@@ -1,0 +1,50 @@
+# OS files
+.DS_Store
+._.DS_Store
+._.TemporaryItems
+.AppleDouble
+Thumbs.db
+.nfs*
+.swp
+
+
+# IDE files
+/.idea
+/.vscode
+
+# Python files
+instance/
+venv/
+env/
+.env
+*.pyc
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+sdist/
+dist/
+build/
+*.egg
+*.egg-info/
+eggs/
+.Python
+develop-eggs/
+.installed.cfg
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django Files
+/static
+
+# JavaScript files
+/node_modules
+npm-debug.log
+yarn-error.log
+#package-lock.json
+
+# Other files
+/.vagrant
