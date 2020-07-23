@@ -5,11 +5,11 @@
 
 # Providers should be a recursive dependency graph
 
-app = {
+config = {
     # Package Info
     'name': 'foundation',
     'vendor': 'uvicore',
-    'module': 'uvicore.foundation',
+    'package': 'uvicore.foundation',
     'config_prefix': 'uvicore.foundation',
 
     'version': '1.0.1',
@@ -20,5 +20,9 @@ app = {
         #'mrcore.support',
     ],
 
-    #'packages': [],
+    'services': {
+        'uvicore.logging': {
+            'provider': 'uvicore.logging.services.Logging',
+        },
+    },
 }

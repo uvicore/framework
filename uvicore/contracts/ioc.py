@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 class Binding:
     path: Optional[str]
     object: Optional[Any]
+    factory: Optional[Any]
     instance: Optional[Any]
     kwargs: Optional[Dict]
     singleton: bool

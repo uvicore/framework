@@ -12,6 +12,17 @@ class Provider(ABC):
     def boot(self, app, package) -> None: pass
 
     @abstractmethod
+    def bind(self,
+        name: str,
+        object: Any,
+        *,
+        factory: Any = None,
+        kwargs: Dict = None,
+        singleton: bool = False,
+        aliases: List = []
+    ) -> None: pass
+
+    @abstractmethod
     def views(self, package: Package, paths: List) -> None: pass
 
     @abstractmethod

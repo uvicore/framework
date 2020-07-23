@@ -5,12 +5,24 @@ from typing import Dict, List, Any
 import uvicore
 from uvicore.support.click import click, group_kargs, typer
 from uvicore.support.module import load, location
-from uvicore import Package
+from uvicore.foundation import Package
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Provider as ProviderInterface
 
 
 class ServiceProvider(ProviderInterface):
+
+    def bind(self,
+        name: str,
+        object: Any,
+        *,
+        factory: Any = None,
+        kwargs: Dict = None,
+        singleton: bool = False,
+        aliases: List = []
+    ) -> None:
+        uvicore.ioc.bind(name, object, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
+
 
     def views(self, package: Package, paths: List) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used
@@ -60,7 +72,7 @@ class ServiceProvider(ProviderInterface):
 
         # Import and instantiate apps WebRoutes class
         from uvicore.http.routing import WebRouter
-        WebRoutes = load(routes_class).mod
+        WebRoutes = load(routes_class).object
         WebRoutes(uvicore.app, package, WebRouter, package.web_route_prefix)
 
     def api_routes(self, package: Package, routes_class: Any) -> None:
@@ -72,16 +84,15 @@ class ServiceProvider(ProviderInterface):
 
         # Import and instantiate apps APIRoutes class
         from uvicore.http import APIRouter
-        APIRoutes = load(routes_class).mod
+        APIRoutes = load(routes_class).object
         APIRoutes(uvicore.app, package, APIRouter, package.api_route_prefix)
 
     def commands(self, package: Package, options: Dict) -> None:
         # Only register command if running from the console
         # or from the http:serve command (register only the http group).
         # Do NOT register apps commands if apps config.register_commands if False
-        register = True
+        register = package.register_commands
         if uvicore.app.is_http: register = False
-        if not package.register_commands: register = False
         for group in options:
             if group.get('group').get('name') == 'http':
                 for command in group.get('commands'):
@@ -106,7 +117,7 @@ class ServiceProvider(ProviderInterface):
 
             # Add each command to this new click group
             for command in commands:
-                click_command = load(command.get('module')).mod
+                click_command = load(command.get('module')).object
                 group.add_command(typer.main.get_command(click_command), command.get('name'))
 
             if group_parent == 'root':
@@ -131,7 +142,7 @@ class ServiceProvider(ProviderInterface):
 
         # Add each apps commands to their own group
         for command_name, module in commands:
-            click_command = load(module).mod
+            click_command = load(module).object
             if name == 'root':
                 # Add all uvicore commands to main command (NOT an app based subcommand)
                 uvicore.app.cli.add_command(typer.main.get_command(click_command), command_name)
@@ -145,7 +156,7 @@ class ServiceProvider(ProviderInterface):
     def configs(self, options: List[Dict]) -> None:
         for config in options:
             # Load module to get actual config value
-            value = load(config['module']).mod
+            value = load(config['module']).object
 
             # Merge config value with complete config
             uvicore.config.merge(config['key'], value)

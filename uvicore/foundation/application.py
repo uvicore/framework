@@ -14,16 +14,13 @@ from uvicore.contracts import Template as TemplateInterface
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 from uvicore.http import templates
+from .package import Package
 
 from ..database.connection import Connection
-from .cli import cli as ClickGroup
-
+from uvicore.console import cli as MainClickGroup
+#from uvicore.support.logger import Logger
 
 class _Application(ApplicationInterface):
-    """Main uvicore application class.  Import Application IoC to instantiate."""
-
-    # Class Variables (state independent of instantiation)
-    #booted: bool = False
 
     # Instance Variables
     @property
@@ -59,7 +56,8 @@ class _Application(ApplicationInterface):
         return self._config
 
     @property
-    def providers(self) -> List[Tuple]:
+    #def providers(self) -> List[Tuple]:
+    def providers(self) -> Dict[str, Dict]:
         return self._providers
 
     @property
@@ -83,7 +81,7 @@ class _Application(ApplicationInterface):
         return self._is_async
 
     @property
-    def packages(self) -> List[PackageInterface]:
+    def packages(self) -> Dict[str, PackageInterface]:
         return self._packages
 
     @property
@@ -102,61 +100,6 @@ class _Application(ApplicationInterface):
     def module(self) -> str:
         return self._module
 
-
-    #version: str = uvicore.__version__
-    # """Uvicore framework version number"""
-
-    # debug: bool = False
-    # """Debug mode for entire application"""
-
-    # perfs: List = []
-    # """List of all perf dumps for performance tuning"""
-
-    # http: ServerInterface = None
-    # """HTTP Server Instance"""
-
-    # template: TemplateInterface = None
-    # """HTML Templating System"""
-
-    # cli: Any = None
-    # """Main click command group"""
-
-    # config: ConfigInterface = None
-    # """Configuration system"""
-
-    # providers: List[Tuple] = []
-    # """List of providers defined in all packages"""
-
-    # registered: bool = False
-    # """All providers have been registered"""
-
-    # booted: bool = False
-    # """All providers have been booted"""
-
-    # is_console: bool = False
-    # """App running from CLI (not serving web or API)"""
-
-    # is_http: bool = False
-    # """App running as HTTP server (not as CLI)"""
-
-    # is_async: bool = False
-    # """App running in async mode (HTTP).  CLI is not async"""
-
-    # packages: List[PackageInterface] = []
-    # """List of all packages defined from providers"""
-
-    # path: str = None
-    # """Base path of running application"""
-
-    # name: str = None
-    # """Short name of running application"""
-
-    # vendor: str = None
-    # """Vendor of running application"""
-
-    # module: str = None
-    # """Full module path of running application"""
-
     def __init__(self):
         # Instance variables
         self._version = uvicore.__version__
@@ -167,20 +110,21 @@ class _Application(ApplicationInterface):
         self._cli = None
         self._db = None
         self._config = None
-        self._providers = []
+        self._providers = {}
         self._registered = False
         self._booted = False
         self._is_console = False
         self._is_http = False
         self._is_async = False
-        self._packages = []
+        self._packages = {}
         self._path = None
         self._name = None
         self._vendor = None
         self._module = None
 
-        # Instantiate uvicore singletons
-        uvicore.config = Config()
+        # Instantiate uvicore core globals
+        uvicore.config = Config
+
 
         # Pass through attributes
         self._config = uvicore.config
@@ -189,11 +133,13 @@ class _Application(ApplicationInterface):
         # Silently do not bootstrap multiple times
         if self.booted: return
 
-        # App name and base_path
+        # App name and path
         self._path = path
         self._name = app_config.get('name')
         self._vendor = app_config.get('vendor')
         self._module = app_config.get('module')
+
+        #uvicore.log = uvicore.ioc.make('Logger')
 
         # Detect if running in console (to register commands)
         # Ensure console is False even when running ./uvicore http serve
@@ -203,7 +149,7 @@ class _Application(ApplicationInterface):
         self._is_http = not self.is_console
 
         # Always set the cli instance, though commands won't be added if not is_console
-        self._cli = ClickGroup
+        self._cli = MainClickGroup
 
         # Add main app config
         self._config.set('app', app_config)
@@ -216,12 +162,15 @@ class _Application(ApplicationInterface):
         self.perf('|--is_console: ' + str(self.is_console))
 
         # Build recursive providers graph
+        #self._build_provider_graph(self.module)
         self._build_provider_graph(self.module)
 
         # Register all providers
+        #self._register_providers()
         self._register_providers()
 
         # Merge Providers (merges configs and creates actual Package class)
+        #self._merge_providers()
         self._merge_providers()
 
         # Create HTTP Server instance
@@ -231,6 +180,7 @@ class _Application(ApplicationInterface):
         self._create_database_instance()
 
         # Boot all providers
+        #self._boot_providers()
         self._boot_providers()
 
         # Mount static asset route
@@ -241,6 +191,121 @@ class _Application(ApplicationInterface):
 
         # Return application
         return self
+
+    def _build_provider_graph(self, package: str, service: Dict = None) -> None:
+        if service:
+            self._providers[package] = service
+            config_module = package + '.config.app.config'  # Default if not defined
+            if 'config' in service: config_module = service['config']
+            app_config = load(config_module).object
+            services = app_config.get('services') or {}
+        else:
+            # First run has no package, which is the current running app, use that config
+            services = self.config('app.services') or {}
+
+        for name, options in services.items():
+            if name not in self.providers:
+                self._build_provider_graph(name, options)
+
+    def _register_providers(self) -> None:
+        self.perf('|--registering providers')
+        for package, service in self.providers.items():
+            config_module = package + '.config.app.config'  # Default if not defined
+            if 'config' in service: config_module = service['config']
+            self.perf('|---' + service['provider'])
+
+            # Instantiate the provider and call boot()
+            provider = load(service['provider']).object()
+            provider.register(app=self)
+        self._registered = True
+
+    def _merge_providers(self) -> None:
+        self.perf('|--merging providers')
+        for package, service in self.providers.items():
+            config_module = package + '.config.app.config'  # Default if not defined
+            if 'config' in service: config_module = service['config']
+            self.perf('|---' + service['provider'])
+
+            # Load this packages config/app.py and merge into package config
+            app_config = load(config_module).object
+            config_prefix = app_config.get('config_prefix')
+            app_name = app_config.get('name')
+            self.config.set(config_prefix + '.app', app_config)
+
+            # Load this packages main config
+            package_config = self.config(config_prefix)
+
+            # Main app
+            main = True if app_name == self.name else False
+
+            # Route prefix
+            web_route_prefix = None
+            api_route_prefix = None
+            if 'route' in package_config:
+                web_route_prefix = package_config.get('route').get('web_prefix')
+                api_route_prefix = package_config.get('route').get('api_prefix')
+
+            # Database connections
+            connections = []
+            if 'database' in package_config:
+                for name, connection in package_config.get('database').get('connections').items():
+                    url = (connection.get('driver')
+                        + '+' + connection.get('dialect')
+                        + '://' + connection.get('username')
+                        + ':' + connection.get('password')
+                        + '@' + connection.get('host')
+                        + ':' + str(connection.get('port'))
+                        + '/' + connection.get('database'))
+                    #self.db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
+                    connections.append(Connection(
+                        name=name,
+                        default=True if name == package_config.get('database').get('default') else False,
+                        driver=connection.get('driver'),
+                        dialect=connection.get('dialect'),
+                        host=connection.get('host'),
+                        port=connection.get('port'),
+                        database=connection.get('database'),
+                        username=connection.get('username'),
+                        password=connection.get('password'),
+                        prefix=connection.get('prefix'),
+                        url=url,
+                    ))
+
+            # Modules file path
+            package_name = app_config.get('package')
+            package = Package(
+                name=app_config.get('name'),
+                vendor=app_config.get('vendor'),
+                package=package_name,
+                location=location(package_name),
+                main=main,
+                config_prefix=app_config.get('config_prefix'),
+                web_route_prefix=web_route_prefix,
+                api_route_prefix=api_route_prefix,
+                view_paths=[],
+                asset_paths=[],
+                template_options={},
+                register_web_routes=True if package_config.get('register_web_routes') else False,
+                register_api_routes=True if package_config.get('register_api_routes') else False,
+                register_views=True if package_config.get('register_views') else False,
+                register_assets=True if package_config.get('register_assets') else False,
+                register_commands=True if package_config.get('register_commands') else False,
+                connections=connections,
+            )
+            #self._packages.append(package)
+            self._packages[package_name] = package
+
+    def _boot_providers(self) -> None:
+        self.perf('|--booting providers')
+        for package, service in self.providers.items():
+            self.perf('|---' + service['provider'])
+
+            # Import the provider and call boot()
+            provider = load(service['provider']).object()
+            provider.boot(self, self.package(package))
+        #__class__.booted = True
+        self._booted = True
+        self.perf('--' + str(self.providers))
 
     def _create_http_server(self) -> None:
         if self.is_http:
@@ -323,134 +388,11 @@ class _Application(ApplicationInterface):
         # Create new template environment
         self.template.init()
 
-    def _register_providers(self) -> None:
-        self.perf('|--registering providers')
-        for (app, module) in self.providers:
-            path = app + '.' + module
-            self.perf('|---' + path)
-
-            # Instantiate the provider and call boot()
-            provider = load(path).mod()
-            provider.register(self)
-        self._registered = True
-
-    def _merge_providers(self) -> None:
-        self.perf('|--merging providers')
-        for (app, module) in self.providers:
-            path = app + '.' + module
-            self.perf('|---' + path)
-
-            # Load this packages config/app.py and merge into package config
-            app_config = load(app + '.config.app.app').mod
-            config_prefix = app_config.get('config_prefix')
-            app_name = app_config.get('name')
-            self.config.set(config_prefix + '.app', app_config)
-
-            # Load this packages main config
-            package_config = self.config(config_prefix)
-
-            # Main app
-            main = True if app_name == self.name else False
-
-            # Route prefix
-            web_route_prefix = None
-            api_route_prefix = None
-            if 'route' in package_config:
-                web_route_prefix = package_config.get('route').get('web_prefix')
-                api_route_prefix = package_config.get('route').get('api_prefix')
-
-            # Database connections
-            connections = []
-            if 'database' in package_config:
-                for name, connection in package_config.get('database').get('connections').items():
-                    url = (connection.get('driver')
-                        + '+' + connection.get('dialect')
-                        + '://' + connection.get('username')
-                        + ':' + connection.get('password')
-                        + '@' + connection.get('host')
-                        + ':' + str(connection.get('port'))
-                        + '/' + connection.get('database'))
-                    #self.db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
-                    connections.append(Connection(
-                        name=name,
-                        default=True if name == package_config.get('database').get('default') else False,
-                        driver=connection.get('driver'),
-                        dialect=connection.get('dialect'),
-                        host=connection.get('host'),
-                        port=connection.get('port'),
-                        database=connection.get('database'),
-                        username=connection.get('username'),
-                        password=connection.get('password'),
-                        prefix=connection.get('prefix'),
-                        url=url,
-                    ))
-
-            # Modules file path
-            package = uvicore.Package(
-                name=app_config.get('name'),
-                vendor=app_config.get('vendor'),
-                module=app_config.get('module'),
-                location=location(app_config.get('module')),
-                main=main,
-                config_prefix=app_config.get('config_prefix'),
-                web_route_prefix=web_route_prefix,
-                api_route_prefix=api_route_prefix,
-                view_paths=[],
-                asset_paths=[],
-                template_options={},
-                register_web_routes=True if package_config.get('register_web_routes') else False,
-                register_api_routes=True if package_config.get('register_api_routes') else False,
-                register_views=True if package_config.get('register_views') else False,
-                register_assets=True if package_config.get('register_assets') else False,
-                register_commands=True if package_config.get('register_commands') else False,
-                connections=connections,
-            )
-            self._packages.append(package)
-
-    def _boot_providers(self) -> None:
-        self.perf('|--booting providers')
-        for (app, module) in self.providers:
-            path = app + '.' + module
-            self.perf('|---' + path)
-
-            # Get this providers package
-            package = self.package(module=app)
-
-            # Import the provider and call boot()
-            provider = load(path).mod()
-            provider.boot(self, package)
-        #__class__.booted = True
-        self._booted = True
-        self.perf('--' + str(self.providers))
-
-    def _build_provider_graph_DICT(self, module: str, package: str = None) -> None:
+    def package(self, package: str = None, *, main: bool = False) -> PackageInterface:
         if package:
-            self._providers[module] = package
-        app_config = load(module + '.config.app.app').mod
-        packages = app_config['packages']
-        for package in packages:
-            if package.get('module') not in self.providers:
-                return self._build_provider_graph(package.get('module'), package)
-        return providers
-
-    def _build_provider_graph(self, app: str, module: str = None) -> None:
-        if module:
-            self._providers.append((app, module))
-        app_config = load(app + '.config.app.app').mod
-        providers = app_config['providers']
-        for (app, module) in providers:
-            #app, module = provider
-            #path = app + '.' + module
-            if (app, module) not in self.providers:
-                self._build_provider_graph(app, module)
-
-    def package(self, name: str = None, module: str = None, main: bool = False) -> PackageInterface:
-        if name:
-            return next(package for package in self.packages if package.name == name)
-        elif module:
-            return next(package for package in self.packages if package.module == module)
+            return self.packages.get(package)
         elif main:
-            return next(package for package in self.packages if package.main == True)
+            return next(package for package in self.packages.values() if package.main == True)
 
     def perf(self, item) -> None:
         if self.debug:
@@ -464,8 +406,14 @@ class _Application(ApplicationInterface):
         dd(*args)
 
 
+# Note about Application
+# Do not make the main Application class
+# or you get an IoC circular dependency issue when you try to override it.
+# All other IoC classes work fine, just not the Application.
+
 # IoC Application class
-Application = uvicore.ioc.make('Application')
+# NO - Circular issues on override
+# Application: ApplicationInterface = uvicore.ioc.make('Application')
 
 # Public API for import * and doc gens
-__all__ = ['Application']
+__all__ = ['_Application']

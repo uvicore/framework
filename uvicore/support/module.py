@@ -1,17 +1,18 @@
 from importlib import import_module
 from importlib.util import find_spec
-from typing import NamedTuple
+from dataclasses import dataclass
 from uvicore.support.dumper import dump, dd
+from typing import Any, NamedTuple
 
-
-class Module(NamedTuple):
-    """Dynamic imported module interface
-    """
-    mod: any
+@dataclass
+class Module():
+    """Dynamic imported module interface"""
+    object: Any
     name: str
     path: str
     fullpath: str
-    origin: str
+    package: str
+    file: str
 
 def load(module: str) -> Module:
     """Import module from string
@@ -19,29 +20,35 @@ def load(module: str) -> Module:
     parts = module.split('.')
     path = '.'.join(parts[0:-1])
     name = ''.join(parts[-1:])
+
+    # Try to import assuming module string is an object, a file or a package (with __init__.py)
     try:
-        # Try to import assuming module string is an actual file or package with __init__.py
-        imported = import_module(path)
+        if path == '':
+            imported = import_module(module)
+        else:
+            imported = import_module(path)
+
+        # Example when importing an actual dictiony called app
+        # from uvicore.foundation.config.app.app
+        # imported.__name__ # uvicore.foundation.config.app
+        # imported.__package__ # uvicore.foundation.config
+        # imported.__file__ # /home/mreschke/Code...
+
+        if path == '':
+            object = imported
+        else:
+            object = getattr(imported, name)
+
         return Module(
-            mod=getattr(imported, name),
+            object=object,
             name=name,
             path=path,
             fullpath=path + '.' + name,
-            origin=imported.__file__,
+            package=imported.__package__,
+            file=imported.__file__,
         )
     except:
-        try:
-            # If not a file or package, assume module string is a namespace package
-            imported = import_module(path)
-            return Module(
-                mod=imported,
-                name=name,
-                path=path,
-                fullpath=path + '.' + name,
-                origin=imported.__file__,
-            )
-        except:
-            raise ModuleNotFoundError
+        raise ModuleNotFoundError("Could not dynamically load module {}".format(module))
 
 def location(module: str) -> str:
     """Find modules folder path (not file path) without importing it

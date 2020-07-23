@@ -19,9 +19,7 @@ from .template import Template
 # requirements and conformity.
 
 class Application(ABC):
-    # Class Variables
-    booted: bool
-    instantiated: List
+    """Main uvicore application"""
 
     # Instance Variables
     @property
@@ -74,7 +72,8 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def providers(self) -> List[Tuple]:
+    #def providers(self) -> List[Tuple]:
+    def providers(self) -> Dict[str, Dict]:
         """List of providers defined in all packages"""
         pass
 
@@ -110,7 +109,7 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def packages(self) -> List:
+    def packages(self) -> Dict[str, Package]:
         """List of all packages defined from providers"""
         pass
 
@@ -152,7 +151,7 @@ class Application(ABC):
         pass
 
     @abstractmethod
-    def package(self, name: str = None, module: str = None, main: bool = False) -> Package: pass
+    def package(self, package: str, *, name: str = None, main: bool = False) -> Package: pass
 
     @abstractmethod
     def perf(self, item: any) -> None: pass

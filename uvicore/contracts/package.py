@@ -7,9 +7,10 @@ from uvicore.database.connection import Connection
 
 @dataclass
 class Package(ABC):
+    """asdfasdf"""
     name: str
     vendor: str
-    module: str
+    package: str
     location: str
     main: bool
     config_prefix: str
@@ -17,7 +18,7 @@ class Package(ABC):
     api_route_prefix: str
     view_paths: List[str]
     asset_paths: List[str]
-    template_options: Dict
+    template_options: Dict[str, str]
     register_web_routes: bool
     register_api_routes: bool
     register_views: bool

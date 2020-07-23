@@ -1,6 +1,4 @@
 config = {
-    'version': '1.0.1',
-
     'test': 'original in foundation',
 
     'database': {

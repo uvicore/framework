@@ -1,7 +1,5 @@
-from uvicore.support.click import click, group_kargs
-
-#from .version import version
 import uvicore
+from uvicore.support.click import click, group_kargs
 
 
 @click.group(**group_kargs, help=f"""
@@ -15,6 +13,9 @@ import uvicore
 def cli():
     pass
 
+
+# Public API for import * and doc gens
+__all__ = ['cli']
 
 
 

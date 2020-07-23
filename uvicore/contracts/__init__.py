@@ -1,6 +1,7 @@
 from .application import Application
 from .config import Config
-from .ioc import Ioc, Binding
+from .ioc import Binding, Ioc
+from .logger import Logger
 from .package import Package
 from .provider import Provider
 from .router import APIRouter, WebRouter
@@ -11,5 +12,5 @@ __all__ = [
     'Application', 'Config',
     'Server', 'Package', 'Provider',
     'APIRouter', 'WebRouter', 'Template',
-    'Ioc', 'Binding',
+    'Ioc', 'Binding', 'Logger',
 ]

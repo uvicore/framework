@@ -28,7 +28,7 @@ class Routes(Generic[R]):
             # Using a string to point to an endpoint class controller
             controller = load(self.endpoints + '.' + module + '.route')
             uvicore.app.http.include_router(
-                controller.mod,
+                controller.object,
                 prefix=self.prefix + str(prefix),
                 tags=tags,
             )

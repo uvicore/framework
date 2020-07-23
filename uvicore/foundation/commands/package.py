@@ -2,18 +2,20 @@ import typer
 from uvicore import app
 from uvicore.support.dumper import dd, dump
 
-
+# Commands
 list = typer.Typer()
+show = typer.Typer()
+
+
 @list.command()
 def list_cmd():
     """List all packages"""
-    for package in app.packages:
+    for package in app.packages.values():
         dump(package)
         #dump(f"== {package.name} deep merged configs --")
         #dump(package.config())
 
 
-show = typer.Typer()
 @show.command()
 def show_cmd(package: str):
     """Show detailed info for one package"""
@@ -21,8 +23,12 @@ def show_cmd(package: str):
         pkg = app.package(main=True)
     else:
         pkg = app.package(package)
-    dump(pkg)
-    typer.secho(f"::- {package} deep merged configs -::", fg=typer.colors.GREEN)
-    dump(pkg.config())
+
+    if pkg:
+        dump(pkg)
+        typer.secho(f"::- {package} deep merged configs -::", fg=typer.colors.GREEN)
+        dump(pkg.config())
+    else:
+        typer.echo(f"Package {package} not found")
 
 

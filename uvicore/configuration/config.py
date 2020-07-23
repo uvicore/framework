@@ -1,29 +1,26 @@
 import os
-from typing import Dict
+from typing import Any, Dict
 
-from environs import Env
-
+import uvicore
 from uvicore.contracts import Config as ConfigInterface
 from uvicore.support import dictionary
 from uvicore.support.dumper import dd, dump
 
-env = Env()
-# def env(variable, default=None):
-#     if variable in os.environ:
-#         return os.getenv(variable)
-#     else:
-#         return default
 
+class _Config(ConfigInterface):
+    #config: Dict = {}
+    @property
+    def items(self) -> Dict:
+        return self._items
 
+    def __init__(self) -> None:
+        self._items: Dict = {}
 
-class Config(ConfigInterface):
-    config: Dict = {}
-
-    def get(self, dotkey: str = None, config: Dict = None):
+    def get(self, dotkey: str = None, config: Dict = None) -> Any:
         # Recursive for dot notation
         if not dotkey:
-            return self.config
-        if config is None: config = self.config
+            return self.items
+        if config is None: config = self.items
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
             if key not in config:
@@ -35,10 +32,10 @@ class Config(ConfigInterface):
             else:
                 return None
 
-    def set(self, dotkey: str, value: any, config: Dict = None):
+    def set(self, dotkey: str, value: any, config: Dict = None) -> Any:
         # Recursive for dot notation
-        # Remember objects are byRef, so changing config also changes self.config
-        if config is None: config = self.config
+        # Remember objects are byRef, so changing config also changes self.items
+        if config is None: config = self._items
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
             if key not in config:
@@ -48,7 +45,7 @@ class Config(ConfigInterface):
             config[dotkey] = value
             return value
 
-    def merge(self, dotkey: str, value: any):
+    def merge(self, dotkey: str, value: Any) -> None:
         existing = self.get(dotkey);
         if not existing:
             return self.set(dotkey, value)
@@ -63,3 +60,10 @@ class Config(ConfigInterface):
 
     def __call__(self, dotkey: str = None):
         return self.get(dotkey)
+
+
+# IoC Config class
+Config: ConfigInterface = uvicore.ioc.make('Config')
+
+# Public API for import * and doc gens
+__all__ = ['Config', '_Config']

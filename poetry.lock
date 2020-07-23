@@ -76,6 +76,14 @@ version = "0.4.3"
 
 [[package]]
 category = "main"
+description = "Simple library for color and formatting to terminal"
+name = "colored"
+optional = false
+python-versions = "*"
+version = "1.4.2"
+
+[[package]]
+category = "main"
 description = "Terminal string styling done right, in Python."
 name = "colorful"
 optional = false
@@ -481,7 +489,7 @@ python-versions = ">=3.6.1"
 version = "8.1"
 
 [metadata]
-content-hash = "60faf8b6a57feb61bede5eddd0cb457aa01a63b9eb60bff7b3511ec7aad7143b"
+content-hash = "276b8c1b740788aef012f7774c6973a8f5bf9f1a8d79b4e379a87cccb19ead92"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -511,6 +519,9 @@ click-help-colors = [
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
     {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
+]
+colored = [
+    {file = "colored-1.4.2.tar.gz", hash = "sha256:056fac09d9e39b34296e7618897ed1b8c274f98423770c2980d829fd670955ed"},
 ]
 colorful = [
     {file = "colorful-0.5.4-py2.py3-none-any.whl", hash = "sha256:8d264b52a39aae4c0ba3e2a46afbaec81b0559a99be0d2cfe2aba4cf94531348"},
