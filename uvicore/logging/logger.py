@@ -270,8 +270,9 @@ class ColoredFormatter(Formatter):
         return message
 
 
-# IoC Config class
-Logger: LoggerInterface = uvicore.ioc.make('Logger')
+# IoC Class Instance
+# NO - Circular issues on override
+# Logger: LoggerInterface = uvicore.ioc.make('Logger')
 
 # Public API for import * and doc gens
-__all__ = ['Logger', '_Logger']
+__all__ = ['_Logger']

@@ -1,9 +1,29 @@
 from abc import ABC, abstractmethod
-from uvicore.contracts import Package
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+from uvicore.contracts import Application, Package
 
 
 class Provider(ABC):
+
+    @property
+    @abstractmethod
+    def app(self) -> Application: pass
+
+    @property
+    @abstractmethod
+    def package(self) -> Package: pass
+
+    @property
+    @abstractmethod
+    def app_config(self) -> Dict: pass
+
+    @property
+    @abstractmethod
+    def package_config(self) -> Dict: pass
+
+    @property
+    def name(self) -> Dict: pass
 
     @abstractmethod
     def register(self, app) -> None: pass
@@ -42,5 +62,3 @@ class Provider(ABC):
 
     @abstractmethod
     def configs(self, modules: List) -> None: pass
-
-

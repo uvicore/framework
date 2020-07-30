@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, OrderedDict
 
 from .config import Config
 from .server import Server
@@ -72,9 +72,8 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    #def providers(self) -> List[Tuple]:
-    def providers(self) -> Dict[str, Dict]:
-        """List of providers defined in all packages"""
+    def providers(self) -> OrderedDict[str, Dict]:
+        """OrderedDict of providers from all packages in proper dependency order"""
         pass
 
     @property
@@ -109,7 +108,7 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def packages(self) -> Dict[str, Package]:
+    def packages(self) -> OrderedDict[str, Package]:
         """List of all packages defined from providers"""
         pass
 
@@ -127,14 +126,8 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def vendor(self) -> str:
-        """Vendor of running application"""
-        pass
-
-    @property
-    @abstractmethod
-    def module(self) -> str:
-        """Full module path of running application"""
+    def main(self) -> str:
+        """The main packages running this application"""
         pass
 
     @abstractmethod

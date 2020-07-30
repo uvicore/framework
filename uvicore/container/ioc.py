@@ -22,21 +22,25 @@ class Ioc(IocInterface):
         self._aliases: Dict[str, str] = {}
 
         # Add default binding specific to uvicore framework
+        # Only some defaults are here.  The rest are bound in
+        # their service providers register() method
         self.bind_map({
             'Application': {
                 'object': 'uvicore.foundation.application._Application',
                 'singleton': True,
                 'aliases': ['App', 'app'],
             },
-            'Config': {
-                'object': 'uvicore.configuration.config._Config',
-                'singleton': True,
-                'aliases': ['Configuration', 'config'],
-            },
             'Package': {
                 'object': 'uvicore.foundation.package._Package',
                 'aliases': ['package'],
             },
+
+            # NO - These are now their own Service Providers with bind()
+            # 'Config': {
+            #     'object': 'uvicore.configuration.config._Config',
+            #     'singleton': True,
+            #     'aliases': ['Configuration', 'config'],
+            # },
             # 'Logger': {
             #     'object': 'uvicore.support.logger._Logger',
             #     'factory': 'uvicore.factory.Logger',

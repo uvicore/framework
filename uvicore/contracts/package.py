@@ -9,8 +9,8 @@ from uvicore.database.connection import Connection
 class Package(ABC):
     """asdfasdf"""
     name: str
-    vendor: str
-    package: str
+    #vendor: str
+    #package: str
     location: str
     main: bool
     config_prefix: str

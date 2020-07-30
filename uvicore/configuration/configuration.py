@@ -7,7 +7,7 @@ from uvicore.support import dictionary
 from uvicore.support.dumper import dd, dump
 
 
-class _Config(ConfigInterface):
+class _Configuration(ConfigInterface):
     #config: Dict = {}
     @property
     def items(self) -> Dict:
@@ -61,9 +61,9 @@ class _Config(ConfigInterface):
     def __call__(self, dotkey: str = None):
         return self.get(dotkey)
 
-
-# IoC Config class
-Config: ConfigInterface = uvicore.ioc.make('Config')
+# IoC Class Instance
+# NO - Circular issues on override
+#Configuration: ConfigInterface = uvicore.ioc.make('Config')
 
 # Public API for import * and doc gens
-__all__ = ['Config', '_Config']
+__all__ = ['_Configuration']

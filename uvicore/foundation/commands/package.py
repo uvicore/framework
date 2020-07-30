@@ -10,8 +10,11 @@ show = typer.Typer()
 @list.command()
 def list_cmd():
     """List all packages"""
-    for package in app.packages.values():
-        dump(package)
+    dump(app.packages)
+    # for package in app.packages.values():
+    #     dump("Package: " + package.name)
+    #     dump(package)
+    #     print()
         #dump(f"== {package.name} deep merged configs --")
         #dump(package.config())
 

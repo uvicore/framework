@@ -3,7 +3,7 @@ from uvicore.support.provider import ServiceProvider
 
 class Foundation(ServiceProvider):
 
-    def register(self, app):
+    def register(self):
 
         # Register config
         self.configs([
@@ -19,15 +19,15 @@ class Foundation(ServiceProvider):
         #     ]
         # )
 
-    def boot(self, app, package):
+    def boot(self):
         # Register commands
-        self.register_commands(package)
+        self.register_commands()
 
 
 
-    def register_commands(self, package):
+    def register_commands(self):
         # Register HTTP Serve commands
-        self.commands(package, [
+        self.commands([
             {
                 'group': {
                     'name': 'http',
@@ -41,7 +41,7 @@ class Foundation(ServiceProvider):
         ])
 
         # Register Package commands
-        self.commands(package, [
+        self.commands([
             {
                 'group': {
                     'name': 'package',
