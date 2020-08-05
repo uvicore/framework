@@ -1,10 +1,11 @@
 import importlib
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import uvicore
 from uvicore.contracts import Application, Package
 from uvicore.contracts import Provider as ProviderInterface
+from uvicore.contracts import Dispatcher
 from uvicore.support.click import click, group_kargs, typer
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
@@ -19,6 +20,10 @@ class ServiceProvider(ProviderInterface):
     @property
     def package(self) -> Package:
         return self._package
+
+    @property
+    def events(self) -> Dispatcher:
+        return uvicore.events
 
     @property
     def app_config(self) -> Dict:
@@ -37,6 +42,15 @@ class ServiceProvider(ProviderInterface):
         self._package = package
         self._app_config = app_config
         self._package_config = package_config
+
+    # def events(self, events: Dict) -> None:
+    #     uvicore.events.register(events)
+
+    # def listen(self, events: Union[str, List], listener: Any) -> None:
+    #     uvicore.events.listen(events, listener)
+
+    # def subscribe(self, listener: str) -> None:
+    #     uvicore.events.subscribe(listener)
 
     def bind(self,
         name: str,
@@ -103,7 +117,8 @@ class ServiceProvider(ProviderInterface):
         # Import and instantiate apps WebRoutes class
         from uvicore.http.routing import WebRouter
         WebRoutes = load(routes_class).object
-        WebRoutes(uvicore.app, self.package, WebRouter, self.package.web_route_prefix)
+        routes = WebRoutes(uvicore.app, self.package, WebRouter, self.package.web_route_prefix)
+        routes.register()
 
     def api_routes(self, routes_class: str) -> None:
         # Dont load routes if running in CLI
@@ -115,7 +130,8 @@ class ServiceProvider(ProviderInterface):
         # Import and instantiate apps APIRoutes class
         from uvicore.http import APIRouter
         APIRoutes = load(routes_class).object
-        APIRoutes(uvicore.app, self.package, APIRouter, self.package.api_route_prefix)
+        routes = APIRoutes(uvicore.app, self.package, APIRouter, self.package.api_route_prefix)
+        routes.register()
 
     def commands(self, options: Dict) -> None:
         # Only register command if running from the console
@@ -130,6 +146,9 @@ class ServiceProvider(ProviderInterface):
                         register = True
                         break;
         if not register: return
+
+        # Main Click Group from Ioc
+        cli = uvicore.ioc.make('Console')
 
         # Register each group and each groups commands
         click_groups = {}
@@ -151,37 +170,12 @@ class ServiceProvider(ProviderInterface):
                 group.add_command(typer.main.get_command(click_command), command.get('name'))
 
             if group_parent == 'root':
-                # Add this click group to root
-                uvicore.app.cli.add_command(group, group_name)
+                # Add this click group to main root click group
+                #uvicore.app.cli.add_command(group, group_name)
+                cli.add_command(group, group_name)
             else:
                 # Add this click group to another parent group
                 click_groups[group_parent].add_command(group, group_name)
-
-    def command_OLD(self, *, name: str, help: str = None, commands: List, force: bool = False) -> None:
-        # Don't load commands if not running in CLI
-        if not force and not uvicore.app.is_console: return
-
-        # Defining the name as 'root' makes the commands a root level command
-        # NOT a click subcommand nested under a name
-
-        if name != 'root':
-            # Create a new click group for all commands in this app
-            @click.group(**group_kargs, help=help)
-            def group():
-                pass
-
-        # Add each apps commands to their own group
-        for command_name, module in commands:
-            click_command = load(module).object
-            if name == 'root':
-                # Add all uvicore commands to main command (NOT an app based subcommand)
-                uvicore.app.cli.add_command(typer.main.get_command(click_command), command_name)
-            else:
-                # Add all apps commands to a click subcommand
-                group.add_command(typer.main.get_command(click_command), command_name)
-
-        if name != 'root':
-                uvicore.app.cli.add_command(group, name)
 
     def configs(self, options: List[Dict]) -> None:
         for config in options:

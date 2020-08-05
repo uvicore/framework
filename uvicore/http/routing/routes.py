@@ -1,26 +1,43 @@
 from typing import Generic, List, TypeVar, Union
 
 import uvicore
-from uvicore.contracts import Application, Package
+from uvicore.contracts import Application as ApplicationInterface
+from uvicore.contracts import Package as PackageInterface
+from uvicore.contracts import Routes as RoutesInterface
 from uvicore.http.routing import APIRouter, WebRouter
 from uvicore.support.module import load
 
 # Generic Router (APIRouter or WebRouter)
 R = TypeVar('R')
 
-class Routes(Generic[R]):
+class Routes(RoutesInterface, Generic[R]):
 
-    app: Application
-    package: Package
+    @property
+    def app(self) -> ApplicationInterface:
+        return self._app
 
+    @property
+    def package(self) -> PackageInterface:
+        return self._package
 
-    def __init__(self, app: Application, package: Package, Router: R, prefix: str):
-        self.package = package
-        self._Router: R = Router
-        self.prefix = prefix
+    @property
+    def Router(self) -> R:
+        return self._Router
 
-        # Register routes
-        self.register()
+    @property
+    def prefix(self) -> str:
+        return self._prefix
+
+    def __init__(self,
+        app: ApplicationInterface,
+        package: PackageInterface,
+        Router: R,
+        prefix: str
+    ):
+        self._app = app
+        self._package = package
+        self._Router = Router
+        self._prefix = prefix
 
     def include(self, module, *, prefix: str = '', tags: List[str] = None) -> None:
         #self.http.controller(controller.route, prefix=self.prefix)
@@ -40,5 +57,5 @@ class Routes(Generic[R]):
                 tags=tags,
             )
 
-    def Router(self) -> R:
-        return self._Router()
+    # def Router(self) -> R:
+    #     return self._Router()

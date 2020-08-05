@@ -6,10 +6,6 @@ config = {
     # Package Information
     # --------------------------------------------------------------------------
     'name': 'uvicore.foundation',
-    # 'name': 'foundation',
-    # 'vendor': 'uvicore',
-    # 'package': 'uvicore.foundation',
-    'config_prefix': 'uvicore.foundation',
 
 
     # --------------------------------------------------------------------------
@@ -21,6 +17,12 @@ config = {
         },
         'uvicore.logging': {
             'provider': 'uvicore.logging.services.Logging',
+        },
+        'uvicore.console': {
+            'provider': 'uvicore.console.services.Console',
+        },
+        'uvicore.http': {
+            'provider': 'uvicore.http.services.Http',
         },
     }),
 

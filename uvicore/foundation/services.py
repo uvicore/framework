@@ -1,4 +1,6 @@
+import uvicore
 from uvicore.support.provider import ServiceProvider
+from uvicore.support.dumper import dump, dd
 
 
 class Foundation(ServiceProvider):
@@ -7,8 +9,20 @@ class Foundation(ServiceProvider):
 
         # Register config
         self.configs([
-            {'key': 'uvicore.foundation', 'module': 'uvicore.foundation.config.foundation.config'}
+            {'key': self.name, 'module': 'uvicore.foundation.config.foundation.config'}
         ])
+
+        # Register events used in this package
+        self.events.register({
+            'uvicore.foundation.events.app.Registered': {
+                'description': 'Application bootstrap has registered all package service providers',
+                'type': 'class',
+            },
+            'uvicore.foundation.events.app.Booted': {
+                'description': 'Application bootstrap has booted all package service providers',
+                'type': 'class',
+            },
+        })
 
         # # Register root level commands
         # self.commands(

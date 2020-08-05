@@ -16,10 +16,7 @@ from uvicore.support.dumper import dd, dump
 # app = FastAPI(), but I call it app.http
 
 
-
-
-
-class Server(ServerInterface):
+class _Server(ServerInterface):
     # def controller(self, *args, **kargs):
     #     return self.include_router(*args, **kargs)
 

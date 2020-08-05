@@ -13,11 +13,10 @@ from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Template as TemplateInterface
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
-from uvicore.http import templates
 from .package import Package
 
 from ..database.connection import Connection
-from uvicore.console import cli as MainClickGroup
+#from uvicore.console import cli as MainClickGroup
 #from uvicore.logging.logger import Logger
 
 
@@ -43,10 +42,6 @@ class _Application(ApplicationInterface):
     @property
     def template(self) -> TemplateInterface:
         return self._template
-
-    @property
-    def cli(self) -> Any:
-        return self._cli
 
     @property
     def db(self) -> Any:
@@ -103,7 +98,6 @@ class _Application(ApplicationInterface):
         self._perfs = []
         self._http = None
         self._template = None
-        self._cli = None
         self._db = None
         self._config = None
         self._providers = collections.OrderedDict()
@@ -127,6 +121,9 @@ class _Application(ApplicationInterface):
         # Silently do not bootstrap multiple times
         if self.booted: return
 
+        # Define foundation events
+        #self._register_events()
+
         # App name and path
         self._path = path
         self._name = app_config.get('name')
@@ -142,9 +139,6 @@ class _Application(ApplicationInterface):
         if "'http', 'serve'" in str(sys.argv):
             self._is_console = False
         self._is_http = not self.is_console
-
-        # Always set the cli instance, though commands won't be added if not is_console
-        self._cli = MainClickGroup
 
         # Add main app config
         #self._config.set('app', app_config)
@@ -166,9 +160,6 @@ class _Application(ApplicationInterface):
         #self._merge_providers()
         self._merge_providers()
 
-        # Create HTTP Server instance
-        self._create_http_server()
-
         # Create Database instance
         self._create_database_instance()
 
@@ -176,14 +167,14 @@ class _Application(ApplicationInterface):
         #self._boot_providers()
         self._boot_providers(app_config)
 
-        # Mount static asset route
-        self._mount_static_assets()
-
-        # Create templating Environment
-        self._create_template_environment()
-
         # Return application
         return self
+
+    # def _register_events(self):
+    #     uvicore.events.register({
+    #         'uvicore.foundation.events.Registered': 'Help here',
+    #         'uvicore.foundation.events.Booted': 'Help here',
+    #     })
 
     def _build_provider_graph(self, app_config: Dict) -> None:
         def recurse(package: str, options: Dict):
@@ -219,7 +210,10 @@ class _Application(ApplicationInterface):
                 package_config=self._get_package_config(package, service),
             )
             provider.register()
+
+        # Complete registration
         self._registered = True
+        uvicore.events.dispatch('uvicore.foundation.events.app.Registered', {'test': 'string test'})
 
     def _merge_providers(self) -> None:
         self.perf('|--merging providers')
@@ -313,22 +307,21 @@ class _Application(ApplicationInterface):
                 package_config=self._get_package_config(package, service),
             )
             provider.boot()
-        self._booted = True
-        self.perf('--' + str(self.providers))
 
-    def _create_http_server(self) -> None:
-        if self.is_http:
-            self.perf('|--firing up HTTP server')
-            from uvicore.http import Server
-            self._http = Server(
-                debug=self.config('app.debug'),
-                title=self.config('app.openapi.title'),
-                version=self.version,
-                openapi_url=self.config('app.openapi.url'),
-                docs_url=self.config('app.openapi.docs_url'),
-                redoc_url=self.config('app.openapi.redoc_url'),
-            )
-            self._is_async = True
+        # Complete booting
+        self._booted = True
+
+        # String based
+        uvicore.events.dispatch('uvicore.foundation.events.app.Booted', {'test': 'string test'})
+
+        # Class based
+        from uvicore.foundation import events
+
+        # Using events.dispatch method passing in a class
+        #uvicore.events.dispatch(events.Booted('class based test'))
+
+        # Using the class .dispatch() method itself
+        #events.Booted('class based test2').dispatch()
 
     def _create_database_instance(self) -> None:
         # Fire up Database
@@ -347,55 +340,6 @@ class _Application(ApplicationInterface):
         # CLI Sync
         from ..database.db import Database
         self._db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
-
-    def _mount_static_assets(self) -> None:
-        # Mount static asset directories
-        # Must be after _boot_providers() since packages register view info there
-        if self.is_console: return
-
-        from uvicore.http.static import StaticFiles
-
-        # Get all packages asset paths
-        paths = []
-        for package in self.packages.values():
-            for path in package.asset_paths:
-                if path not in paths:
-                    paths.append(path)
-
-        # Mount all directories to /assets
-        # Last directory defined WINS, which fits our last provider wins
-        self.http.mount('/static', StaticFiles(directories=paths), name='static')
-
-    def _create_template_environment(self) -> None:
-        # Instantiate template environment with all paths, filters, tests...
-        # Must be after _boot_providers() since packages register view info there
-        if self.is_console: return
-
-        # Instantiate template
-        self._template = templates.Jinja()
-
-        # Add all package view paths to template environment
-        for package in self.packages.values():
-            for path in package.view_paths:
-                self.template.include_path(path)
-
-        # Add all package template options to template environment
-        options = package.template_options
-        if 'context_functions' in options:
-            for f in options['context_functions']:
-                self.template.include_context_function(**f)
-        if 'context_filters' in options:
-            for f in options['context_filters']:
-                self.template.include_context_filter(**f)
-        if 'filters' in options:
-            for f in options['filters']:
-                self.template.include_filter(**f)
-        if 'tests' in options:
-            for f in options['tests']:
-                self.template.include_test(**f)
-
-        # Create new template environment
-        self.template.init()
 
     def _get_package_config(self, package: str, options: Dict):
         config_module = package + '.config.package.config'  # Default if not defined

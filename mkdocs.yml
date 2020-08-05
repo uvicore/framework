@@ -1,0 +1,87 @@
+site_name: Uvicore Python Framework
+site_description: A Fast Async ASGI Python Framework for CLI, Web and API
+copyright: Copyright 2020 Matthew Reschke
+
+# Repository
+repo_name: uvicore/framework
+repo_url: https://github.com/uvicore/framework
+edit_uri: ''
+
+
+
+# Navigation
+nav:
+  - Prologue:
+    - index.md
+    - release-notes.md
+    - mkdocs-help.md
+  - Getting Started:
+    - installation.md
+    - configuration.md
+    - directory-structure.md
+    - deployment.md
+  - The Basics:
+    - routing.md
+    - views.md
+    - controllers.md
+  - Architecture:
+    - service-providers.md
+    - ioc-container.md
+    - request-lifecycle.md
+  - Digging Deeper:
+    - events.md
+
+# Plugins
+plugins:
+  - search
+
+# Markdown Extensions
+markdown_extensions:
+  - extra
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - footnotes
+  - attr_list
+  - codehilite:
+      guess_lang: false
+      #use_pygments: true
+      #noclasses: true
+  - meta
+  #- nl2br
+  - sane_lists
+  - toc:
+      permalink: true
+
+# Theme and Colors
+theme:
+  name: material
+  palette:
+    scheme: slate  # default or slate
+    primary: blue
+    accent: purple
+  font:
+    text: Roboto
+    code: Roboto Mono
+  #favicon: assets/favicon.png
+  features:
+    #- instant
+    - tabs
+  icon:
+    logo: fontawesome/solid/bong
+    repo: fontawesome/brands/github
+
+
+# Extra CSS and Javascript
+extra_css:
+- assets/css/termynal.css
+- assets/css/custom.css
+extra_javascript:
+- assets/js/termynal.js
+- assets/js/custom.js

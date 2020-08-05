@@ -34,6 +34,11 @@ class Ioc(IocInterface):
                 'object': 'uvicore.foundation.package._Package',
                 'aliases': ['package'],
             },
+            'Dispatcher': {
+                'object': 'uvicore.events.dispatcher._Dispatcher',
+                'singleton': True,
+                'aliases': ['dispatcher', 'Event', 'event', 'Events', 'events'],
+            },
 
             # NO - These are now their own Service Providers with bind()
             # 'Config': {

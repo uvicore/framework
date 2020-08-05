@@ -1,5 +1,4 @@
 import uvicore
-from uvicore.contracts import Application, Package
 from uvicore.support.provider import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
@@ -38,3 +37,4 @@ class Configuration(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
+        pass

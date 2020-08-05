@@ -54,12 +54,6 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def cli(self) -> Any:
-        """Main click command group"""
-        pass
-
-    @property
-    @abstractmethod
     def db(self) -> Any:
         """Database instance"""
         pass

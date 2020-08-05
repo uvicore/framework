@@ -10,12 +10,9 @@ from uvicore.support.click import click, group_kargs
     License http://mreschke.com/license/mit
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')
-def cli():
+def _cli():
     pass
 
-
-# Public API for import * and doc gens
-__all__ = ['cli']
 
 
 
