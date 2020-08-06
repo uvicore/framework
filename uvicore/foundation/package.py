@@ -17,7 +17,7 @@ class _Package(PackageInterface):
             return next(connection for connection in self.connections if connection.default == True)
 
 
-# IoC Config class
+# IoC Class Instance
 Package: PackageInterface = uvicore.ioc.make('Package')
 
 # Public API for import * and doc gens

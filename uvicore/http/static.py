@@ -1,9 +1,9 @@
+import uvicore
 from typing import List
+from starlette.staticfiles import StaticFiles as _Static
 
-from starlette.staticfiles import StaticFiles as _StaticFiles
 
-
-class StaticFiles(_StaticFiles):
+class _StaticFiles(_Static):
 
     def __init__(self, directories: List[str]):
         super().__init__()
@@ -16,3 +16,11 @@ class StaticFiles(_StaticFiles):
 
     def get_directories(self, directories, packages):
         pass
+
+
+# IoC Class Instance
+# No because not to be used by the public
+#StaticFiles: _StaticFiles = uvicore.ioc.make('StaticFiles')
+
+# Public API for import * and doc gens
+__all__ = ['_StaticFiles']

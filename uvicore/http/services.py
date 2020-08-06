@@ -17,6 +17,8 @@ class Http(ServiceProvider):
 
         # Register IoC bindings only if running in HTTP mode
         if self.app.is_http:
+
+            # Bind HTTP Server
             override = self.binding('Http')
             self.bind(
                 name='Http',
@@ -33,29 +35,55 @@ class Http(ServiceProvider):
                 aliases=['http', 'HTTP']
             )
 
-            # Set app.http instance variable
+            # Bind WebRouter
+            override = self.binding('WebRouter')
+            self.bind(
+                name='WebRouter',
+                object=override or 'uvicore.http.routing.web_router._WebRouter',
+                aliases=['web_router']
+            )
+
+            # Bind ApiRouter
+            override = self.binding('ApiRouter')
+            self.bind(
+                name='ApiRouter',
+                object=override or 'uvicore.http.routing.api_router._ApiRouter',
+                aliases=['api_router']
+            )
+
+            # Bind Routes
+            override = self.binding('Routes')
+            self.bind(
+                name='Routes',
+                object=override or 'uvicore.http.routing.routes._Routes',
+                aliases=['routes']
+            )
+
+            # Bind StaticFiles
+            override = self.binding('StaticFiles')
+            self.bind(
+                name='StaticFiles',
+                object=override or 'uvicore.http.static._StaticFiles',
+                aliases=['Static', 'static']
+            )
+
+            # Bind Templates
+            override = self.binding('Templates')
+            self.bind(
+                name='Templates',
+                object=override or 'uvicore.http.templating.jinja._Jinja',
+                aliases=['templates']
+            )
+
+            # Set app instance variables
             self.app._http = uvicore.ioc.make('Http')
             self.app._is_async = True
 
-            # Register event listeners as methods
-            #self.listen('uvicore.foundation.events.app.Registered', self.registered)
+            # Register event listeners
+            # After all providers are booted we have a complete list of view paths
+            # and template options fully merged.  Now we can fire up the static
+            # paths and template system.
             self.events.listen('uvicore.foundation.events.app.Booted', self.booted)
-
-            # Register as a listener class
-            #self.listen('uvicore.foundation.events.app.Booted', 'uvicore.http.listeners.mount_static_assets.MountStaticAssets')
-
-            # Register a subscriber class
-            #self.subscribe('uvicore.http.listeners.subscription.HttpEventSubscription')
-
-            # # Multi event listener
-            # self.listen([
-            #     'uvicore.foundation.events.app.Booted',
-            #     'uvicore.foundation.events.app.Registered',
-            # ], self.multi)
-
-            # Wilecard event listener
-            #self.listen('uvicore.foundation.events.*', self.multi)
-
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.
@@ -65,26 +93,14 @@ class Http(ServiceProvider):
         """
         pass
 
-    def registered(self, event: str, payload: Any) -> None:
-        pass
-        #dump("registered event handler")
-        #dd(event, payload, payload.__dict__)
-
-
     def booted(self, event: str, payload: Any) -> None:
         """Custom event handler for uvicore.foundation.events.booted"""
-        #dd(event, payload.__dict__)
         self.mount_static_assets()
         self.create_template_environment()
 
-    def multi(self, event: str, payload: Any) -> None:
-        dump(event, payload.__dict__)
-        if event['name'] == 'uvicore.foundation.events.app.Booted':
-            dd('done')
-
     def mount_static_assets(self) -> None:
         """Mount /static route using all packages static paths"""
-        from uvicore.http.static import StaticFiles
+        StaticFiles = uvicore.ioc.make('StaticFiles')
 
         # Get all packages asset paths
         paths = []
@@ -99,10 +115,10 @@ class Http(ServiceProvider):
 
     def create_template_environment(self) -> None:
         """Create template environment with settings from all packages"""
-        from uvicore.http import templates
+        Templates = uvicore.ioc.make('Templates')
 
         # Instantiate template system
-        self.app._template = templates.Jinja()
+        self.app._template = Templates()
 
         # Add all package view paths to template environment
         for package in self.app.packages.values():

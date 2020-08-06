@@ -43,15 +43,6 @@ class ServiceProvider(ProviderInterface):
         self._app_config = app_config
         self._package_config = package_config
 
-    # def events(self, events: Dict) -> None:
-    #     uvicore.events.register(events)
-
-    # def listen(self, events: Union[str, List], listener: Any) -> None:
-    #     uvicore.events.listen(events, listener)
-
-    # def subscribe(self, listener: str) -> None:
-    #     uvicore.events.subscribe(listener)
-
     def bind(self,
         name: str,
         object: Any,
@@ -115,7 +106,7 @@ class ServiceProvider(ProviderInterface):
         if not self.package.register_web_routes: return
 
         # Import and instantiate apps WebRoutes class
-        from uvicore.http.routing import WebRouter
+        from uvicore.http.routing.web_router import WebRouter
         WebRoutes = load(routes_class).object
         routes = WebRoutes(uvicore.app, self.package, WebRouter, self.package.web_route_prefix)
         routes.register()
@@ -128,9 +119,9 @@ class ServiceProvider(ProviderInterface):
         if not self.package.register_api_routes: return
 
         # Import and instantiate apps APIRoutes class
-        from uvicore.http import APIRouter
-        APIRoutes = load(routes_class).object
-        routes = APIRoutes(uvicore.app, self.package, APIRouter, self.package.api_route_prefix)
+        from uvicore.http.routing.api_router import ApiRouter
+        ApiRoutes = load(routes_class).object
+        routes = ApiRoutes(uvicore.app, self.package, ApiRouter, self.package.api_route_prefix)
         routes.register()
 
     def commands(self, options: Dict) -> None:

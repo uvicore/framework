@@ -8,16 +8,27 @@ from uvicore.contracts import WebRouter as RouterInterface
 from uvicore.support.dumper import dd, dump
 
 
-class WebRouter(RouterInterface):
+class _WebRouter(RouterInterface):
 
-    _router: _StarletteRouter
+    @property
+    def router(self) -> _StarletteRouter:
+        return self._router
+
+    @property
+    def routes(self) -> List[BaseRoute]:
+        return self._router.routes
+
+    @property
+    def on_startup(self) -> None:
+        return self._router.on_startup
+
+    @property
+    def on_shutdown(self) -> None:
+        return self._router.on_shutdown
 
     def __init__(self):
         # Fireup Starlette Router
         self._router = _StarletteRouter()
-
-    # def get(self, path: str):
-    #     return self._router.get(path)
 
     def get(self,
         path: str,
@@ -35,14 +46,9 @@ class WebRouter(RouterInterface):
         for route in router.routes:
             self._router.routes.append(route)
 
-    @property
-    def routes(self) -> List[BaseRoute]:
-        return self._router.routes
 
-    @property
-    def on_startup(self) -> None:
-        return self._router.on_startup
+# IoC Class Instance
+WebRouter: RouterInterface = uvicore.ioc.make('WebRouter')
 
-    @property
-    def on_shutdown(self) -> None:
-        return self._router.on_shutdown
+# Public API for import * and doc gens
+__all__ = ['WebRouter', '_WebRouter']

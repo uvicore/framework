@@ -1,3 +1,4 @@
+import re
 import uvicore
 import inspect
 from typing import Dict, List, Any, Union
@@ -6,6 +7,7 @@ from types import SimpleNamespace as obj
 from collections import namedtuple
 from uvicore.contracts import Dispatcher as DispatcherInterface
 from uvicore.support import module
+
 
 class _Dispatcher(DispatcherInterface):
 
@@ -94,7 +96,10 @@ class _Dispatcher(DispatcherInterface):
             # Event is a string.  Convert payload into an object
             # so the data is accessible as if it were a class based event
             #payload['event'] = event_meta
-            payload = namedtuple('payload', sorted(payload))(**payload)
+            if payload:
+                payload = namedtuple('payload', sorted(payload))(**payload)
+            else:
+                payload = None
         else:
             # Event is a class or method.  The payload is the instantiated
             # class itself and the event is the classes MODULE name, not the class name itself
@@ -126,8 +131,10 @@ class _Dispatcher(DispatcherInterface):
             listeners += self.listeners[event]
 
         for wildcard in self.wildcards:
-            if wildcard.replace('*', '') in event:
+            if re.search(wildcard, event):
+            # if wildcard.replace('*', '') in event:
                 listeners += self.listeners[wildcard]
+
         return listeners
 
     def get_event(self, event: Any) -> Dict:

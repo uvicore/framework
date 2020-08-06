@@ -37,8 +37,6 @@ class Foundation(ServiceProvider):
         # Register commands
         self.register_commands()
 
-
-
     def register_commands(self):
         # Register HTTP Serve commands
         self.commands([
@@ -65,6 +63,21 @@ class Foundation(ServiceProvider):
                 'commands': [
                     {'name': 'list', 'module': 'uvicore.foundation.commands.package.list'},
                     {'name': 'show', 'module': 'uvicore.foundation.commands.package.show'},
+                ],
+            }
+        ])
+
+        # Register Event commands
+        self.commands([
+            {
+                'group': {
+                    'name': 'event',
+                    'parent': 'root',
+                    'help': 'Uvicore Event Information',
+                },
+                'commands': [
+                    {'name': 'list', 'module': 'uvicore.events.commands.event.list'},
+                    {'name': 'show', 'module': 'uvicore.events.commands.event.show'},
                 ],
             }
         ])

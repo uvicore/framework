@@ -5,22 +5,44 @@ from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Template as TemplateInterface
 
 
-class Jinja(TemplateInterface, _Jinja2Templates):
+class _Jinja(TemplateInterface, _Jinja2Templates):
 
-    env: jinja2.Environment = None
-    paths: List[str] = []
-    context_functions: Dict = {}
-    context_filters: Dict = {}
-    filters: Dict = {}
-    tests: Dict = {}
+    @property
+    def env(self) -> jinja2.Environment:
+        return self._env
+
+    @property
+    def paths(self) -> List[str]:
+        return self._paths
+
+    @property
+    def context_functions(self) -> Dict:
+        return self._context_functions
+
+    @property
+    def context_filters(self) -> Dict:
+        return self._context_filters
+
+    @property
+    def filters(self) -> Dict:
+        return self._filters
+
+    @property
+    def tests(self) -> Dict:
+        return self._tests
 
     def __init__(self) -> None:
-        pass
+        self._env = None
+        self._paths = []
+        self._context_functions = {}
+        self._context_filters = {}
+        self._filters = {}
+        self._tests = {}
 
     def init(self) -> None:
         # Load our jinja2 environment
         loader = jinja2.FileSystemLoader(self.paths)
-        self.env = jinja2.Environment(loader=loader, autoescape=True)
+        self._env = jinja2.Environment(loader=loader, autoescape=True)
 
         # Define our own uvicore built-in options
         self._define_context_functions()
@@ -38,47 +60,40 @@ class Jinja(TemplateInterface, _Jinja2Templates):
     def _register_options(self):
         # Add Context Functions
         for name, method in self.context_functions.items():
-            self.env.globals[name] = jinja2.contextfunction(method)
+            self._env.globals[name] = jinja2.contextfunction(method)
 
         # Add Context Filters
         for name, method in self.context_filters.items():
-            self.env.filters[name] = jinja2.contextfilter(method)
+            self._env.filters[name] = jinja2.contextfilter(method)
 
         # Add Filters
         for name, method in self.filters.items():
-            self.env.filters[name] = method
+            self._env.filters[name] = method
 
         # Add Tests
         for name, method in self.tests.items():
-            self.env.tests[name] = method
-
-        # # Add jinja options defined in packages service providers
-        # for options in self.options.values():
-        #     if 'globals' in options:
-        #         for g in options['globals']:
-        #             self.env.globals[g['name']] = jinja2.contextfunction(g['method'])
-        #     if 'filters' in options:
-        #         for f in options['filters']:
-        #             self.env.filters[f['name']] = f['method']
-        #     if 'context_filters' in options:
-        #         for f in options['context_filters']:
-        #             self.env.filters[f['name']] = jinja2.contextfilter(f['method'])
-        #     if 'tests' in options:
-        #         for t in options['tests']:
-        #             self.env.tests[t['name']] = t['method']
+            self._env.tests[name] = method
 
     def include_path(self, path) -> None:
         if path not in self.paths:
-            self.paths.append(path)
+            self._paths.append(path)
 
     def include_context_function(self, name: str, method: Any) -> None:
-        self.context_functions[name] = method
+        self._context_functions[name] = method
 
     def include_context_filter(self, name: str, method: Any) -> None:
-        self.context_filters[name] = method
+        self._context_filters[name] = method
 
     def include_filter(self, name: str, method: Any) -> None:
-        self.filters[name] = method
+        self._filters[name] = method
 
     def include_test(self, name: str, method: Any) -> None:
-        self.tests[name] = method
+        self._tests[name] = method
+
+
+# IoC Class Instance
+# No, not to be used by public
+#Jinja: TemplateInterface = uvicore.ioc.make('Jinja')
+
+# Public API for import * and doc gens
+__all__ = ['_Jinja']

@@ -9,8 +9,13 @@ from starlette.routing import BaseRoute
 #     def package(self, name: str = None, module: str = None, main: bool = False):
 #         pass
 
-
 class WebRouter(ABC):
+    """Router for Web Controllers"""
+
+    @property
+    @abstractmethod
+    def router(self) -> Any: pass
+
     @property
     @abstractmethod
     def routes(self) -> List[BaseRoute]: pass
@@ -33,8 +38,12 @@ class WebRouter(ABC):
     def include_router(self, router: "WebRouter") -> None: pass
 
 
-class APIRouter(ABC):
+class ApiRouter(ABC):
     """Router for API Endpoints"""
+
+    @property
+    @abstractmethod
+    def router(self) -> Any: pass
 
     @property
     @abstractmethod

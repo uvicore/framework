@@ -111,27 +111,14 @@ class _Application(ApplicationInterface):
         self._name = None
         self._main = None
 
-        # Instantiate uvicore core globals
-        #uvicore.config = Config
-
-        # Pass through attributes
-        #self._config = uvicore.config
-
     def bootstrap(self, app_config: Dict, path: str, is_console: bool) -> None:
         # Silently do not bootstrap multiple times
         if self.booted: return
-
-        # Define foundation events
-        #self._register_events()
 
         # App name and path
         self._path = path
         self._name = app_config.get('name')
         self._main = app_config.get('main')
-        #self._vendor = app_config.get('vendor')
-        #self._packagename = app_config.get('package')
-
-        #uvicore.log = uvicore.ioc.make('Logger')
 
         # Detect if running in console (to register commands)
         # Ensure console is False even when running ./uvicore http serve
@@ -139,9 +126,6 @@ class _Application(ApplicationInterface):
         if "'http', 'serve'" in str(sys.argv):
             self._is_console = False
         self._is_http = not self.is_console
-
-        # Add main app config
-        #self._config.set('app', app_config)
 
         # Detect debug flag from main app config
         self._debug = app_config['debug']
@@ -157,7 +141,6 @@ class _Application(ApplicationInterface):
         self._register_providers(app_config)
 
         # Merge Providers (merges configs and creates actual Package class)
-        #self._merge_providers()
         self._merge_providers()
 
         # Create Database instance
@@ -169,12 +152,6 @@ class _Application(ApplicationInterface):
 
         # Return application
         return self
-
-    # def _register_events(self):
-    #     uvicore.events.register({
-    #         'uvicore.foundation.events.Registered': 'Help here',
-    #         'uvicore.foundation.events.Booted': 'Help here',
-    #     })
 
     def _build_provider_graph(self, app_config: Dict) -> None:
         def recurse(package: str, options: Dict):
@@ -194,9 +171,6 @@ class _Application(ApplicationInterface):
         for package, options in packages.items():
             recurse(package, options)
 
-        # Finally add this running apps provider config
-        #self._providers[self.packagename] = services.get(self.packagename)
-
     def _register_providers(self, app_config: Dict) -> None:
         self.perf('|--registering providers')
         for package, service in self.providers.items():
@@ -213,7 +187,7 @@ class _Application(ApplicationInterface):
 
         # Complete registration
         self._registered = True
-        uvicore.events.dispatch('uvicore.foundation.events.app.Registered', {'test': 'string test'})
+        uvicore.events.dispatch('uvicore.foundation.events.app.Registered')
 
     def _merge_providers(self) -> None:
         self.perf('|--merging providers')
@@ -225,9 +199,7 @@ class _Application(ApplicationInterface):
 
             # Get this packages config prefix and package name from its configuration
             package_name = package_config.get('name')
-            #config_prefix = package_config.get('config_prefix')
             config_prefix = package_name
-
 
             # Add in package config with custom config
             self.config.set(config_prefix + '.package', package_config)
@@ -274,11 +246,8 @@ class _Application(ApplicationInterface):
             # Modules file path
             package = Package(
                 name=package_config.get('name'),
-                #vendor=package_config.get('vendor'),
-                #package=package_name,
                 location=location(package_name),
                 main=main,
-                config_prefix=config_prefix,
                 web_route_prefix=web_route_prefix,
                 api_route_prefix=api_route_prefix,
                 view_paths=[],
@@ -291,7 +260,6 @@ class _Application(ApplicationInterface):
                 register_commands=True if custom_config.get('register_commands') else False,
                 connections=connections,
             )
-            #self._packages.append(package)
             self._packages[package_name] = package
 
     def _boot_providers(self, app_config: Dict) -> None:
@@ -310,18 +278,7 @@ class _Application(ApplicationInterface):
 
         # Complete booting
         self._booted = True
-
-        # String based
-        uvicore.events.dispatch('uvicore.foundation.events.app.Booted', {'test': 'string test'})
-
-        # Class based
-        from uvicore.foundation import events
-
-        # Using events.dispatch method passing in a class
-        #uvicore.events.dispatch(events.Booted('class based test'))
-
-        # Using the class .dispatch() method itself
-        #events.Booted('class based test2').dispatch()
+        uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
 
     def _create_database_instance(self) -> None:
         # Fire up Database

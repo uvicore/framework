@@ -1,10 +1,26 @@
+import uvicore
 from fastapi import APIRouter as _FastAPIRouter
 from typing import Any, Type, List, Callable
 from starlette.routing import BaseRoute
-from uvicore.contracts import APIRouter as RouterInterface
+from uvicore.contracts import ApiRouter as RouterInterface
 
-class APIRouter(RouterInterface):
-    _router: _FastAPIRouter
+class _ApiRouter(RouterInterface):
+
+    @property
+    def router(self) -> _FastAPIRouter:
+        return self._router
+
+    @property
+    def routes(self) -> List[BaseRoute]:
+        return self._router.routes
+
+    @property
+    def on_startup(self) -> None:
+        return self._router.on_startup
+
+    @property
+    def on_shutdown(self) -> None:
+        return self._router.on_shutdown
 
     def __init__(self):
         # Fireup FastAPI Router
@@ -37,14 +53,10 @@ class APIRouter(RouterInterface):
     # def router(self):
     #     return self._router
 
-    @property
-    def routes(self) -> List[BaseRoute]:
-        return self._router.routes
 
-    @property
-    def on_startup(self) -> None:
-        return self._router.on_startup
 
-    @property
-    def on_shutdown(self) -> None:
-        return self._router.on_shutdown
+# IoC Class Instance
+ApiRouter: RouterInterface = uvicore.ioc.make('ApiRouter')
+
+# Public API for import * and doc gens
+__all__ = ['ApiRouter', '_ApiRouter']

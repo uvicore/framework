@@ -4,13 +4,12 @@ import uvicore
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Routes as RoutesInterface
-from uvicore.http.routing import APIRouter, WebRouter
 from uvicore.support.module import load
 
 # Generic Router (APIRouter or WebRouter)
 R = TypeVar('R')
 
-class Routes(RoutesInterface, Generic[R]):
+class _Routes(RoutesInterface, Generic[R]):
 
     @property
     def app(self) -> ApplicationInterface:
@@ -59,3 +58,10 @@ class Routes(RoutesInterface, Generic[R]):
 
     # def Router(self) -> R:
     #     return self._Router()
+
+
+# IoC Class Instance
+Routes: RoutesInterface = uvicore.ioc.make('Routes')
+
+# Public API for import * and doc gens
+__all__ = ['Routes', '_Routes']

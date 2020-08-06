@@ -192,6 +192,9 @@ self.listen('uvicore.foundation.events.*', self.NotifyUsers)
 
 # Use a listener class as the callback
 self.listen('uvicore.foundation.events.*', 'mreschke.wiki.listeners.NotifyUsers')
+
+# The * wildcard also works in the middle of an event name
+self.listen('mreschke.wiki.models.*.Deleted', self.LogDeletions)
 ```
 
 **Registering a subscriber**

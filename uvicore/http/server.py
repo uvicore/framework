@@ -17,10 +17,10 @@ from uvicore.support.dumper import dd, dump
 
 
 class _Server(ServerInterface):
-    # def controller(self, *args, **kargs):
-    #     return self.include_router(*args, **kargs)
 
-    _server: _FastAPI
+    @property
+    def server(self) -> _FastAPI:
+        return self._server
 
     def __init__(self, debug: bool, title: str, version: str, openapi_url: str, docs_url: str, redoc_url: str):
 
@@ -34,7 +34,7 @@ class _Server(ServerInterface):
             redoc_url=redoc_url,
         )
 
-    def include_router(self, router, *, prefix: str = '', tags: List[str] = None):
+    def include_router(self, router, *, prefix: str = '', tags: List[str] = None) -> None:
         self._server.include_router(
             router=router,
             prefix=prefix,
@@ -47,6 +47,10 @@ class _Server(ServerInterface):
     def on_event(self, event_type: str) -> Callable:
         return self._server.on_event(event_type)
 
-    @property
-    def server(self):
-        return self._server
+
+# IoC Class Instance
+# No because not to be used by the public
+#Server: ServerInterface = uvicore.ioc.make('Http')
+
+# Public API for import * and doc gens
+__all__ = ['_Server']
