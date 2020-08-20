@@ -1,9 +1,10 @@
 import uvicore
+from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
 
-class Console(ServiceProvider):
+class Orm(ServiceProvider):
 
     def register(self) -> None:
         """Register package into uvicore framework.
@@ -14,11 +15,16 @@ class Console(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        override = self.binding('Console')
+        if self.app.is_async:
+            #object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
+            object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
+        else:
+            object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
         self.bind(
-            name='Console',
-            object=override or 'uvicore.console.console._cli',
-            aliases=['console', 'cli']
+            name='Model',
+            object=object,
+            singleton=False,
+            aliases=['model']
         )
 
     def boot(self) -> None:

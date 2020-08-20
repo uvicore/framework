@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, NamedTuple
-
-from uvicore.database.connection import Connection
+from .connection import Connection
 
 
 @dataclass
@@ -21,6 +20,7 @@ class Package(ABC):
     register_views: bool
     register_assets: bool
     register_commands: bool
+    connection_default: str
     connections: List[Connection]
 
     @abstractmethod

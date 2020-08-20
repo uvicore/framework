@@ -28,10 +28,14 @@ class Ioc(IocInterface):
             'Application': {
                 'object': 'uvicore.foundation.application._Application',
                 'singleton': True,
-                'aliases': ['App', 'app'],
+                'aliases': ['App', 'app', 'application'],
+            },
+            'ServiceProvider': {
+                'object': 'uvicore.package.provider._ServiceProvider',
+                'aliases': ['service', 'provider'],
             },
             'Package': {
-                'object': 'uvicore.foundation.package._Package',
+                'object': 'uvicore.package.package._Package',
                 'aliases': ['package'],
             },
             'Dispatcher': {

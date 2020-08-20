@@ -1,5 +1,6 @@
 import uvicore
-from uvicore.support.provider import ServiceProvider
+#from uvicore.support.provider import ServiceProvider
+from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
 

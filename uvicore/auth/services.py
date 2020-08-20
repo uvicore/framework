@@ -3,7 +3,7 @@ from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
 
-class Console(ServiceProvider):
+class Auth(ServiceProvider):
 
     def register(self) -> None:
         """Register package into uvicore framework.
@@ -14,12 +14,18 @@ class Console(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        override = self.binding('Console')
+        override = self.binding('Auth')
         self.bind(
-            name='Console',
-            object=override or 'uvicore.console.console._cli',
-            aliases=['console', 'cli']
+            name='Auth',
+            object=override or 'uvicore.auth.auth._Auth',
+            aliases=['auth']
         )
+
+        # Register config
+        self.configs([
+            {'key': self.name, 'module': 'uvicore.auth.config.auth.config'}
+        ])
+
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

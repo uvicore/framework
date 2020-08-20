@@ -52,11 +52,11 @@ class Application(ABC):
         """HTML Templating System"""
         pass
 
-    @property
-    @abstractmethod
-    def db(self) -> Any:
-        """Database instance"""
-        pass
+    # @property
+    # @abstractmethod
+    # def db(self) -> Any:
+    #     """Database instance"""
+    #     pass
 
     @property
     @abstractmethod

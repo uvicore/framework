@@ -95,6 +95,12 @@ Lorem ipsum[^1] dolor sit amet, consectetur adipiscing elit.[^2]
 
 Smile Emoji :smile:
 
+See https://emojiguide.com/ or https://emojipedia.org for all emoji.
+
+I use the twitter emoji
+
+You can also just paste 🧒 emoji right in markdown.  Or use things like :slightly_frowning_face:
+
 This theme comes with these 3 FULL SETS of icons!
 
 * :material-account-circle: – `.icons/material/account-circle.svg`

@@ -11,13 +11,9 @@ from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Config as ConfigInterface
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Template as TemplateInterface
+from uvicore.contracts import Connection
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
-from .package import Package
-
-from ..database.connection import Connection
-#from uvicore.console import cli as MainClickGroup
-#from uvicore.logging.logger import Logger
 
 
 class _Application(ApplicationInterface):
@@ -43,9 +39,9 @@ class _Application(ApplicationInterface):
     def template(self) -> TemplateInterface:
         return self._template
 
-    @property
-    def db(self) -> Any:
-        return self._db
+    # @property
+    # def db(self) -> Any:
+    #     return self._db
 
     @property
     def config(self) -> ConfigInterface:
@@ -98,7 +94,7 @@ class _Application(ApplicationInterface):
         self._perfs = []
         self._http = None
         self._template = None
-        self._db = None
+        #self._db = None
         self._config = None
         self._providers = collections.OrderedDict()
         self._registered = False
@@ -126,6 +122,7 @@ class _Application(ApplicationInterface):
         if "'http', 'serve'" in str(sys.argv):
             self._is_console = False
         self._is_http = not self.is_console
+        self._is_async = self.is_http
 
         # Detect debug flag from main app config
         self._debug = app_config['debug']
@@ -137,14 +134,11 @@ class _Application(ApplicationInterface):
         # Build recursive providers graph
         self._build_provider_graph(app_config)
 
-        # Register all providers
+        # Register and merge all providers
         self._register_providers(app_config)
 
-        # Merge Providers (merges configs and creates actual Package class)
-        self._merge_providers()
-
         # Create Database instance
-        self._create_database_instance()
+        #self._create_database_instance()
 
         # Boot all providers
         #self._boot_providers()
@@ -184,6 +178,9 @@ class _Application(ApplicationInterface):
                 package_config=self._get_package_config(package, service),
             )
             provider.register()
+
+        # Merge all registered configs and create actual packages
+        self._merge_providers()
 
         # Complete registration
         self._registered = True
@@ -231,7 +228,7 @@ class _Application(ApplicationInterface):
                     #self.db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
                     connections.append(Connection(
                         name=name,
-                        default=True if name == custom_config.get('database').get('default') else False,
+                        #default=True if name == custom_config.get('database').get('default') else False,
                         driver=connection.get('driver'),
                         dialect=connection.get('dialect'),
                         host=connection.get('host'),
@@ -244,7 +241,7 @@ class _Application(ApplicationInterface):
                     ))
 
             # Modules file path
-            package = Package(
+            package = uvicore.ioc.make('Package')(
                 name=package_config.get('name'),
                 location=location(package_name),
                 main=main,
@@ -258,6 +255,7 @@ class _Application(ApplicationInterface):
                 register_views=True if custom_config.get('register_views') else False,
                 register_assets=True if custom_config.get('register_assets') else False,
                 register_commands=True if custom_config.get('register_commands') else False,
+                connection_default=custom_config.get('database').get('default') if 'database' in custom_config else None,
                 connections=connections,
             )
             self._packages[package_name] = package

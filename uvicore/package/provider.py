@@ -11,7 +11,7 @@ from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 
 
-class ServiceProvider(ProviderInterface):
+class _ServiceProvider(ProviderInterface):
 
     @property
     def app(self) -> Application:
@@ -175,3 +175,10 @@ class ServiceProvider(ProviderInterface):
 
             # Merge config value with complete config
             uvicore.config.merge(config['key'], value)
+
+
+# IoC Class Instance
+ServiceProvider: ProviderInterface = uvicore.ioc.make('ServiceProvider')
+
+# Public API for import * and doc gens
+__all__ = ['ServiceProvider', '_ServiceProvider']

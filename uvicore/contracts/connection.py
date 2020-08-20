@@ -1,8 +1,9 @@
-from typing import NamedTuple
+from dataclasses import dataclass
 
-class Connection(NamedTuple):
+@dataclass
+class Connection:
     name: str
-    default: bool
+    #default: bool
     driver: str
     dialect: str
     host: str

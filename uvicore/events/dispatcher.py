@@ -146,3 +146,10 @@ class _Dispatcher(DispatcherInterface):
             event_meta = self.events.get(name)
             event_meta['name'] = name
             return event_meta
+
+
+# IoC Class Instance
+# No because not to be used by the public
+
+# Public API for import * and doc gens
+__all__ = ['_Dispatcher']
