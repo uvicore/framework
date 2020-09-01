@@ -2,7 +2,7 @@ import uvicore
 from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
-
+from asgiref.sync import async_to_sync
 
 class Database(ServiceProvider):
 
@@ -16,10 +16,11 @@ class Database(ServiceProvider):
         """
         # Register IoC bindings
         if self.app.is_async:
-            #object = self.binding('DbAsync') or 'uvicore.database.async._Async'
-            object = self.binding('DbSync') or 'uvicore.database.sync._Sync'
+            object = self.binding('DatabaseAsync') or 'uvicore.database.db_async._Db'
+            #object = self.binding('Database') or 'uvicore.database.db._Db'
         else:
-            object = self.binding('DbSync') or 'uvicore.database.sync._Sync'
+            #object = self.binding('Database') or 'uvicore.database.db._Db'
+            object = self.binding('DatabaseAsync') or 'uvicore.database.db_async._Db'
         self.bind(
             name='Database',
             object=object,
@@ -59,4 +60,27 @@ class Database(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
-        pass
+
+        # Define CLI commands to be added to the ./uvicore command line interface
+        self.load_commands()
+
+    def load_commands(self) -> None:
+        """Define CLI commands to be added to the ./uvicore command line interface
+        """
+        self.commands([
+            {
+                'group': {
+                    'name': 'db',
+                    'parent': 'root',
+                    'help': 'Database Commands',
+                },
+                'commands': [
+                    {'name': 'create', 'module': 'uvicore.database.commands.db.create'},
+                    {'name': 'drop', 'module': 'uvicore.database.commands.db.drop'},
+                    {'name': 'recreate', 'module': 'uvicore.database.commands.db.recreate'},
+                    {'name': 'seed', 'module': 'uvicore.database.commands.db.seed'},
+                    {'name': 'reseed', 'module': 'uvicore.database.commands.db.reseed'},
+                    {'name': 'connections', 'module': 'uvicore.database.commands.db.connections'},
+                ],
+            },
+        ])

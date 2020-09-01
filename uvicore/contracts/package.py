@@ -22,6 +22,8 @@ class Package(ABC):
     register_commands: bool
     connection_default: str
     connections: List[Connection]
+    models: List[str]
+    seeders: List[str]
 
     @abstractmethod
     def config(self, dotkey: str = None):

@@ -13,7 +13,9 @@ class ModelMetaclass(BaseMetaclass):
             '__connection__': None,
             '__tablename__': None,
             '__table__': None,
+            '__tableclass__': None,
             '__callbacks__': {},
+            '__query__': {},
             **{n: v for n, v in namespace.items()},
         }
 
@@ -25,6 +27,13 @@ class ModelMetaclass(BaseMetaclass):
         if not cls.__fields__: return cls
 
         #dump("Registering Schema in Metaclass")
+
+        # Build connection, tablename and table from tableclass
+        if cls.__tableclass__ is not None:
+            if cls.__connection__ is None: cls.__connection__ = cls.__tableclass__.connection
+            if cls.__tablename__ is None: cls.__tablename__ = cls.__tableclass__.name
+            if cls.__table__ is None: cls.__table__ = cls.__tableclass__.schema
+
 
         # Dynamically Build SQLAlchemy Table From Model Properties
         if cls.__table__ is not None:

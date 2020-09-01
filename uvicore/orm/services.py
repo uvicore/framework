@@ -16,10 +16,11 @@ class Orm(ServiceProvider):
         """
         # Register IoC bindings
         if self.app.is_async:
-            #object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
-            object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
+            object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
+            #object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
         else:
-            object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
+            object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
+            #object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
         self.bind(
             name='Model',
             object=object,

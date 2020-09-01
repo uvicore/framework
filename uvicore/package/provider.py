@@ -124,6 +124,22 @@ class _ServiceProvider(ProviderInterface):
         routes = ApiRoutes(uvicore.app, self.package, ApiRouter, self.package.api_route_prefix)
         routes.register()
 
+    def models(self, models: List[str]) -> None:
+        # Import all defined models so SQLAlchemy metedata is built
+        for model in models:
+            if model not in self.package.models:
+                self.package.models.append(model)
+                #dd(model)
+                load(model)
+
+    def tables(self, tables: List[str]) -> None:
+        self.models(tables)
+
+    def seeders(self, seeders: List[str]) -> None:
+        for seeder in seeders:
+            if seeder not in self.package.seeders:
+                self.package.seeders.append(seeder)
+
     def commands(self, options: Dict) -> None:
         # Only register command if running from the console
         # or from the http:serve command (register only the http group).
@@ -147,7 +163,7 @@ class _ServiceProvider(ProviderInterface):
             group_name = group.get('group').get('name')
             group_parent = group.get('group').get('parent')
             group_help = group.get('group').get('help')
-            commands = group.get('commands')
+            commands = group.get('commands') or []
 
             # Create a new click group
             @click.group(**group_kargs, help=group_help)

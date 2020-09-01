@@ -12,4 +12,5 @@ class Connection:
     username: str
     password: str
     prefix: str
+    metakey: str
     url: str

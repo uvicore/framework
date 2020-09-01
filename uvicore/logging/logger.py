@@ -102,74 +102,75 @@ class _Logger(LoggerInterface):
 
     def debug(self, message):
         logging.debug(message)
-
+        return self
 
     def info(self, message):
         logging.info(message)
-
+        return self
 
     def warning(self, message):
         logging.warning(message)
-
+        return self
 
     def error(self, message):
         logging.error(message)
-
+        return self
 
     def critical(self, message):
         logging.critical(message)
-
+        return self
 
     def exception(self, message):
         logging.exception(message)
-
+        return self
 
     def header(self, message):
         logging.info(":: " + message + " ::")
-
+        return self
 
     def header2(self, message):
         logging.info("## " + message + " ##")
-
+        return self
 
     def header3(self, message):
         logging.info("=== " + message + " ===")
-
+        return self
 
     def header4(self, message):
         logging.info("---- " + message + " ----")
+        return self
 
-
-    def bullet(self, message):
+    def item(self, message):
         logging.info("* " + message)
+        return self
 
-
-    def bullet2(self, message):
+    def item2(self, message):
         logging.info("- " + message)
+        return self
 
-
-    def bullet3(self, message):
+    def item3(self, message):
         logging.info("+ " + message)
+        return self
 
-
-    def bullet4(self, message):
+    def item4(self, message):
         logging.info("> " + message)
-
+        return self
 
     def notice(self, message):
         logging.info("NOTICE: " + message)
-
+        return self
 
     def blank(self):
         logging.info('')
-
+        return self
 
     def separator(self):
         logging.info('=' * 80)
-
+        return self
 
     def line(self):
         logging.info('-' * 80)
+        return self
 
     def __call__(self, message):
         self.info(message)

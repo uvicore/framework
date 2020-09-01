@@ -1,40 +1,25 @@
 import sqlalchemy as sa
-from uvicore import db
-from uvicore.database.table import Table, autocolumns
+from uvicore.database.table import Schema
 from uvicore.support.dumper import dump, dd
 
-# Actual database table name
-# Usually tabkes are plural while models are signular
-tablename = 'users'
 
-# Connection for this database from your config file
-connection = 'auth'
+class Table(metaclass=Schema):
 
-# SQLAlchemy connection metedata this table belongs to
-metadata = db.metadata.get(connection)
+    # Actual database table name
+    # Plural table names and singluar model names are encouraged
+    # Do not add a package prefix, leave that to the connection config
+    name = 'users'
 
-# Table object details
-table = Table(tablename, connection,
-    # Actual SQLAlchemy Table definition
+    # Connection for this database from your config file
+    connection = 'auth'
+
+    # SQLAlchemy Table definition as a list (exclude name and metadata)
+    # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
-    schema=sa.Table(tablename, metadata,
+    schema = [
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("email", sa.String(length=50))
+    ]
 
-        # Automatically add owner_id, creator_id, updator_id,
-        # created_at, updated_at columns required for Uvicore auth and logging
-        #*autocolumns
-    ),
-)
-
-
-# table = Table('users', 'auth',
-#     # Actual SQLAlchemy Table definition
-#     # See https://docs.sqlalchemy.org/en/13/core/schema.html
-#     sa.Column("id", sa.Integer, primary_key=True),
-#     sa.Column("email", sa.String(length=50))
-
-#     # Automatically add owner_id, creator_id, updator_id,
-#     # created_at, updated_at columns required for Uvicore auth and logging
-#     #*autocolumns
-# )
+    # Optional SQLAlchemy Table() instance kwargs
+    schema_kwargs = {}

@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Tuple, Any, Optional
 from pydantic.fields import FieldInfo
 
 
@@ -14,19 +14,21 @@ class Field(FieldInfo):
         read_only: Optional[bool] = None,
         write_only: Optional[bool] = None,
         callback: Optional[Any] = None,
+        has_one: Optional[Tuple] = None,
         properties: Optional[Dict] = None,
     ):
-        self.column: str = column
-        self.title: str = title
-        self.description: str = description
-        self.default: Any = default
-        self.required: bool = required
-        self.sortable: bool = sortable
-        self.searchable: bool = searchable
-        self.read_only: Optional[bool] = read_only
-        self.write_only: Optional[bool] = write_only
-        self.callback: Any = callback
-        self.properties: Optional[Dict] = properties
+        self.column = column
+        self.title = title
+        self.description = description
+        self.default = default
+        self.required = required
+        self.sortable = sortable
+        self.searchable = searchable
+        self.read_only = read_only
+        self.write_only = write_only
+        self.callback = callback
+        self.has_one = has_one
+        self.properties = properties
         super().__init__(
             default=default,
             column=column,
@@ -38,5 +40,6 @@ class Field(FieldInfo):
             readOnly=read_only,
             writeOnly=write_only,
             callback=callback,
+            has_one=has_one,
             properties=properties,
         )

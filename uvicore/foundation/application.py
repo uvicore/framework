@@ -1,18 +1,19 @@
+import collections
 import os
 import sys
-import collections
-from typing import Dict, List, NamedTuple, OrderedDict, Tuple, Any
+from typing import Any, Dict, List, NamedTuple, OrderedDict, Tuple
 
 import uvicore
 from uvicore import config
 #from uvicore.configuration import Config
 from uvicore.contracts import Application as ApplicationInterface
-from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Config as ConfigInterface
-from uvicore.contracts import Package as PackageInterface
-from uvicore.contracts import Template as TemplateInterface
 from uvicore.contracts import Connection
+from uvicore.contracts import Package as PackageInterface
+from uvicore.contracts import Server as ServerInterface
+from uvicore.contracts import Template as TemplateInterface
 from uvicore.support.dumper import dd, dump
+from uvicore.support.hash import md5
 from uvicore.support.module import load, location
 
 
@@ -218,14 +219,23 @@ class _Application(ApplicationInterface):
             connections = []
             if 'database' in custom_config:
                 for name, connection in custom_config.get('database').get('connections').items():
+                    # Metakey cannot be the connection name.  If 2 connections share the exact
+                    # same database (host, port, dbname) then they need to also share the same
+                    # metedata for foreign keys to work properly.
+                    metakey = ((connection.get('host')
+                        + ':' + str(connection.get('port'))
+                        + '/' + connection.get('database')
+                    ))
+
                     url = (connection.get('driver')
                         + '+' + connection.get('dialect')
                         + '://' + connection.get('username')
                         + ':' + connection.get('password')
                         + '@' + connection.get('host')
                         + ':' + str(connection.get('port'))
-                        + '/' + connection.get('database'))
-                    #self.db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
+                        + '/' + connection.get('database')
+                    )
+                    #self.db = Database("mysql+pymysql://root:techie@127.0.0.1:3306/uvicore_wiki")
                     connections.append(Connection(
                         name=name,
                         #default=True if name == custom_config.get('database').get('default') else False,
@@ -237,6 +247,7 @@ class _Application(ApplicationInterface):
                         username=connection.get('username'),
                         password=connection.get('password'),
                         prefix=connection.get('prefix'),
+                        metakey=metakey,
                         url=url,
                     ))
 
@@ -250,13 +261,15 @@ class _Application(ApplicationInterface):
                 view_paths=[],
                 asset_paths=[],
                 template_options={},
-                register_web_routes=True if custom_config.get('register_web_routes') else False,
-                register_api_routes=True if custom_config.get('register_api_routes') else False,
-                register_views=True if custom_config.get('register_views') else False,
-                register_assets=True if custom_config.get('register_assets') else False,
-                register_commands=True if custom_config.get('register_commands') else False,
+                register_web_routes=custom_config.get('register_web_routes') or True,
+                register_api_routes=custom_config.get('register_api_routes') or True,
+                register_views=custom_config.get('register_views') or True,
+                register_assets=custom_config.get('register_assets') or True,
+                register_commands=custom_config.get('register_commands') or True,
                 connection_default=custom_config.get('database').get('default') if 'database' in custom_config else None,
                 connections=connections,
+                models=[],
+                seeders=[],
             )
             self._packages[package_name] = package
 

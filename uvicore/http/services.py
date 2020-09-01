@@ -91,7 +91,20 @@ class Http(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
-        pass
+        # Register HTTP Serve commands
+        self.commands([
+            {
+                'group': {
+                    'name': 'http',
+                    'parent': 'root',
+                    'help': 'Uvicore HTTP Commands',
+                },
+                'commands': [
+                    {'name': 'serve', 'module': 'uvicore.http.commands.serve.cli'},
+                ],
+            }
+        ])
+
 
     def booted(self, event: str, payload: Any) -> None:
         """Custom event handler for uvicore.foundation.events.booted"""
