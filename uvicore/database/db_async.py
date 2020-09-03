@@ -1,6 +1,6 @@
 import uvicore
 from uvicore import app
-from typing import Dict, List
+from typing import Dict, List, Any, Union
 from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
 from uvicore.support.dumper import dd, dump
@@ -9,8 +9,6 @@ import sqlalchemy as sa
 # from sqlalchemy.engine import Engine as SaEngine
 # from sqlalchemy.engine import Connection as SaConnection
 from databases import Database as EncodeDatabase
-from asgiref.sync import async_to_sync
-from uvicore.concurrency import asyncmethod
 
 
 class _Db(DatabaseInterface):
@@ -28,6 +26,10 @@ class _Db(DatabaseInterface):
         return self._engines
 
     @property
+    def databases(self) -> Dict[str, str]:
+        return self._databases
+
+    @property
     def metadatas(self) -> Dict[str, sa.MetaData]:
         return self._metadatas
 
@@ -39,12 +41,15 @@ class _Db(DatabaseInterface):
         self._default = None
         self._connections = {}
         self._engines = {}
+        self._databases = {}
         self._metadatas = {}
 
     def init(self, default: str, connections: List[Connection]) -> None:
         self._default = default
         for connection in connections:
-            url = (connection.driver
+            # connection.url has a dialect in it, which we need for engines
+            # but don't need for encode/databases library
+            encode_url = (connection.driver
                 + '://' + connection.username
                 + ':' + connection.password
                 + '@' + connection.host
@@ -52,19 +57,20 @@ class _Db(DatabaseInterface):
                 + '/' + connection.database
             )
             self._connections[connection.name] = connection
-            self._engines[connection.metakey] = EncodeDatabase(url)
+            self._engines[connection.metakey] = sa.create_engine(connection.url)
+            self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
 
         # if app.is_http:
         #     @app.http.on_event("startup")
         #     async def startup():
-        #         for engine in self.engines.values():
-        #             await engine.connect()
+        #         for database in self.databases.values():
+        #             await database.connect()
 
         #     @app.http.on_event("shutdown")
         #     async def shutdown():
-        #         for engine in self.engines.values():
-        #             await engine.disconnect()
+        #         for database in self.databases.values():
+        #             await database.disconnect()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         """Get all packages with the metakey derived from the connection name
@@ -101,24 +107,39 @@ class _Db(DatabaseInterface):
         # If running from web, we will already be connected from on_event("startup")
         # but if from CLI, we wont
         metakey = self.metakey(connection, metakey)
-        engine = self.engines.get(metakey)  # Dont call self.engine() as its recursive
-        if not engine.is_connected:
-            await engine.connect()
+        database = self.databases.get(metakey)  # Dont call self.database() as its recursive
+        if not database.is_connected:
+            await database.connect()
 
     async def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
         """Get one engine by connection name or metakey"""
         metakey = self.metakey(connection, metakey)
-        await self.connect(metakey=metakey)
         return self.engines.get(metakey)
 
-    async def fetchone(self, entity, query):
-        engine = await self.engine(entity.__connection__)
-        return await engine.fetch_one(query=query)
+    async def database(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
+        """Get one database by connection name or metakey"""
+        metakey = self.metakey(connection, metakey)
+        await self.connect(metakey=metakey)
+        return self.databases.get(metakey)
 
-    #@asyncmethod
-    async def fetchall(self, entity, query):
-        #return self.execute(entity, query).fetchall()
-        #await self.connect(entity.__connection__)
-        engine = await self.engine(entity.__connection__)
-        return await engine.fetch_all(query=query)
+    async def execute(self, query: Any, values: Union[List,Dict] = None, connection: str = None) -> Any:
+        database = await self.database(connection)
+        if type(values) == dict:
+            return await database.execute(query, values)
+        elif type(values) == list:
+            return await database.execute_many(query, values)
+        else:
+            return await database.execute(query)
+
+    # async def execute_many(self, query: Any, values: List, connection: str = None) -> None:
+    #     database = await self.database(connection)
+    #     return await database.execute_many(query, values)
+
+    async def fetchone(self, query, connection: str = None):
+        database = await self.database(connection)
+        return await database.fetch_one(query=query)
+
+    async def fetchall(self, query, connection: str = None):
+        database = await self.database(connection)
+        return await database.fetch_all(query=query)
 

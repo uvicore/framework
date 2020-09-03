@@ -1,16 +1,16 @@
-import typer
 import json as JSON
+from uvicore.console import command, argument, option
 from uvicore import app, log
 from uvicore.support.dumper import dd, dump
 
 # Commands
-list = typer.Typer()
-show = typer.Typer()
-providers = typer.Typer()
+# list = typer.Typer()
+# show = typer.Typer()
+# providers = typer.Typer()
 
 
-@list.command()
-def list_cmd():
+@command()
+def list():
     """List all packages"""
     log.header("List of all Packages (in exact order of registration dependency)").line()
     dump(app.packages)
@@ -22,8 +22,9 @@ def list_cmd():
         #dump(package.config())
 
 
-@show.command()
-def show_cmd(package: str):
+@command()
+@argument('package')
+def show(package: str):
     """Show detailed info for one package"""
     if package == 'main':
         pkg = app.package(main=True)
@@ -31,16 +32,17 @@ def show_cmd(package: str):
         pkg = app.package(package)
 
     if pkg:
-        log.header("Package detail for " + package).line()
+        log.header("Package object for " + package).line()
         dump(pkg)
         print()
-        log.header2("Deep merged configs")
+        log.header("Deep merged configs for " + package).line()
         dump(pkg.config())
     else:
-        typer.echo(f"Package {package} not found")
+        exit(f"Package {package} not found")
 
-@providers.command()
-def providers_cmd(json: bool = False):
+@command()
+@option('--json', is_flag=True, help='Show providers as JSON')
+def providers(json: bool):
     """Show providers graph"""
     if json:
         print(JSON.dumps(app.providers))

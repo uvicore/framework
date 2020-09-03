@@ -1,14 +1,17 @@
+from typing import Any, Tuple, Dict
 from pydantic.main import ModelMetaclass as BaseMetaclass
 from uvicore.support.dumper import dump, dd
 
 
 class ModelMetaclass(BaseMetaclass):
 
-    def __new__(mcs, name, bases, namespace, **kwargs):
-        # The cls from super() pydantic is the actual model class
-        # id (models.user.User), not Entity.  We want to add __ properties
-        # to that model class like pydantic does, so we add them to this
-        # new_namespace and pass that into pydantic ModelMetaclass
+    def __new__(mcls: type, name: str, bases: Tuple[type, ...], namespace: Dict[str, Any], **kwargs) -> type:
+        # mcls is this ModelMetaclass itself
+        # name is the string name of the child class, in this case '_Model' from model.py
+        # bases is a tuple of parent used in the child (_Model) class, in this case (uvicore.contracts.model.Model, pydantic.main.BaseModel) it does not include this metaclass
+        # namespace is the child _Model classes original __dict__ Dictionary
+
+        # This __new__ metaclass will be adding items to the child (_Model) __dict__
         new_namespace = {
             '__connection__': None,
             '__tablename__': None,
@@ -20,7 +23,7 @@ class ModelMetaclass(BaseMetaclass):
         }
 
         # Call pydantic ModelMetaClass which builds __fields__ and more
-        cls = super().__new__(mcs, name, bases, new_namespace, **kwargs)
+        cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
 
         # Meta is fired up more than once, sometimes pydantic has NOT
         # actually populated all fields.  If no fields, ignore this __new__
@@ -96,4 +99,3 @@ class ModelMetaclass(BaseMetaclass):
 
         #dump(cls.__dict__)
         return cls
-

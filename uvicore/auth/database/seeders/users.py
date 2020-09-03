@@ -3,7 +3,7 @@ from faker import Faker
 from uvicore.auth.models.user import User
 from uvicore.support.dumper import dump, dd
 
-def seed():
+async def seed():
     log.item('Seeding table users')
     users = []
     fake = Faker()
@@ -11,7 +11,7 @@ def seed():
         user = User(
             email=fake.email()
         )
-        user.save()
+        await user.save()
         #posts.append(post)
 
     #dump(posts)

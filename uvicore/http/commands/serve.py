@@ -1,16 +1,15 @@
 import os
-import typer
-import uvicorn
-import uvicore
 from subprocess import Popen
 
+import uvicorn
 
-cli = typer.Typer()
+import uvicore
+from uvicore.console import command
 
-@cli.command()
-def serve():
-    """Unicorn dev server (reload and logs)
-    """
+
+@command()
+def cli():
+    """Unicorn dev server (reload and logs)"""
     # Uvicorn dev server info
     appname = uvicore.config('app.server.app')
     host = uvicore.config('app.server.host')

@@ -1,5 +1,5 @@
 from . import users
 
-def seed():
+async def seed():
     # Order is critical for ForeignKey dependencies
-    users.seed()
+    await users.seed()

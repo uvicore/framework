@@ -35,6 +35,7 @@ class Foundation(ServiceProvider):
         # )
 
     def boot(self):
+        pass
         # Register Package commands
         self.commands([
             {

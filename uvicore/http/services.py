@@ -105,7 +105,6 @@ class Http(ServiceProvider):
             }
         ])
 
-
     def booted(self, event: str, payload: Any) -> None:
         """Custom event handler for uvicore.foundation.events.booted"""
         self.mount_static_assets()

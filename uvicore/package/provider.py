@@ -3,10 +3,11 @@ import sys
 from typing import Any, Dict, List, Union
 
 import uvicore
+#import typer_async as typer
 from uvicore.contracts import Application, Package
 from uvicore.contracts import Provider as ProviderInterface
 from uvicore.contracts import Dispatcher
-from uvicore.support.click import click, group_kargs, typer
+from uvicore.console import group as click_group
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 
@@ -166,7 +167,7 @@ class _ServiceProvider(ProviderInterface):
             commands = group.get('commands') or []
 
             # Create a new click group
-            @click.group(**group_kargs, help=group_help)
+            @click_group(help=group_help)
             def group():
                 pass
             click_groups[group_name] = group
@@ -174,7 +175,14 @@ class _ServiceProvider(ProviderInterface):
             # Add each command to this new click group
             for command in commands:
                 click_command = load(command.get('module')).object
-                group.add_command(typer.main.get_command(click_command), command.get('name'))
+
+                if 'Typer' in str(click_command):
+                    # Typer
+                    import typer
+                    group.add_command(typer.main.get_command(click_command), command.get('name'))
+                else:
+                    # Click
+                    group.add_command(click_command, command.get('name'))
 
             if group_parent == 'root':
                 # Add this click group to main root click group

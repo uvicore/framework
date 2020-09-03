@@ -1,22 +1,23 @@
-import typer
 import uvicore
 from uvicore import log
 from uvicore.support.dumper import dd, dump
+from uvicore.console import command, argument
 
 # Commands
-list = typer.Typer()
-show = typer.Typer()
+#list = typer.Typer()
+#show = typer.Typer()
 
 
-@list.command()
-def list_cmd():
+@command()
+def list():
     """List all events"""
     log.header("Events defined from all packages").line()
     dump(uvicore.events.events)
 
 
-@show.command()
-def show_cmd(event: str):
+@command()
+@argument('event')
+def show(event: str):
     """Show detailed info for one event"""
     log.header("Event details for " + event).line()
     event = uvicore.events.get_event(event)
