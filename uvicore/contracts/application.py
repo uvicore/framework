@@ -94,11 +94,11 @@ class Application(ABC):
         """App running as HTTP server (not as CLI)"""
         pass
 
-    @property
-    @abstractmethod
-    def is_async(self) -> bool:
-        """App running in async mode (HTTP).  CLI is not async"""
-        pass
+    # @property
+    # @abstractmethod
+    # def is_async(self) -> bool:
+    #     """App running in async mode (HTTP).  CLI is not async"""
+    #     pass
 
     @property
     @abstractmethod

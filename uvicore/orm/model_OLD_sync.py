@@ -7,7 +7,6 @@ from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Model as ModelInterface
 import sqlalchemy as sa
 
-
 class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
 
     def __init__(self, **data: Any) -> None:
@@ -17,16 +16,6 @@ class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
         # Fill in callback properties
         for (key, callback) in self.__callbacks__.items():
             setattr(self, key, callback(self))
-
-    def __getattribute__(self, name):
-        # __getattribute__ intercepts ALL attribute accessors
-        # while __getattr__ intercepts non existing attribute accessors
-        # This is where we intercept and handle lazy loaded relations
-        if name == 'creator':
-            return 'creator here'
-        else:
-            # Must return the parents __getattribute__ or we get infinite recursion
-            return BaseModel.__getattribute__(self, name)
 
     @classmethod
     def info(entity, detailed: bool = False):
@@ -61,6 +50,33 @@ class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
         }
 
     @classmethod
+    def find(entity, id: Any):
+        table = entity.__table__
+        query = table.select().where(table.c.post_id == id)
+        results = db.fetchone(entity, query)
+        if results:
+            return entity._to_model(results)
+
+    @classmethod
+    def _to_model(entity, row):
+        """Convert a row of table data into a model"""
+        model_columns = {}
+        for (field_name, field) in entity.__fields__.items():
+            column_name = field.field_info.extra.get('column')
+            if column_name is not None:
+                model_columns[field_name] = getattr(row, column_name)
+        return entity(**model_columns)
+
+    @classmethod
+    def all(entity):
+        results = db.fetchall(entity, entity.__table__.select())
+        models = []
+        for row in results:
+            # Convert table result row into entity model
+            models.append(entity._to_model(row))
+        return models
+
+    @classmethod
     def where(entity, column: str, value: Any):
         if 'where' not in entity.__query__: entity.__query__['where'] = []
         entity.__query__['where'].append({'column': column, 'value': value})
@@ -71,28 +87,18 @@ class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
         entity.__query__['include'] = list(args)
         return entity
 
-    @classmethod
-    async def find(entity, id: Any):
-        table = entity.__table__
-        query = table.select().where(table.c.id == id)
-        results = await entity.fetchone(query)
-        if results:
-            return entity._to_model(results)
+    def __getattribute__(self, name):
+        # __getattribute__ intercepts ALL attribute accessors
+        # while __getattr__ intercepts non existing attribute accessors
+        # This is where we intercept and handle lazy loaded relations
+        if name == 'creator':
+            return 'creator here'
+        else:
+            # Must return the parents __getattribute__ or we get infinite recursion
+            return BaseModel.__getattribute__(self, name)
 
     @classmethod
-    async def all(entity):
-        #await entity._connect()
-        table = entity.__table__
-        query = table.select()
-        results = await entity.fetchall(query)
-        models = []
-        for row in results:
-            # Convert table result row into entity model
-            models.append(entity._to_model(row))
-        return models
-
-    @classmethod
-    async def get(entity):
+    def get(entity):
         fields = entity.__fields__
         qb = entity.__query__
         table = entity.__table__
@@ -174,12 +180,12 @@ class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
             for where in entity.__query__['where']:
                 query = query.where(getattr(table.c, where['column']) == where['value'])
 
-        # query = session.query(Domain.domain_name, Subdomain.subdomain_name, Title.title, Title.status, Title.response_len, Title.created_on, Title.updated_on)
-        # query = query.join(Title).join(Subdomain)
+# query = session.query(Domain.domain_name, Subdomain.subdomain_name, Title.title, Title.status, Title.response_len, Title.created_on, Title.updated_on)
+# query = query.join(Title).join(Subdomain)
 
         #print(query)
 
-        results = await entity.fetchall(query)
+        results = db.fetchall(entity, query)
         # for row in results:
         #     dd(row.items())
 
@@ -194,53 +200,29 @@ class _Model(ModelInterface, BaseModel, metaclass=ModelMetaclass):
         return models
 
     @classmethod
-    async def insert(entity, values: List):
+    def insert(entity, values: List):
         """Insert an array of models in bulk"""
         # Convert each entity into a dictionary of table data
         bulk = []
         for value in values:
             bulk.append(value._to_table())
         table = entity.__table__
-        query = table.insert()
-        await entity.execute(query, bulk)
+        db.execute(entity, table.insert(), bulk)
 
-    @classmethod
-    async def execute(entity, query, values: Union[List,Dict] = None):
-        return await db.execute(query=query, values=values, connection=entity.__connection__)
-
-    @classmethod
-    async def fetchone(entity, query):
-        return await db.fetchone(query=query, connection=entity.__connection__)
-
-    @classmethod
-    async def fetchall(entity, query):
-        return await db.fetchall(query=query, connection=entity.__connection__)
-
-    @classmethod
-    def _to_model(entity, row):
-        """Convert a row of table data into a model"""
-        model_columns = {}
-        for (field_name, field) in entity.__fields__.items():
-            column_name = field.field_info.extra.get('column')
-            if column_name is not None:
-                model_columns[field_name] = getattr(row, column_name)
-        return entity(**model_columns)
-
-    async def save(self):
+    def save(self):
         table = self.__table__
         values = self._to_table()
         query = table.insert().values(**values)
-        await self.execute(query)
+        db.execute(self, query)
 
     def _to_table(self) -> Dict:
         """Convert an model entry into a dictionary matching the tables columns"""
         table_columns = {}
         for (key, value) in self.__dict__.items():
             field = self.__class__.__fields__.get(key)
-            extra = field.field_info.extra
-            column_name = extra.get('column')
-            if column_name and not extra.get('readOnly'):
-                table_columns[column_name] = value
+            # Fixme, now to handle read_only field? If at all?
+            column_name = field.field_info.extra.get('column')
+            table_columns[column_name] = value
         return table_columns
 
 

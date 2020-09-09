@@ -15,18 +15,7 @@ class Orm(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        if self.app.is_async:
-            object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
-            #object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
-        else:
-            object = self.binding('ModelAsync') or 'uvicore.orm.model_async._Model'
-            #object = self.binding('ModelSync') or 'uvicore.orm.model._Model'
-        self.bind(
-            name='Model',
-            object=object,
-            singleton=False,
-            aliases=['model']
-        )
+        self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

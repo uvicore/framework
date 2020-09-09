@@ -14,10 +14,7 @@ class Console(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        override = self.binding('Console')
-        self.bind(
-            name='Console',
-            object=override or 'uvicore.console.console._cli',
+        self.bind('Console', 'uvicore.console.console._cli',
             aliases=['console', 'cli']
         )
 

@@ -1,5 +1,5 @@
 from typing import Any, Tuple, Dict
-from pydantic.main import ModelMetaclass as BaseMetaclass
+from uvicore.support.pydantic.main import ModelMetaclass as BaseMetaclass
 from uvicore.support.dumper import dump, dd
 
 
@@ -19,6 +19,7 @@ class ModelMetaclass(BaseMetaclass):
             '__tableclass__': None,
             '__callbacks__': {},
             '__query__': {},
+            #'_test1': 'hi',
             **{n: v for n, v in namespace.items()},
         }
 

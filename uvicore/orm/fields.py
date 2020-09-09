@@ -1,10 +1,12 @@
 from typing import Dict, Tuple, Any, Optional
 from pydantic.fields import FieldInfo
 
+# Do NOT import from uvicore.support.pydantic.fields as it doesn't exist
 
 class Field(FieldInfo):
 
     def __init__(self, column: str = None, *,
+        primary: Optional[bool] = False,
         title: Optional[str] = None,
         description: Optional[str] = None,
         default: Optional[Any] = None,
@@ -18,6 +20,7 @@ class Field(FieldInfo):
         properties: Optional[Dict] = None,
     ):
         self.column = column
+        self.primary = primary
         self.title = title
         self.description = description
         self.default = default
@@ -32,6 +35,7 @@ class Field(FieldInfo):
         super().__init__(
             default=default,
             column=column,
+            primary=primary,
             title=title,
             description=description,
             required=required,

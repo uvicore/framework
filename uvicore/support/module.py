@@ -32,71 +32,83 @@ def load(module: str) -> Module:
     name = ''.join(parts[-1:])
 
     # Try to import assuming module string is an object, a file or a package (with __init__.py)
-    try:
-        # Namespace means you are importing a folder without a __init__.py
-        namespace = False
-        root = False
+    #try:
+    # Namespace means you are importing a folder without a __init__.py
+    namespace = False
+    root = False
 
-        # Root means you are importing a single module without a path
-        # like just 'uvicore'
-        if path == '': root = True
+    # Root means you are importing a single module without a path
+    # like just 'uvicore'
+    if path == '': root = True
 
-        if namespace or root:
+    if namespace or root:
+        imported = import_module(module)
+    else:
+        try:
             imported = import_module(module)
-        else:
-            try:
-                imported = import_module(module)
-                namespace = True
-            except:
-                imported = import_module(path)
-            #if name == 'models': dd('--', module, path, imported)
+            namespace = True
+        except:
+            imported = import_module(path)
+        #if name == 'models': dd('--', module, path, imported)
 
-        # Example when importing an actual dictiony called app
-        # from uvicore.foundation.config.app.app
-        # imported.__name__ # uvicore.foundation.config.app
-        # imported.__package__ # uvicore.foundation.config
-        # imported.__file__ # /home/mreschke/Code...
+    # Example when importing an actual dictiony called app
+    # from uvicore.foundation.config.app.app
+    # imported.__name__ # uvicore.foundation.config.app
+    # imported.__package__ # uvicore.foundation.config
+    # imported.__file__ # /home/mreschke/Code...
 
-        # Get actual imported object
-        if namespace or root:
-            object = imported
-        else:
-            object = getattr(imported, name)
+    # Get actual imported object
+    if namespace or root:
+        object = imported
+    else:
+        object = getattr(imported, name)
 
-        # File can be actual file.py or __init__.py or just the folder
-        # if its a namespace import
-        file = imported.__file__ or imported.__path__._path[0]
+    # File can be actual file.py or __init__.py or just the folder
+    # if its a namespace import
+    file = imported.__file__ or imported.__path__._path[0]
 
-        if wildcard:
-            pyfiles = glob.glob(file + '/*.py')
-            for pyfile in pyfiles:
-                # Recursively load each .py file in this folder
-                modname = pyfile.split('/')[-1].split('.')[0]
-                load(module + '.' + modname)
-            # No need to load actual namespace module since we load .*
-            return
+    if wildcard:
+        pyfiles = glob.glob(file + '/*.py')
+        for pyfile in pyfiles:
+            # Recursively load each .py file in this folder
+            modname = pyfile.split('/')[-1].split('.')[0]
+            load(module + '.' + modname)
+        # No need to load actual namespace module since we load .*
+        return
 
-        # Build our Module() object for return
-        mod = Module(
-            object=object,
-            name=name,
-            path=path if path else name,
-            fullpath=path + '.' + name if path else name,
-            package=imported.__package__,
-            file=file
-        )
-        return mod
-    except:
-        raise ModuleNotFoundError("Could not dynamically load module {}".format(module))
+    # Build our Module() object for return
+    mod = Module(
+        object=object,
+        name=name,
+        path=path if path else name,
+        fullpath=path + '.' + name if path else name,
+        package=imported.__package__,
+        file=file
+    )
+    return mod
+    #except:
+        #raise ModuleNotFoundError("Could not dynamically load module {}".format(module))
 
 def location(module: str) -> str:
-    """Find modules folder path (not file path) without importing it
-    """
+    """Find modules folder path (not file path) without importing it"""
+
     try:
+        # Module is a package or namespace package
         spec = find_spec(module)
+        return spec.submodule_search_locations[0]
     except:
+        # Module is actual file or class/method inside a file
         spec = find_spec('.'.join(module.split('.')[0:-1]))
-    return spec.submodule_search_locations[0]
+        if spec.submodule_search_locations:
+            # Module is actual file
+            return spec.submodule_search_locations[0]
+        else:
+            # Module is a class/method inside a file
+            spec = find_spec('.'.join(module.split('.')[0:-2]))
+            return spec.submodule_search_locations[0]
+
+
+
     # if spec.submodule_search_locations[0]:
     #     return spec.submodule_search_locations[0]
     # else:

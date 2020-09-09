@@ -7,5 +7,5 @@ base="$( cd "$(dirname "$0")" ; cd .. ; pwd -P )"; cd $base
 # -e Exit immediately if anything return on-zero status
 set -x; set -e
 
-#pytest --cov=uvicore --cov=tests --cov-report=term-missing --cov-report=xml tests
-./bin/test.sh --cov-report=html ${@}
+# Run tests
+./bin/test-cov.sh --cov-report=html

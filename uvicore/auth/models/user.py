@@ -6,13 +6,14 @@ from uvicore.auth.database.tables import users
 from uvicore.support.dumper import dd, dump
 
 
-class User(Model):
+class _User(Model):
     """Auth User Model"""
 
     # Database connection and table information
     __tableclass__ = users.Table
 
     id: Optional[int] = Field('id',
+        primary=True,
         description='Users primary ID',
         sortable=True,
         searchable=True,
@@ -22,3 +23,11 @@ class User(Model):
         description='Users email and username',
         required=True,
     )
+
+    # class Config:
+    #     extra = 'ignore'
+    #     arbitrary_types_allowed = True
+
+
+# IoC Class Instance
+User: _User = uvicore.ioc.make('uvicore.auth.models.User')

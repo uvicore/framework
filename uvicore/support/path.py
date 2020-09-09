@@ -1,14 +1,12 @@
 import os
 
-
 def find_base(file):
-    """Finds app base path relative to some __file__ in the app
-    """
+    """Finds app base path relative to some __file__ in the app"""
     count = 0
     path=os.path.dirname(os.path.realpath(file))
     while count < 50:
         if (
-            os.path.exists(os.path.realpath(path + '/uvicorex')) or
+            os.path.exists(os.path.realpath(path + '/uvicore')) or
             os.path.exists(os.path.realpath(path + '/setup.py')) or
             os.path.exists(os.path.realpath(path + '/.env'))
         ):

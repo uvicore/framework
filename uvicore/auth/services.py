@@ -14,12 +14,14 @@ class Auth(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        override = self.binding('Auth')
         self.bind(
             name='Auth',
-            object=override or 'uvicore.auth.auth._Auth',
+            object='uvicore.auth.auth._Auth',
             aliases=['auth']
         )
+
+        # Bind Models
+        self.bind('uvicore.auth.models.User', 'uvicore.auth.models.user._User')
 
         # Register config
         self.configs([

@@ -5,30 +5,30 @@ from typing import Dict, List, Any, Union
 
 class Model(ABC):
 
-    @abstractclassmethod
-    def all(entity):
-        """Get all records"""
-        pass
+    # @abstractclassmethod
+    # def all(entity):
+    #     """Get all records"""
+    #     pass
 
-    @abstractclassmethod
-    def get(entity):
-        """Get records defined by query builder"""
-        pass
+    # @abstractclassmethod
+    # def get(entity):
+    #     """Get records defined by query builder"""
+    #     pass
 
-    @abstractclassmethod
-    def find(entity, id: Any):
-        """Get records defined by query builder"""
-        pass
+    # @abstractclassmethod
+    # def find(entity, id: Any):
+    #     """Get records defined by query builder"""
+    #     pass
 
-    @abstractclassmethod
-    def insert(entity, values: List):
-        """Insert an array of models in bulk"""
-        pass
+    # @abstractclassmethod
+    # def insert(entity, values: List):
+    #     """Insert an array of models in bulk"""
+    #     pass
 
-    @abstractclassmethod
-    def where(entity, column: str, value: Any):
-        """Get records defined by query builder"""
-        pass
+    # @abstractclassmethod
+    # def where(entity, column: str, value: Any):
+    #     """Get records defined by query builder"""
+    #     pass
 
     @abstractclassmethod
     def _to_model(entity, row):

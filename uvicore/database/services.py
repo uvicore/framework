@@ -2,7 +2,7 @@ import uvicore
 from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
-from asgiref.sync import async_to_sync
+
 
 class Database(ServiceProvider):
 
@@ -15,17 +15,9 @@ class Database(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        if self.app.is_async:
-            object = self.binding('DatabaseAsync') or 'uvicore.database.db_async._Db'
-            #object = self.binding('Database') or 'uvicore.database.db._Db'
-        else:
-            #object = self.binding('Database') or 'uvicore.database.db._Db'
-            object = self.binding('DatabaseAsync') or 'uvicore.database.db_async._Db'
-        self.bind(
-            name='Database',
-            object=object,
+        self.bind('Database', 'uvicore.database.db._Db',
+            aliases=['database', 'db'],
             singleton=True,
-            aliases=['database', 'db']
         )
 
         # Set uvicore.log global

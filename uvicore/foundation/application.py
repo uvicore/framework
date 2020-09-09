@@ -68,9 +68,9 @@ class _Application(ApplicationInterface):
     def is_http(self) -> bool:
         return self._is_http
 
-    @property
-    def is_async(self) -> bool:
-        return self._is_async
+    # @property
+    # def is_async(self) -> bool:
+    #     return self._is_async
 
     @property
     def packages(self) -> OrderedDict[str, PackageInterface]:
@@ -102,7 +102,7 @@ class _Application(ApplicationInterface):
         self._booted = False
         self._is_console = False
         self._is_http = False
-        self._is_async = False
+        #self._is_async = False
         self._packages = collections.OrderedDict()
         self._path = None
         self._name = None
@@ -123,7 +123,7 @@ class _Application(ApplicationInterface):
         if "'http', 'serve'" in str(sys.argv):
             self._is_console = False
         self._is_http = not self.is_console
-        self._is_async = self.is_http
+        #self._is_async = self.is_http
 
         # Detect debug flag from main app config
         self._debug = app_config['debug']
@@ -222,19 +222,23 @@ class _Application(ApplicationInterface):
                     # Metakey cannot be the connection name.  If 2 connections share the exact
                     # same database (host, port, dbname) then they need to also share the same
                     # metedata for foreign keys to work properly.
-                    metakey = ((connection.get('host')
-                        + ':' + str(connection.get('port'))
-                        + '/' + connection.get('database')
-                    ))
+                    if connection.get('driver') == 'sqlite':
+                        url = 'sqlite:///' + connection.get('database')
+                        metakey = url
+                    else:
+                        url = (connection.get('driver')
+                            + '+' + connection.get('dialect')
+                            + '://' + connection.get('username')
+                            + ':' + connection.get('password')
+                            + '@' + connection.get('host')
+                            + ':' + str(connection.get('port'))
+                            + '/' + connection.get('database')
+                        )
+                        metakey = (connection.get('host')
+                            + ':' + str(connection.get('port'))
+                            + '/' + connection.get('database')
+                        )
 
-                    url = (connection.get('driver')
-                        + '+' + connection.get('dialect')
-                        + '://' + connection.get('username')
-                        + ':' + connection.get('password')
-                        + '@' + connection.get('host')
-                        + ':' + str(connection.get('port'))
-                        + '/' + connection.get('database')
-                    )
                     #self.db = Database("mysql+pymysql://root:techie@127.0.0.1:3306/uvicore_wiki")
                     connections.append(Connection(
                         name=name,
@@ -246,7 +250,7 @@ class _Application(ApplicationInterface):
                         database=connection.get('database'),
                         username=connection.get('username'),
                         password=connection.get('password'),
-                        prefix=connection.get('prefix'),
+                        prefix=connection.get('prefix') or '',
                         metakey=metakey,
                         url=url,
                     ))

@@ -14,12 +14,9 @@ class Configuration(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        override = self.binding('Configuration')
-        self.bind(
-            name='Configuration',
-            object=override or 'uvicore.configuration.configuration._Configuration',
+        self.bind('Configuration', 'uvicore.configuration.configuration._Configuration',
+            aliases=['Config', 'config'],
             singleton=True,
-            aliases=['Config', 'config']
         )
 
         # Set uvicore.log global

@@ -53,6 +53,11 @@ class _ServiceProvider(ProviderInterface):
         singleton: bool = False,
         aliases: List = []
     ) -> None:
+        # Get override object from config if exists
+        override = self.binding(name)
+        object = override or object
+
+        # Bind object to IoC
         uvicore.ioc.bind(name, object, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
 
     def binding(self, name: str) -> str:

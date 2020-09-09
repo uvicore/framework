@@ -19,10 +19,8 @@ class Http(ServiceProvider):
         if self.app.is_http:
 
             # Bind HTTP Server
-            override = self.binding('Http')
-            self.bind(
-                name='Http',
-                object=override or 'uvicore.http.server._Server',
+            self.bind('Http', 'uvicore.http.server._Server',
+                aliases=['http', 'HTTP'],
                 singleton=True,
                 kwargs={
                     'debug': uvicore.config('app.debug'),
@@ -31,53 +29,16 @@ class Http(ServiceProvider):
                     'openapi_url': uvicore.config('app.openapi.url'),
                     'docs_url': uvicore.config('app.openapi.docs_url'),
                     'redoc_url': uvicore.config('app.openapi.redoc_url'),
-                },
-                aliases=['http', 'HTTP']
+                }
             )
-
-            # Bind WebRouter
-            override = self.binding('WebRouter')
-            self.bind(
-                name='WebRouter',
-                object=override or 'uvicore.http.routing.web_router._WebRouter',
-                aliases=['web_router']
-            )
-
-            # Bind ApiRouter
-            override = self.binding('ApiRouter')
-            self.bind(
-                name='ApiRouter',
-                object=override or 'uvicore.http.routing.api_router._ApiRouter',
-                aliases=['api_router']
-            )
-
-            # Bind Routes
-            override = self.binding('Routes')
-            self.bind(
-                name='Routes',
-                object=override or 'uvicore.http.routing.routes._Routes',
-                aliases=['routes']
-            )
-
-            # Bind StaticFiles
-            override = self.binding('StaticFiles')
-            self.bind(
-                name='StaticFiles',
-                object=override or 'uvicore.http.static._StaticFiles',
-                aliases=['Static', 'static']
-            )
-
-            # Bind Templates
-            override = self.binding('Templates')
-            self.bind(
-                name='Templates',
-                object=override or 'uvicore.http.templating.jinja._Jinja',
-                aliases=['templates']
-            )
+            self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['web_router'])
+            self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['api_router'])
+            self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['routes'])
+            self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
+            self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', aliases=['templates'])
 
             # Set app instance variables
             self.app._http = uvicore.ioc.make('Http')
-            self.app._is_async = True
 
             # Register event listeners
             # After all providers are booted we have a complete list of view paths

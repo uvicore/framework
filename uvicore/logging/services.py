@@ -22,13 +22,10 @@ class Logging(ServiceProvider):
         # as usual from your own app.  So instead, the logger config is in your actual app config
 
         # Register IoC bindings
-        override = self.binding('Logger')
-        self.bind(
-            name='Logger',
-            object=override or 'uvicore.logging.logger._Logger',
+        self.bind('Logger', 'uvicore.logging.logger._Logger',
+            aliases=['Log', 'log', 'logger'],
             kwargs={'config': self.app_config.get('logger')},
-            singleton=True,
-            aliases=['Log', 'log', 'logger']
+            singleton=True
         )
 
         # Set uvicore.log global
