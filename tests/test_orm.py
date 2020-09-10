@@ -10,47 +10,6 @@ async def test_find(bootstrap_app1):
     user = await User.find(3)
     assert user.email == 'manager2@example.com'
 
-    # from app1.models.post import Post
-    # post = await Post.find(1)
-    # dump(post)
-
-    #assert 1 == 2
-
-
-    # User._.find(3)
-    # User._q.find(2)
-    # User._query.find(4)
-    # User.table().save()
-    # User.table().update()
-    # User.table().insert([])
-    # User.table().where('asdf', 'asdf').get()
-
-    # # Actions ON the model itself
-    # user = User.query.find(email='mail@mreschke.com')
-    # user.email = 'asdfasdf'
-    # user.save()  # used for both create and update
-    # user.delete()
-
-    #assert user.email == 'manager2@example.com'
-
-    # x = await User.find(1)
-    # #dump(User.__dict__)
-    # dump(x)
-
-
-    # from pydantic.main import ModelMetaclass, BaseModel
-    # class UsersMeta(ModelMetaclass):
-    #     def find(cls):
-    #         return 'find here'
-
-    # class Users2(BaseModel, metaclass=UsersMeta):
-    #     find: int
-    #     find2: int
-
-    # #x = Users2.find2
-    # x = Users2(find=1, find2=2)
-    # dump(Users2.find)()
-
 
 @pytest.mark.asyncio
 async def test_select_all(bootstrap_app1):
@@ -269,3 +228,30 @@ async def test_where_or_not_like(bootstrap_app1):
     ] == [x.email for x in users]
 
 
+@pytest.mark.asyncio
+async def test_callback(bootstrap_app1):
+    from app1.models.post import Post
+    post = await Post.find(2)
+    assert post.cb == 'test-post2 callback'
+
+
+@pytest.mark.asyncio
+async def test_many_to_one(bootstrap_app1):
+    # Many posts can have ONE user (has_one)
+    from app1.models.post import Post
+    posts = await Post.include('creator').get()
+    dump(posts)
+
+    #dump(uvicore.ioc.bindings)
+    # dump(uvicore.config('app'))
+
+    # name = 'uvicore.auth.database.tables.Users'
+    # override = None
+    # app_config = uvicore.config('app')
+    # if 'bindings' in app_config:
+    #     if name in app_config['bindings']:
+    #         override = app_config['bindings'][name]
+    # dump(override)
+
+
+    assert 1 == 2

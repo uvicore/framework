@@ -17,6 +17,8 @@ class Field(FieldInfo):
         write_only: Optional[bool] = None,
         callback: Optional[Any] = None,
         has_one: Optional[Tuple] = None,
+        has_many: Optional[Tuple] = None,
+        belongs_to: Optional[Tuple] = None,
         properties: Optional[Dict] = None,
     ):
         self.column = column
@@ -31,6 +33,8 @@ class Field(FieldInfo):
         self.write_only = write_only
         self.callback = callback
         self.has_one = has_one
+        self.has_many = has_many
+        self.belongs_to = belongs_to
         self.properties = properties
         super().__init__(
             default=default,
@@ -45,5 +49,7 @@ class Field(FieldInfo):
             writeOnly=write_only,
             callback=callback,
             has_one=has_one,
+            has_many=has_many,
+            belongs_to=belongs_to,
             properties=properties,
         )

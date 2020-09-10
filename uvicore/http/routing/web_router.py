@@ -48,7 +48,7 @@ class _WebRouter(RouterInterface):
 
 
 # IoC Class Instance
-WebRouter: RouterInterface = uvicore.ioc.make('WebRouter')
+WebRouter: RouterInterface = uvicore.ioc.make('WebRouter', _WebRouter)
 
 # Public API for import * and doc gens
 __all__ = ['WebRouter', '_WebRouter']

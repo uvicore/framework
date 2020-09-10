@@ -1,6 +1,7 @@
 import operator as operators
 import sqlalchemy as sa
 from typing import Any, List, Tuple, Union
+from uvicore.support.dumper import dump, dd
 
 
 class QueryBuilder:
@@ -9,8 +10,10 @@ class QueryBuilder:
         self.entity = entity
         self.conn = entity.__connection__
         self.table = entity.__table__
+        self.fields = entity.__fields__
         self._where = []
         self._where_or = []
+        self._include = []
 
     # def __get__(self, instance, owner):
     #     return self.__class__(owner)
@@ -41,6 +44,11 @@ class QueryBuilder:
             else:
                 where_or.append((where[0], where[1].lower(), where[2]))
         self._where_or = where_or
+        return self
+
+    def include(self, *args):
+        for include in args:
+            self._include.append(include)
         return self
 
     async def find(self, pk_value: Any):
@@ -90,13 +98,8 @@ class QueryBuilder:
         # insert will never come into this get() or _build function
 
         if method == 'select':
-            # if self._select:
-            #     columns = []
-            #     #for select in self._select:
-            #     columns = [getattr(table.c, x) for x in self._select]
-            #     query = sa.select(columns)
-            # else:
-            query = sa.select([table])
+            query = self._build_select()
+
 
         # Where And
         if self._where:
@@ -110,6 +113,33 @@ class QueryBuilder:
 
 
         return table, query
+
+    def _build_select(self):
+        table = self.table
+        query = sa.select([table])
+
+        if self._include:
+            for include in self._include:
+                field = self.fields.get(include)
+                if not field: continue
+                extra = field.field_info.extra
+                if extra.get('column') is not None: continue
+
+                if extra.get('has_one'):
+                    dump(field)
+
+        # if self._select:
+        #     columns = []
+        #     #for select in self._select:
+        #     columns = [getattr(table.c, x) for x in self._select]
+        #     query = sa.select(columns)
+        # else:
+
+
+
+
+
+        return query
 
     def _build_where(self, wheres: List[Tuple]):
         statements = []

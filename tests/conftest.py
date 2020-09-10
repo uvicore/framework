@@ -21,7 +21,7 @@ async def bootstrap_app1(event_loop):
 
     # Drop/Create and Seed SQLite In-Memory Database
     from app1.database.seeders.seeders import seed
-    engine = await uvicore.db.engine()
+    engine = uvicore.db.engine()
     metadata = uvicore.db.metadata()
     metadata.create_all(engine)
     await seed()

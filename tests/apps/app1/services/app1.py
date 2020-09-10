@@ -13,13 +13,7 @@ class App1(ServiceProvider):
 
     def boot(self) -> None:
         # self.tables([
-        #     'mreschke.wiki.database.tables.*',
-        #     #'uvicore.auth.database.tables.*',
-        # ])
-
-        # # Define data seeders used by this package
-        # self.seeders([
-        #     'mreschke.wiki.database.seeders.seeders.seed',
+        #     'app1.database.tables.*',
         # ])
 
         # # Define view and asset paths and configure the templating system

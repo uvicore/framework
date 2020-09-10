@@ -31,6 +31,7 @@ class Http(ServiceProvider):
                     'redoc_url': uvicore.config('app.openapi.redoc_url'),
                 }
             )
+            # No because I added default to make
             self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['web_router'])
             self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['api_router'])
             self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['routes'])

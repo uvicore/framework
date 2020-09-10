@@ -61,7 +61,7 @@ class _Routes(RoutesInterface, Generic[R]):
 
 
 # IoC Class Instance
-Routes: RoutesInterface = uvicore.ioc.make('Routes')
+Routes: RoutesInterface = uvicore.ioc.make('Routes', _Routes)
 
 # Public API for import * and doc gens
 __all__ = ['Routes', '_Routes']

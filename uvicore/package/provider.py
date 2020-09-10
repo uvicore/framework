@@ -61,9 +61,8 @@ class _ServiceProvider(ProviderInterface):
         uvicore.ioc.bind(name, object, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
 
     def binding(self, name: str) -> str:
-        if 'bindings' in self.app_config:
-            if name in self.app_config['bindings']:
-                return self.app_config['bindings'][name]
+        if self.app_config.get('bindings'):
+            return self.app_config.get('bindings').get(name)
 
     def views(self, paths: List) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used

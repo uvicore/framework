@@ -47,10 +47,10 @@ class Post(Model, metaclass=ModelMetaclass):
 
     creator: Optional[User] = Field(None,
         description="Post Creator User Model",
-        # ForeignKey or many-to-one
-        # Default assumes foreign is 'id' and local is field + _id
-        #has_one=(User),
-        has_one=(User, 'id', 'creator_id'),
+        # One To Many (Inverse, called many-to-one)
+        # A post has ONE user
+        # Default assumes foreign is 'id' and local is field+_id
+        belongs_to=(User, 'id', 'creator_id'),
     )
 
     def cb_results(self):

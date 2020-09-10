@@ -20,8 +20,11 @@ class Auth(ServiceProvider):
             aliases=['auth']
         )
 
+        # Bind Tables
+        #self.bind('uvicore.auth.database.tables.Users', 'uvicore.auth.database.tables.users._Table', singleton=True)
+
         # Bind Models
-        self.bind('uvicore.auth.models.User', 'uvicore.auth.models.user._User')
+        #self.bind('uvicore.auth.models.User', 'uvicore.auth.models.user._User')
 
         # Register config
         self.configs([
@@ -44,9 +47,9 @@ class Auth(ServiceProvider):
         # If you use models only, or models with inline tables then use self.models(['myapp.models.*])
         # Optionally define your own models/__init__.py and import myapp.models to load every table.
         # Order does not matter as they are sorted topologically for ForeignKey dependencies
-        self.tables([
-            'uvicore.auth.database.tables.*',
-        ])
+        # self.tables([
+        #     'uvicore.auth.database.tables.*',
+        # ])
 
         # Define data seeders
         self.seeders([

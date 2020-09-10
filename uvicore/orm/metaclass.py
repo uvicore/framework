@@ -36,12 +36,17 @@ class _ModelMetaclass(PydanticMetaclass):
         """Query builder passthrough"""
         return QueryBuilder(entity).or_where(wheres)
 
+    def include(entity, *args):
+        """Query builder passthrough"""
+        return QueryBuilder(entity).include(*args)
+
     async def insert(entity, values: List):
         """Insert one or more entities"""
         bulk = []
         for value in values:
             bulk.append(value._to_table())
         table = entity.__table__
+        dd(table)
         query = table.insert()
         await entity._execute(query, bulk)
 

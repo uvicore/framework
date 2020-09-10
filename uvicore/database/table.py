@@ -1,20 +1,32 @@
+import uvicore
 import sqlalchemy as sa
 from abc import ABCMeta
 from typing import Dict, List
-from uvicore import db
 from uvicore.support.dumper import dd, dump
 
+class Schema:
+    def __init__(self):
+        self.metadata = uvicore.db.metadata(self.connection)
+        prefix = uvicore.db.connection(self.connection).prefix
+        if prefix is not None:
+            self.name = str(prefix) + self.name
+        self.schema = sa.Table(
+            self.name,
+            self.metadata,
+            *self.schema,
+            **self.schema_kwargs
+        )
 
-class Schema(ABCMeta):
+
+class SchemaOLD(ABCMeta):
     def __new__(mcs, name, bases, namespace, **kwargs):
         # Set metadata based on connection string
-        namespace['metadata'] = db.metadata(namespace.get('connection'))
+        namespace['metadata'] = uvicore.db.metadata(namespace.get('connection'))
 
         # Add prefix to table name
-        prefix = db.connection(namespace.get('connection')).prefix
+        prefix = uvicore.db.connection(namespace.get('connection')).prefix
         if prefix is not None:
             namespace['name'] = str(prefix) + namespace['name']
-
 
         # Convert table List into actual SQLAlchemy table schema
         namespace['schema'] = sa.Table(

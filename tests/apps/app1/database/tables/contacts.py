@@ -13,7 +13,7 @@ class Table(Schema):
     # Actual database table name
     # Plural table names and singluar model names are encouraged
     # Do not add a package prefix, leave that to the connection config
-    name = 'posts'
+    name = 'contacts'
 
     # Connection for this database from your config file
     connection = 'app1'
@@ -23,10 +23,11 @@ class Table(Schema):
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('unique_slug', sa.String(length=100), unique=True),
+        sa.Column('name', sa.String(length=100)),
         sa.Column('title', sa.String(length=100)),
-        sa.Column('other', sa.String(length=100), nullable=True),
-        sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
+        sa.Column('address', sa.String(length=100)),
+        sa.Column('phone', sa.String(length=100)),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

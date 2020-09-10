@@ -31,4 +31,4 @@ class _User(Model, metaclass=ModelMetaclass):
 
 
 # IoC Class Instance
-User: _User = uvicore.ioc.make('uvicore.auth.models.User', _User)
+User: _User = uvicore.ioc.make('uvicore.auth.models.User')

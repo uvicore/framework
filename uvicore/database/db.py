@@ -31,9 +31,7 @@ class QueryBuilder:
         return self
 
     def join(self, table: str, left: str, operator: str, right: str):
-
         dd('hi')
-
 
     def where(self, column: str, operator: str = None, value: Any = None):
         if not value:
@@ -210,7 +208,15 @@ class _Db(DatabaseInterface):
         if metadata:
             return metadata.tables.get(table)
 
-    async def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
+    def tablename(self, table: str, connection: str = None) -> str:
+        """Get table name with prefix for a table string without prefix"""
+        if '.' in table:
+            connection, table = tuple(table.split('.'))
+        connection = self.connection(connection)
+        if connection:
+            return connection.prefix + table
+
+    def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
         """Get one engine by connection name or metakey"""
         metakey = self.metakey(connection, metakey)
         return self.engines.get(metakey)

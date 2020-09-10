@@ -4,7 +4,6 @@ from uvicore.database.table import Schema
 from uvicore.support.dumper import dump, dd
 
 
-#class _Table(metaclass=Schema):
 class _Table(Schema):
 
     # Actual database table name
@@ -28,4 +27,4 @@ class _Table(Schema):
 
 
 # IoC Class Instance
-Table: _Table = uvicore.ioc.make('uvicore.auth.database.tables.Users', _Table, singleton=True)
+Table: _Table = uvicore.ioc.make('uvicore.auth.database.tables.Users')

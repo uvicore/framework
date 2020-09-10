@@ -56,7 +56,7 @@ class _ApiRouter(RouterInterface):
 
 
 # IoC Class Instance
-ApiRouter: RouterInterface = uvicore.ioc.make('ApiRouter')
+ApiRouter: RouterInterface = uvicore.ioc.make('ApiRouter', _ApiRouter)
 
 # Public API for import * and doc gens
 __all__ = ['ApiRouter', '_ApiRouter']

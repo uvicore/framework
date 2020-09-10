@@ -1,12 +1,13 @@
 import importlib
 import inspect
-
 from typing import Any, Dict, List, Optional
 
-from uvicore.contracts import Ioc as IocInterface
-from uvicore.support.dumper import dd, dump
+import uvicore
 from uvicore.contracts import Binding
+from uvicore.contracts import Ioc as IocInterface
 from uvicore.support import module
+from uvicore.support.dumper import dd, dump
+
 
 class Ioc(IocInterface):
     @property
@@ -64,9 +65,17 @@ class Ioc(IocInterface):
         elif name in self.aliases:
             return self.bindings[self.aliases[name]]
 
-    def make(self, name: str) -> Any:
-        """Make a module/class/method by name from IoC mapping
-        """
+    def make(self, name: str, default: Any = None, **kwargs) -> Any:
+        """Make a module/class/method by name from IoC mapping"""
+        if default is not None and self.binding(name) is None:
+            # Default was provided and no binding currently exists
+            # Bind the default provided but look for bindings override in app_config
+            override = None
+            app_config = uvicore.config('app')
+            if app_config.get('bindings'):
+                object = app_config.get('bindings').get('name') or default
+            self.bind(name, object, **kwargs)
+
         binding = self.binding(name)
         if not binding:
             raise ModuleNotFoundError("Could not find IoC name '{}' in mapping.".format(name))
@@ -119,8 +128,7 @@ class Ioc(IocInterface):
         singleton: bool = False,
         aliases: List = []
     ) -> None:
-        """Add binding from method parameters
-        """
+        """Add binding from method parameters"""
         # Add each aliases to list of all aliases
         for alias in aliases:
             self._aliases[alias] = name
