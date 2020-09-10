@@ -8,6 +8,14 @@ from starlette.testclient import TestClient
 async def test_find(bootstrap_app1):
     from uvicore.auth.models.user import User
     user = await User.find(3)
+    assert user.email == 'manager2@example.com'
+
+    # from app1.models.post import Post
+    # post = await Post.find(1)
+    # dump(post)
+
+    #assert 1 == 2
+
 
     # User._.find(3)
     # User._q.find(2)
@@ -23,7 +31,7 @@ async def test_find(bootstrap_app1):
     # user.save()  # used for both create and update
     # user.delete()
 
-    assert user.email == 'manager2@example.com'
+    #assert user.email == 'manager2@example.com'
 
     # x = await User.find(1)
     # #dump(User.__dict__)
@@ -42,8 +50,6 @@ async def test_find(bootstrap_app1):
     # #x = Users2.find2
     # x = Users2(find=1, find2=2)
     # dump(Users2.find)()
-
-    #assert 1 == 2
 
 
 @pytest.mark.asyncio

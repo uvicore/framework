@@ -1,12 +1,13 @@
 import uvicore
 from typing import Optional
-from uvicore.orm.model import Model
-from uvicore.orm.fields import Field
 from uvicore.auth.database.tables import users
+from uvicore.orm.fields import Field
+from uvicore.orm.metaclass import ModelMetaclass
+from uvicore.orm.model import Model
 from uvicore.support.dumper import dd, dump
 
 
-class _User(Model):
+class _User(Model, metaclass=ModelMetaclass):
     """Auth User Model"""
 
     # Database connection and table information

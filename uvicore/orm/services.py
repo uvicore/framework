@@ -16,6 +16,7 @@ class Orm(ServiceProvider):
         """
         # Register IoC bindings
         self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
+        self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

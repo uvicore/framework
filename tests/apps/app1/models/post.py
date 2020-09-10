@@ -5,13 +5,17 @@ from app1.database.tables import posts
 from uvicore.auth.models.user import User
 
 
-class Post(Model):
+from uvicore.orm.metaclass import ModelMetaclass
+
+#class Post(Model):
+class Post(Model, metaclass=ModelMetaclass):
     """App1 Posts"""
 
     # Database table definition
     __tableclass__ = posts.Table
 
     id: Optional[int] = Field('id',
+        primary=True,
         description='Post ID',
         sortable=True,
         searchable=True,
@@ -32,6 +36,10 @@ class Post(Model):
         description='Post Other',
     )
 
+    cb: str = Field(None,
+        callback='cb_results'
+    )
+
     creator_id: int = Field('creator_id',
         description="Post Creator UserID",
         required=True,
@@ -44,3 +52,6 @@ class Post(Model):
         #has_one=(User),
         has_one=(User, 'id', 'creator_id'),
     )
+
+    def cb_results(self):
+        return self.slug + ' callback'
