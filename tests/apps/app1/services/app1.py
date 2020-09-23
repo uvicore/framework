@@ -11,10 +11,16 @@ class App1(ServiceProvider):
             {'key': 'uvicore.auth', 'module': 'app1.config.auth.config'},
         ])
 
+        # Bind Models
+        #self.bind('app1.models.Contact', 'app1.models.contact._Contact')
+
+
     def boot(self) -> None:
-        # self.tables([
-        #     'app1.database.tables.*',
-        # ])
+        # Using __init__.py now so just import it
+        #from app1 import models
+        #self.models([
+        #    'app1.models.*',
+        #])
 
         # # Define view and asset paths and configure the templating system
         # self.load_views()
@@ -33,8 +39,8 @@ class App1(ServiceProvider):
 
         # Add asset paths
         self.assets([
-            'mreschke.wiki.http.static2',  #foundation example - BLUE
-            'mreschke.wiki.http.static',     # wiki override example - RED
+            'mreschke.wiki.http.static2', #foundation example - BLUE
+            'mreschke.wiki.http.static',  # wiki override example - RED
         ])
 
         def url_method(context: dict, name: str, **path_params: any) -> str:

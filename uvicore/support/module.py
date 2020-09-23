@@ -47,9 +47,8 @@ def load(module: str) -> Module:
         try:
             imported = import_module(module)
             namespace = True
-        except:
+        except ModuleNotFoundError:
             imported = import_module(path)
-        #if name == 'models': dd('--', module, path, imported)
 
     # Example when importing an actual dictiony called app
     # from uvicore.foundation.config.app.app
@@ -61,7 +60,10 @@ def load(module: str) -> Module:
     if namespace or root:
         object = imported
     else:
-        object = getattr(imported, name)
+        try:
+            object = getattr(imported, name)
+        except:
+            raise Exception("There was an error while dynamically importing " + module + '.  Check for errors in that file.')
 
     # File can be actual file.py or __init__.py or just the folder
     # if its a namespace import
@@ -86,8 +88,8 @@ def load(module: str) -> Module:
         file=file
     )
     return mod
-    #except:
-        #raise ModuleNotFoundError("Could not dynamically load module {}".format(module))
+    # except:
+    #     raise ModuleNotFoundError("Could not dynamically load module {}".format(module))
 
 def location(module: str) -> str:
     """Find modules folder path (not file path) without importing it"""

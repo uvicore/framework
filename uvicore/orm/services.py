@@ -15,8 +15,8 @@ class Orm(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
-        self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
+        # Automatic - self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
+        # Automatic - self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

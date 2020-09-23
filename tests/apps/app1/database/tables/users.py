@@ -1,10 +1,13 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema
+from uvicore.database.table import Schema, SchemaOLD
 from uvicore.support.dumper import dump, dd
 
+from uvicore.auth.database.tables import users
 
-class _Table(Schema):
+# This is an override.  Do not import this Table, instead import
+# the original in uvicore.auth.database.tables
+class _Users(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -18,8 +21,11 @@ class _Table(Schema):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("email", sa.String(length=50))
+        # Include original auth users table
+        *users._Users.schema,
+
+        # Add extra columns
+        sa.Column("app1_extra", sa.String(length=50))
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -27,4 +33,5 @@ class _Table(Schema):
 
 
 # IoC Class Instance
-Table: _Table = uvicore.ioc.make('uvicore.auth.database.tables.Users')
+Users: _Users = uvicore.ioc.make('uvicore.auth.database.tables.users.Users', _Users, singleton=True)
+

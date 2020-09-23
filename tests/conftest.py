@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import uvicore
+from uvicore.support.dumper import dump, dd
 
 
 @pytest.yield_fixture(scope='session')
@@ -13,6 +14,9 @@ def event_loop(request):
 @pytest.fixture(scope="session")
 async def bootstrap_app1(event_loop):
 
+    #import sys
+    #dd(sys.modules)
+
     # Setup Tests
     ############################################################################
     # Bootstrap uvicore application
@@ -23,16 +27,18 @@ async def bootstrap_app1(event_loop):
     from app1.database.seeders.seeders import seed
     engine = uvicore.db.engine()
     metadata = uvicore.db.metadata()
+    metadata.drop_all(engine)
     metadata.create_all(engine)
     await seed()
 
 
     # Run ALL Tests
     ############################################################################
+
     yield ''
 
 
     # Tear down tests
     ############################################################################
-    metadata.drop_all(engine)
+    #metadata.drop_all(engine)
 

@@ -6,6 +6,12 @@ from uvicore.support.dumper import dd, dump
 
 class Schema:
     def __init__(self):
+        # Tables are singleton classes bound in the IoC
+        # So they are instantiated ONCE when first ioc.make()
+        # Once instantiated, the actual SQLAlchemy table is created
+        # and added to the metadata.  Tables cannot be made twice or SA
+        # complains about duplicate tables.  To override a table simply use
+        # your app configs bindings array to swap the initial singleton binding.
         self.metadata = uvicore.db.metadata(self.connection)
         prefix = uvicore.db.connection(self.connection).prefix
         if prefix is not None:

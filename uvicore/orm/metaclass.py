@@ -1,9 +1,15 @@
-import uvicore
-from .query import QueryBuilder
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+
+import sqlalchemy as sa
+from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic.main import ModelMetaclass as PydanticMetaclass
 from sqlalchemy.sql import ClauseElement
+
+import uvicore
+from uvicore.orm.fields import Field
 from uvicore.support.dumper import dd, dump
+
+from .query import QueryBuilder
 
 # Think of this metaclass as all the STATIC methods similar to @classmethod
 # but different in that they become INVISIBLE to the instance of the class
@@ -17,14 +23,25 @@ from uvicore.support.dumper import dd, dump
 class _ModelMetaclass(PydanticMetaclass):
 
     # Testing of duplicate field
-    # def email(entity):
-    #     return 'email on meta'
+    # Only works if EACH model sets a metaclass=ModelMetaclass
+    # You cannot set the metaclass at the Module.py level
+    def email(entity):
+        return 'email on meta'
 
-    async def get(entity):
+
+
+    ############################################################################
+    ## These query builder passthroughs are for convenience only.  Best to use
+    ## MyModel.query().get()... instead (the query() is on the Model.py not
+    ## this metaclass).  Why use query()?  Becuase metaclasses are not currently
+    ## supported in VSCode for autocomplete code intellisense but parent classes
+    ## are.  So by using query() you get autocomplete on the full query builder!
+    ############################################################################
+    async def get(entity) -> List[Any]:
         """Query builder passthrough"""
         return await QueryBuilder(entity).get()
 
-    async def find(entity, id: Any):
+    async def find(entity, id: Any) -> Any:
         """Query builder passthrough"""
         return await QueryBuilder(entity).find(id)
 
@@ -32,51 +49,87 @@ class _ModelMetaclass(PydanticMetaclass):
         """Query builder passthrough"""
         return QueryBuilder(entity).where(column, operator, value)
 
-    def or_where(entity, wheres: List):
+    def or_where(entity, wheres: List) -> QueryBuilder:
         """Query builder passthrough"""
         return QueryBuilder(entity).or_where(wheres)
 
-    def include(entity, *args):
+    def include(entity, *args) -> QueryBuilder:
         """Query builder passthrough"""
         return QueryBuilder(entity).include(*args)
+    ############################################################################
+    ############################################################################
 
-    async def insert(entity, values: List):
-        """Insert one or more entities"""
-        bulk = []
-        for value in values:
-            bulk.append(value._to_table())
-        table = entity.__table__
-        dd(table)
-        query = table.insert()
-        await entity._execute(query, bulk)
 
-    async def _execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
+
+    @property
+    def pk(entity) -> str:
+        """Get the entities primary key"""
+        for field in entity.modelfields.values():
+            if field.primary: return field.name
+
+    @property
+    def connection(entity) -> str:
+        """Helper for entity connection string"""
+        return entity.__connection__
+
+    @property
+    def tablename(entity) -> str:
+        """Helper for entity tablename string"""
+        return entity.__tablename__
+
+    @property
+    def table(entity) -> sa.Table:
+        """Helper for entity SQLAlchemy table"""
+        return entity.__table__
+
+    @property
+    def modelfields(entity) -> Dict[str, Field]:
+        """Helper for original uvicore model fields (not pydantic __fields__)"""
+        return entity.__modelfields__
+
+    async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
 
-    async def _fetchone(entity, query: Union[ClauseElement, str], values: Dict = None) -> Optional[Mapping]:
+    async def fetchone(entity, query: Union[ClauseElement, str], values: Dict = None) -> Optional[Mapping]:
         """Database fetchone in the context of this entities connection"""
         return await uvicore.db.fetchone(query=query, connection=entity.__connection__)
 
-    async def _fetchall(entity, query: Union[ClauseElement, str], values: Dict = None) -> List[Mapping]:
+    async def fetchall(entity, query: Union[ClauseElement, str], values: Dict = None) -> List[Mapping]:
         """Database fetchall in the context of this entities connection"""
         return await uvicore.db.fetchall(query=query, connection=entity.__connection__)
 
-    def _to_model(entity, row):
+    def to_model(entity, row, prefix: str = None) -> Any:
         """Convert a row of table data into a model"""
-        model_columns = {}
-        for (field_name, field) in entity.__fields__.items():
-            column_name = field.field_info.extra.get('column')
-            if column_name is not None:
-                model_columns[field_name] = getattr(row, column_name)
-        return entity(**model_columns)
-
-    def info(entity, detailed: bool = False):
         fields = {}
-        for (key, field) in entity.__fields__.items():
+        for field in entity.modelfields.values():
+            if not field.column: continue
+            column = field.column
+            if prefix: column = prefix + '.' + column
+            if hasattr(row, column):
+                fields[field.name] = getattr(row, column)
+        return entity(**fields)
+
+    def selectable_columns(entity) -> List[sa.Column]:
+        """Get all SQLA columns that are selectable
+
+        Why not just use the table to get all columns?  Because a table
+        may have far more columns than the actual model.  So we use the model
+        to infer a list of actual SQLA columns (excluding write_only fields)
+        """
+        all_columns = entity.table.columns
+        columns: List[sa.Column] = []
+        for (field_name, field) in entity.modelfields.items():
+            if field.column and not field.write_only:
+                columns.append(getattr(all_columns, field.column))
+        return columns
+
+    def info(entity, detailed: bool = False) -> Dict[str, Any]:
+        fields = {}
+        for (field_name, field) in entity.modelfields.items():
             info = field.field_info
             extra = info.extra
-            fields[key] = {
+            fields[field_name] = {
                 #'name': field.name,
                 'column': extra.get('column'),
                 'default': info.default,
@@ -91,14 +144,14 @@ class _ModelMetaclass(PydanticMetaclass):
                 #'extra': extra,
             }
             if detailed:
-                fields[key]['class_dict'] = entity.__dict__
-                fields[key]['field_info'] = info,
-                fields[key]['extra'] = extra,
+                fields[field_name]['class_dict'] = entity.__dict__
+                fields[field_name]['field_info'] = info,
+                fields[field_name]['extra'] = extra,
 
         return {
             'connection': uvicore.db.connection(entity.__connection__),
-            'tablename': entity.__tablename__,
-            'table': entity.__table__,
+            'tablename': entity.tablename,
+            'table': entity.table,
             'fields': fields,
         }
 
@@ -108,6 +161,34 @@ class _ModelMetaclass(PydanticMetaclass):
         # bases is a tuple of parent used in the child (_Model) class, in this case (uvicore.contracts.model.Model, pydantic.main.BaseModel) it does not include this metaclass
         # namespace is the child _Model classes original __dict__ Dictionary
 
+        # Pull out all properties of type Field and store in _fields property
+        # And SWAP my Field for pydantics FieldInfo so pydantic knows how to handle each field
+        # Do not confuse my custom __modelfields__ with pydantics __fields__
+        __modelfields__: Dict[str, Field] = {}
+        #dump("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        #dump(namespace, mcls, name, bases)
+        #dump(bases[0].__dict__)
+        for field_name, field in namespace.items():
+            if field_name[0] != '_' and type(field) == Field:
+                # Pull out uvicore model field into own __modelfields__ dict
+                field.name = field_name
+                __modelfields__[field_name] = field
+
+                # Convert uvicore model field into pydantic FieldInfo
+                field_info_kwargs = {}
+                for slot in field.__slots__:
+                    arg = slot
+                    if slot == 'read_only': arg = 'readOnly'
+                    if slot == 'write_only': arg = 'writeOnly'
+                    field_info_kwargs[arg] = getattr(field, slot)
+                namespace[field_name] = PydanticFieldInfo(**field_info_kwargs)
+
+        # Add in each bases __modelfields__ just in case our model extends another model
+        for base in bases:
+            if hasattr(base, '__modelfields__'):
+                #__modelfields__ = {**__modelfields__, **base.__modelfields__}
+                __modelfields__ = {**base.__modelfields__, **__modelfields__}
+
         # Add my own ORM attributes to pydantics base ModelMetaClass
         new_namespace = {
             '__connection__': None,
@@ -115,13 +196,21 @@ class _ModelMetaclass(PydanticMetaclass):
             '__table__': None,
             '__tableclass__': None,
             '__callbacks__': {},
+            '__modelfields__': __modelfields__,
             #'__query__': {},
             #'_test1': 'hi',
             **{n: v for n, v in namespace.items()},
         }
 
-        # Call pydantic ModelMetaClass which builds __fields__ and more
+        # Call pydantic ModelMetaClass
+        # Amoung other things, pydantic will take all model attributes that do not
+        # begin with a _ and convert them into ModelField classes
+        # This is why I keep the originals in my new __modelfields__ attribute
         cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
+
+        #dump(cls.__dict__)
+
+
 
         # Meta is fired up more than once, sometimes pydantic has NOT
         # actually populated all fields.  If no fields, ignore this __new__
@@ -175,16 +264,20 @@ class _ModelMetaclass(PydanticMetaclass):
 
                 # Add these keys into the properties dictionary to show in OpenAPI schema
                 if 'sortable' in extra:
-                    properties['sortable'] = extra['sortable']
-                    #del extra['sortable']
-                #else:
-                    #extra['sortable'] = False
+                    # Nullable boolean.  If None is omitted from OpenAPI
+                    # If explicitely set to True or False, it will show in OpenAPI
+                    if extra['sortable'] is not None:
+                        properties['sortable'] = extra['sortable']
 
                 if 'searchable' in extra:
-                    properties['searchable'] = extra['searchable']
-                    #del extra['searchable']
-                #else:
-                    #extra['searchable']
+                    # Nullable boolean.  If None is omitted from OpenAPI
+                    # If explicitely set to True or False, it will show in OpenAPI
+                    if extra['searchable'] is not None:
+                        properties['searchable'] = extra['searchable']
+
+                # Add in properties to extra
+                if properties:
+                    extra['properties'] = properties
 
                 # Track properties with callbacks
                 if 'callback' in extra and extra['callback'] is not None:
@@ -199,4 +292,4 @@ class _ModelMetaclass(PydanticMetaclass):
 
 
 # IoC Class Instance
-ModelMetaclass: _ModelMetaclass = uvicore.ioc.make('ModelMetaclass')
+ModelMetaclass: _ModelMetaclass = uvicore.ioc.make('ModelMetaclass', _ModelMetaclass)

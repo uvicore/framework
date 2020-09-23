@@ -4,7 +4,7 @@ import sys
 from typing import Any, Dict, List, NamedTuple, OrderedDict, Tuple
 
 import uvicore
-from uvicore import config
+#from uvicore import config
 #from uvicore.configuration import Config
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
@@ -96,7 +96,7 @@ class _Application(ApplicationInterface):
         self._http = None
         self._template = None
         #self._db = None
-        self._config = None
+        self._config = None  # None until config provider registered
         self._providers = collections.OrderedDict()
         self._registered = False
         self._booted = False

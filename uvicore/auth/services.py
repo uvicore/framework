@@ -47,9 +47,12 @@ class Auth(ServiceProvider):
         # If you use models only, or models with inline tables then use self.models(['myapp.models.*])
         # Optionally define your own models/__init__.py and import myapp.models to load every table.
         # Order does not matter as they are sorted topologically for ForeignKey dependencies
-        # self.tables([
-        #     'uvicore.auth.database.tables.*',
-        # ])
+
+        # Using __init__.py now, so just import it
+        #from uvicore.auth import models
+        self.models([
+            'uvicore.auth.models.*',
+        ])
 
         # Define data seeders
         self.seeders([

@@ -5,16 +5,16 @@ from uvicore.support.dumper import dump
 
 
 # Get related tablenames with proper prefixes
-users = uvicore.db.tablename('auth.users')
+posts = uvicore.db.tablename('app1.posts')
 
 
-class _Posts(Schema):
+class _Comments(Schema):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
     # Do not add a package prefix, leave that to the connection config
-    name = 'posts'
+    name = 'comments'
 
     # Connection for this database from your config file
     connection = 'app1'
@@ -24,10 +24,9 @@ class _Posts(Schema):
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('unique_slug', sa.String(length=100), unique=True),
         sa.Column('title', sa.String(length=100)),
-        sa.Column('other', sa.String(length=100), nullable=True),
-        sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
+        sa.Column('body', sa.Text()),
+        sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id"), nullable=False),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -37,4 +36,4 @@ class _Posts(Schema):
 
 
 # IoC Class Instance
-Posts: _Posts = uvicore.ioc.make('app1.database.tables.posts.Posts', _Posts, singleton=True)
+Comments: _Comments = uvicore.ioc.make('app1.database.tables.comments.Comments', _Comments, singleton=True)

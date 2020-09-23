@@ -1,48 +1,36 @@
 import pytest
 import uvicore
+from typing import List
 from uvicore.support.dumper import dump
 from starlette.testclient import TestClient
 
-
-@pytest.mark.asyncio
-async def test_find(bootstrap_app1):
-    from uvicore.auth.models.user import User
-    user = await User.find(3)
-    assert user.email == 'manager2@example.com'
-
-
-@pytest.mark.asyncio
-async def test_select_all(bootstrap_app1):
-    from uvicore.auth.models.user import User
-    users = await User.get()
-    assert [
-        'administrator@example.com',
-        'manager1@example.com',
-        'manager2@example.com',
-        'user1@example.com',
-        'user2@example.com',
-    ] == [x.email for x in users]
+# Typechecking imports only
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app1.models.user import UserModel
+    from app1.models.post import PostModel
 
 
 @pytest.mark.asyncio
 async def test_where_equal(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
+    # Test Ioc instead of import
+    User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User')
 
     # Test implicit =
-    users = await User.where('email', 'manager1@example.com').get()
+    users: List[UserModel] = await User.where('email', 'manager1@example.com').get()
     assert ['manager1@example.com'] == [x.email for x in users]
 
     # Test explicit =
-    users = await User.where('email', '=', 'manager1@example.com').get()
+    users: List[UserModel] = await User.where('email', '=', 'manager1@example.com').get()
     assert ['manager1@example.com'] == [x.email for x in users]
 
 
 @pytest.mark.asyncio
 async def test_where_notequal(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
+    from uvicore.auth.models.user import User
 
     # Single where
-    users = await User.where('email', '!=', 'manager1@example.com').get()
+    users: List[UserModel] = await User.where('email', '!=', 'manager1@example.com').get()
     assert [
         'administrator@example.com',
         'manager2@example.com',
@@ -51,7 +39,7 @@ async def test_where_notequal(bootstrap_app1):
     ] == [x.email for x in users]
 
     # Double where
-    users = await (User
+    users: List[UserModel] = await (User
         .where('email', '!=', 'manager1@example.com')
         .where('email', '!=', 'manager2@example.com')
         .get()
@@ -65,8 +53,9 @@ async def test_where_notequal(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_in(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+
+    users: List[UserModel] = await (User
         .where('email', 'in', [
             'manager1@example.com',
             'manager2@example.com',
@@ -81,8 +70,9 @@ async def test_where_in(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_not_in(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+
+    users: List[UserModel] = await (User
         .where('email', '!in', [
             'manager1@example.com',
             'manager2@example.com',
@@ -98,8 +88,9 @@ async def test_where_not_in(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_like(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await(User
+    from uvicore.auth.models.user import User
+
+    users: List[UserModel] = await(User
         .where('email', 'like', 'manager%')
         .get()
     )
@@ -111,8 +102,8 @@ async def test_where_like(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_not_like(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await(User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await(User
         .where('email', '!like', 'manager%')
         .get()
     )
@@ -128,22 +119,39 @@ async def test_where_null(bootstrap_app1):
     from app1.models.post import Post
 
     # Implicit =
-    posts = await Post.where('other', 'null').get()
-    assert ['test-post2'] == [x.slug for x in posts]
+    posts: List[PostModel] = await Post.where('other', 'null').get()
+    dump(posts)
+    assert [
+        'test-post2',
+        'test-post4',
+        'test-post5',
+        'test-post7',
+    ] == [x.slug for x in posts]
 
     # Explicit =
-    posts = await Post.where('other', '=', 'null').get()
-    assert ['test-post2'] == [x.slug for x in posts]
+    posts: List[PostModel] = await Post.where('other', '=', 'null').get()
+    dump(posts)
+    assert [
+        'test-post2',
+        'test-post4',
+        'test-post5',
+        'test-post7',
+    ]== [x.slug for x in posts]
 
     # Where not NULL
-    posts = await Post.where('other', '!=', 'null').get()
-    assert ['test-post1'] == [x.slug for x in posts]
+    posts: List[PostModel] = await Post.where('other', '!=', 'null').get()
+    dump(posts)
+    assert [
+        'test-post1',
+        'test-post3',
+        'test-post6',
+    ] == [x.slug for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_where_or(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await (User
         .or_where([
             ('email', 'manager1@example.com'),
             ('email', 'manager2@example.com'),
@@ -158,8 +166,8 @@ async def test_where_or(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_or_in(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await (User
         .or_where([
             ('email', 'in', ['manager1@example.com', 'manager2@example.com']),
             ('id', 'in', [1,4]),
@@ -176,8 +184,8 @@ async def test_where_or_in(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_or_not_in(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await (User
         .or_where([
             ('email', '!in', ['manager1@example.com', 'manager2@example.com']),
             ('id', 2),
@@ -194,8 +202,8 @@ async def test_where_or_not_in(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_or_like(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await (User
         .or_where([
             ('email', 'like', 'manager%'),
             ('email', 'like', 'user%'),
@@ -212,8 +220,8 @@ async def test_where_or_like(bootstrap_app1):
 
 @pytest.mark.asyncio
 async def test_where_or_not_like(bootstrap_app1):
-    User = uvicore.ioc.make('uvicore.auth.models.User')
-    users = await (User
+    from uvicore.auth.models.user import User
+    users: List[UserModel] = await (User
         .or_where([
             ('email', '!like', 'manager%'),
             ('id', 2),
@@ -227,31 +235,3 @@ async def test_where_or_not_like(bootstrap_app1):
         'user2@example.com',
     ] == [x.email for x in users]
 
-
-@pytest.mark.asyncio
-async def test_callback(bootstrap_app1):
-    from app1.models.post import Post
-    post = await Post.find(2)
-    assert post.cb == 'test-post2 callback'
-
-
-@pytest.mark.asyncio
-async def test_many_to_one(bootstrap_app1):
-    # Many posts can have ONE user (has_one)
-    from app1.models.post import Post
-    posts = await Post.include('creator').get()
-    dump(posts)
-
-    #dump(uvicore.ioc.bindings)
-    # dump(uvicore.config('app'))
-
-    # name = 'uvicore.auth.database.tables.Users'
-    # override = None
-    # app_config = uvicore.config('app')
-    # if 'bindings' in app_config:
-    #     if name in app_config['bindings']:
-    #         override = app_config['bindings'][name]
-    # dump(override)
-
-
-    assert 1 == 2

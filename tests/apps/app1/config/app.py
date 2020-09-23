@@ -80,8 +80,8 @@ config = {
     # array above to define your own complete service provider.  Often times
     # simply overriding the bound class is good enough.
     'bindings': {
-        #'uvicore.auth.database.tables.Users': 'app1.database.tables.users._Table',
-        'uvicore.auth.models.User': 'app1.models.user._User',
+        'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users._Users',
+        'uvicore.auth.models.user.User': 'app1.models.user.UserModel',
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',
         # 'Configuration': 'mreschke.wiki.overrides.configuration.Configuration',
         # 'Console': 'mreschke.wiki.overrides.console.cli',

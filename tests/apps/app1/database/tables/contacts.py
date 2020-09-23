@@ -8,7 +8,7 @@ from uvicore.support.dumper import dump
 users = uvicore.db.tablename('auth.users')
 
 
-class Table(Schema):
+class _Contacts(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -34,3 +34,7 @@ class Table(Schema):
     schema_kwargs = {
         'sqlite_autoincrement': True,
     }
+
+
+# IoC Class Instance
+Contacts: _Contacts = uvicore.ioc.make('app1.database.tables.contacts.Contacts', _Contacts, singleton=True)

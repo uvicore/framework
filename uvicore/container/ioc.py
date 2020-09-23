@@ -1,12 +1,22 @@
 import importlib
 import inspect
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypeVar, Type, Callable
 
 import uvicore
 from uvicore.contracts import Binding
 from uvicore.contracts import Ioc as IocInterface
 from uvicore.support import module
 from uvicore.support.dumper import dd, dump
+
+T = TypeVar('T')
+
+
+#from uvicore.orm import model
+#from uvicore.foundation.application import _Application
+# class Container:
+
+#     def singleton(cls: Callable[[], T], **kwargs) -> T:
+#         return cls
 
 
 class Ioc(IocInterface):
@@ -17,6 +27,11 @@ class Ioc(IocInterface):
     @property
     def aliases(self) -> Dict[str, str]:
         return self._aliases
+
+
+    #application = _Application
+    #Model = model.Model
+
 
     def __init__(self) -> None:
         self._bindings: Dict[str, Binding] = {}
@@ -65,15 +80,16 @@ class Ioc(IocInterface):
         elif name in self.aliases:
             return self.bindings[self.aliases[name]]
 
-    def make(self, name: str, default: Any = None, **kwargs) -> Any:
+
+    def make(self, name: str, default: Callable[[], T] = None, **kwargs) -> T:
         """Make a module/class/method by name from IoC mapping"""
         if default is not None and self.binding(name) is None:
             # Default was provided and no binding currently exists
             # Bind the default provided but look for bindings override in app_config
-            override = None
+            object = default
             app_config = uvicore.config('app')
             if app_config.get('bindings'):
-                object = app_config.get('bindings').get('name') or default
+                object = app_config.get('bindings').get(name) or default
             self.bind(name, object, **kwargs)
 
         binding = self.binding(name)

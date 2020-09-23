@@ -16,6 +16,6 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def _to_table(self) -> Dict:
+    def to_table(self) -> Dict:
         """Convert an model entry into a dictionary matching the tables columns"""
         pass
