@@ -157,16 +157,16 @@ class _Db(DatabaseInterface):
             self._metadatas[connection.metakey] = sa.MetaData()
             self._query = {}
 
-        # if app.is_http:
-        #     @app.http.on_event("startup")
-        #     async def startup():
-        #         for database in self.databases.values():
-        #             await database.connect()
+        if app.is_http:
+            @app.http.on_event("startup")
+            async def startup():
+                for database in self.databases.values():
+                    await database.connect()
 
-        #     @app.http.on_event("shutdown")
-        #     async def shutdown():
-        #         for database in self.databases.values():
-        #             await database.disconnect()
+            @app.http.on_event("shutdown")
+            async def shutdown():
+                for database in self.databases.values():
+                    await database.disconnect()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         """Get all packages with the metakey derived from the connection name

@@ -24,6 +24,8 @@ nav:
     - routing.md
     - views.md
     - controllers.md
+  - Database:
+    - orm-basics.md
   - Architecture:
     - service-providers.md
     - ioc-container.md
@@ -79,9 +81,9 @@ theme:
 
 
 # Extra CSS and Javascript
-extra_css:
-- assets/css/termynal.css
-- assets/css/custom.css
-extra_javascript:
-- assets/js/termynal.js
-- assets/js/custom.js
+#extra_css:
+#- assets/css/termynal.css
+#- assets/css/custom.css
+#extra_javascript:
+#- assets/js/termynal.js
+#- assets/js/custom.js

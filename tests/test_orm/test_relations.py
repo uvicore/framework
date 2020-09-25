@@ -109,7 +109,7 @@ async def xtest_play(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_one(bootstrap_app1):
+async def test_one_to_one(bootstrap_app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -131,7 +131,7 @@ async def xtest_one_to_one(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_one_inverse(bootstrap_app1):
+async def test_one_to_one_inverse(bootstrap_app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -154,7 +154,7 @@ async def xtest_one_to_one_inverse(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_many(bootstrap_app1):
+async def xtest_one_to_many(bootstrap_app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.post import Post
@@ -188,10 +188,19 @@ async def test_one_to_many(bootstrap_app1):
 
 
     #posts = await Post.query().include('creator.contact').where('creator.contact.phone', '777-777-7777').get()
-    posts = await Post.query().include('creator.contact').get()
-    dump(posts)
+    #posts = await Post.query().include('creator.contact').get()
+    #for post in posts:
+        #post.comment2().
+    #dump(posts)
     #for post in posts:
     #    dump(post.creator.contact.phone)
+
+
+    #comments = await Comment.query().get()
+    #dump(comments)
+
+    posts = await Post.query().include('creator').get()
+    dump(posts)
 
 
 
@@ -215,7 +224,7 @@ async def test_one_to_many(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many_inverse(bootstrap_app1):
+async def test_one_to_many_inverse(bootstrap_app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment

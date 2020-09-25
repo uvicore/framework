@@ -1,8 +1,9 @@
+import uvicore
 from typing import Dict, Tuple, Any, Optional, Callable
 from pydantic.fields import FieldInfo
 from pydantic.utils import Representation
-
-
+from uvicore.support import module
+from uvicore.support.dumper import dump, dd
 
 class Relation(Representation):
     __slots__ = (
@@ -28,27 +29,63 @@ class Relation(Representation):
         if not self.foreign_key:
             self.foreign_key = 'id'
         if not self.local_key:
-            self.local_key = field.name + '_id'
+            self.local_key = str(field.name) + '_id'
+        self.name = field.name
+        self._load_entity()
+        return self
 
     def _fill_reverse(self, field: 'Field'):
         if not self.foreign_key:
-            self.foreign_key = field.name + '_id'
+            self.foreign_key = str(field.name) + '_id'
         if not self.local_key:
             self.local_key = 'id'
+        self.name = field.name
+        self._load_entity()
+        return self
 
+    def _load_entity(self):
+        # Fill actual entity class
+        if uvicore.ioc.binding(self.model):
+            self.entity = uvicore.ioc.make(self.model)
+        else:
+            self.entity = module.load(self.model).object
+
+
+
+
+class BelongsToMany(Representation):
+    __slots__ = (
+        'model',
+        'join_table',
+        'local_key',
+        'foreign_key',
+    )
+
+    def __init__(self,
+        model: str,
+        join_table: str,
+        local_key: str,
+        foreign_key: str,
+    ) -> None:
+        self.model = model
+        self.join_table = join_table
+        self.local_key = local_key
+        self.foreign_key = foreign_key
+
+    def fill(self, field: 'Field'):
+        pass
 
 
 class HasOne(Relation):
     def fill(self, field: 'Field'):
-        self._fill_reverse(field)
+        return self._fill_reverse(field)
 
 class HasMany(Relation):
     def fill(self, field: 'Field'):
-        self._fill_reverse(field)
+        return self._fill_reverse(field)
 
 class BelongsTo(Relation):
     pass
-
 
 
 class Field(Representation):
@@ -67,15 +104,12 @@ class Field(Representation):
         'read_only',
         'write_only',
         'callback',
-        'has_one',
-        'has_many',
-        'belongs_to',
         'relation',
         'properties'
     )
 
     def __init__(self, column: str = None, *,
-        name: Optional[bool] = False,
+        name: Optional[str] = None,
         primary: Optional[bool] = False,
         title: Optional[str] = None,
         description: Optional[str] = None,
@@ -86,9 +120,6 @@ class Field(Representation):
         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         callback: Optional[Any] = None,
-        has_one: Optional[Tuple] = None,
-        has_many: Optional[Tuple] = None,
-        belongs_to: Optional[Tuple] = None,
         relation: Optional[Relation] = None,
         properties: Optional[Dict] = None,
     ):
@@ -104,12 +135,8 @@ class Field(Representation):
         self.read_only = read_only
         self.write_only = write_only
         self.callback = callback
-        self.has_one = has_one
-        self.has_many = has_many
-        self.belongs_to = belongs_to
         self.relation = relation
         self.properties = properties
-
 
 
 # class PydanticField(FieldInfo):

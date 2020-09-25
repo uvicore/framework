@@ -20,7 +20,7 @@ def test_location():
     assert 'uvicore/foundation/config' in x
 
 
-def test_load():
+def test_load_root():
     # Import root level package (has __init__.py)
     # Module(
     #     object=<module 'uvicore' from '/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/__init__.py'>,
@@ -37,6 +37,8 @@ def test_load():
     assert x.package == 'uvicore'
     assert 'uvicore/__init__.py' in x.file
 
+
+def test_load_package():
     # Import non root level package (has __init__.py)
     # Module(
     #     object=<module 'uvicore.container' from '/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/container/__init__.py'>,
@@ -53,6 +55,8 @@ def test_load():
     assert x.package == 'uvicore.container'
     assert 'uvicore/container/__init__.py' in x.file
 
+
+def test_load_namespace():
     # Import namespace package (no __init__.py)
     # Module(
     #     object=<module 'uvicore.foundation' (namespace)>,
@@ -69,6 +73,8 @@ def test_load():
     assert x.package == 'uvicore.foundation'
     assert 'uvicore/foundation' in x.file
 
+
+def test_load_file():
     # Import actual module (file) but not a method inside it
     # Module(
     #     object=<module 'uvicore.foundation.config.package' from '/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/foundation/config/package.py'>,
@@ -85,6 +91,8 @@ def test_load():
     assert x.package == 'uvicore.foundation.config'
     assert 'uvicore/foundation/config/package.py' in x.file
 
+
+def test_load_object():
     # Import class from inside a file
     # Module(
     #     object=<class 'uvicore.foundation.services.Foundation'>,
@@ -101,13 +109,19 @@ def test_load():
     assert x.package == 'uvicore.foundation'
     assert 'uvicore/foundation/services.py' in x.file
 
+
+def test_load_invalid():
     # Import invalid module
     with pytest.raises(ModuleNotFoundError):
         module.load('uvicorex')
 
+
+def test_load_invalid_attribute():
     # Import invalid attribute
-    with pytest.raises(AttributeError):
+    with pytest.raises(Exception):
         module.load('uvicore.nothing')
 
+
+def test_load_wildcard():
     # Import wildcard
     module.load('uvicore.foundation.config.*')

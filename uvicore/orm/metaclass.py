@@ -6,7 +6,7 @@ from pydantic.main import ModelMetaclass as PydanticMetaclass
 from sqlalchemy.sql import ClauseElement
 
 import uvicore
-from uvicore.orm.fields import Field
+from uvicore.orm.fields import Field, HasMany, HasOne, BelongsTo
 from uvicore.support.dumper import dd, dump
 
 from .query import QueryBuilder
@@ -87,6 +87,113 @@ class _ModelMetaclass(PydanticMetaclass):
         """Helper for original uvicore model fields (not pydantic __fields__)"""
         return entity.__modelfields__
 
+    async def insert(entity, models: List) -> None:
+        """Insert one or more entities as List of entities or List of Dictionaries
+
+        This bulk insert does NOT allow inserting child relations at the same time
+        as there is no way to get each parents PK out to reference with each child
+        in BULK. If you want to insert parent and relations at the same time use
+        the slower non-bulk insert_with_relations() instead
+        """
+
+        bulk = []
+        for model in models:
+            if type(model) == dict:
+                # Value is a dictionary, not an actual model, convert to model
+                model = entity(**model)
+
+            bulk.append(model.to_table())
+        query = entity.table.insert()
+        await entity.execute(query, bulk)
+
+    async def insert_with_relations(entity, models: List[Dict]) -> Any:
+        """Insert one or more entities as List of Dict that DO have relations included
+
+        Because relations are included, this insert is NOT bulk and must loop each row,
+        insert the parent, get the PK, then insert each children (or children first then
+        parent depending on BelongsTo vs HasOne or HasMany)
+        """
+
+        # Note about bulk insert with nested relations Dictionary
+        # Bulk insert does not give back the primary keys for each inserted record
+        # So I have no way to know the PK of the parent when I insert the child relations
+        # So the only way to possibly insert parent and child is to do one at a time
+        # which is not bulk and will be slower.  If I wanted to do this I could pull
+        # out all models that HAVE a relation and set those asside.  All that do NOT
+        # have a relation I could bulk insert, then after insert one those that do have a
+        # relation one at a time.  The problem with this is they won't be inserted in the
+        # order you wanted.  Only way to preserve order is to check if ANY models have
+        # a relation, if so, loop and insert one at a time, no bulk period.
+        # SQLAlchemy does have a bulk_save_objects that does return the PKs but
+        # encode/databases does not impliment this.  Instead their insert_many
+        # uses a cursor where each row is added as a query, then the cursor is committed.
+        # This is bulk insert, but no way to retrieve each PK from it.
+
+        bulk = []
+        for model in models:
+
+            # Check each field for relations and rename them before inserting parent
+            relations = {}
+            skip_children = False
+            for (fieldname, value) in model.items():
+                field = entity.modelfields.get(fieldname)
+                if not field.relation: continue
+                relation = field.relation.fill(field)
+                if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
+                    # Cannot change a dict in place or you get error
+                    # RuntimeError: dictionary keys changed during iteration
+                    # Se we'll add to a list and delete it outside the loop
+                    relations[fieldname] = relation
+                    relation.data = value
+
+            # Delete relations from parent model as they cannot be inserted
+            for relation in relations.keys():
+                del model[relation]
+
+            # BelongTo relations are the inverse of HasOne or HasMany in that
+            # the child has to be created BEFORE the parent
+            for relation in relations.values():
+                if type(relation) == BelongsTo:
+                    # Because we insert the children first, skip inserting
+                    # children later down the method
+                    skip_children = True
+
+                    # Recursively insert child and get PK
+                    child_pk = await relation.entity.insert_with_relations([relation.data])
+
+                    # Replace parent foreignKey with child_pk
+                    model[relation.local_key] = child_pk
+
+            # Convert dict to model and to_table()
+            # Could go straignt from dict to_table() but by going
+            # from dict->model->table you get model valudations
+            tabledata = entity(**model).to_table()
+
+            # Insert the parent model
+            query = entity.table.insert()
+            parent_pk = await entity.execute(query, tabledata)
+
+            # Don't insert children if we already did above with BelongsTo
+            if not skip_children:
+                # Now insert each file relation
+                for relation in relations.values():
+                    if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
+                        childmodels = relation.data
+                        if type(childmodels) != list: childmodels = [childmodels]
+
+                        # Handle One-To-Many
+                        if type(relation) == HasMany or type(relation) == HasOne:
+                            # Replace child foreignKey with parent_pk
+                            for childmodel in childmodels:
+                                childmodel[relation.foreign_key] = parent_pk
+
+                        # We don't know if this child has its own children, so
+                        # we must also insert_with_relations()
+                        await relation.entity.insert_with_relations(childmodels)
+
+            # Return parent_pk for recursion
+            return parent_pk
+
     async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
@@ -109,6 +216,12 @@ class _ModelMetaclass(PydanticMetaclass):
             if hasattr(row, column):
                 fields[field.name] = getattr(row, column)
         return entity(**fields)
+
+    def to_column(entity, fieldname: str):
+        """Convert a model field name into a table column name"""
+        field = entity.modelfields.get(fieldname)
+        if field: return field.column
+        return fieldname
 
     def selectable_columns(entity) -> List[sa.Column]:
         """Get all SQLA columns that are selectable

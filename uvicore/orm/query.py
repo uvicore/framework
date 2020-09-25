@@ -21,6 +21,7 @@ class QueryBuilder(Generic[E]):
         self.includes = []
         self.relations: Dict[str, Relation] = {}
         self.joins = None
+        self.keyed_by = None
 
     @property
     def table(self) -> sa.Table:
@@ -75,6 +76,13 @@ class QueryBuilder(Generic[E]):
             self.includes.append(include)
         return self
 
+    def key_by(self, field: str):
+        self.keyed_by = field
+        return self
+
+    async def link(self, relation: str, values: List) -> None:
+        dump('hiii')
+
     async def find(self, pk_value: Any) -> E:
         # Where on Primary Key
         pk = self.entity.pk
@@ -98,7 +106,7 @@ class QueryBuilder(Generic[E]):
         # if results:
         #     return self.entity.to_model(results)
 
-    async def get(self) -> List[E]:
+    async def get(self) -> Union[List[E], Dict[str, E]]:
         # Build query
         table, query = self.build_query('select')
         print(query)  # Actual SQL
@@ -143,6 +151,16 @@ class QueryBuilder(Generic[E]):
 
         # Return List of entities
         #dump('ENTITIES', entities)
+
+
+        # Experimental key_by
+        if self.keyed_by:
+            keyed_entities = {}
+            for entity in entities:
+                keyed_entities[getattr(entity, self.keyed_by)] = entity
+            return keyed_entities
+
+        # Return List of Entities
         return entities
 
     def build_results(self, results, multiple: bool = True):
@@ -253,12 +271,9 @@ class QueryBuilder(Generic[E]):
 
         relations: Dict[str, Relation] = {}
         for include in self.includes:
-            if '.' in include:
-                parts = include.split('.')
-            else:
-                parts = [include]
+            parts = [include]
+            if '.' in include: parts = include.split('.')
 
-            i = 0
             entity = self.entity
             parts_added = []
             for part in parts:
@@ -270,61 +285,28 @@ class QueryBuilder(Generic[E]):
                 parts_added.append(part)
                 relation_name = '.'.join(parts_added)
 
-                # relation_type = None
-                # if field.has_one:
-                #     relation_type = 'has_one'
-                # elif field.belongs_to:
-                #     relation_type = 'belongs_to'
-                # elif field.has_many:
-                #     relation_type = 'has_many'
-
-                # # Pull out any type of relationship tuple
-                # relation_tuple = (
-                #     field.has_one or
-                #     field.belongs_to or
-                #     field.has_many or
-                #     None
-                # )
-
                 # If any relation found
                 if field.relation:  #if relation_tuple:
                     # Get relation model class from IoC or dynamic Imports
-                    #entity2, foreign, local = extract(field, relation_tuple)
-                    relation: Relation = field.relation
-                    if uvicore.ioc.binding(relation.model):
-                        model = uvicore.ioc.make(relation.model)
-                    else:
-                        model = module.load(relation.model).object
+                    relation: Relation = field.relation.fill(field)
 
-
-                    # Fill in missing relation keys
-                    relation.fill(field)
+                    # Set a new name based on relation_name dot notation for nested relations
                     relation.name = relation_name
-                    #relation.field = field
-                    relation.entity = model
-                    #relation.type = 'asdf'
 
                     # Add relation to List only once
                     if relation_name not in relations:
                         relations[relation_name] = relation
-                        # relations[relation_name] = {
-                        #     'name': relation_name,
-                        #     'type': relation_type,
-                        #     'field': field,
-                        #     'entity': entity2,
-                        #     'foreign': foreign,
-                        #     'local': local,
-                        # }
 
                         # Add joins only for one-to-one or one-to-many inverse
                         # Outer Join in case some foreign keys are nullable
                         #if field.has_one or field.belongs_to:
                         if self.joins is None: self.joins = entity.table
                         self.joins = self.joins.outerjoin(
-                            right=model.table,
+                            right=relation.entity.table,
                             #onclause=getattr(self.table.c, local) == getattr(entity.table.c, foreign)
-                            onclause=getattr(entity.table.c, relation.local_key) == getattr(model.table.c, relation.foreign_key)
+                            onclause=getattr(entity.table.c, relation.local_key) == getattr(relation.entity.table.c, relation.foreign_key)
                         )
+
 
                         # Contact = uvicore.ioc.make('app1.models.contact.Contact')
                         # self.joins = self.joins.outerjoin(
@@ -338,30 +320,32 @@ class QueryBuilder(Generic[E]):
                         #     onclause=getattr(self.table.c, local) == getattr(entity.table.c, foreign)
                         # ))
 
-                entity = model
-                i += 1
+                # Swap entities for next loop
+                entity = relation.entity
 
-
+        # Return all relations
         return relations
 
     def build_where(self, wheres: List[Tuple]):
         statements = []
         #table = self.table
         for where in wheres:
-            column, operator, value = where
+            field, operator, value = where
 
             # Where on relation
-            if '.' in column:
-                #relation = self.relations.get(column.split('.')[0])
+            if '.' in field:
+                #relation = self.relations.get(field.split('.')[0])
                 #table = relation['entity'].table
-                #column = column.split('.')[1]
-                #relation = self.relations.get(column.split('.')[0:-1])
-                relation = self.relations.get('.'.join(column.split('.')[:-1]))
+                #field = field.split('.')[1]
+                #relation = self.relations.get(field.split('.')[0:-1])
+                relation = self.relations.get('.'.join(field.split('.')[:-1]))
                 table = relation.entity.table
-                column = column.split('.')[-1]
-
+                field = field.split('.')[-1]
             else:
                 table = self.table
+
+            # Translate model column into table column
+            column = self.entity.to_column(field)
 
             if type(value) == str and value.lower() == 'null': value = None
             if operator == 'in':

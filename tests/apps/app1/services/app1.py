@@ -18,9 +18,12 @@ class App1(ServiceProvider):
     def boot(self) -> None:
         # Using __init__.py now so just import it
         #from app1 import models
-        #self.models([
-        #    'app1.models.*',
-        #])
+        self.tables([
+            'app1.database.tables.*',
+        ])
+        # self.models([
+        #     'app1.models.*',
+        # ])
 
         # # Define view and asset paths and configure the templating system
         # self.load_views()

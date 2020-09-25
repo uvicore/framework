@@ -45,21 +45,24 @@ config = {
     'database': {
         'default': 'app1',
         'connections': {
-            'app1': {
-                'driver': 'sqlite',
-                #'dialect': 'pysqlite',
-                'database': ':memory',
-            },
-            # 'some-sql': {
-            #     'driver': 'mysql',
-            #     'dialect': 'pymysql',
-            #     'host': '127.0.0.1',
-            #     'port': 3306,
-            #     'database': 'somesql',
-            #     'username': 'root',
-            #     'password': 'techie',
-            #     'prefix': None,
+            # SQLite
+            # 'app1': {
+            #     'driver': 'sqlite',
+            #     #'dialect': 'pysqlite',
+            #     'database': ':memory',
             # },
+
+            # MySQL
+            'app1': {
+                'driver': 'mysql',
+                'dialect': 'pymysql',
+                'host': '127.0.0.1',
+                'port': 3306,
+                'database': 'uvicore_test',
+                'username': 'root',
+                'password': 'techie',
+                'prefix': None,
+            },
         },
     },
 

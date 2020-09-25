@@ -20,26 +20,26 @@ from uvicore.auth.models.user import UserModel as AuthOverride
 
 # This is an override.  Do not import this Model, instead import
 # the original in uvicore.auth.models
-#class UserModel(AuthOverride):
+class UserModel(AuthOverride):
 #class UserModel(Model['UserModel']):
-class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
+#class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 #class _User(Model, metaclass=ModelMetaclass):
     """Auth User Model"""
 
     # Database connection and table information
     __tableclass__ = table.Users
 
-    id: Optional[int] = Field('id',
-        primary=True,
-        description='Users primary ID',
-        sortable=True,
-        searchable=True,
-    )
+    # id: Optional[int] = Field('id',
+    #     primary=True,
+    #     description='Users primary ID',
+    #     sortable=True,
+    #     searchable=True,
+    # )
 
-    email: str = Field('email',
-        description='Users email and username',
-        required=True,
-    )
+    # email: str = Field('email',
+    #     description='Users email and username',
+    #     required=True,
+    # )
 
     app1_extra: Optional[str] = Field('app1_extra',
         description='Extra column on auth.users by app1',

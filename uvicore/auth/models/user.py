@@ -27,7 +27,8 @@ from uvicore.support.dumper import dd, dump
 
 # UserModel for typehints only.  Import User for actual usage.
 #class UserModel(Model, metaclass=ModelMetaclass):
-class UserModel(Model['UserModel']):
+class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
+#class UserModel(Model['UserModel']):
     """Auth User Model"""
 
     # Database connection and table information

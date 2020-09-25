@@ -2,10 +2,9 @@ from __future__ import annotations
 import uvicore
 from typing import Optional, List
 from app1.database.tables import posts as table
-from uvicore.orm.fields import Field, HasMany, BelongsTo
+from uvicore.orm.fields import Field, HasMany, BelongsTo, BelongsToMany
 from uvicore.orm.metaclass import ModelMetaclass, _ModelMetaclass
 from uvicore.orm.model import Model
-
 
 class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 #class PostModel(Model['PostModel']):
@@ -70,9 +69,13 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
         #relation=HasMany('app1.models.comment.Comment'),
     )
 
+    tags: 'Optional[List[TagModel]]' = Field(None,
+        description="Post Tags Model",
+        relation=BelongsToMany('app1.models.tag.Tag', 'post_tags', 'post_id', 'tag_id'),
+    )
+
     def cb_results(self):
         return str(self.slug) + ' callback'
-
 
 # IoC Class Instance
 Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
@@ -81,5 +84,5 @@ Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
 # Update forwrad refs (a work around to circular dependencies)
 from app1.models.comment import CommentModel
 from app1.models.user import UserModel
+from app1.models.tag import TagModel
 Post.update_forward_refs()
-

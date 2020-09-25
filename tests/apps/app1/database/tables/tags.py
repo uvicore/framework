@@ -1,31 +1,26 @@
 import uvicore
 import sqlalchemy as sa
 from uvicore.database.table import Schema, SchemaOLD
-from uvicore.support.dumper import dump, dd
+from uvicore.support.dumper import dump
 
-from uvicore.auth.database.tables import users
 
-# This is an override.  Do not import this Table, instead import
-# the original in uvicore.auth.database.tables
-class _Users(Schema):
+class _Tags(Schema):
+#class Table(metaclass=SchemaOLD):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
     # Do not add a package prefix, leave that to the connection config
-    name = 'users'
+    name = 'tags'
 
     # Connection for this database from your config file
-    connection = 'auth'
+    connection = 'app1'
 
     # SQLAlchemy Table definition as a list (exclude name and metadata)
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        # Include original auth users table
-        *users._Users.schema,
-
-        # Add extra columns
-        sa.Column("app1_extra", sa.String(length=50))
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('name', sa.String(length=50), unique=True),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -35,5 +30,4 @@ class _Users(Schema):
 
 
 # IoC Class Instance
-Users: _Users = uvicore.ioc.make('uvicore.auth.database.tables.users.Users', _Users, singleton=True)
-
+Tags: _Tags = uvicore.ioc.make('app1.database.tables.tags.Tags', _Tags, singleton=True)

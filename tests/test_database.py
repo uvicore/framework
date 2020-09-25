@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 
 
 @pytest.mark.asyncio
-async def test_database(bootstrap_app1):
+async def xtest_database(bootstrap_app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
 

@@ -5,7 +5,7 @@ from uvicore.contracts import Model as ModelInterface
 from uvicore.support.dumper import dd, dump
 from .query import QueryBuilder
 from uvicore.orm.metaclass import ModelMetaclass
-
+from uvicore.orm.fields import HasMany
 
 E = TypeVar("E")
 
@@ -31,37 +31,58 @@ class Model(Generic[E], PydanticBaseModel):
     def query(entity) -> QueryBuilder[E]:
         return QueryBuilder[entity](entity)
 
-    @classmethod
-    async def insert(entity, values: List) -> Any:
-        """Insert one or more entities"""
-        bulk = []
-        for value in values:
-            bulk.append(value.to_table())
-        query = entity.table.insert()
-        await entity.execute(query, bulk)
+    async def create(self, relation: str, values: Union[List[Dict], Dict]) -> Any:
+        """Create related records and link them to the parent model"""
+        field = self.__class__.modelfields.get(relation)
+        relation = field.relation.fill(field)
 
-    async def save(self):
+        # Only works with HasMany or or HasOne
+        # But NOT from the other way around (BelongsTo)
+        # and not for ManyToMany
+        if type(relation) == HasMany:
+            relation_field = relation.foreign_key
+            relation_value = getattr(self, relation.local_key)
+
+            # Fill in relation foreign key vlaue
+            for value in values:
+                value[relation_field] = relation_value
+
+        # Bulk insert new values with proper keys
+        await relation.entity.insert(values)
+
+    async def save(self) -> None:
         """Save this model to the database"""
         table = self.__table__
         values = self.to_table()
         query = table.insert().values(**values)
-        await self._execute(query)
+        new_pk = await self.__class__.execute(query)
+        setattr(self, self.__class__.pk, new_pk)
 
     async def delete(self):
         """Delete this model from the database"""
         pass
 
+    async def link(self, relation: str, values: List):
+        """Link ManyToMany values to this model"""
+        query = QueryBuilder(self)
+        await query.link(relation, values)
+
     def to_table(self) -> Dict:
         """Convert an model entry into a dictionary matching the tables columns"""
-        table_columns = {}
-        for (key, value) in self.__dict__.items():
-            field = self.__class__.__fields__.get(key)
-            extra = field.field_info.extra
-            column_name = extra.get('column')
-            if column_name and not extra.get('readOnly'):
-                table_columns[column_name] = value
-        return table_columns
-
+        columns = {}
+        for (field, value) in self.__dict__.items():
+            field = self.__class__.modelfields.get(field)
+            if field.column and not field.read_only:
+                columns[field.column] = value
+        return columns
+        # table_columns = {}
+        # for (key, value) in self.__dict__.items():
+        #     field = self.__class__.__fields__.get(key)
+        #     extra = field.field_info.extra
+        #     column_name = extra.get('column')
+        #     if column_name and not extra.get('readOnly'):
+        #         table_columns[column_name] = value
+        # return table_columns
 
 
 # IoC Class Instance

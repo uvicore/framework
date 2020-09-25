@@ -60,10 +60,10 @@ def load(module: str) -> Module:
     if namespace or root:
         object = imported
     else:
-        try:
-            object = getattr(imported, name)
-        except:
-            raise Exception("There was an error while dynamically importing " + module + '.  Check for errors in that file.')
+        #try:
+        object = getattr(imported, name)
+        #except:
+        #    raise Exception("There was an error while dynamically importing " + module + '.  Check for errors in that file.')
 
     # File can be actual file.py or __init__.py or just the folder
     # if its a namespace import
