@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
-async def test_callback(bootstrap_app1):
+async def test_callback(app1):
     from app1.models.post import Post
     post: PostModel = await Post.find(2)
     assert post.cb == 'test-post2 callback'

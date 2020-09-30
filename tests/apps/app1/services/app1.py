@@ -11,8 +11,18 @@ class App1(ServiceProvider):
             {'key': 'uvicore.auth', 'module': 'app1.config.auth.config'},
         ])
 
+        # Bind Tables
+        #self.bind('app1.database.tables.comments.Comments', 'app1.database.tables.comments._Comments', singleton=True)
+        #self.bind('app1.database.tables.contacts.Contacts', 'app1.database.tables.contacts._Contacts', singleton=True)
+        #self.bind('app1.database.tables.post_tags.PostTags', 'app1.database.tables.post_tags._PostTags', singleton=True)
+        #self.bind('app1.database.tables.posts.Posts', 'app1.database.tables.posts._Posts', singleton=True)
+        #self.bind('app1.database.tables.tags.Tags', 'app1.database.tables.tags._Tags', singleton=True)
+
         # Bind Models
-        #self.bind('app1.models.Contact', 'app1.models.contact._Contact')
+        #self.bind('app1.models.contact.Contact', 'app1.models.contact.ContactModel')
+        #self.bind('app1.models.comment.Comment', 'app1.models.comment.CommentModel')
+        #self.bind('app1.models.tag.Tag', 'app1.models.tag.TagModel')
+        #self.bind('app1.models.post.Post', 'app1.models.post.PostModel')
 
 
     def boot(self) -> None:
@@ -21,9 +31,9 @@ class App1(ServiceProvider):
         self.tables([
             'app1.database.tables.*',
         ])
-        # self.models([
-        #     'app1.models.*',
-        # ])
+        #self.models([
+        #    'app1.models.*',
+        #])
 
         # # Define view and asset paths and configure the templating system
         # self.load_views()

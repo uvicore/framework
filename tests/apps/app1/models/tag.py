@@ -3,7 +3,7 @@ import uvicore
 from typing import Optional, List
 from app1.database.tables import tags as table
 from uvicore.orm.fields import Field, HasMany, BelongsTo
-from uvicore.orm.metaclass import ModelMetaclass, _ModelMetaclass
+from uvicore.orm.metaclass import ModelMetaclass
 from uvicore.orm.model import Model
 
 class TagModel(Model['TagModel'], metaclass=ModelMetaclass):

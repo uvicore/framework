@@ -1,6 +1,7 @@
 import uvicore
 from uvicore.configuration import Env
 from uvicore.support import path
+from uvicore.support.dumper import dump, dd
 
 def application(is_console: bool = False) -> None:
     # Base path
@@ -23,6 +24,28 @@ def application(is_console: bool = False) -> None:
 
     # Bootstrap the Uvicore Application (Either CLI or HTTP entry points based on is_console)
     uvicore.app.bootstrap(app_config, base_path, is_console)
+
+
+
+    # IoC by Hacking Import Overrides
+    #import sys
+
+    #from app1.models import user
+    #sys.modules['uvicore.auth.models.user'] = user
+
+    # from app1.overrides.orm import metaclass
+    # sys.modules['uvicore.orm.metaclass'] = metaclass
+
+    # from app1.overrides.orm import model
+    # sys.modules['uvicore.orm.model'] = model
+
+    # from uvicore.foundation.application import _Application
+
+
+
+
+
+
 
     # Return application
     return uvicore.app

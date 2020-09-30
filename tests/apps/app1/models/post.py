@@ -3,10 +3,20 @@ import uvicore
 from typing import Optional, List
 from app1.database.tables import posts as table
 from uvicore.orm.fields import Field, HasMany, BelongsTo, BelongsToMany
-from uvicore.orm.metaclass import ModelMetaclass, _ModelMetaclass
-from uvicore.orm.model import Model
+from uvicore.orm.metaclass import ModelMetaclass
+from uvicore.orm.model import Model, _Model
+from uvicore.contracts import Model as ModelInterface
+
+
+from app1.contracts import Post as PostInterface
+from app1.contracts import User as UserInterface
+from app1.contracts import Comment as CommentInterface
+from app1.contracts import Tag as TagInterface
 
 class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
+#class _PostModel(Model['PostModel'], PostInterface, metaclass=ModelMetaclass):
+#class _PostModel(Model['PostModel'], metaclass=ModelMetaclass):
+#class PostModel(Model['PostModel'], ModelInterface['PostModel'], metaclass=ModelMetaclass):
 #class PostModel(Model['PostModel']):
     """App1 Posts"""
 
@@ -51,7 +61,7 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One User)
-    creator: 'Optional[UserModel]' = Field(None,
+    creator: Optional[User] = Field(None,
         description="Post Creator User Model",
 
         #belongs_to=('uvicore.auth.models.user.User', 'id', 'creator_id'),
@@ -60,7 +70,7 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many (One Post has Many Comments)
-    comments: 'Optional[List[CommentModel]]' = Field(None,
+    comments: Optional[List[Comment]] = Field(None,
         description="Post Comments Model",
 
         #has_many=('app1.models.comment.Comment', 'post_id', 'id'),
@@ -69,7 +79,7 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
         #relation=HasMany('app1.models.comment.Comment'),
     )
 
-    tags: 'Optional[List[TagModel]]' = Field(None,
+    tags: Optional[List[Tag]] = Field(None,
         description="Post Tags Model",
         relation=BelongsToMany('app1.models.tag.Tag', 'post_tags', 'post_id', 'tag_id'),
     )
@@ -79,10 +89,21 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 
 # IoC Class Instance
 Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
+#class Post(PostIoc, Model[PostModel], PostInterface): pass
 
 
 # Update forwrad refs (a work around to circular dependencies)
-from app1.models.comment import CommentModel
-from app1.models.user import UserModel
-from app1.models.tag import TagModel
+# If the relation has an ID foreign key on this table, use ioc.make
+# If not (the reverse relation) use from xyz import abc
+
+
+#from uvicore.auth.models.user import User
+#from app1.models.user import User
+from app1.models.comment import Comment
+from app1.models.tag import Tag
+
+User = uvicore.ioc.make('uvicore.auth.models.user.User')
+#Comment = uvicore.ioc.make('app1.models.comment.Comment')
+#Tag = uvicore.ioc.make('app1.models.tag.Tag')
+
 Post.update_forward_refs()

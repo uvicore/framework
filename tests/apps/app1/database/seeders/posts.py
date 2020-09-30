@@ -1,4 +1,4 @@
-from app1.models.post import Post, PostModel
+from app1.models.post import Post
 from app1.models.comment import Comment, CommentModel
 from app1.models.tag import Tag
 from uvicore.support.dumper import dump, dd
@@ -7,6 +7,7 @@ async def seed():
 
     # Get all tags keyed by 'name' column
     tags = await Tag.query().key_by('name').get()
+
 
     #post = PostModel(slug='test-post1', title='Test Post1', other='other stuff1', creator_id=1)
     #await post.save()
@@ -69,13 +70,13 @@ async def seed():
             #NO - 'creator_id': 5,
             'creator': {
                 'email': 'user2@example.com',
-                'contact': {
-                    'name': 'User Two',
-                    'title': 'User2',
-                    'address': '444 User Dr.',
-                    'phone': '444-444-4444'
-                    # NO user_id=5
-                }
+                # 'contact': {
+                #     'name': 'User Two',
+                #     'title': 'User2',
+                #     'address': '444 User Dr.',
+                #     'phone': '444-444-4444'
+                #     # NO user_id=5
+                # }
             }
         }
     ])

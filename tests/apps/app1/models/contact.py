@@ -17,7 +17,13 @@ from uvicore.orm.model import Model
 
 #E = TypeVar("E", bound='_Contact')
 
-class ContactModel(Model, metaclass=ModelMetaclass):
+from app1.contracts import Contact as ContactInterface
+from app1.contracts import User as UserInterface
+#from app1.models.user import User
+#from uvicore.auth.models.user import User
+
+class ContactModel(Model['ContactModel'], metaclass=ModelMetaclass):
+#class ContactModel(Model['ContactModel'], metaclass=ModelMetaclass):
 #class ContactModel(Model['ContactModel']):
 #class _Contact2:
     """App1 Contacts"""
@@ -60,21 +66,20 @@ class ContactModel(Model, metaclass=ModelMetaclass):
         #belongs_to=('uvicore.auth.models.user.User', 'id', 'user_id'),
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'user_id')
         relation=BelongsTo('uvicore.auth.models.user.User')
-
     )
-
-# class _Contact(_Contact2, _Model[_Contact2], metaclass=ModelMetaclass):
-#     pass
 
 
 # IoC Class Instance
 Contact: ContactModel = uvicore.ioc.make('app1.models.contact.Contact', ContactModel)
+#class Contact(ContactIoc, Model[ContactModel]): pass
+
 
 # Update forwrad refs (a work around to circular dependencies)
-from app1.models.user import User
+#from app1.models.user import User
+#from uvicore.auth.models.user import User
+
+User = uvicore.ioc.make('uvicore.auth.models.user.User')
 Contact.update_forward_refs()
-
-
 
 
 

@@ -16,8 +16,7 @@ class Module():
     file: str
 
 def load(module: str) -> Module:
-    """Import module from string
-    """
+    """Import module from string"""
     # Detect if wildcard some.module.*
     # If so, we will import EACH file in that directory
     # Meaning no __init__.py required to load all
@@ -61,6 +60,7 @@ def load(module: str) -> Module:
         object = imported
     else:
         #try:
+        #dump('hi', imported)
         object = getattr(imported, name)
         #except:
         #    raise Exception("There was an error while dynamically importing " + module + '.  Check for errors in that file.')

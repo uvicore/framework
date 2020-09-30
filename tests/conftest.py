@@ -12,7 +12,7 @@ def event_loop(request):
 
 
 @pytest.fixture(scope="session")
-async def bootstrap_app1(event_loop):
+async def app1(event_loop):
 
     #import sys
     #dd(sys.modules)

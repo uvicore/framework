@@ -1,13 +1,12 @@
 import pytest
 import uvicore
 
-#from tests import bootstrap_app1, event_loop
 from uvicore.support.dumper import dump
 from starlette.testclient import TestClient
 
 
 @pytest.mark.asyncio
-async def xtest_database(bootstrap_app1):
+async def xtest_database(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
 

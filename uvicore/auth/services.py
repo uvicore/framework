@@ -21,10 +21,14 @@ class Auth(ServiceProvider):
         )
 
         # Bind Tables
-        #self.bind('uvicore.auth.database.tables.Users', 'uvicore.auth.database.tables.users._Table', singleton=True)
+        #self.bind('uvicore.auth.database.tables.groups.Groups', 'uvicore.auth.database.tables.groups._Groups', singleton=True)
+        #self.bind('uvicore.auth.database.tables.user_info.UserInfo', 'uvicore.auth.database.tables.user_info._UserInfo', singleton=True)
+        #self.bind('uvicore.auth.database.tables.users.Users', 'uvicore.auth.database.tables.users._Users', singleton=True)
 
         # Bind Models
-        #self.bind('uvicore.auth.models.User', 'uvicore.auth.models.user._User')
+        #self.bind('uvicore.auth.models.group.Group', 'uvicore.auth.models.group.GroupModel')
+        #self.bind('uvicore.auth.models.user.User', 'uvicore.auth.models.user.UserModel')
+        #self.bind('uvicore.auth.models.user_info.UserInfo', 'uvicore.auth.models.user_info.UserInfoModel')
 
         # Register config
         self.configs([

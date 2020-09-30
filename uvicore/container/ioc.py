@@ -88,6 +88,7 @@ class Ioc(IocInterface):
             # Bind the default provided but look for bindings override in app_config
             object = default
             app_config = uvicore.config('app')
+
             if app_config.get('bindings'):
                 object = app_config.get('bindings').get(name) or default
             self.bind(name, object, **kwargs)

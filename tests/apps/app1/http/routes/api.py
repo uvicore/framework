@@ -9,3 +9,4 @@ class Api(Routes[ApiRouter]):
 
     def register(self):
         self.include('post', tags=['Posts'])
+        self.include('user', tags=['Users'])

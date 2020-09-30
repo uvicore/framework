@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
-async def test_where_equal(bootstrap_app1):
+async def test_where_equal(app1):
     # Test Ioc instead of import
     #User = uvicore.ioc.make('uvicore.auth.models.user.User')
     from uvicore.auth.models.user import User
@@ -29,7 +29,7 @@ async def test_where_equal(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_column_mapper(bootstrap_app1):
+async def test_where_column_mapper(app1):
     from app1.models.post import Post
 
     # The model field `slug` is table column `unique_slug`
@@ -40,7 +40,7 @@ async def test_where_column_mapper(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_notequal(bootstrap_app1):
+async def test_where_notequal(app1):
     from uvicore.auth.models.user import User
 
     # Single where
@@ -66,7 +66,7 @@ async def test_where_notequal(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_in(bootstrap_app1):
+async def test_where_in(app1):
     from uvicore.auth.models.user import User
 
     users: List[UserModel] = await (User
@@ -83,7 +83,7 @@ async def test_where_in(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_not_in(bootstrap_app1):
+async def test_where_not_in(app1):
     from uvicore.auth.models.user import User
 
     users: List[UserModel] = await (User
@@ -101,7 +101,7 @@ async def test_where_not_in(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_like(bootstrap_app1):
+async def test_where_like(app1):
     from uvicore.auth.models.user import User
 
     users: List[UserModel] = await(User
@@ -115,7 +115,7 @@ async def test_where_like(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_not_like(bootstrap_app1):
+async def test_where_not_like(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await(User
         .where('email', '!like', 'manager%')
@@ -129,7 +129,7 @@ async def test_where_not_like(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_null(bootstrap_app1):
+async def test_where_null(app1):
     from app1.models.post import Post
 
     # Implicit =
@@ -163,7 +163,7 @@ async def test_where_null(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_or(bootstrap_app1):
+async def test_where_or(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .or_where([
@@ -179,7 +179,7 @@ async def test_where_or(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_and_or(bootstrap_app1):
+async def test_where_and_or(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .where('app1_extra', None)
@@ -197,7 +197,7 @@ async def test_where_and_or(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_or_in(bootstrap_app1):
+async def test_where_or_in(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .or_where([
@@ -215,7 +215,7 @@ async def test_where_or_in(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_or_not_in(bootstrap_app1):
+async def test_where_or_not_in(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .or_where([
@@ -233,7 +233,7 @@ async def test_where_or_not_in(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_or_like(bootstrap_app1):
+async def test_where_or_like(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .or_where([
@@ -251,7 +251,7 @@ async def test_where_or_like(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_or_not_like(bootstrap_app1):
+async def test_where_or_not_like(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User
         .or_where([
@@ -269,7 +269,7 @@ async def test_where_or_not_like(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_where_relation(bootstrap_app1):
+async def test_where_relation(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
 

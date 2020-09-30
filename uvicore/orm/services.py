@@ -18,6 +18,9 @@ class Orm(ServiceProvider):
         # Automatic - self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
         # Automatic - self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
+        #self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
+        #self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
+
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.
         Boot takes place after all packages are registered.  This means all package

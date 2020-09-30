@@ -2,7 +2,7 @@ from __future__ import annotations
 import uvicore
 from typing import Optional
 from uvicore.auth.database.tables import users as table
-from uvicore.orm.fields import Field
+from uvicore.orm.fields import Field, HasOne
 from uvicore.orm.metaclass import ModelMetaclass
 from uvicore.orm.model import Model
 from uvicore.support.dumper import dd, dump
@@ -36,15 +36,22 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 
     id: Optional[int] = Field('id',
         primary=True,
-        description='Users primary ID',
+        description='User Primary ID',
         sortable=True,
         searchable=True,
     )
 
     email: str = Field('email',
-        description='Users email and username',
+        description='User Email and Username',
         required=True,
     )
+
+    # One-To-One - User has ONE Contact
+    info: Optional[UserInfo] = Field(None,
+        description='User Info Model',
+        relation=HasOne('uvicore.auth.models.user_info.UserInfo', 'user_id'),
+    )
+
 
     # class Config:
     #     extra = 'ignore'
@@ -53,3 +60,9 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 
 # IoC Class Instance
 User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+
+
+from uvicore.auth.models.user_info import UserInfo
+#UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
+
+User.update_forward_refs()

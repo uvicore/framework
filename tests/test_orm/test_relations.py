@@ -4,12 +4,12 @@ from typing import List
 from uvicore.support.dumper import dump
 
 # Typechecking imports only
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-#     from app1.models.comment import CommentModel
-#     from app1.models.contact import ContactModel
-#     from app1.models.post import PostModel
-#     from app1.models.user import UserModel
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app1.models.comment import CommentModel
+    from app1.models.contact import ContactModel
+    from app1.models.post import PostModel
+    from app1.models.user import UserModel
 
 class User1:
     id: int = ''
@@ -17,7 +17,7 @@ class User1:
 
 
 @pytest.mark.asyncio
-async def xtest_play(bootstrap_app1):
+async def xtest_play(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
     from app1.models.post import Post
@@ -100,6 +100,7 @@ async def xtest_play(bootstrap_app1):
 
 
 
+
     # table = User.table()
     # query = table.select()
     # results = await User.fetchall(query)
@@ -109,7 +110,7 @@ async def xtest_play(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_one(bootstrap_app1):
+async def xtest_one_to_one(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -131,7 +132,7 @@ async def test_one_to_one(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_one_inverse(bootstrap_app1):
+async def xtest_one_to_one_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -154,11 +155,12 @@ async def test_one_to_one_inverse(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many(bootstrap_app1):
+async def xtest_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment
+    from app1.models.tag import Tag
 
     # A User has Many Posts
     #users: List[User] = await User.include('posts').get()
@@ -199,8 +201,57 @@ async def xtest_one_to_many(bootstrap_app1):
     #comments = await Comment.query().get()
     #dump(comments)
 
-    posts = await Post.query().include('creator').get()
-    dump(posts)
+    #posts = await Post.query().include('creator').get()
+    #dump(posts)
+
+    #post = await Post.query().find(1)
+    #dump(Post.mapper('slug').column())
+    #dump(post.mapper('slug').column())
+    #dump(post.to_table())
+    #dump(post.mapper().table())
+
+    #dump(await Post.query().get())
+
+
+    #tags = await Tag.query().key_by('name').get()
+    #dump('hi-done')
+
+    #post = await Post.query().find(1)
+
+
+
+    #posts = await Post.query().include('creator.contact').get()
+    #for post in posts:
+
+    # posts = await Post.query().include('creator.contact').get()
+    # for p in posts:
+    #     #await p.creator.contact.delete()
+    #     dump(p)
+
+    # post = await Post.query().include('creator.contact').find(1)
+    # post.creator.contact.phone = 'asdf'
+    # dump(post)
+    # #await post.creator.contact.save()
+
+    users = await User.get()
+
+    #x = User.query().find(1)
+    for u in users:
+        dump(u)
+        dump(u.contact)
+
+
+
+
+
+
+
+
+    #post = await Post.query().find(1)
+    #dump(Post.query2())
+    #dump(post)
+
+    #dump(col)
 
 
 
@@ -224,7 +275,7 @@ async def xtest_one_to_many(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_many_inverse(bootstrap_app1):
+async def xtest_one_to_many_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment
@@ -254,8 +305,6 @@ async def test_one_to_many_inverse(bootstrap_app1):
         'test-post3',
         'test-post3',
     ] == [x.post.slug for x in comments]
-
-
 
     # posts = await Post
     #     .include('creator', 'comments')
@@ -297,7 +346,7 @@ async def test_one_to_many_inverse(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_pydantic_issue_242_original(bootstrap_app1):
+async def xtest_pydantic_issue_242_original(app1):
     from pydantic.main import ModelMetaclass, BaseModel
 
     class UsersMeta(ModelMetaclass):
@@ -312,7 +361,7 @@ async def xtest_pydantic_issue_242_original(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_pydantic_issue_242_attempt1(bootstrap_app1):
+async def xtest_pydantic_issue_242_attempt1(app1):
     from pydantic.main import BaseModel as PydanticBaseModel
     from pydantic.main import ModelMetaclass as PydanticMetaclass
 
@@ -339,7 +388,7 @@ async def xtest_pydantic_issue_242_attempt1(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def xtest_pydantic_issue_242_attempt2(bootstrap_app1):
+async def xtest_pydantic_issue_242_attempt2(app1):
     from pydantic.main import BaseModel as PydanticBaseModel
     from pydantic.main import ModelMetaclass as PydanticMetaclass
 
@@ -365,7 +414,7 @@ async def xtest_pydantic_issue_242_attempt2(bootstrap_app1):
 
 
 # @pytest.mark.asyncio
-# async def test_many_to_one(bootstrap_app1):
+# async def test_many_to_one(app1):
 #     # Many posts can have ONE user (has_one)
 #     from app1.models.post import Post
 #     posts = await Post.include('creator').get()

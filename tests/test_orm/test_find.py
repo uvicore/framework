@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.asyncio
-async def test_find(bootstrap_app1):
+async def test_find(app1):
     from uvicore.auth.models.user import User
     user: UserModel = await User.find(3)
     dump(user)
@@ -18,7 +18,7 @@ async def test_find(bootstrap_app1):
 
 
 @pytest.mark.asyncio
-async def test_select_all(bootstrap_app1):
+async def test_select_all(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await User.get()
     assert [

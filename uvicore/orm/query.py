@@ -1,11 +1,14 @@
 from __future__ import annotations
-import uvicore
+
 import operator as operators
+from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+
 import sqlalchemy as sa
-from typing import Any, List, Dict, Tuple, Union, TypeVar, Generic
-from uvicore.support.dumper import dump, dd
+
+import uvicore
+from uvicore.orm.fields import BelongsTo, Field, HasMany, HasOne, Relation
 from uvicore.support import module
-from .fields import Field, Relation, HasOne, HasMany, BelongsTo
+from uvicore.support.dumper import dd, dump
 
 E = TypeVar('E')
 
@@ -106,7 +109,8 @@ class QueryBuilder(Generic[E]):
         # if results:
         #     return self.entity.to_model(results)
 
-    async def get(self) -> Union[List[E], Dict[str, E]]:
+    #async def get(self) -> Union[List[E], Dict[str, E]]:
+    async def get(self) -> List[E]:
         # Build query
         table, query = self.build_query('select')
         print(query)  # Actual SQL
@@ -170,7 +174,8 @@ class QueryBuilder(Generic[E]):
 
         entities = []
         for row in results:
-            model = self.entity.to_model(row)
+            #model = self.entity.to_model(row)
+            model = self.entity.mapper(row).model()
             for relation in self.relations.values():
                 if type(relation) == HasOne or type(relation) == BelongsTo:
                     relation_name = relation.name
@@ -179,9 +184,11 @@ class QueryBuilder(Generic[E]):
                         current_model = model
                         for i in range(0, len(parts) - 1):
                             current_model = getattr(current_model, parts[i])
-                        setattr(current_model, parts[-1], relation.entity.to_model(row, relation_name))
+                        #setattr(current_model, parts[-1], relation.entity.to_model(row, relation_name))
+                        setattr(current_model, parts[-1], relation.entity.mapper(row, relation_name).model())
                     else:
-                        setattr(model, relation_name, relation.entity.to_model(row, relation_name))
+                        #setattr(model, relation_name, relation.entity.to_model(row, relation_name))
+                        setattr(model, relation_name, relation.entity.mapper(row, relation_name).model())
             entities.append(model)
         if multiple:
             return entities
@@ -345,7 +352,7 @@ class QueryBuilder(Generic[E]):
                 table = self.table
 
             # Translate model column into table column
-            column = self.entity.to_column(field)
+            column = self.entity.mapper(field).column()
 
             if type(value) == str and value.lower() == 'null': value = None
             if operator == 'in':

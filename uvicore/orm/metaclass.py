@@ -6,10 +6,10 @@ from pydantic.main import ModelMetaclass as PydanticMetaclass
 from sqlalchemy.sql import ClauseElement
 
 import uvicore
-from uvicore.orm.fields import Field, HasMany, HasOne, BelongsTo
+from uvicore.orm.fields import Field
+from uvicore.orm.mapper import Mapper
+from uvicore.orm.query import QueryBuilder
 from uvicore.support.dumper import dd, dump
-
-from .query import QueryBuilder
 
 # Think of this metaclass as all the STATIC methods similar to @classmethod
 # but different in that they become INVISIBLE to the instance of the class
@@ -28,6 +28,15 @@ class _ModelMetaclass(PydanticMetaclass):
     def email(entity):
         return 'email on meta'
 
+    def slug(entity):
+        return 'slug on meta'
+
+
+    # Remember all metaclass method ARE @classmethods
+    # Remember any method here DO NOT clash with pydantic field names
+    # Remember any method here do NOT show up in code intellisense because its a metaclass
+    # If you want it in code intellisense, it myst be in model.py and ModelInterface
+    # but then it WILL clash with any pydantic fields of the same name.
 
 
     ############################################################################
@@ -87,113 +96,6 @@ class _ModelMetaclass(PydanticMetaclass):
         """Helper for original uvicore model fields (not pydantic __fields__)"""
         return entity.__modelfields__
 
-    async def insert(entity, models: List) -> None:
-        """Insert one or more entities as List of entities or List of Dictionaries
-
-        This bulk insert does NOT allow inserting child relations at the same time
-        as there is no way to get each parents PK out to reference with each child
-        in BULK. If you want to insert parent and relations at the same time use
-        the slower non-bulk insert_with_relations() instead
-        """
-
-        bulk = []
-        for model in models:
-            if type(model) == dict:
-                # Value is a dictionary, not an actual model, convert to model
-                model = entity(**model)
-
-            bulk.append(model.to_table())
-        query = entity.table.insert()
-        await entity.execute(query, bulk)
-
-    async def insert_with_relations(entity, models: List[Dict]) -> Any:
-        """Insert one or more entities as List of Dict that DO have relations included
-
-        Because relations are included, this insert is NOT bulk and must loop each row,
-        insert the parent, get the PK, then insert each children (or children first then
-        parent depending on BelongsTo vs HasOne or HasMany)
-        """
-
-        # Note about bulk insert with nested relations Dictionary
-        # Bulk insert does not give back the primary keys for each inserted record
-        # So I have no way to know the PK of the parent when I insert the child relations
-        # So the only way to possibly insert parent and child is to do one at a time
-        # which is not bulk and will be slower.  If I wanted to do this I could pull
-        # out all models that HAVE a relation and set those asside.  All that do NOT
-        # have a relation I could bulk insert, then after insert one those that do have a
-        # relation one at a time.  The problem with this is they won't be inserted in the
-        # order you wanted.  Only way to preserve order is to check if ANY models have
-        # a relation, if so, loop and insert one at a time, no bulk period.
-        # SQLAlchemy does have a bulk_save_objects that does return the PKs but
-        # encode/databases does not impliment this.  Instead their insert_many
-        # uses a cursor where each row is added as a query, then the cursor is committed.
-        # This is bulk insert, but no way to retrieve each PK from it.
-
-        bulk = []
-        for model in models:
-
-            # Check each field for relations and rename them before inserting parent
-            relations = {}
-            skip_children = False
-            for (fieldname, value) in model.items():
-                field = entity.modelfields.get(fieldname)
-                if not field.relation: continue
-                relation = field.relation.fill(field)
-                if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
-                    # Cannot change a dict in place or you get error
-                    # RuntimeError: dictionary keys changed during iteration
-                    # Se we'll add to a list and delete it outside the loop
-                    relations[fieldname] = relation
-                    relation.data = value
-
-            # Delete relations from parent model as they cannot be inserted
-            for relation in relations.keys():
-                del model[relation]
-
-            # BelongTo relations are the inverse of HasOne or HasMany in that
-            # the child has to be created BEFORE the parent
-            for relation in relations.values():
-                if type(relation) == BelongsTo:
-                    # Because we insert the children first, skip inserting
-                    # children later down the method
-                    skip_children = True
-
-                    # Recursively insert child and get PK
-                    child_pk = await relation.entity.insert_with_relations([relation.data])
-
-                    # Replace parent foreignKey with child_pk
-                    model[relation.local_key] = child_pk
-
-            # Convert dict to model and to_table()
-            # Could go straignt from dict to_table() but by going
-            # from dict->model->table you get model valudations
-            tabledata = entity(**model).to_table()
-
-            # Insert the parent model
-            query = entity.table.insert()
-            parent_pk = await entity.execute(query, tabledata)
-
-            # Don't insert children if we already did above with BelongsTo
-            if not skip_children:
-                # Now insert each file relation
-                for relation in relations.values():
-                    if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
-                        childmodels = relation.data
-                        if type(childmodels) != list: childmodels = [childmodels]
-
-                        # Handle One-To-Many
-                        if type(relation) == HasMany or type(relation) == HasOne:
-                            # Replace child foreignKey with parent_pk
-                            for childmodel in childmodels:
-                                childmodel[relation.foreign_key] = parent_pk
-
-                        # We don't know if this child has its own children, so
-                        # we must also insert_with_relations()
-                        await relation.entity.insert_with_relations(childmodels)
-
-            # Return parent_pk for recursion
-            return parent_pk
-
     async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
@@ -206,22 +108,22 @@ class _ModelMetaclass(PydanticMetaclass):
         """Database fetchall in the context of this entities connection"""
         return await uvicore.db.fetchall(query=query, connection=entity.__connection__)
 
-    def to_model(entity, row, prefix: str = None) -> Any:
-        """Convert a row of table data into a model"""
-        fields = {}
-        for field in entity.modelfields.values():
-            if not field.column: continue
-            column = field.column
-            if prefix: column = prefix + '.' + column
-            if hasattr(row, column):
-                fields[field.name] = getattr(row, column)
-        return entity(**fields)
+    # def to_model(entity, row, prefix: str = None) -> Any:
+    #     """Convert a row of table data into a model"""
+    #     fields = {}
+    #     for field in entity.modelfields.values():
+    #         if not field.column: continue
+    #         column = field.column
+    #         if prefix: column = prefix + '.' + column
+    #         if hasattr(row, column):
+    #             fields[field.name] = getattr(row, column)
+    #     return entity(**fields)
 
-    def to_column(entity, fieldname: str):
-        """Convert a model field name into a table column name"""
-        field = entity.modelfields.get(fieldname)
-        if field: return field.column
-        return fieldname
+    # def to_column(entity, fieldname: str):
+    #     """Convert a model field name into a table column name"""
+    #     field = entity.modelfields.get(fieldname)
+    #     if field: return field.column
+    #     return fieldname
 
     def selectable_columns(entity) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
@@ -274,13 +176,17 @@ class _ModelMetaclass(PydanticMetaclass):
         # bases is a tuple of parent used in the child (_Model) class, in this case (uvicore.contracts.model.Model, pydantic.main.BaseModel) it does not include this metaclass
         # namespace is the child _Model classes original __dict__ Dictionary
 
+        # Define our custom attributes
+        __connection__ = None
+        __tablename__ = None
+        __table__ = None
+        __tableclass__ = None
+        __callbacks__ = {}
+
         # Pull out all properties of type Field and store in _fields property
         # And SWAP my Field for pydantics FieldInfo so pydantic knows how to handle each field
         # Do not confuse my custom __modelfields__ with pydantics __fields__
         __modelfields__: Dict[str, Field] = {}
-        #dump("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        #dump(namespace, mcls, name, bases)
-        #dump(bases[0].__dict__)
         for field_name, field in namespace.items():
             if field_name[0] != '_' and type(field) == Field:
                 # Pull out uvicore model field into own __modelfields__ dict
@@ -296,19 +202,34 @@ class _ModelMetaclass(PydanticMetaclass):
                     field_info_kwargs[arg] = getattr(field, slot)
                 namespace[field_name] = PydanticFieldInfo(**field_info_kwargs)
 
-        # Add in each bases __modelfields__ just in case our model extends another model
+        # If we extend and overwrite our own models, then some information
+        # will be buried in the baseclass typle.  Loop each baseclass and
+        # pluck out these critical fields (for modelfields, APPEND them to allow extension)
         for base in bases:
             if hasattr(base, '__modelfields__'):
-                #__modelfields__ = {**__modelfields__, **base.__modelfields__}
+                # Notice we are APPEND modelfields to allow model extension
                 __modelfields__ = {**base.__modelfields__, **__modelfields__}
+
+            # I am only setting these if not already set.  This allows a higher base
+            # like the parent to override and win over the base children
+            if hasattr(base, '__connection__') and not __connection__:
+                __connection__ = base.__connection__
+            if hasattr(base, '__tablename__') and not __tablename__:
+                __tablename__ = base.__tablename__
+            if hasattr(base, '__table__') and not __table__:
+                __table__ = base.__table__
+            if hasattr(base, '__tableclass__') and not __tableclass__:
+                __tableclass__ = base.__tableclass__
+            if hasattr(base, '__callbacks__') and not __callbacks__:
+                __callbacks__ = base.__callbacks__
 
         # Add my own ORM attributes to pydantics base ModelMetaClass
         new_namespace = {
-            '__connection__': None,
-            '__tablename__': None,
-            '__table__': None,
-            '__tableclass__': None,
-            '__callbacks__': {},
+            '__connection__': __connection__,
+            '__tablename__': __tablename__,
+            '__table__': __table__,
+            '__tableclass__': __tableclass__,
+            '__callbacks__': __callbacks__,
             '__modelfields__': __modelfields__,
             #'__query__': {},
             #'_test1': 'hi',

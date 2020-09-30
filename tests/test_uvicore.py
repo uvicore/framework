@@ -1,13 +1,12 @@
 import pytest
 import uvicore
-#from tests import bootstrap_app1, event_loop
 from uvicore.support.dumper import dump
 from starlette.testclient import TestClient
 
 
 
 @pytest.mark.asyncio
-async def xtest_app1(bootstrap_app1):
+async def xtest_app1(app1):
     #print(app.providers)
 
     #dump(uvicore.app.providers)
