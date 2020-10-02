@@ -1,27 +1,40 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any, Union, Callable
 
 
 class Dispatcher(ABC):
 
     @property
     @abstractmethod
-    def events(self) -> Dict: pass
+    def events(self) -> Dict[str, Dict]:
+        """Dictionary of all registered events in uvicore and all packages"""
+        pass
 
     @property
     @abstractmethod
-    def listeners(self) -> Dict[str, List]: pass
+    def listeners(self) -> Dict[str, List]:
+        """Dictionary of all listeners for each event"""
+        pass
 
     @property
     @abstractmethod
-    def wildcards(self) -> List: pass
-
-    @abstractmethod
-    def register(self, events: Dict):
+    def wildcards(self) -> List:
+        """List of all wildcard listeners"""
         pass
 
     @abstractmethod
-    def listen(self, events: Union[str, List], listener: Any) -> None:
+    def register(self, events: Dict[str, Dict]):
+        """Register an event with the system.  Retrieve with .events property"""
+        pass
+
+    @abstractmethod
+    def listen(self, events: Union[str, List], listener: Union[str, Callable]) -> None:
+        """Append a listener (string or method) callback to one or more events"""
+        pass
+
+    @abstractmethod
+    def subscribe(self, listener: Union[str, Callable]) -> None:
+        """Add a subscription class which handles both registration and listener callbacks"""
         pass
 
     @abstractmethod

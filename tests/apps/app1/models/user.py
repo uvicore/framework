@@ -33,8 +33,8 @@ from uvicore.support.dumper import dd, dump
 
 
 from app1.contracts import User as UserInterface
-from app1.contracts import Contact as ContactInterface
-from app1.contracts import Post as PostInterface
+#from app1.contracts import Contact as ContactInterface
+#from app1.contracts import Post as PostInterface
 
 
 #from uvicore.auth.models.user import UserModel as AuthOverride
@@ -100,7 +100,13 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 
 # IoC Class Instance
 User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
-#class User(UserIoc, Model[UserModel]): pass
+#class User(UserIoc, Model[UserModel], UserInterface): pass
+
+# class User(
+#     _User,
+#     Model[UserModel],
+#     UserInterface
+# ): pass
 
 
 
@@ -121,5 +127,5 @@ from app1.models.post import Post
 #Post = uvicore.ioc.make('app1.models.post.Post')
 
 
-#UserModel.update_forward_refs()
 User.update_forward_refs()
+#UserModel.update_forward_refs()

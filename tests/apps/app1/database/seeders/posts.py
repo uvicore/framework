@@ -1,5 +1,5 @@
 from app1.models.post import Post
-from app1.models.comment import Comment, CommentModel
+from app1.models.comment import Comment
 from app1.models.tag import Tag
 from uvicore.support.dumper import dump, dd
 
@@ -15,7 +15,7 @@ async def seed():
     # Now I want to do inline, though has to be DIct
     # where I create the post with comments=[{dict}]
 
-    # WORK!!!
+    # WORKS!!!
     await Post.insert_with_relations([
         {
             'slug': 'test-post1',
@@ -70,13 +70,13 @@ async def seed():
             #NO - 'creator_id': 5,
             'creator': {
                 'email': 'user2@example.com',
-                # 'contact': {
-                #     'name': 'User Two',
-                #     'title': 'User2',
-                #     'address': '444 User Dr.',
-                #     'phone': '444-444-4444'
-                #     # NO user_id=5
-                # }
+                'contact': {
+                    'name': 'User Two',
+                    'title': 'User2',
+                    'address': '444 User Dr.',
+                    'phone': '444-444-4444'
+                    # NO user_id=5
+                }
             }
         }
     ])

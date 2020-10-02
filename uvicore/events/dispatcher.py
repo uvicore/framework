@@ -1,7 +1,7 @@
 import re
 import uvicore
 import inspect
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any, Union, Callable
 from uvicore.support.dumper import dump, dd
 from types import SimpleNamespace as obj
 from collections import namedtuple
@@ -12,7 +12,7 @@ from uvicore.support import module
 class _Dispatcher(DispatcherInterface):
 
     @property
-    def events(self) -> Dict:
+    def events(self) -> Dict[str, Dict]:
         return self._events
 
     @property
@@ -28,13 +28,13 @@ class _Dispatcher(DispatcherInterface):
         self._listeners = {}
         self._wildcards = []
 
-    def register(self, events: Dict):
+    def register(self, events: Dict[str, Dict]):
         # Merge (but not deep) with existing events
         # Merging allows override by other later defined packages
         self._events = {**self.events, **events}
         pass
 
-    def listen(self, events: Union[str, List], listener: Any) -> None:
+    def listen(self, events: Union[str, List], listener: Union[str, Callable]) -> None:
         if type(events) == str: events = [events]
 
         # Do NOT check self.events for listener verification becuase self.events
@@ -51,9 +51,12 @@ class _Dispatcher(DispatcherInterface):
             if '*' in event:
                 self._wildcards.append(event)
 
-    def subscribe(self, listener: str) -> None:
+    def subscribe(self, listener: Union[str, Callable]) -> None:
         try:
-            module.load(listener).object().subscribe(uvicore.events)
+            if type(listener) == str:
+                module.load(listener).object().subscribe(uvicore.events)
+            else:
+                listener.subscribe(uvicore.events)
         except ModuleNotFoundError:
             pass
 
@@ -137,7 +140,7 @@ class _Dispatcher(DispatcherInterface):
 
         return listeners
 
-    def get_event(self, event: Any) -> Dict:
+    def get_event(self, event: Union[str, Callable]) -> Dict:
         if type(event) == str:
             name = event
         else:

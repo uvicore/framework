@@ -155,12 +155,13 @@ async def xtest_one_to_one_inverse(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many(app1):
+async def test_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment
     from app1.models.tag import Tag
+    from uvicore.auth.models.user_info import UserInfo
 
     # A User has Many Posts
     #users: List[User] = await User.include('posts').get()
@@ -223,24 +224,78 @@ async def xtest_one_to_many(app1):
     #posts = await Post.query().include('creator.contact').get()
     #for post in posts:
 
-    # posts = await Post.query().include('creator.contact').get()
-    # for p in posts:
-    #     #await p.creator.contact.delete()
-    #     dump(p)
 
-    # post = await Post.query().include('creator.contact').find(1)
-    # post.creator.contact.phone = 'asdf'
-    # dump(post)
-    # #await post.creator.contact.save()
-
-    users = await User.get()
-
-    #x = User.query().find(1)
-    for u in users:
-        dump(u)
-        dump(u.contact)
+    # posts = await Post.query().where('email', 'asdf').include('creator', 'creator.contact').get()
+    # for post in posts:
+    #     post.title
+    #     post.slug
+    #     post.creator.contact.phone
+    #     print(post.creator.email)
 
 
+
+    posts = await Post.query().include('creator.contact').get()
+    for p in posts:
+        dump(p)
+
+    # #post = await Post.query().find(1)
+
+    # uis = await UserInfo.query().include('user').get()
+    # for ui in uis:
+    #     dump(ui.user.app1_extra, '-------------')
+
+
+
+
+    # # post = await Post.query().include('creator.contact').find(1)
+    # # post.creator.contact.phone = 'asdf'
+    # # dump(post)
+    # # #await post.creator.contact.save()
+
+    # users = await User.query().include('contact').get()
+    # for u in users:
+    #     dump(u)
+
+
+
+    #import sys
+    #dump(sys.path)
+    #dump('USER INFO', [(key, value) for (key, value) in sys.modules.items() if 'uvicore.auth.models' in key])
+
+
+
+    # dump('##########################################################')
+
+    # import rx
+    # import rx.operators as ops
+    # from rx.subject import Subject
+
+    # source = rx.from_iterable([1,2,3,4])
+
+    # disposable = source.pipe(
+    #     ops.map(lambda i: i - 1),
+    #     ops.filter(lambda i: i % 2 == 0),
+    # ).subscribe(
+    #     on_next=lambda i: print("on_next: {}".format(i)),
+    #     on_completed=lambda: print("on_completed"),
+    # )
+    # disposable.dispose()
+    # print('DONE!')
+
+
+    # stream = Subject()
+
+    # d = stream.subscribe(lambda x: print("Got: %s" % x))
+
+    # stream.on_next(42)
+    # stream.on_next(43)
+
+    # d.dispost()
+
+
+
+
+    # dump('##########################################################')
 
 
 

@@ -7,6 +7,7 @@ from uvicore.orm.metaclass import ModelMetaclass
 from uvicore.orm.model import Model
 from uvicore.support.dumper import dd, dump
 
+from uvicore.auth.contracts import Group as GroupInterface
 
 class GroupModel(Model['GroupModel'], metaclass=ModelMetaclass):
     """Auth Group Model"""
@@ -28,3 +29,9 @@ class GroupModel(Model['GroupModel'], metaclass=ModelMetaclass):
 
 # IoC Class Instance
 Group: GroupModel = uvicore.ioc.make('uvicore.auth.models.group.Group', GroupModel)
+
+# class Group(
+#     _Group,
+#     Model[_Group],
+#     GroupInterface
+# ): pass

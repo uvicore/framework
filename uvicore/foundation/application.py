@@ -40,10 +40,6 @@ class _Application(ApplicationInterface):
     def template(self) -> TemplateInterface:
         return self._template
 
-    # @property
-    # def db(self) -> Any:
-    #     return self._db
-
     @property
     def config(self) -> ConfigInterface:
         return self._config
@@ -68,10 +64,6 @@ class _Application(ApplicationInterface):
     def is_http(self) -> bool:
         return self._is_http
 
-    # @property
-    # def is_async(self) -> bool:
-    #     return self._is_async
-
     @property
     def packages(self) -> OrderedDict[str, PackageInterface]:
         return self._packages
@@ -95,14 +87,12 @@ class _Application(ApplicationInterface):
         self._perfs = []
         self._http = None
         self._template = None
-        #self._db = None
         self._config = None  # None until config provider registered
         self._providers = collections.OrderedDict()
         self._registered = False
         self._booted = False
         self._is_console = False
         self._is_http = False
-        #self._is_async = False
         self._packages = collections.OrderedDict()
         self._path = None
         self._name = None
@@ -138,8 +128,19 @@ class _Application(ApplicationInterface):
         # Register and merge all providers
         self._register_providers(app_config)
 
-        # Create Database instance
-        #self._create_database_instance()
+
+
+        # Experimental - Swap Imports
+        # dump('BEFORE', [x for x in sys.modules.items() if 'uvicore.auth.models' in x])
+        # from app1.models import user
+        # sys.modules['uvicore.auth.models.user'] = user
+        # sys.modules['app1.models.user'] = user
+        # dump(sys.path)
+        # dump('AFTER', [x for x in sys.modules.items() if 'uvicore.auth.models' in x])
+
+
+
+
 
         # Boot all providers
         #self._boot_providers()
@@ -295,24 +296,6 @@ class _Application(ApplicationInterface):
         self._booted = True
         uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
 
-    def _create_database_instance(self) -> None:
-        # Fire up Database
-        # if not self.is_console:
-        #     # HTTP Async
-        #     from databases import Database
-        #     self.db = Database("mysql://root:techie@127.0.0.1/uvicore_wiki")
-        #     @self.http.on_event("startup")
-        #     async def startup():
-        #         await self.db.connect()
-
-        #     @self.http.on_event("shutdown")
-        #     async def shutdown():
-        #         await self.db.disconnect()
-        # else:
-        # CLI Sync
-        from ..database.db import Database
-        self._db = Database("mysql+pymysql://root:techie@127.0.0.1/uvicore_wiki")
-
     def _get_package_config(self, package: str, options: Dict):
         config_module = package + '.config.package.config'  # Default if not defined
         if 'config' in options: config_module = options['config']
@@ -340,6 +323,7 @@ class _Application(ApplicationInterface):
 # Do not make the main Application class
 # or you get an IoC circular dependency issue when you try to override it.
 # All other IoC classes work fine, just not the Application.
+# This is fine because no one should ever get app except from uvicore.app global
 
 # IoC Class Instance
 # NO - Circular issues on override

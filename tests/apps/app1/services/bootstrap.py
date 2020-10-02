@@ -7,7 +7,7 @@ def application(is_console: bool = False) -> None:
     # Base path
     base_path = path.find_base(__file__) + '/testapp/app'
 
-    # Load .env from environs
+    # Load .env from environs - NO, not for testing
     #Env().read_env(base_path + '/.env')
 
     # Import this apps config (import must be after Env())
@@ -26,7 +26,6 @@ def application(is_console: bool = False) -> None:
     uvicore.app.bootstrap(app_config, base_path, is_console)
 
 
-
     # IoC by Hacking Import Overrides
     #import sys
 
@@ -40,11 +39,6 @@ def application(is_console: bool = False) -> None:
     # sys.modules['uvicore.orm.model'] = model
 
     # from uvicore.foundation.application import _Application
-
-
-
-
-
 
 
     # Return application

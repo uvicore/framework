@@ -9,9 +9,6 @@ from uvicore.contracts import Model as ModelInterface
 
 
 from app1.contracts import Post as PostInterface
-from app1.contracts import User as UserInterface
-from app1.contracts import Comment as CommentInterface
-from app1.contracts import Tag as TagInterface
 
 class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 #class _PostModel(Model['PostModel'], PostInterface, metaclass=ModelMetaclass):
@@ -35,10 +32,12 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     slug: str = Field('unique_slug',
+        title='CocknBalls',
         description='URL Friendly Post Title Slug',
         required=True,
         # properties={
-        #     'stuff': 'hi'
+        #     'stuff': 'hi',
+        #     'stuff2': 'hi2',
         # }
     )
 
@@ -91,6 +90,12 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
 #class Post(PostIoc, Model[PostModel], PostInterface): pass
 
+# class Post(
+#     _Post,
+#     Model[PostModel],
+#     PostInterface
+# ): pass
+
 
 # Update forwrad refs (a work around to circular dependencies)
 # If the relation has an ID foreign key on this table, use ioc.make
@@ -102,8 +107,11 @@ Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
 from app1.models.comment import Comment
 from app1.models.tag import Tag
 
+#from uvicore.auth.models.user import User
+#from app1.models.user import User
 User = uvicore.ioc.make('uvicore.auth.models.user.User')
 #Comment = uvicore.ioc.make('app1.models.comment.Comment')
 #Tag = uvicore.ioc.make('app1.models.tag.Tag')
 
 Post.update_forward_refs()
+#PostModel.update_forward_refs()

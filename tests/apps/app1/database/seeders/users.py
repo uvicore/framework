@@ -9,14 +9,14 @@ async def seed():
     await User.insert_with_relations([
         {
             'email': 'administrator@example.com',
-            #######'app1_extra': 'hi',
-            # 'contact': {
-            #     'name': 'Administrator',
-            #     'title': 'God',
-            #     'address': '777 Heaven Ln',
-            #     'phone': '777-777-7777',
-            #     # NO, user_id=1
-            # }
+            'app1_extra': 'hi',
+            'contact': {
+                'name': 'Administrator',
+                'title': 'God',
+                'address': '777 Heaven Ln',
+                'phone': '777-777-7777',
+                # NO, user_id=1
+            }
         }
     ])
 

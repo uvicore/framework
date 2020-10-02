@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar
+
+T = TypeVar('T')
 
 
 @dataclass
@@ -25,9 +27,27 @@ class Ioc(ABC):
     def aliases(self) -> Dict[str, str]:
         pass
 
+    @abstractmethod
+    def binding(self, name: str) -> Binding:
+        """Get an IoC binding object by name or alias"""
+        pass
 
-    # @abstractmethod
-    # def make(self, name: str) -> Any: pass
+    @abstractmethod
+    def make(self, name: str, default: Callable[[], T] = None, **kwargs) -> T:
+        """Make a module/class/method by name or alias from IoC bindings"""
+        pass
 
-    # @abstractmethod
-    # def merge_map(self, mapping: Dict) -> None: pass
+    @abstractmethod
+    def bind(self, name: str, object: Any, *, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
+        """Add an IoC binding"""
+        pass
+
+    @abstractmethod
+    def bind_map(self, mapping: Dict) -> None:
+        """Add IoC bindings from dictionary"""
+        pass
+
+    @abstractmethod
+    def alias(self, src: str, dest: str) -> None:
+        """Add alias to existing binding"""
+        pass

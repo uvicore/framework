@@ -13,10 +13,12 @@ from uvicore.orm.model import Model
 #     'ModelMetaclass'
 # ])
 
+from app1.contracts import Comment as CommentInterface
+
 
 class CommentModel(Model['CommentModel'], metaclass=ModelMetaclass):
 #class CommentModel(Model['CommentModel']):
-    """App1 Posts"""
+    """App1 Post Comments"""
 
     # Database table definition
     __tableclass__ = table.Comments
@@ -60,9 +62,15 @@ class CommentModel(Model['CommentModel'], metaclass=ModelMetaclass):
 # IoC Class Instance
 Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentModel)
 
+# class Comment(
+#     _Comment,
+#     Model[_Comment],
+#     CommentInterface
+# ): pass
 
 # Update forwrad refs (a work around to circular dependencies)
 
 #from app1.models.post import Post
 Post = uvicore.ioc.make('app1.models.post.Post')
 Comment.update_forward_refs()
+#_Comment.update_forward_refs()

@@ -28,18 +28,10 @@ class _BaseModel(Generic[E], PydanticBaseModel):
 
     @classmethod
     def query(entity) -> QueryBuilder[E]:
-        """Query builder passthrough"""
         return QueryBuilder[entity](entity)
 
     @classmethod
-    async def insert(entity, models: List) -> None:
-        """Insert one or more entities as List of entities or List of Dictionaries
-
-        This bulk insert does NOT allow inserting child relations at the same time
-        as there is no way to get each parents PK out to reference with each child
-        in BULK. If you want to insert parent and relations at the same time use
-        the slower non-bulk insert_with_relations() instead
-        """
+    async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
         # Convert List[Model] or List[Dict] into dict of mapped table columns ready for insert
         bulk = entity.mapper(models).table()
         query = entity.table.insert()
@@ -47,13 +39,6 @@ class _BaseModel(Generic[E], PydanticBaseModel):
 
     @classmethod
     async def insert_with_relations(entity, models: List[Dict]) -> None:
-        """Insert one or more entities as List of Dict that DO have relations included
-
-        Because relations are included, this insert is NOT bulk and must loop each row,
-        insert the parent, get the PK, then insert each children (or children first then
-        parent depending on BelongsTo vs HasOne or HasMany)
-        """
-
         # Note about bulk insert with nested relations Dictionary
         # Bulk insert does not give back the primary keys for each inserted record
         # So I have no way to know the PK of the parent when I insert the child relations
@@ -136,14 +121,9 @@ class _BaseModel(Generic[E], PydanticBaseModel):
 
     @hybridmethod
     def mapper(self_or_entity, *args) -> Mapper:
-        """Entity mapper for model->table or table->model conversions
-
-        Can be accessed both from the [static] class or from an instance
-        """
         return Mapper(self_or_entity, *args)
 
     async def create(self, relation: str, values: Union[List[Dict], Dict]) -> None:
-        """Create related records and link them to the parent model"""
         field = self.__class__.modelfields.get(relation)
         relation = field.relation.fill(field)
 
@@ -162,7 +142,6 @@ class _BaseModel(Generic[E], PydanticBaseModel):
         await relation.entity.insert(values)
 
     async def save(self) -> None:
-        """Save this model to the database"""
         # Convert self model instance into Dict of mapped table columns
         values = self.mapper().table()
 
@@ -173,7 +152,6 @@ class _BaseModel(Generic[E], PydanticBaseModel):
         setattr(self, self.__class__.pk, new_pk)
 
     async def delete(self) -> None:
-        """Delete this model from the database"""
         dump('delete', self)
         pass
 

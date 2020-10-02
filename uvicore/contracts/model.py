@@ -20,13 +20,14 @@ class Model(Generic[E], ABC):
     #     pass
 
     @abstractmethod
-    async def insert(entity, models: List) -> None:
+    async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
         """Insert one or more entities as List of entities or List of Dictionaries
 
-        This bulk insert does NOT allow inserting child relations at the same time
-        as there is no way to get each parents PK out to reference with each child
-        in BULK. If you want to insert parent and relations at the same time use
-        the slower non-bulk insert_with_relations() instead
+        This bulk insert does NOT allow inserting child relations at the
+        same time as there is no way to get each parents PK out to
+        reference with each child in BULK. If you want to insert parent
+        and relations at the same time use the slower non-bulk
+        insert_with_relations() instead.
         """
         pass
 
@@ -34,9 +35,10 @@ class Model(Generic[E], ABC):
     async def insert_with_relations(entity, models: List[Dict]) -> None:
         """Insert one or more entities as List of Dict that DO have relations included
 
-        Because relations are included, this insert is NOT bulk and must loop each row,
-        insert the parent, get the PK, then insert each children (or children first then
-        parent depending on BelongsTo vs HasOne or HasMany)
+        Because relations are included, this insert is NOT bulk and must
+        loop each row, insert the parent, get the PK, then insert each
+        children (or children first then parent depending on BelongsTo vs
+        HasOne or HasMany)
         """
         pass
 

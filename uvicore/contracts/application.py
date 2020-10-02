@@ -52,12 +52,6 @@ class Application(ABC):
         """HTML Templating System"""
         pass
 
-    # @property
-    # @abstractmethod
-    # def db(self) -> Any:
-    #     """Database instance"""
-    #     pass
-
     @property
     @abstractmethod
     def config(self) -> Config:
@@ -94,12 +88,6 @@ class Application(ABC):
         """App running as HTTP server (not as CLI)"""
         pass
 
-    # @property
-    # @abstractmethod
-    # def is_async(self) -> bool:
-    #     """App running in async mode (HTTP).  CLI is not async"""
-    #     pass
-
     @property
     @abstractmethod
     def packages(self) -> OrderedDict[str, Package]:
@@ -126,25 +114,25 @@ class Application(ABC):
 
     @abstractmethod
     def bootstrap(self, app_config: Dict, path: str, is_console: bool) -> None:
-        """Bootstrap the uvicore application
-
-        * Set globals and framework options attributes
-        * Register, boot and merge all providers and configs
-        * Fire up the CLI instance (only if running CLI commands)
-        * Fire up the HTTP server (only if running as a server)
-        * Fire up the Database engine
-        * Configure template environment and mount static routes
-        """
+        """Bootstrap the uvicore application"""
         pass
 
     @abstractmethod
-    def package(self, package: str, *, name: str = None, main: bool = False) -> Package: pass
+    def package(self, package: str, *, name: str = None, main: bool = False) -> Package:
+        """Get package by name or by main running package"""
+        pass
 
     @abstractmethod
-    def perf(self, item: any) -> None: pass
+    def perf(self, item: any) -> None:
+        """Add entry to debug performance counter"""
+        pass
 
     @abstractmethod
-    def dump(self, *args) -> None: pass
+    def dump(self, *args) -> None:
+        """Pretty print args to console"""
+        pass
 
     @abstractmethod
-    def dd(self, *args) -> None: pass
+    def dd(self, *args) -> None:
+        """Pretty print args to console and exit()"""
+        pass

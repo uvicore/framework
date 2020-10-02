@@ -4,16 +4,13 @@ from uvicore.contracts import Model as ModelInterface
 
 
 # Model interfaces, though redundant, are used for proper type hinting code intellisense
-class User(ModelInterface):
+class UserInfo(ModelInterface):
     id: Optional[int]
-    email: str
-    info: Optional[UserInfo]
-    app1_extra: Optional[str]
-    contact: Optional[Contact]
-    posts: Optional[List[Post]]
+    extra1: str
+    user_id: int
+    user: Optional[User]
 
 
 # Import relations after model to avoid circular dependencies
-from uvicore.auth.contracts import UserInfo
-from .contact import Contact
-from .post import Post
+from .user import User
+

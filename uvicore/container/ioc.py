@@ -28,11 +28,6 @@ class Ioc(IocInterface):
     def aliases(self) -> Dict[str, str]:
         return self._aliases
 
-
-    #application = _Application
-    #Model = model.Model
-
-
     def __init__(self) -> None:
         self._bindings: Dict[str, Binding] = {}
         self._aliases: Dict[str, str] = {}
@@ -80,9 +75,7 @@ class Ioc(IocInterface):
         elif name in self.aliases:
             return self.bindings[self.aliases[name]]
 
-
     def make(self, name: str, default: Callable[[], T] = None, **kwargs) -> T:
-        """Make a module/class/method by name from IoC mapping"""
         if default is not None and self.binding(name) is None:
             # Default was provided and no binding currently exists
             # Bind the default provided but look for bindings override in app_config
@@ -122,7 +115,12 @@ class Ioc(IocInterface):
         # Unless there is no factory and no kwargs, simply return the object class
         elif is_class:
             if binding.factory:
-                factory = module.load(binding.factory).object
+                if type(binding.factory) == str:
+                    # String factory, dynamically import it
+                    factory = module.load(binding.factory).object
+                else:
+                    # Direct class factory
+                    factory = binding.factory
                 made = factory().make(binding.object, **kwargs)
             elif binding.kwargs:
                 made = binding.object(**kwargs)
@@ -136,54 +134,33 @@ class Ioc(IocInterface):
         # Return made object
         return made
 
-    def bind(self,
-        name: str,
-        object: Any,
-        *,
-        factory: Any = None,
-        kwargs: Dict = None,
-        singleton: bool = False,
-        aliases: List = []
-    ) -> None:
-        """Add binding from method parameters"""
+    def bind(self, name: str, object: Any, *, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
         # Add each aliases to list of all aliases
         for alias in aliases:
             self._aliases[alias] = name
 
-        # Object is a not yet imported string
-        # Add to bindings without actually importing it for deferred loading
+        # Set path and object based on str or actual class
+        path = None
         if type(object) == str:
-            binding = Binding(
-                path=object,
-                object=None,
-                factory=factory,
-                instance=None,
-                kwargs=kwargs,
-                singleton=singleton,
-                aliases=aliases,
-            )
-        else:
-            # Object is an actual module, class, method...
-            binding = Binding(
-                path=None,
-                object=object,
-                factory=factory,
-                instance=None,
-                kwargs=kwargs,
-                singleton=singleton,
-                aliases=aliases,
-            )
+            path = object
+            object = None
+
         # Add binding
-        self._bindings[name] = binding
+        self._bindings[name] = Binding(
+            path=path,
+            object=object,
+            factory=factory,
+            instance=None,
+            kwargs=kwargs,
+            singleton=singleton,
+            aliases=aliases,
+        )
 
     def bind_map(self, mapping: Dict) -> None:
-        """Add bindings from mapping dictionary
-        """
         for name, options in mapping.items():
             self.bind(name, **options)
 
-    def alias(self, src: str, dest: str):
-        """Add alias to existing binding"""
+    def alias(self, src: str, dest: str) -> None:
         if dest in self.bindings:
             if src not in self.bindings[dest]:
                 self.bindings[dest].aliases.append(src)

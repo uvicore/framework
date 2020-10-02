@@ -25,6 +25,18 @@ from uvicore.support.dumper import dd, dump
 
 #     id2: Optional[int]
 
+
+#from uvicore.contracts import Model as ModelInterface
+# # Model interfaces, though redundant, are used for proper type hinting code intellisense
+# class User(ModelInterface):
+#     id: Optional[int]
+#     email: str
+#     info: Optional[List[UserInfo]]
+
+
+from uvicore.auth.contracts import User as UserInterface
+
+
 # UserModel for typehints only.  Import User for actual usage.
 #class UserModel(Model, metaclass=ModelMetaclass):
 class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
@@ -60,9 +72,18 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 
 # IoC Class Instance
 User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+#class User(UserIoc, Model[UserModel], UserInterface): pass
+
+# class User(
+#     _User,
+#     Model[_User],
+#     UserInterface
+# ): pass
+
 
 
 from uvicore.auth.models.user_info import UserInfo
 #UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
 
 User.update_forward_refs()
+#_User.update_forward_refs()
