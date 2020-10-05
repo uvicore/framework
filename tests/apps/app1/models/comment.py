@@ -70,7 +70,7 @@ Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentM
 
 # Update forwrad refs (a work around to circular dependencies)
 
-#from app1.models.post import Post
-Post = uvicore.ioc.make('app1.models.post.Post')
+from app1.models.post import Post
+#Post = uvicore.ioc.make('app1.models.post.Post')
 Comment.update_forward_refs()
 #_Comment.update_forward_refs()

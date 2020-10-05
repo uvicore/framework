@@ -8,93 +8,8 @@ import uvicore
 from uvicore import app
 from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
+from uvicore.database.query import QueryBuilder
 from uvicore.support.dumper import dd, dump
-
-
-class QueryBuilder:
-
-    def __init__(self, db: DatabaseInterface, connection: str, table: str = None):
-        self.db = db
-        self.connection = connection or self.db.default
-        self.prefix = self.db.connection(self.connection).prefix
-        self._table = table
-        self._join = None
-        self._select = None
-        self._where = []
-
-    def table(self, table: str):
-        self._table = self.prefix + table
-        return self
-
-    def select(self, *args):
-        self._select = args
-        return self
-
-    def join(self, table: str, left: str, operator: str, right: str):
-        dd('hi')
-
-    def where(self, column: str, operator: str = None, value: Any = None):
-        if not value:
-            value = operator
-            operator = '='
-        self._where.append((column, operator, value))
-        return self
-
-    # Finalizers are find, get, update, delete, insert
-
-    async def find(self, pk: Any):
-        # FIDME, need dynamic pk
-        table, query = self.build()
-        query = query.where(table.c.id == pk)
-        return await self.db.fetchone(query)
-
-    async def get(self):
-        table, query = self.build()
-
-        # if self._select is none
-        # query = sa.select([table.c.id, table.c.email])
-        # #query = table.select()
-
-        #x = [getattr(table.c, x) for x in self._select]
-        #return x
-
-        return await self.db.fetchall(query)
-        return {
-            'db': self.db,
-            'connection': self.db.connection(self.connection),
-            'select': self._select,
-            'table': table,
-            'where': self._where,
-        }
-
-    def build(self, method: str = 'select'):
-        table = self.get_table()
-        query = None
-
-        # where
-        #   select
-        #   update (not in insert)
-        #   delete
-
-        if method == 'select':
-            if self._select:
-                columns = []
-                #for select in self._select:
-                columns = [getattr(table.c, x) for x in self._select]
-                query = sa.select(columns)
-            else:
-                query = sa.select([table])
-
-
-
-        return table, query
-
-    def get_table(self):
-        #return self.db.table(self._table, connection=self.connection)
-        metadata = self.db.metadata(self.connection)
-        if metadata:
-            return metadata.tables.get(self._table)
-
 
 
 class _Db(DatabaseInterface):
@@ -108,20 +23,16 @@ class _Db(DatabaseInterface):
         return self._connections
 
     @property
-    def engines(self) -> Dict[str, str]:
+    def engines(self) -> Dict[str, sa.engine.Engine]:
         return self._engines
 
     @property
-    def databases(self) -> Dict[str, str]:
+    def databases(self) -> Dict[str, EncodeDatabase]:
         return self._databases
 
     @property
     def metadatas(self) -> Dict[str, sa.MetaData]:
         return self._metadatas
-
-    @default.setter
-    def default(self, value: str) -> None:
-        self._default = value
 
     @property
     def query(self) -> Dict:
@@ -169,9 +80,6 @@ class _Db(DatabaseInterface):
                     await database.disconnect()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
-        """Get all packages with the metakey derived from the connection name
-        or passed in metakey.
-        """
         if not metakey:
             if not connection: connection = self.default
             metakey = self.connection(connection).metakey
@@ -189,27 +97,22 @@ class _Db(DatabaseInterface):
                 metakey = self.connection(connection).metakey
             return metakey
         except Exception:
-            raise Exception('Metakey not found')
+            raise Exception('Metakey not found, connection={} metakey={}'.format(connection, metakey))
 
     def connection(self, connection: str = None) -> Connection:
-        """Get one connection by connection name"""
         if not connection: connection = self.default
         return self.connections.get(connection)
 
     def metadata(self, connection: str = None, metakey: str = None) -> sa.MetaData:
-        """Get one metadata by connection name or metakey"""
         metakey = self.metakey(connection, metakey)
         return self.metadatas.get(metakey)
 
-    def table(self, table: str, connection: str = None, metakey: str = None) -> sa.Table:
-        """Get one table by name using connection or metakey"""
-        metakey = self.metakey(connection, metakey)
-        metadata = self.metadata(metakey=metakey)
-        if metadata:
-            return metadata.tables.get(table)
+    def table(self, table: str, connection: str = None) -> sa.Table:
+        tablename = self.tablename(table, connection)
+        metadata = self.metadata(connection)
+        if metadata: return metadata.tables.get(tablename)
 
     def tablename(self, table: str, connection: str = None) -> str:
-        """Get table name with prefix for a table string without prefix"""
         if '.' in table:
             connection, table = tuple(table.split('.'))
         connection = self.connection(connection)
@@ -217,12 +120,10 @@ class _Db(DatabaseInterface):
             return connection.prefix + table
 
     def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
-        """Get one engine by connection name or metakey"""
         metakey = self.metakey(connection, metakey)
         return self.engines.get(metakey)
 
-    async def database(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
-        """Get one database by connection name or metakey"""
+    async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
         metakey = self.metakey(connection, metakey)
         database = self.databases.get(metakey)
         if not database.is_connected:
@@ -230,16 +131,16 @@ class _Db(DatabaseInterface):
         #await self._connect(metakey=metakey)
         return self.databases.get(metakey)
 
-    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None) -> List[Mapping]:
-        database = await self.database(connection)
+    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[Mapping]:
+        database = await self.database(connection, metakey)
         return await database.fetch_all(query, values)
 
-    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None) -> Optional[Mapping]:
-        database = await self.database(connection)
+    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[Mapping]:
+        database = await self.database(connection, metakey)
         return await database.fetch_one(query, values)
 
-    async def execute(self, query: Union[ClauseElement, str], values: Union[List, Dict] = None, connection: str = None) -> Any:
-        database = await self.database(connection)
+    async def execute(self, query: Union[ClauseElement, str], values: Union[List, Dict] = None, connection: str = None, metakey: str = None) -> Any:
+        database = await self.database(connection, metakey)
         if type(values) == dict:
             return await database.execute(query, values)
         elif type(values) == list:
@@ -262,12 +163,112 @@ class _Db(DatabaseInterface):
     #         await database.connect()
 
 
-    def query(self, connection: str = None):
+    def query(self, connection: str = None) -> QueryBuilder:
         if not connection: connection = self.default
-        return QueryBuilder(self, connection)
+        return QueryBuilder(connection)
 
     # def table(self, table: str):
     #     return QueryBuilder(self, self.default, table)
 
     # def conn(self, connection: str):
     #     return QueryBuilder(self, connection)
+
+
+# IoC Class Instance
+# No because not to be used by the public
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#class QueryBuilder:
+#     def __init__(self, db: DatabaseInterface, connection: str, table: str = None):
+#         self.db = db
+#         self.connection = connection or self.db.default
+#         self.prefix = self.db.connection(self.connection).prefix
+#         self._table = table
+#         self._join = None
+#         self._select = None
+#         self._where = []
+
+#     def table(self, table: str):
+#         self._table = self.prefix + table
+#         return self
+
+#     def select(self, *args):
+#         self._select = args
+#         return self
+
+#     def join(self, table: str, left: str, operator: str, right: str):
+#         dd('hi')
+
+#     def where(self, column: str, operator: str = None, value: Any = None):
+#         if not value:
+#             value = operator
+#             operator = '='
+#         self._where.append((column, operator, value))
+#         return self
+
+#     # Finalizers are find, get, update, delete, insert
+
+#     async def find(self, pk: Any):
+#         # FIDME, need dynamic pk
+#         table, query = self.build()
+#         query = query.where(table.c.id == pk)
+#         return await self.db.fetchone(query)
+
+#     async def get(self):
+#         table, query = self.build()
+
+#         # if self._select is none
+#         # query = sa.select([table.c.id, table.c.email])
+#         # #query = table.select()
+
+#         #x = [getattr(table.c, x) for x in self._select]
+#         #return x
+
+#         return await self.db.fetchall(query)
+#         return {
+#             'db': self.db,
+#             'connection': self.db.connection(self.connection),
+#             'select': self._select,
+#             'table': table,
+#             'where': self._where,
+#         }
+
+#     def build(self, method: str = 'select'):
+#         table = self.get_table()
+#         query = None
+
+#         # where
+#         #   select
+#         #   update (not in insert)
+#         #   delete
+
+#         if method == 'select':
+#             if self._select:
+#                 columns = []
+#                 #for select in self._select:
+#                 columns = [getattr(table.c, x) for x in self._select]
+#                 query = sa.select(columns)
+#             else:
+#                 query = sa.select([table])
+
+#         return table, query
+
+#     def get_table(self):
+#         #return self.db.table(self._table, connection=self.connection)
+#         metadata = self.db.metadata(self.connection)
+#         if metadata:
+#             return metadata.tables.get(self._table)
+
+#adf

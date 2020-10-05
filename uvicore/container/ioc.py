@@ -1,6 +1,6 @@
 import importlib
 import inspect
-from typing import Any, Dict, List, Optional, TypeVar, Type, Callable
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 import uvicore
 from uvicore.contracts import Binding
@@ -9,15 +9,6 @@ from uvicore.support import module
 from uvicore.support.dumper import dd, dump
 
 T = TypeVar('T')
-
-
-#from uvicore.orm import model
-#from uvicore.foundation.application import _Application
-# class Container:
-
-#     def singleton(cls: Callable[[], T], **kwargs) -> T:
-#         return cls
-
 
 class Ioc(IocInterface):
     @property
@@ -33,7 +24,7 @@ class Ioc(IocInterface):
         self._aliases: Dict[str, str] = {}
 
         # Add default binding specific to uvicore framework
-        # Only some defaults are here.  The rest are bound in
+        # Only some early defaults are here.  The rest are bound in
         # their service providers register() method
         self.bind_map({
             'Application': {
@@ -54,19 +45,6 @@ class Ioc(IocInterface):
                 'singleton': True,
                 'aliases': ['dispatcher', 'Event', 'event', 'Events', 'events'],
             },
-
-            # NO - These are now their own Service Providers with bind()
-            # 'Config': {
-            #     'object': 'uvicore.configuration.config._Config',
-            #     'singleton': True,
-            #     'aliases': ['Configuration', 'config'],
-            # },
-            # 'Logger': {
-            #     'object': 'uvicore.support.logger._Logger',
-            #     'factory': 'uvicore.factory.Logger',
-            #     'singleton': True,
-            #     'aliases': ['Log', 'log', 'logger'],
-            # },
         })
 
     def binding(self, name: str) -> Binding:
@@ -156,14 +134,12 @@ class Ioc(IocInterface):
             aliases=aliases,
         )
 
-    def bind_map(self, mapping: Dict) -> None:
+    def bind_map(self, mapping: Dict[str, Dict]) -> None:
         for name, options in mapping.items():
             self.bind(name, **options)
 
     def alias(self, src: str, dest: str) -> None:
-        if dest in self.bindings:
-            if src not in self.bindings[dest]:
-                self.bindings[dest].aliases.append(src)
-
-# Public API for import * and doc gens
-__all__ = ['Ioc']
+        if dest not in self.bindings:
+            raise Exception('Could not find IoC binding '.format(dest))
+        if src not in self.bindings[dest]:
+            self.bindings[dest].aliases.append(src)

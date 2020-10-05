@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import logging
 import logging.config
 import re
 import sys
 from logging import Formatter
 
-import uvicore
 from colored import attr, bg, fg
+
+import uvicore
 from uvicore.contracts import Logger as LoggerInterface
 
 # # Sunfinity standardized log configuration
@@ -100,80 +103,80 @@ class _Logger(LoggerInterface):
             ))
             logger.addHandler(fh)
 
-    def debug(self, message):
-        logging.debug(message)
-        return self
+    def __call__(self, message):
+        self.info(message)
 
-    def info(self, message):
+    def info(self, message) -> LoggerInterface:
         logging.info(message)
         return self
 
-    def warning(self, message):
-        logging.warning(message)
-        return self
-
-    def error(self, message):
-        logging.error(message)
-        return self
-
-    def critical(self, message):
-        logging.critical(message)
-        return self
-
-    def exception(self, message):
-        logging.exception(message)
-        return self
-
-    def header(self, message):
-        logging.info(":: " + message + " ::")
-        return self
-
-    def header2(self, message):
-        logging.info("## " + message + " ##")
-        return self
-
-    def header3(self, message):
-        logging.info("=== " + message + " ===")
-        return self
-
-    def header4(self, message):
-        logging.info("---- " + message + " ----")
-        return self
-
-    def item(self, message):
-        logging.info("* " + message)
-        return self
-
-    def item2(self, message):
-        logging.info("- " + message)
-        return self
-
-    def item3(self, message):
-        logging.info("+ " + message)
-        return self
-
-    def item4(self, message):
-        logging.info("> " + message)
-        return self
-
-    def notice(self, message):
+    def notice(self, message) -> LoggerInterface:
         logging.info("NOTICE: " + message)
         return self
 
-    def blank(self):
+    def warning(self, message) -> LoggerInterface:
+        logging.warning(message)
+        return self
+
+    def debug(self, message) -> LoggerInterface:
+        logging.debug(message)
+        return self
+
+    def error(self, message) -> LoggerInterface:
+        logging.error(message)
+        return self
+
+    def critical(self, message) -> LoggerInterface:
+        logging.critical(message)
+        return self
+
+    def exception(self, message) -> LoggerInterface:
+        logging.exception(message)
+        return self
+
+    def blank(self) -> LoggerInterface:
         logging.info('')
         return self
 
-    def separator(self):
+    def separator(self) -> LoggerInterface:
         logging.info('=' * 80)
         return self
 
-    def line(self):
+    def line(self) -> LoggerInterface:
         logging.info('-' * 80)
         return self
 
-    def __call__(self, message):
-        self.info(message)
+    def header(self, message) -> LoggerInterface:
+        logging.info(":: " + message + " ::")
+        return self
+
+    def header2(self, message) -> LoggerInterface:
+        logging.info("## " + message + " ##")
+        return self
+
+    def header3(self, message) -> LoggerInterface:
+        logging.info("=== " + message + " ===")
+        return self
+
+    def header4(self, message) -> LoggerInterface:
+        logging.info("---- " + message + " ----")
+        return self
+
+    def item(self, message) -> LoggerInterface:
+        logging.info("* " + message)
+        return self
+
+    def item2(self, message) -> LoggerInterface:
+        logging.info("- " + message)
+        return self
+
+    def item3(self, message) -> LoggerInterface:
+        logging.info("+ " + message)
+        return self
+
+    def item4(self, message) -> LoggerInterface:
+        logging.info("> " + message)
+        return self
 
 
 class ColoredFormatter(Formatter):
@@ -272,8 +275,7 @@ class ColoredFormatter(Formatter):
 
 
 # IoC Class Instance
-# NO - Circular issues on override
-# Logger: LoggerInterface = uvicore.ioc.make('Logger')
+# No because not to be used by the public
 
 # Public API for import * and doc gens
-__all__ = ['_Logger']
+__all__ = ['_Logger', 'ColoredFormatter']

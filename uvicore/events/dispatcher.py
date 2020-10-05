@@ -29,10 +29,13 @@ class _Dispatcher(DispatcherInterface):
         self._wildcards = []
 
     def register(self, events: Dict[str, Dict]):
+        # Ensure each event has a 'name' attribute
+        for (key, value) in events.items():
+            if 'name' not in value: value['name'] = key
+
         # Merge (but not deep) with existing events
         # Merging allows override by other later defined packages
         self._events = {**self.events, **events}
-        pass
 
     def listen(self, events: Union[str, List], listener: Union[str, Callable]) -> None:
         if type(events) == str: events = [events]
@@ -70,7 +73,7 @@ class _Dispatcher(DispatcherInterface):
         # and _dispatch is called directly.
 
         # Get event by string name or class inspection
-        event_meta = self.get_event(event)
+        event_meta = self.event(event)
 
         # Event not registered, dispatch nothing
         if not event_meta: return
@@ -90,7 +93,7 @@ class _Dispatcher(DispatcherInterface):
 
     def _dispatch(self, event: Any, payload = {}) -> None:
         # Get event by string name or class inspection
-        event_meta = self.get_event(event)
+        event_meta = self.event(event)
 
         # Event not registered, dispatch nothing
         if not event_meta: return
@@ -116,7 +119,7 @@ class _Dispatcher(DispatcherInterface):
         self._fire_listeners(event_meta, payload)
 
     def _fire_listeners(self, event: Dict, payload: Dict) -> None:
-        listeners = self.get_listeners(event['name'])
+        listeners = self.event_listeners(event['name'])
         for listener in listeners:
             # New up the listener
             if type(listener) == str:
@@ -128,27 +131,29 @@ class _Dispatcher(DispatcherInterface):
             else:
                 listener(event, payload)
 
-    def get_listeners(self, event: str) -> List:
+    def event(self, event: Union[str, Callable]) -> Dict:
+        if type(event) == str:
+            name = event
+        else:
+            name = str(event.__class__).split("'")[1]
+        if name in self.events:
+            # dump('before', self.events.get(name))
+            # event_meta = self.events.get(name)
+            # event_meta['name'] = name
+            # dump('after', self.events.get(name))
+            #return event_meta
+            return self.events.get(name)
+
+    def event_listeners(self, event: str) -> List:
         listeners = []
         if event in self.listeners:
             listeners += self.listeners[event]
 
         for wildcard in self.wildcards:
             if re.search(wildcard, event):
-            # if wildcard.replace('*', '') in event:
                 listeners += self.listeners[wildcard]
 
         return listeners
-
-    def get_event(self, event: Union[str, Callable]) -> Dict:
-        if type(event) == str:
-            name = event
-        else:
-            name = str(event.__class__).split("'")[1]
-        if name in self.events:
-            event_meta = self.events.get(name)
-            event_meta['name'] = name
-            return event_meta
 
 
 # IoC Class Instance

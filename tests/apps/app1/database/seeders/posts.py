@@ -6,7 +6,7 @@ from uvicore.support.dumper import dump, dd
 async def seed():
 
     # Get all tags keyed by 'name' column
-    tags = await Tag.query().key_by('name').get()
+    #tags = await Tag.query().key_by('name').get()
 
 
     #post = PostModel(slug='test-post1', title='Test Post1', other='other stuff1', creator_id=1)

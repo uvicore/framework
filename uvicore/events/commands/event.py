@@ -20,7 +20,7 @@ def list():
 def show(event: str):
     """Show detailed info for one event"""
     log.header("Event details for " + event).line()
-    event = uvicore.events.get_event(event)
+    event = uvicore.events.event(event)
     if event:
         dump(event)
     else:

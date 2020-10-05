@@ -206,7 +206,7 @@ class _ServiceProvider(ProviderInterface):
 
 
 # IoC Class Instance
-ServiceProvider: ProviderInterface = uvicore.ioc.make('ServiceProvider')
+ServiceProvider: _ServiceProvider = uvicore.ioc.make('ServiceProvider', _ServiceProvider)
 
 # Public API for import * and doc gens
 __all__ = ['ServiceProvider', '_ServiceProvider']

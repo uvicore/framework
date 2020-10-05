@@ -20,7 +20,7 @@ class Http(ServiceProvider):
 
             # Bind HTTP Server
             self.bind('Http', 'uvicore.http.server._Server',
-                aliases=['http', 'HTTP'],
+                aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
                 singleton=True,
                 kwargs={
                     'debug': uvicore.config('app.debug'),
@@ -32,9 +32,9 @@ class Http(ServiceProvider):
                 }
             )
             # No because I added default to make
-            self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['web_router'])
-            self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['api_router'])
-            self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['routes'])
+            self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['uvicore.http.routing.web_router.WebRouter', 'web_router'])
+            self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['uvicore.http.routing.api_router.ApiRouter', 'api_router'])
+            self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['uvicore.http.routing.routes.Routes', 'routes'])
             self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
             self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', aliases=['templates'])
 

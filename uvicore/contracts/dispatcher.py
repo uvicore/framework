@@ -39,8 +39,15 @@ class Dispatcher(ABC):
 
     @abstractmethod
     def dispatch(self, event: Any, payload = {}) -> None:
+        """Fire off an event and run all listener callbacks"""
         pass
 
     @abstractmethod
-    def get_listeners(self, event: str) -> List:
+    def event(self, event: Union[str, Callable]) -> Dict:
+        """Get one event by str name or class"""
+        pass
+
+    @abstractmethod
+    def event_listeners(self, event: str) -> List:
+        """Get all listeners for an event including wildcard"""
         pass

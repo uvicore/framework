@@ -43,7 +43,7 @@ class Ioc(ABC):
         pass
 
     @abstractmethod
-    def bind_map(self, mapping: Dict) -> None:
+    def bind_map(self, mapping: Dict[str, Dict]) -> None:
         """Add IoC bindings from dictionary"""
         pass
 

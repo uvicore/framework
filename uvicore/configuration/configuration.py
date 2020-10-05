@@ -10,39 +10,42 @@ from uvicore.support.dumper import dd, dump
 class _Configuration(ConfigInterface):
     #config: Dict = {}
     @property
-    def items(self) -> Dict:
+    def items(self) -> Dict[str, Dict]:
         return self._items
 
     def __init__(self) -> None:
         self._items: Dict = {}
 
-    def get(self, dotkey: str = None, config: Dict = None) -> Any:
+    def __call__(self, dotkey: str = None):
+        return self.get(dotkey)
+
+    def get(self, dotkey: str = None, _recursive_config: Dict = None) -> Any:
         # Recursive for dot notation
         if not dotkey:
             return self.items
-        if config is None: config = self.items
+        if _recursive_config is None: _recursive_config = self.items
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
-            if key not in config:
-                config[key] = {}
-            return self.get(rest, config[key])
+            if key not in _recursive_config:
+                _recursive_config[key] = {}
+            return self.get(rest, _recursive_config[key])
         else:
-            if dotkey in config:
-                return config[dotkey]
+            if dotkey in _recursive_config:
+                return _recursive_config[dotkey]
             else:
                 return None
 
-    def set(self, dotkey: str, value: any, config: Dict = None) -> Any:
+    def set(self, dotkey: str, value: any, _recursive_config: Dict = None) -> Any:
         # Recursive for dot notation
         # Remember objects are byRef, so changing config also changes self.items
-        if config is None: config = self._items
+        if _recursive_config is None: _recursive_config = self._items
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
-            if key not in config:
-                config[key] = {}
-            return self.set(rest, value, config[key])
+            if key not in _recursive_config:
+                _recursive_config[key] = {}
+            return self.set(rest, value, _recursive_config[key])
         else:
-            config[dotkey] = value
+            _recursive_config[dotkey] = value
             return value
 
     def merge(self, dotkey: str, value: Any) -> None:
@@ -58,12 +61,9 @@ class _Configuration(ConfigInterface):
             # Finally set the new merged config
             self.set(dotkey, existing)
 
-    def __call__(self, dotkey: str = None):
-        return self.get(dotkey)
 
 # IoC Class Instance
-# NO - Circular issues on override
-#Configuration: ConfigInterface = uvicore.ioc.make('Config')
+# No because not to be used by the public
 
 # Public API for import * and doc gens
 __all__ = ['_Configuration']

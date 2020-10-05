@@ -32,3 +32,7 @@ title_ideas = """
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')
 def _cli():
     pass
+
+
+# IoC Class Instance
+# No because not to be used by the public

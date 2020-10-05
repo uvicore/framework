@@ -168,13 +168,83 @@ async def test_one_to_many(app1):
     #dump(users)
 
     # A Post has Many Comments
-    # posts: List[PostModel] = (await Post
-    #     .include('creator', 'comments')
-    #     .where('creator_id', 1)
-    #     .where('comments.id', 1)  # No cannot where on many-to-many unless I joined and deduped
-    #     #filter('comments.deleted', False)
+    #posts = await Post.query().include('comments').get()
+    #dump(posts)
+
+
+    from uvicore import db
+
+    # query = (db
+    #     .query('app1')
+    #     #.select('id', 'title', 'unique_slug')
+    #     .table('posts')
+    #     .join('auth.users', 'posts.creator_id', 'auth.users.id')
+    #     .join('contacts', 'auth.users.id', 'contacts.user_id')
+    #     .outer_join('comments', 'posts.id', 'comments.post_id')
+    #     #.where('id', '=', 1)
+    #     #.where('comments.id', '>', 0)
+    #     #.where('auth.users.id', 1)
+    #     #.where('contacts.phone', '111-111-1111')
+    #     #.order_by('title')
+    #     #.order_by('title', 'DESC')
+    #     #.order_by(['id', 'title'])
+    #     #.order_by([('id', 'ASC'), ('title', 'DESC')])
+    #     .order_by('auth.users.email')
+    # )
+    # dump(query.query)
+    # print(query.sql())
+
+    # results = await query.get()
+    # #for row in results:
+    #     #dump(getattr(row, 'auth_users_email'))
+    #     #dump(row.keys())
+    #     #dump(row.users__email)
+    # dump(results)
+    # dump(results[0].keys())
+
+
+    posts = await Post.query().include('creator.contact').order_by('creator.contact.phone', 'ASC').get()
+    dump(posts)
+
+
+
+    # x = (db.query()
+    #     .table('wiki.posts')
+    #     .join('auth.users', 'posts.creator_id', 'auth.users.id')
+    #     .join('contacts', 'auth.users.id', 'contacts.user_id')
+    #     .join('comments', 'posts.id', 'comments.id')
+    #     .where('posts.creator_id', 1)
+    #     .where('comments.post_id', 1)
     #     .get()
     # )
+    #x.id, x.users.email, x.users.comments.phone
+
+
+# FROM posts
+# LEFT OUTER JOIN auth_users ON posts.creator_id = auth_users.id
+# LEFT OUTER JOIN contacts ON auth_users.id = contacts.user_id
+# LEFT OUTER JOIN comments ON posts.id = comments.post_id
+# LEFT OUTER JOIN auth_users ON posts.creator_id = auth_users.id
+# LEFT OUTER JOIN contacts ON auth_users.id = contacts.user_id
+# LEFT OUTER JOIN comments ON posts.id = comments.post_id
+
+# WHERE posts.creator_id = :creator_id_1 AND comments.post_id = :post_id_1
+
+
+
+    # posts: List[PostModel] = (await Post.query()
+    #     .include('creator.contact', 'comments')
+    #     .where('creator_id', 1)
+    #     #.where('comments.id', 1)  # No cannot where on many-to-many unless I joined and deduped
+
+    #     #.order_by('title')                     # Exclude in 2
+
+    #     .filter('comments.post_id', 1)      # Exclude in 1, add to 2 as where()
+    #     #.order_by('comments.title')            # Exclude in 1, add to 2
+
+    #     .get()
+    # )
+    # dump(posts)
 
     #x = await Post._find(1)
     #dump(x, 'xxxxxxx')
@@ -233,18 +303,17 @@ async def test_one_to_many(app1):
     #     print(post.creator.email)
 
 
-
-    posts = await Post.query().include('creator.contact').get()
-    for p in posts:
-        dump(p)
+    # query = Post.query().include('creator.contact').where('creator.email', 'administrator@example.com')
+    # posts = await query.get()
+    # # print('QUERY:', query.sql())
+    # for p in posts:
+    #     dump(p)
 
     # #post = await Post.query().find(1)
 
     # uis = await UserInfo.query().include('user').get()
     # for ui in uis:
     #     dump(ui.user.app1_extra, '-------------')
-
-
 
 
     # # post = await Post.query().include('creator.contact').find(1)
@@ -296,10 +365,6 @@ async def test_one_to_many(app1):
 
 
     # dump('##########################################################')
-
-
-
-
 
 
     #post = await Post.query().find(1)

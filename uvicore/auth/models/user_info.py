@@ -56,4 +56,3 @@ UserInfo: UserInfoModel = uvicore.ioc.make('uvicore.auth.models.user_info.UserIn
 #from uvicore.auth.models.user import User
 User = uvicore.ioc.make('uvicore.auth.models.user.User')
 UserInfo.update_forward_refs()
-#UserInfoModel.update_forward_refs()

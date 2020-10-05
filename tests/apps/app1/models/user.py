@@ -43,6 +43,7 @@ from app1.contracts import User as UserInterface
 
 #class User(Model['User'], metaclass=ModelMetaclass):
 #class UserModel(AuthOverride):
+
 class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 #class UserModel(Model['UserModel']):
 #class UserModel(Model['UserModel'], metaclass=ModelMetaclass):

@@ -16,8 +16,8 @@ class Database(ServiceProvider):
         """
         # Register IoC bindings
         self.bind('Database', 'uvicore.database.db._Db',
-            aliases=['database', 'db'],
             singleton=True,
+            aliases=['database', 'db'],
         )
 
         # Set uvicore.log global

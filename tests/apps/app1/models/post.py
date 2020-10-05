@@ -32,7 +32,6 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     slug: str = Field('unique_slug',
-        title='CocknBalls',
         description='URL Friendly Post Title Slug',
         required=True,
         # properties={
@@ -108,8 +107,8 @@ from app1.models.comment import Comment
 from app1.models.tag import Tag
 
 #from uvicore.auth.models.user import User
-#from app1.models.user import User
-User = uvicore.ioc.make('uvicore.auth.models.user.User')
+from app1.models.user import User
+#User = uvicore.ioc.make('uvicore.auth.models.user.User')
 #Comment = uvicore.ioc.make('app1.models.comment.Comment')
 #Tag = uvicore.ioc.make('app1.models.tag.Tag')
 

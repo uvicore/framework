@@ -11,7 +11,7 @@ class Model(Generic[E], ABC):
 
     @abstractmethod
     def query(entity) -> QueryBuilder[E]:
-        """Query builder passthrough"""
+        """ORM query builder passthrough"""
         pass
 
     # @abstractmethod
