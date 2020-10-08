@@ -3,18 +3,17 @@ from __future__ import annotations
 import operator as operators
 from copy import copy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import BinaryExpression
 
-
 import uvicore
+from uvicore.database.builder import Column, Join, Query, QueryBuilder
 from uvicore.support.dumper import dd, dump
-from uvicore.database.builder import Query, Builder, Join, Column
-
 
 E = TypeVar('E')
 
-class QueryBuilder(Builder):
+class _DbQueryBuilder(Generic[E], QueryBuilder[E]):
     """Database Query Builder"""
 
     def __init__(self, connection: str):
@@ -87,3 +86,11 @@ class QueryBuilder(Builder):
         results = await uvicore.db.fetchall(saquery, connection=self._connection)
 
         return results
+
+
+# IoC Class Instance
+_DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
+
+# Actual Usable Model Class Derived from IoC Inheritence
+class DbQueryBuilder(Generic[E], _DbQueryBuilderIoc):
+    pass

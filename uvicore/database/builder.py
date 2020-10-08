@@ -57,24 +57,18 @@ class Query(Representation):
     __slots__ = (
         'includes',
         'selects',
-
         'wheres',
         'or_wheres',
-
         'filters',
         'or_filters',
-
         'group_by',
-
         'order_by',
         'limit',
         'offset',
-
         'keyed_by',
         'relations',
         'joins',
         'table',
-        #'extra',
     )
 
     def __init__(self):
@@ -94,7 +88,7 @@ class Query(Representation):
         self.table: sa.Table
 
 
-class Builder(Generic[E]):
+class _QueryBuilder(Generic[E]):
 
     def __init__(self):
         self.query = Query()
@@ -372,3 +366,11 @@ class Builder(Generic[E]):
             '<': operators.lt,
         }
         return ops[operator]
+
+
+# IoC Class Instance
+_QueryBuilderIoc: _QueryBuilder = uvicore.ioc.make('QueryBuilder', _QueryBuilder)
+
+# Actual Usable Model Class Derived from IoC Inheritence
+class QueryBuilder(Generic[E], _QueryBuilderIoc):
+    pass

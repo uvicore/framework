@@ -8,7 +8,7 @@ import uvicore
 from uvicore import app
 from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
-from uvicore.database.query import QueryBuilder
+from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
 
 
@@ -163,9 +163,9 @@ class _Db(DatabaseInterface):
     #         await database.connect()
 
 
-    def query(self, connection: str = None) -> QueryBuilder:
+    def query(self, connection: str = None) -> DbQueryBuilder:
         if not connection: connection = self.default
-        return QueryBuilder(connection)
+        return DbQueryBuilder(connection)
 
     # def table(self, table: str):
     #     return QueryBuilder(self, self.default, table)

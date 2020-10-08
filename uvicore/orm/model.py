@@ -7,7 +7,7 @@ from uvicore.contracts import Model as ModelInterface
 from uvicore.orm.fields import BelongsTo, Field, HasMany, HasOne
 from uvicore.orm.mapper import Mapper
 from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.query import QueryBuilder
+from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
 from uvicore.support.dumper import dd, dump
 
@@ -27,8 +27,8 @@ class _BaseModel(Generic[E], PydanticBaseModel):
             setattr(self, key, callback(self))
 
     @classmethod
-    def query(entity) -> QueryBuilder[E]:
-        return QueryBuilder[entity](entity)
+    def query(entity) -> OrmQueryBuilder[E]:
+        return OrmQueryBuilder[entity](entity)
 
     @classmethod
     async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
@@ -157,7 +157,7 @@ class _BaseModel(Generic[E], PydanticBaseModel):
 
     async def link(self, relation: str, values: List):
         """Link ManyToMany values to this model"""
-        query = QueryBuilder(self)
+        query = OrmQueryBuilder(self)
         await query.link(relation, values)
 
 
