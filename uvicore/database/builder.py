@@ -6,21 +6,70 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 
 import sqlalchemy as sa
 from pydantic.utils import Representation
+from sqlalchemy.sql import quoted_name
 
 import uvicore
 from uvicore.support.dumper import dd, dump
 
 E = TypeVar('E')
 
+class Column(Representation):
+    __slots__ = (
+        'sacol',
+        'name',
+        'alias',
+        #'field',
+        'connection',
+        'table',
+        'tablename',
+    )
+    def __init__(self, sacol: sa.Column, name: str, alias: str, connection: str, table: sa.Table, tablename: str):
+        self.sacol = sacol
+        self.name = name
+        self.alias = alias
+        #self.field = field
+        self.connection = connection
+        self.table = table
+        self.tablename = tablename
+
+
+class Join(Representation):
+    __slots__ = (
+        'table',
+        'tablename',
+        'left',
+        'right',
+        'onclause',
+        'alias',
+        'method'
+    )
+    def __init__(self, table: sa.Table, tablename: str, left: Column, right: Column, onclause: sa.sql.expression.BinaryExpression, alias: str, method: str):
+        self.table = table
+        self.tablename = tablename
+        self.left = left
+        self.right = right
+        self.onclause = onclause
+        self.alias = alias
+        self.method = method
+
+
 class Query(Representation):
     __slots__ = (
         'includes',
         'selects',
+
         'wheres',
         'or_wheres',
+
         'filters',
         'or_filters',
+
+        'group_by',
+
         'order_by',
+        'limit',
+        'offset',
+
         'keyed_by',
         'relations',
         'joins',
@@ -35,12 +84,14 @@ class Query(Representation):
         self.or_wheres: List[Tuple] = []
         self.filters: List[Tuple] = []
         self.or_filters: List[Tuple] = []
+        self.group_by: List = []
         self.order_by: List[Tuple] = []
-        self.keyed_by: str = None
+        self.limit: Optional[int] = None
+        self.offset: Optional[int] = None
+        self.keyed_by: Optional[str] = None
         self.relations: Dict[str, Relation] = {}
-        self.joins: List[Tuple] = []
+        self.joins: List[Join] = []
         self.table: sa.Table
-        #self.exra: Dict[str, Dict]
 
 
 class Builder(Generic[E]):
@@ -48,7 +99,11 @@ class Builder(Generic[E]):
     def __init__(self):
         self.query = Query()
 
-    def where(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> QueryBuilder[E]:
+    @property
+    def _connection(self):
+        return self._conn
+
+    def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> QueryBuilder[E]:
         if type(column) == str:
             # A single where as a string
             # .where('column', 'value')
@@ -57,7 +112,7 @@ class Builder(Generic[E]):
                 value = operator
                 operator = '='
             self.query.wheres.append((column, operator.lower(), value))
-        else:
+        elif type(column) == tuple:
             # Multiple wheres in one as a List[Tuple]
             # .where([('column', 'value'), ('column', '=', 'value')])
             for where in column:
@@ -66,24 +121,30 @@ class Builder(Generic[E]):
                     self.where(where[0], '=', where[1])
                 else:
                     self.where(where[0], where[1], where[2])
+        else:
+            # Direct SQLAlchemy expression
+            self.query.wheres.append(column)
         return self
 
-    def or_where(self, wheres: List[Tuple]) -> QueryBuilder[E]:
+    def or_where(self, wheres: List[Union[Tuple, Any]]) -> QueryBuilder[E]:
         # Or where must be a list of tuple as it required at least 2 statements
         # .or_where([('column', 'value'), ('column', '=', 'value')])
         or_where: List[Tuple] = []
         for where in wheres:
-            if len(where) == 2:
-                or_where.append((where[0], '=', where[1]))
+            if type(where) == tuple:
+                if len(where) == 2:
+                    or_where.append((where[0], '=', where[1]))
+                else:
+                    or_where.append((where[0], where[1].lower(), where[2]))
             else:
-                or_where.append((where[0], where[1].lower(), where[2]))
+                or_where.append(where)
         self.query.or_wheres.extend(or_where)
         return self
 
-    def order_by(self, column: Union[str, List[Tuple]], order: str = 'ASC') -> QueryBuilder[E]:
+    def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> QueryBuilder[E]:
         if type(column) == str:
             self.query.order_by.append((column, order.upper()))
-        else:
+        elif type(column) == tuple:
             # Multiple order as a List[Tuple] (column, order)
             for order_by in column:
                 if type(order_by) == tuple:
@@ -96,13 +157,24 @@ class Builder(Generic[E]):
                     column = order_by
                     order = 'ASC'
                 self.order_by(column, order)
+        else:
+            # Direct SQLAlchemy expression
+            self.query.order_by.append(column)
+        return self
+
+    def limit(self, limit: int):
+        self.query.limit = limit
+        return self
+
+    def offset(self, offset: int):
+        self.query.offset = offset
         return self
 
     def sql(self, method: str = 'select'):
         query, saquery = self._build_query('select', copy(self.query))
         return str(saquery)
 
-    def _build_query(self, method: str, query: Query):
+    def _build_query(self, method: str, query: Query) -> Tuple:
         # Convert our Query into SQLAlchemy query
         #saquery: sa.sql.select = None
 
@@ -115,158 +187,181 @@ class Builder(Generic[E]):
 
         if method == 'select':
 
-            #saquery = sa.select([query.table])
+            # Build .select() query from tables and joins and selectable columns
             saquery = self._build_select(query)
 
-            join_stmt = self._build_joins(query)
-            if join_stmt is not None: saquery = saquery.select_from(join_stmt)
+            # Build .select_from() query from tables and joins
+            saquery = self._build_from(query, saquery)
 
-            # Order By
-            if query.order_by:
-                saquery = self._build_order_by(query, saquery)
+            # Build .order_by() query
+            saquery = self._build_order_by(query, saquery)
 
-
-        # Where And
+        # Build WHERE AND queries
         if query.wheres:
             where_ands = self._build_where(query, query.wheres)
             saquery = saquery.where(sa.and_(*where_ands))
 
-        # Where Or
+        # Build WHERE OR queries
         if query.or_wheres:
             where_ors = self._build_where(query, query.or_wheres)
             saquery = saquery.where(sa.or_(*where_ors))
 
-        return query, saquery
+        # Build .group_by() queries
+        saquery = self._build_group_by(query, saquery)
+
+        # Build .limit() query
+        if query.limit: saquery = saquery.limit(query.limit)
+
+        # Build .offset query
+        if query.offset: saquery = saquery.offset(query.offset)
+
+        # Return query and SQLAlchemy query
+        return (query, saquery)
+
+    def _build_group_by(self, query: Query, saquery):
+        for column in query.group_by:
+            column = self._column(column, query)
+            saquery = saquery.group_by(column.sacol)
+        return saquery
 
     def _build_order_by(self, query: Query, saquery):
         for order_by in query.order_by:
-            column, order = order_by
+            if type(order_by) == tuple:
+                column = self._column(order_by[0], query).sacol
+                order = order_by[1]
 
-            # Get actual table and column based on conn.table.column dot notation
-            column, table = self._column_parts(column, query)
-
-            if order == 'DESC':
-                saquery = saquery.order_by(sa.desc(getattr(table.c, column)))
+                if order == 'DESC':
+                    saquery = saquery.order_by(sa.desc(column))
+                else:
+                    saquery = saquery.order_by(column)
             else:
-                saquery = saquery.order_by(getattr(table.c, column))
+                # SQLAlchemy expression
+                saquery = saquery.order_by(order_by)
         return saquery
 
-
-    def _column_parts(self, dotcol: str, query: Query):
-        column = None
-        table = None
-        if '.' in dotcol:
-            parts = dotcol.split('.')
-            conn = None
-            if len(parts) == 2:
-                tablename, column = tuple(parts)
-            if len(parts) == 3:
-                conn, tablename, column = tuple(parts)
-            table = uvicore.db.table(tablename, conn)
-        else:
-            column = dotcol
-            table = query.table
-        return (column, table)
-
-    def _build_joins(self, query: Query):
-        # No Joins
-        if not query.joins: return None
-
+    def _build_from(self, query: Query, saquery) -> sa.select.select_from:
         joins = query.table
         for join in query.joins:
-            tablename, lwhere, rwhere, type = join
+            method = getattr(joins, join.method)
+            joins = method(right=join.table, onclause=join.onclause)
 
-            #dump('doing joins now')
-            #dump(table, left_where, right_where)
+        # Return SQLAlchemy .select_from() query
+        return saquery.select_from(joins)
 
-            if '.' in tablename:
-                conn, tablename = tuple(tablename.split('.'))
-                table = uvicore.db.table(tablename, conn)
-            else:
-                table = uvicore.db.table(tablename)
-
-            # Get actual table and column based on conn.table.column dot notation
-            lcolumn, ltable = self._column_parts(lwhere, query)
-
-            # Get actual table and column based on conn.table.column dot notation
-            rcolumn, rtable = self._column_parts(rwhere, query)
-
-            if type == 'inner':
-                joins = joins.join(
-                    right=table,
-                    onclause=getattr(ltable.c, lcolumn) == getattr(rtable.c, rcolumn)
-                )
-            elif type == 'outer':
-                joins = joins.outerjoin(
-                    right=table,
-                    onclause=getattr(ltable.c, lcolumn) == getattr(rtable.c, rcolumn)
-                )
-        return joins
-
-
-
-    def _build_select(self, query: Query):
+    def _build_select(self, query: Query) -> sa.select:
         selects = []
 
         if not query.selects and not query.joins:
             # No explicit selects, no joins, return entire table of columns
             return sa.select([query.table])
 
-        if not query.selects and query.joins:
+        elif not query.selects and query.joins:
             selects.extend(query.table.columns)
             for join in query.joins:
-                tablename = join[0]
-                conn = None
-                if '.' in tablename:
-                    conn, tablename = tuple(tablename.split('.'))
-                table = uvicore.db.table(tablename, conn)
-                for column in table.columns:
-                    selects.append(column.label(sa.sql.quoted_name(tablename + '__' + column.name, True)))
+                for column in join.table.columns:
+                    selects.append(column.label(quoted_name(join.alias + '__' + column.name, True)))
 
-        if query.selects:
-            dump(query.selects)
+        elif query.selects:
+            # Explicit selects (can be on main table or joined relations)
             for select in query.selects:
-                table = query.table
-                selects.append(table.columns.get(select))
+                column = self._column(select, query)
+                if column.alias:
+                    selects.append(column.sacol.label(quoted_name(column.alias, True)))
+                else:
+                    selects.append(column.sacol)
 
-
-        # if not query.selects and query.joins:
-        #     # No explicit selects, but has joins
-        #     # Loop table columns + join columns with labels
-        #     pass
-        # elif query.selects:
-        #     # Explitit selects
-        #     pass
-
+        # Return SQLAlchemy .select() statment with above columns
         return sa.select(selects)
-
-
 
     def _build_where(self, query: Query, wheres: List[Tuple]):
         """Build all wheres"""
         statements = []
         for where in wheres:
-            column, operator, value = where
-            table = query.table
+            if type(where) == tuple:
+                column, operator, value = where
+                column = self._column(column, query).sacol
 
-            # Get actual table and column based on conn.table.column dot notation
-            column, table = self._column_parts(column, query)
-
-            # Convert to SQL Alchemy Where
-            if type(value) == str and value.lower() == 'null': value = None
-            if operator == 'in':
-                statements.append(getattr(table.c, column).in_(value))
-            elif operator == '!in':
-                statements.append(sa.not_(getattr(table.c, column).in_(value)))
-            elif operator == 'like':
-                statements.append(getattr(table.c, column).like(value))
-            elif operator == '!like':
-                statements.append(sa.not_(getattr(table.c, column).like(value)))
+                # Convert to SQL Alchemy Where
+                if type(value) == str and value.lower() == 'null': value = None
+                if operator == 'in':
+                    statements.append(column.in_(value))
+                elif operator == '!in':
+                    statements.append(sa.not_(column.in_(value)))
+                elif operator == 'like':
+                    statements.append(column.like(value))
+                elif operator == '!like':
+                    statements.append(sa.not_(column.like(value)))
+                else:
+                    op = self._operator(operator)
+                    statements.append(op(column, value))
             else:
-                op = self._operator(operator)
-                statements.append(op(getattr(table.c, column), value))
+                # SQLAlchemy expression
+                statements.append(where)
 
         return statements
+
+    def _pk(self):
+        for column in self.query.table.primary_key.columns:
+            # Just take first PK for now???
+            return str(column.name)
+
+    def _column(self, dotname: Any, query: Query = None) -> Column:
+        # Column() class builder from dotname
+        if not query: query = self.query
+        if dotname is None: return None
+        name = dotname
+        alias = None
+        table = query.table
+        tablename = str(table.name)
+        conn = self._connection
+
+        if type(dotname) == str:
+            # Get column information from a string
+            # This is separated into its own method so we can override it with the ORM builder
+            table, tablename, column, name, conn = self._column_from_string(dotname, query)
+
+        elif type(dotname) == sa.Column:
+            # SQLAlchemy column
+            column = dotname
+            name = str(column.name)
+            table = column.table
+            tablename = str(column.table.name)
+        else:
+            # SQLAlchemy generic function (sa.func.count(), min(), max()...)
+            column = dotname
+            name = 'func'
+
+        # Set alias only if using column is a relation
+        if alias is None:
+            if str(table.name) != str(query.table.name):
+                alias = str(table.name) + '__' + name
+
+        # Return new column class
+        return Column(column, name, alias, conn, table, tablename)
+
+    def _column_from_string(self, dotname: str, query: Query) -> Tuple:
+        name = dotname
+        table = query.table
+        tablename = str(table.name)
+        conn = self._connection
+        if '.' in dotname:
+            parts = dotname.split('.')
+            if len(parts) == 2:
+                tablename, name = tuple(parts)
+            elif len(parts) == 3:
+                conn, tablename, name = tuple(parts)
+
+            table = uvicore.db.table(tablename, conn)
+            if table is None:
+                # Table not found by name, must be a JOIN alias
+                for join in query.joins:
+                    if join.alias == tablename:
+                        table = join.table
+                        alias = join.alias + '__' + name
+                        break;
+
+        column = table.columns.get(name)
+        return (table, tablename, column, name, conn)
 
     def _operator(self, operator: str):
         ops = {

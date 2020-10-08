@@ -43,10 +43,11 @@ class Mapper:
         if len(self.args) == 2: prefix = self.args[1]
         fields = {}
 
+        #dump(row.keys(), prefix)
         for field in self.instance.__modelfields__.values():
             if not field.column: continue
             column = field.column
-            if prefix: column = prefix + '.' + column
+            if prefix: column = prefix + '__' + column
             if hasattr(row, column):
                 fields[field.name] = getattr(row, column)
         return self.entity(**fields)

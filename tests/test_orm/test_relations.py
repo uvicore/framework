@@ -110,7 +110,7 @@ async def xtest_play(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_one(app1):
+async def test_one_to_one(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -132,7 +132,7 @@ async def xtest_one_to_one(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_one_inverse(app1):
+async def test_one_to_one_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -155,7 +155,7 @@ async def xtest_one_to_one_inverse(app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_many(app1):
+async def xtest_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.post import Post
@@ -172,39 +172,8 @@ async def test_one_to_many(app1):
     #dump(posts)
 
 
-    from uvicore import db
-
-    # query = (db
-    #     .query('app1')
-    #     #.select('id', 'title', 'unique_slug')
-    #     .table('posts')
-    #     .join('auth.users', 'posts.creator_id', 'auth.users.id')
-    #     .join('contacts', 'auth.users.id', 'contacts.user_id')
-    #     .outer_join('comments', 'posts.id', 'comments.post_id')
-    #     #.where('id', '=', 1)
-    #     #.where('comments.id', '>', 0)
-    #     #.where('auth.users.id', 1)
-    #     #.where('contacts.phone', '111-111-1111')
-    #     #.order_by('title')
-    #     #.order_by('title', 'DESC')
-    #     #.order_by(['id', 'title'])
-    #     #.order_by([('id', 'ASC'), ('title', 'DESC')])
-    #     .order_by('auth.users.email')
-    # )
-    # dump(query.query)
-    # print(query.sql())
-
-    # results = await query.get()
-    # #for row in results:
-    #     #dump(getattr(row, 'auth_users_email'))
-    #     #dump(row.keys())
-    #     #dump(row.users__email)
-    # dump(results)
-    # dump(results[0].keys())
-
-
-    posts = await Post.query().include('creator.contact').order_by('creator.contact.phone', 'ASC').get()
-    dump(posts)
+    #posts = await Post.query().include('creator.contact').order_by('id').limit(2).offset(4).get()
+    #dump(posts)
 
 
 
@@ -362,6 +331,15 @@ async def test_one_to_many(app1):
     # d.dispost()
 
 
+    posts = (await Post.query()
+        .include('creator.contact')
+        .where('creator.id', 1)
+        #.where('creator.email', 'manager1@example.com')
+        #.where('creator.contact.phone', '111-111-1111')
+        .order_by('creator.contact.phone')
+        .get()
+    )
+    dump(posts)
 
 
     # dump('##########################################################')
@@ -395,7 +373,7 @@ async def test_one_to_many(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many_inverse(app1):
+async def test_one_to_many_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment

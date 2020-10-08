@@ -5,6 +5,11 @@ from typing import Dict, List
 from uvicore.support.dumper import dd, dump
 
 class Schema:
+
+    @property
+    def table(self):
+        return self.schema
+
     def __init__(self):
         # Tables are singleton classes bound in the IoC
         # So they are instantiated ONCE when first ioc.make()

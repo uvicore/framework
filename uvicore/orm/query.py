@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from pydantic.utils import Representation
 
 import uvicore
-from uvicore.database.builder import Builder, Query
+from uvicore.database.builder import Builder, Query, Column, Join
 from uvicore.orm.fields import BelongsTo, Field, HasMany, HasOne, Relation
 from uvicore.support.dumper import dd, dump
 
@@ -21,7 +21,11 @@ class QueryBuilder(Generic[E], Builder[E]):
         self.entity = entity
         super().__init__()
         self.query.table = entity.table
-        self.query.joins = None
+        #self.query.joins = None
+
+    @property
+    def _connection(self):
+        return self.entity.connection
 
     def filter(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> QueryBuilder[E]:
         # Filters are for Many relations only
@@ -65,8 +69,7 @@ class QueryBuilder(Generic[E], Builder[E]):
 
     async def find(self, pk_value: Any) -> E:
         # Where on Primary Key
-        pk = self.entity.pk
-        self.where(pk, pk_value)
+        self.where(self._pk(), pk_value)
 
         # Build query
         query, saquery = self._build_query('select', copy(self.query))
@@ -169,7 +172,7 @@ class QueryBuilder(Generic[E], Builder[E]):
         # Return List of Entities
         return entities
 
-    def _build_query(self, method: str, query: Query):
+    def _build_query_ORIGINAL(self, method: str, query: Query):
         saquery = None
 
         # where
@@ -202,10 +205,51 @@ class QueryBuilder(Generic[E], Builder[E]):
             where_ors = self._build_where(query, query.or_wheres)
             saquery = saquery.where(sa.or_(*where_ors))
 
+        # Limit
+        if query.limit:
+            saquery = saquery.limit(query.limit)
+
+        # Offset
+        if query.offset:
+            saquery = saquery.offset(query.offset)
+
 
         return query, saquery
 
-    def _build_select(self, query: Query):
+    def _build_query(self, method: str, query: Query) -> Tuple:
+
+        # Before we call the parent Builder we need to build our ORM relations,
+        # translate those into regular .join() and derive our .select() columns.
+
+        # Build ORM relations from .include() and add append to query.joins
+        self._build_orm_relations(query)
+
+
+        # NO!! Because if select is blank the base Builder adds ALL fields with proper alias based on JOIN!!!
+        # But I do need to pass in custom selects on multi-select many-to-many
+
+        # # Build selects for main table
+        # # Only add selects if selects is EMPTY.  Why?  If its not empty, I have overwridden
+        # # the selects for many-to-many multi-query porposes
+        # if not query.selects:
+        #     # Remember the base Builder accepts string OR actual SQLAlchemy columns as selects!
+        #     query.selects.extend(self.entity.selectable_columns())
+
+        #     # Build relation selects
+        #     for relation in query.relations.values():
+
+        #         if type(relation) == HasOne or type(relation) == BelongsTo:
+        #             #columns = relation.entity.selectable_columns()
+        #             query.selects.extend(relation.entity.selectable_columns())
+        #             #for column in columns:
+        #             #    selects.append(column.label(sa.sql.quoted_name(relation.name + '.' + column.name, True)))
+
+        #dump(query)
+
+        # Call Parent _build_query()
+        return super()._build_query(method, query)
+
+    def _build_selectXX(self, query: Query):
         # Get models selectable columns
         # Infer from model, not all columns in table as model may have less columns
         selects = self.entity.selectable_columns()
@@ -229,7 +273,80 @@ class QueryBuilder(Generic[E], Builder[E]):
 
         return saquery
 
-    def _build_relations(self, query: Query):
+    def _build_orm_relations(self, query: Query) -> None:
+        if not query.includes: return
+
+        def extract(field, value):
+            entity = None
+            foreign = 'id'
+            local = field.name + '_id'
+            if type(value) == tuple:
+                entity = value[0]
+                if len(value) >= 2:
+                    foreign = value[1]
+                if len(value) == 3:
+                    local = value[2]
+            else:
+                entity = value
+            return entity, foreign, local
+
+        relations: Dict[str, Relation] = {}
+        for include in query.includes:
+            parts = [include]
+            if '.' in include: parts = include.split('.')
+
+            entity = self.entity
+            parts_added = []
+            for part in parts:
+                field = entity.modelfields.get(part)
+                if not field: continue
+                if field.column is not None: continue
+
+                parts_added.append(part)
+                relation_name = '.'.join(parts_added)
+
+                # If any relation found
+                if field.relation:  #if relation_tuple:
+                    # Get relation model class from IoC or dynamic Imports
+                    relation: Relation = field.relation.fill(field)
+
+                    # Set a new name based on relation_name dot notation for nested relations
+                    relation.name = relation_name
+
+                    # Add relation to List only once
+                    if relation_name not in relations:
+                        relations[relation_name] = relation
+
+                        # Build Join and add to query
+                        left = self._column(getattr(entity.table.c, relation.local_key))
+                        right = self._column(getattr(relation.entity.table.c, relation.foreign_key))
+                        join = Join(
+                            table=relation.entity.table,
+                            tablename=str(relation.entity.table.name),
+                            left=left,
+                            right=right,
+                            onclause=left.sacol == right.sacol,
+                            alias=relation_name.replace('.', '__'),
+                            method='outerjoin'
+                        )
+                        query.joins.append(join)
+
+                        # Add joins only for one-to-one or one-to-many inverse
+                        # Outer Join in case some foreign keys are nullable
+                        #if field.has_one or field.belongs_to:
+                        #if query.joins is None: query.joins = entity.table
+                        #query.joins = query.joins.outerjoin(
+                        #    right=relation.entity.table,
+                        #    onclause=getattr(entity.table.c, relation.local_key) == getattr(relation.entity.table.c, relation.foreign_key)
+                        #)
+
+                # Swap entities for next loop
+                entity = relation.entity
+
+        # Set query.relations
+        query.relations = relations
+
+    def _build_relations_ORIGINAL(self, query: Query):
         if not query.includes: return
 
         def extract(field, value):
@@ -288,21 +405,6 @@ class QueryBuilder(Generic[E], Builder[E]):
         # Return all relations
         query.relations = relations
 
-    def _column_parts(self, dotcol: str, query: Query):
-        column = None
-        table = None
-        if '.' in dotcol:
-            parts = dotcol.split('.')
-            relation = query.relations.get('.'.join(parts[:-1]))
-            table = relation.entity.table
-            field = parts[-1]
-            column = self.entity.mapper(field).column()
-        else:
-            column = self.entity.mapper(dotcol).column()
-            table = query.table
-        return (column, table)
-
-
     def _build_results(self, query: Query, results, multiple: bool = True):
         if not results:
             if multiple: return []
@@ -314,19 +416,37 @@ class QueryBuilder(Generic[E], Builder[E]):
             model = self.entity.mapper(row).model()
             for relation in query.relations.values():
                 if type(relation) == HasOne or type(relation) == BelongsTo:
-                    relation_name = relation.name
-                    if '.' in relation_name:
-                        parts = relation_name.split('.')
+                    prefix = relation.name.replace('.', '__')
+                    if '.' in relation.name:
+                        parts = relation.name.split('.')
                         current_model = model
                         for i in range(0, len(parts) - 1):
                             current_model = getattr(current_model, parts[i])
                         #setattr(current_model, parts[-1], relation.entity.to_model(row, relation_name))
-                        setattr(current_model, parts[-1], relation.entity.mapper(row, relation_name).model())
+                        setattr(current_model, parts[-1], relation.entity.mapper(row, prefix).model())
                     else:
                         #setattr(model, relation_name, relation.entity.to_model(row, relation_name))
-                        setattr(model, relation_name, relation.entity.mapper(row, relation_name).model())
+                        setattr(model, relation.name, relation.entity.mapper(row, prefix).model())
             entities.append(model)
         if multiple:
             return entities
         else:
             return entities[0]
+
+    def _pk(self):
+        return self.entity.pk
+
+    def _column_from_string(self, dotname: str, query: Query) -> Tuple:
+        if '.' in dotname:
+            parts = dotname.split('.')
+            relation = query.relations.get('.'.join(parts[:-1]))
+            table = relation.entity.table
+            field = parts[-1]
+            name = self.entity.mapper(field).column()
+        else:
+            name = self.entity.mapper(dotname).column()
+            table = query.table
+
+        tablename = str(table.name)
+        column = table.columns.get(name)
+        return (table, tablename, column, name, self._connection)
