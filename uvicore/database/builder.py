@@ -9,9 +9,11 @@ from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
 
 import uvicore
+from uvicore.contracts import QueryBuilder as BuilderInterface
 from uvicore.support.dumper import dd, dump
 
-E = TypeVar('E')
+B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
+E = TypeVar("E")  # Entity Model
 
 class Column(Representation):
     __slots__ = (
@@ -88,7 +90,7 @@ class Query(Representation):
         self.table: sa.Table
 
 
-class _QueryBuilder(Generic[E]):
+class QueryBuilder(Generic[B, E]):
 
     def __init__(self):
         self.query = Query()
@@ -97,7 +99,7 @@ class _QueryBuilder(Generic[E]):
     def _connection(self):
         return self._conn
 
-    def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> QueryBuilder[E]:
+    def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> B[B, E]:
         if type(column) == str:
             # A single where as a string
             # .where('column', 'value')
@@ -120,7 +122,7 @@ class _QueryBuilder(Generic[E]):
             self.query.wheres.append(column)
         return self
 
-    def or_where(self, wheres: List[Union[Tuple, Any]]) -> QueryBuilder[E]:
+    def or_where(self, wheres: List[Union[Tuple, Any]]) -> B[B, E]:
         # Or where must be a list of tuple as it required at least 2 statements
         # .or_where([('column', 'value'), ('column', '=', 'value')])
         or_where: List[Tuple] = []
@@ -135,7 +137,7 @@ class _QueryBuilder(Generic[E]):
         self.query.or_wheres.extend(or_where)
         return self
 
-    def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> QueryBuilder[E]:
+    def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         if type(column) == str:
             self.query.order_by.append((column, order.upper()))
         elif type(column) == tuple:
@@ -156,15 +158,15 @@ class _QueryBuilder(Generic[E]):
             self.query.order_by.append(column)
         return self
 
-    def limit(self, limit: int):
+    def limit(self, limit: int) -> B[B, E]:
         self.query.limit = limit
         return self
 
-    def offset(self, offset: int):
+    def offset(self, offset: int) -> B[B, E]:
         self.query.offset = offset
         return self
 
-    def sql(self, method: str = 'select'):
+    def sql(self, method: str = 'select') -> str:
         query, saquery = self._build_query('select', copy(self.query))
         return str(saquery)
 
@@ -369,8 +371,6 @@ class _QueryBuilder(Generic[E]):
 
 
 # IoC Class Instance
-_QueryBuilderIoc: _QueryBuilder = uvicore.ioc.make('QueryBuilder', _QueryBuilder)
-
-# Actual Usable Model Class Derived from IoC Inheritence
-class QueryBuilder(Generic[E], _QueryBuilderIoc):
-    pass
+# No need to IoC this one because it is always inherited
+# If you need to overrite it use the IoC to swap DbQueryBuilder or OrmQueryBuilder
+# and set a new parent from there.

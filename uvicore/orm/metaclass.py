@@ -8,7 +8,7 @@ from sqlalchemy.sql import ClauseElement
 import uvicore
 from uvicore.orm.fields import Field
 from uvicore.orm.mapper import Mapper
-from uvicore.orm.query import QueryBuilder
+from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.dumper import dd, dump
 
 # Think of this metaclass as all the STATIC methods similar to @classmethod
@@ -48,23 +48,23 @@ class _ModelMetaclass(PydanticMetaclass):
     ############################################################################
     async def get(entity) -> List[Any]:
         """Query builder passthrough"""
-        return await QueryBuilder(entity).get()
+        return await OrmQueryBuilder(entity).get()
 
     async def find(entity, id: Any) -> Any:
         """Query builder passthrough"""
-        return await QueryBuilder(entity).find(id)
+        return await OrmQueryBuilder(entity).find(id)
 
     def where(entity, column: Union[str, List[Tuple]], operator: str = None, value: Any = None):
         """Query builder passthrough"""
-        return QueryBuilder(entity).where(column, operator, value)
+        return OrmQueryBuilder(entity).where(column, operator, value)
 
-    def or_where(entity, wheres: List) -> QueryBuilder:
+    def or_where(entity, wheres: List):
         """Query builder passthrough"""
-        return QueryBuilder(entity).or_where(wheres)
+        return OrmQueryBuilder(entity).or_where(wheres)
 
-    def include(entity, *args) -> QueryBuilder:
+    def include(entity, *args):
         """Query builder passthrough"""
-        return QueryBuilder(entity).include(*args)
+        return OrmQueryBuilder(entity).include(*args)
     ############################################################################
     ############################################################################
 
@@ -125,7 +125,7 @@ class _ModelMetaclass(PydanticMetaclass):
     #     if field: return field.column
     #     return fieldname
 
-    def selectable_columns(entity) -> List[sa.Column]:
+    def _columns(entity) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
 
         Why not just use the table to get all columns?  Because a table

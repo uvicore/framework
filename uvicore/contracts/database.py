@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union, Mapping, Optional
 import sqlalchemy as sa
 from databases import Database as EncodeDatabase
 from sqlalchemy.sql import ClauseElement
-from uvicore.database.query import QueryBuilder
+from uvicore.contracts import DbQueryBuilder
 
 from .connection import Connection
 from .package import Package
@@ -104,7 +104,7 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def query(self, connection: str = None) -> QueryBuilder:
+    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, None]:
         """Database query builder passthrough"""
 
     # @property

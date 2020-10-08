@@ -6,33 +6,36 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import BinaryExpression
+from sqlalchemy.engine.result import RowProxy
 
 import uvicore
 from uvicore.database.builder import Column, Join, Query, QueryBuilder
 from uvicore.support.dumper import dd, dump
+from uvicore.contracts import DbQueryBuilder as BuilderInterface
 
-E = TypeVar('E')
+B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
+E = TypeVar("E")  # Entity Model
 
-class _DbQueryBuilder(Generic[E], QueryBuilder[E]):
+class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """Database Query Builder"""
 
     def __init__(self, connection: str):
         self._conn = connection
         super().__init__()
 
-    def table(self, table: Union[str, sa.Table]) -> QueryBuilder[E]:
+    def table(self, table: Union[str, sa.Table]) -> B[B, E]:
         if type(table) == str:
             self.query.table = uvicore.db.table(table, self._connection)
         else:
             self.query.table = table
         return self
 
-    def select(self, *args) -> QueryBuilder[E]:
+    def select(self, *args) -> B[B, E]:
         for column in args:
             self.query.selects.append(column)
         return self
 
-    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join'):
+    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
         # Get table and tablename
         conn = self._connection
         if type(table) == str:
@@ -57,16 +60,16 @@ class _DbQueryBuilder(Generic[E], QueryBuilder[E]):
         self.query.joins.append(Join(table, tablename, left, right, onclause, alias, method))
         return self
 
-    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None):
+    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
         self.join(table=table, left_where=left_where, right_where=right_where, method='outerjoin', alias=alias)
         return self
 
-    def group_by(self, *args):
+    def group_by(self, *args) -> B[B, E]:
         for group_by in args:
             self.query.group_by.append(group_by)
         return self
 
-    async def find(self, pk_value: Any) -> E:
+    async def find(self, pk_value: Any) -> RowProxy:
         # Where on Primary Key
         self.where(self._pk(), pk_value)
 
@@ -78,7 +81,7 @@ class _DbQueryBuilder(Generic[E], QueryBuilder[E]):
 
         return results
 
-    async def get(self) -> List[E]:
+    async def get(self) -> List[RowProxy]:
         # Build query
         query, saquery = self._build_query('select', copy(self.query))
 
@@ -92,5 +95,5 @@ class _DbQueryBuilder(Generic[E], QueryBuilder[E]):
 _DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
 
 # Actual Usable Model Class Derived from IoC Inheritence
-class DbQueryBuilder(Generic[E], _DbQueryBuilderIoc):
+class DbQueryBuilder(Generic[B, E], _DbQueryBuilderIoc[B, E], BuilderInterface[B, E]):
     pass

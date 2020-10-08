@@ -10,6 +10,7 @@ from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
 from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
+from sqlalchemy.engine.result import RowProxy
 
 
 class _Db(DatabaseInterface):
@@ -33,10 +34,6 @@ class _Db(DatabaseInterface):
     @property
     def metadatas(self) -> Dict[str, sa.MetaData]:
         return self._metadatas
-
-    @property
-    def query(self) -> Dict:
-        return self._query
 
     def __init__(self) -> None:
         self._default = None
@@ -66,7 +63,6 @@ class _Db(DatabaseInterface):
             self._engines[connection.metakey] = sa.create_engine(connection.url)
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
-            self._query = {}
 
         if app.is_http:
             @app.http.on_event("startup")
@@ -131,11 +127,11 @@ class _Db(DatabaseInterface):
         #await self._connect(metakey=metakey)
         return self.databases.get(metakey)
 
-    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[Mapping]:
+    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
         database = await self.database(connection, metakey)
         return await database.fetch_all(query, values)
 
-    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[Mapping]:
+    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[RowProxy]:
         database = await self.database(connection, metakey)
         return await database.fetch_one(query, values)
 
@@ -163,9 +159,10 @@ class _Db(DatabaseInterface):
     #         await database.connect()
 
 
-    def query(self, connection: str = None) -> DbQueryBuilder:
+    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
         if not connection: connection = self.default
         return DbQueryBuilder(connection)
+
 
     # def table(self, table: str):
     #     return QueryBuilder(self, self.default, table)

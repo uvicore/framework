@@ -11,10 +11,12 @@ import uvicore
 from uvicore.database.builder import Column, Join, Query, QueryBuilder
 from uvicore.orm.fields import BelongsTo, Field, HasMany, HasOne, Relation
 from uvicore.support.dumper import dd, dump
+from uvicore.contracts import OrmQueryBuilder as BuilderInterface
 
-E = TypeVar('E')
+B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
+E = TypeVar("E")  # Entity Model
 
-class _OrmQueryBuilder(Generic[E], QueryBuilder[E]):
+class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """ORM Query Builder"""
 
     def __init__(self, entity: E):
@@ -27,7 +29,18 @@ class _OrmQueryBuilder(Generic[E], QueryBuilder[E]):
     def _connection(self):
         return self.entity.connection
 
-    def filter(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> QueryBuilder[E]:
+    def include(self, *args) -> QueryBuilder[B, E]:
+        # import inspect
+        # x = inspect.currentframe()
+        # y = inspect.getouterframes(x, 1)
+        # context = y[1].code_context
+        # #dump(context)
+        #args = ['creator.contact']
+        for include in args:
+            self.query.includes.append(include)
+        return self
+
+    def filter(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> B[B, E]:
         # Filters are for Many relations only
         if type(column) == str:
             # A single filter as a string
@@ -49,22 +62,12 @@ class _OrmQueryBuilder(Generic[E], QueryBuilder[E]):
                     self.filter(filter[0], filter[1], filter[2])
         return self
 
-    def include(self, *args) -> QueryBuilder[E]:
-        # import inspect
-        # x = inspect.currentframe()
-        # y = inspect.getouterframes(x, 1)
-        # context = y[1].code_context
-        # #dump(context)
-        #args = ['creator.contact']
-        for include in args:
-            self.query.includes.append(include)
-        return self
-
-    def key_by(self, field: str) -> QueryBuilder[E]:
+    def key_by(self, field: str) -> B[B, E]:
         self.query.keyed_by = field
         return self
 
     async def link(self, relation: str, values: List) -> None:
+        # NOT YET IN INTERFACE
         dump('hiii')
 
     async def find(self, pk_value: Any) -> E:
@@ -349,5 +352,5 @@ class _OrmQueryBuilder(Generic[E], QueryBuilder[E]):
 _OrmQueryBuilderIoc: _OrmQueryBuilder = uvicore.ioc.make('OrmQueryBuilder', _OrmQueryBuilder)
 
 # Actual Usable Model Class Derived from IoC Inheritence
-class OrmQueryBuilder(Generic[E], _OrmQueryBuilderIoc):
+class OrmQueryBuilder(Generic[B, E], _OrmQueryBuilderIoc[B, E], BuilderInterface[B, E]):
     pass

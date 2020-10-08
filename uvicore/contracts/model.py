@@ -3,21 +3,18 @@ from abc import ABC, abstractmethod
 from typing import Dict, Generic, TypeVar, Union, List, Tuple, Any
 
 from uvicore.orm.mapper import Mapper
-from uvicore.orm.query import QueryBuilder
+#from uvicore.orm.query import QueryBuilder
+from uvicore.contracts import OrmQueryBuilder
 
+B = TypeVar("B")
 E = TypeVar("E")
 
 class Model(Generic[E], ABC):
 
     @abstractmethod
-    def query(entity) -> QueryBuilder[E]:
+    def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
         """ORM query builder passthrough"""
         pass
-
-    # @abstractmethod
-    # def where(entity, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> QueryBuilder[E]:
-    #     """Query builder passthrough"""
-    #     pass
 
     @abstractmethod
     async def insert(entity, models: Union[List[E], List[Dict]]) -> None:

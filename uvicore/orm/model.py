@@ -27,8 +27,8 @@ class _BaseModel(Generic[E], PydanticBaseModel):
             setattr(self, key, callback(self))
 
     @classmethod
-    def query(entity) -> OrmQueryBuilder[E]:
-        return OrmQueryBuilder[entity](entity)
+    def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
+        return OrmQueryBuilder(entity)
 
     @classmethod
     async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
