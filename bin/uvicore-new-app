@@ -41,7 +41,36 @@ function check_dependencies() {
 }
 
 function install() {
-    echo "Installing now"
+    echo
+    echo "---------------------------------------------------------------------"
+    echo
+
+    if [ -d "$path" ]; then
+       echo "Directory $path already exists.  Probably not what you wanted."
+       echo "Install failed. Exiting."
+       exit 1
+    fi
+
+    echo "Creating directory $path"
+    mkdir -p $path
+    echo
+
+    echo "Cloning $repo $branch branch into $path"
+    git clone --depth 1 $repo -b $branch $path
+    echo
+
+    installer="$path/.install/install.py"
+    if [ -f "$installer" ]; then
+        echo "Running the python installer $installer"
+        echo
+        echo "---------------------------------------------------------------------"
+        echo
+        python $installer
+    else
+        echo "Installer $installer not found."
+        echo "Install failed. Exiting."
+        exit 1
+    fi
 }
 
 check_dependencies
@@ -61,7 +90,6 @@ else
 
     echo -n "Continue to clone and execute $path/.install/install.py (y/N)? "; read answer
     if [ "$answer" != "${answer#[Yy]}" ] ;then
-        echo
         install
     else
         echo
