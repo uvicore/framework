@@ -27,6 +27,11 @@ class Ioc(ABC):
     def aliases(self) -> Dict[str, str]:
         pass
 
+    # @abstractmethod
+    # def config(self, config: Dict) -> None:
+    #     """Set the main running app config dictionary for IoC binding override configs"""
+    #     pass
+
     @abstractmethod
     def binding(self, name: str) -> Binding:
         """Get an IoC binding object by name or alias"""

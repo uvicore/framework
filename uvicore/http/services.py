@@ -36,7 +36,10 @@ class Http(ServiceProvider):
             self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['uvicore.http.routing.api_router.ApiRouter', 'api_router'])
             self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['uvicore.http.routing.routes.Routes', 'routes'])
             self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
-            self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', aliases=['templates'])
+
+            # Default templating system is Jinja2.  Users can overwrite this
+            # easily in their app configs 'bindings' dictionary.
+            self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', singleton=True, aliases=['templates'])
 
             # Set app instance variables
             self.app._http = uvicore.ioc.make('Http')
@@ -89,30 +92,29 @@ class Http(ServiceProvider):
 
     def create_template_environment(self) -> None:
         """Create template environment with settings from all packages"""
-        Templates = uvicore.ioc.make('Templates')
 
-        # Instantiate template system
-        self.app._template = Templates()
+        # Get the template singleton from the IoC
+        templates = uvicore.ioc.make('Templates')
 
         # Add all package view paths to template environment
         for package in self.app.packages.values():
             for path in package.view_paths:
-                self.app.template.include_path(path)
+                templates.include_path(path)
 
             # Add all package template options to template environment
             options = package.template_options
             if 'context_functions' in options:
                 for f in options['context_functions']:
-                    self.app.template.include_context_function(**f)
+                    templates.include_context_function(**f)
             if 'context_filters' in options:
                 for f in options['context_filters']:
-                    self.app.template.include_context_filter(**f)
+                    templates.include_context_filter(**f)
             if 'filters' in options:
                 for f in options['filters']:
-                    self.app.template.include_filter(**f)
+                    templates.include_filter(**f)
             if 'tests' in options:
                 for f in options['tests']:
-                    self.app.template.include_test(**f)
+                    templates.include_test(**f)
 
-        # Create new template environment
-        self.app.template.init()
+        # Initialize new template environment from the options above
+        templates.init()

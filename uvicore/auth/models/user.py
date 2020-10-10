@@ -1,12 +1,13 @@
 from __future__ import annotations
-import uvicore
+
 from typing import Optional
+
+import uvicore
+from uvicore.auth.contracts import User as UserInterface
 from uvicore.auth.database.tables import users as table
 from uvicore.orm.fields import Field, HasOne
-from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.model import Model
+from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.support.dumper import dd, dump
-
 
 #Model: _Model = uvicore.ioc.make('Model', _Model)
 #import sys
@@ -32,9 +33,6 @@ from uvicore.support.dumper import dd, dump
 #     id: Optional[int]
 #     email: str
 #     info: Optional[List[UserInfo]]
-
-
-from uvicore.auth.contracts import User as UserInterface
 
 
 # UserModel for typehints only.  Import User for actual usage.
@@ -82,7 +80,6 @@ User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
 
 
 
-#from uvicore.auth.models.user_info import UserInfo
+#from uvicore.auth.models.user_info import UserInfo  # isort:skip
 UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
 User.update_forward_refs()
-

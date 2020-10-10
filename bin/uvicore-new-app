@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# uvicore-new-app ./wiki https://github.com/uvicore.app version-12
+
+path="$1"
+branch="$2"
+repo="$3"
+
+function usage() {
+    cat << EOF
+Uvicore Application Installer
+The Async Python Framework for Artisans.
+An Elegant Fullstack Python Web, API and CLI Framework
+
+  Usage: uvicore-new-app path [branch] [gitrepo]
+
+  You can optionally pass your own git branch and repository URL.
+
+  Examples: Use uvicore default appstub repo on master branch
+    uvicore-new-app ./wiki
+
+  Example: Use uvicore default appstub repo on 3.0 branch
+    uvicore-new-app ./wiki 3.0
+
+  Example: Use your own appstub repo on master branch
+    uvicore-new-app ./wiki master https://github.com/mystuff/custom-uvicore-appstub
+EOF
+}
+
+function check_dependencies() {
+    # python
+    pass=1
+    if ! command -v python > /dev/null; then pass=0; fi
+    if ! command -v git > /dev/null; then pass=0; fi
+    if [ $pass -eq 0 ]; then
+        echo
+        echo "Uvicore install required git and python to be installed."
+        echo "Please install the required dependencies on your system and try again."
+        exit 1
+    fi
+}
+
+function install() {
+    echo "Installing now"
+}
+
+check_dependencies
+if [ "$path" == "" ] || [ "$path" == "--help" ] || [ "$path" == "-h" ] || [ "$path" == "--version" ] || [ "$path" == "-v" ]; then
+    usage
+else
+    if [ "$branch" == "" ]; then branch="master"; fi
+    if [ "$repo" == "" ]; then repo="https://github.com/uvicore/app"; fi
+
+    #echo "You are about to create a new directory $path"
+    echo "You are about to clone branch $branch from $repo into $path"
+    echo "Once cloned, the $path/.install/install.py python script will be executed"
+    echo
+    echo "Please ensure you TRUST the repository you are cloning if 3rd party!"
+    echo "Please ensure you have read the repositories .install/install.py file if unsure!"
+    echo
+
+    echo -n "Continue to clone and execute $path/.install/install.py (y/N)? "; read answer
+    if [ "$answer" != "${answer#[Yy]}" ] ;then
+        echo
+        install
+    else
+        echo
+        echo "Install Cancelled.  Please try uvicore later!  Bye."
+    fi
+
+fi
+
+#echo $path
+
+
+# Usage: uvicore [OPTIONS] COMMAND [ARGS]...
+
+#   Uvicore 0.1.0
+#   The Async Python Framework for Artisans.
+#   An Elegant Fullstack Python Web, API and CLI Framework
+
+#   Copyright (c) 2020 Matthew Reschke License http://mreschke.com/license/mit
+
+# Options:
+#   --version  Show the version and exit.
+#   --help     Show this message and exit.
+
+# Commands:
+#   db       Database Commands
+#   event    Uvicore Event Information
+#   http     Uvicore HTTP Commands
+#   package  Uvicore Package Information
+#   wiki     Wiki Commands

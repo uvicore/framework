@@ -12,5 +12,3 @@ class Event:
     # No, logging should be a listener
     # def log(self, cls):
     #     uvicore.log.debug("Event " + str(cls.__class__.__module__) + " Dispatched")
-
-

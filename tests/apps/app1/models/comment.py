@@ -3,8 +3,7 @@ import uvicore
 from typing import Optional
 from app1.database.tables import comments as table
 from uvicore.orm.fields import Field, BelongsTo
-from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.model import Model
+from uvicore.orm.model import Model, ModelMetaclass
 
 # # Make Many
 # Field, BelongsTo, ModelMetaclass = uvicore.ioc.make('uvicore.orm', [
@@ -70,7 +69,7 @@ Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentM
 
 # Update forwrad refs (a work around to circular dependencies)
 
-from app1.models.post import Post
+from app1.models.post import Post  # isort:skip
 #Post = uvicore.ioc.make('app1.models.post.Post')
 Comment.update_forward_refs()
 #_Comment.update_forward_refs()

@@ -6,6 +6,10 @@ from uvicore.contracts import Template as TemplateInterface
 
 
 class _Jinja(TemplateInterface, _Jinja2Templates):
+    """Jinja Template private class.
+
+    Dont access templates directly.
+    Use reponse.View() instead helper instead."""
 
     @property
     def env(self) -> jinja2.Environment:
@@ -92,8 +96,8 @@ class _Jinja(TemplateInterface, _Jinja2Templates):
 
 
 # IoC Class Instance
-# No, not to be used by public
-#Jinja: TemplateInterface = uvicore.ioc.make('Jinja')
+# No, not to be used by public by importing.  Use ioc.make instead.
+
 
 # Public API for import * and doc gens
 __all__ = ['_Jinja']

@@ -9,9 +9,11 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Service Providers Dependencies
+    # Package Dependencies (Service Providers)
+    #
+    # Careful to only define REQUIRED services.  Things like auth, db, http,
+    # etc... are optional and specified in a packages dependencies if needed.
     # --------------------------------------------------------------------------
-    # Careful to only define REQUIRED services.  Things like 'auth' are optional
     'services': OrderedDict({
         # Configuration is used right away in provider register()
         'uvicore.configuration': {
@@ -22,14 +24,6 @@ config = {
         'uvicore.logging': {
             'provider': 'uvicore.logging.services.Logging',
         },
-
-        # optional
-        # 'uvicore.database': {
-        #     'provider': 'uvicore.database.services.Database',
-        # },
-        # 'uvicore.orm': {
-        #     'provider': 'uvicore.orm.services.Orm',
-        # },
 
         'uvicore.console': {
             'provider': 'uvicore.console.services.Console',

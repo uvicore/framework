@@ -51,6 +51,10 @@ from uvicore.contracts import Logger as LoggerInterface
 
 
 class _Logger(LoggerInterface):
+    """Logger private class.
+
+    Do not import from this location.
+    Use the uvicore.log singleton global instead."""
 
     def __init__(self, config):
         # Default Config
@@ -275,7 +279,8 @@ class ColoredFormatter(Formatter):
 
 
 # IoC Class Instance
-# No because not to be used by the public
+# Not to be imported by the public from here.
+# Use the uvicore.log singleton global instead.
 
 # Public API for import * and doc gens
 __all__ = ['_Logger', 'ColoredFormatter']

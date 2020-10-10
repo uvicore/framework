@@ -7,7 +7,6 @@ from uvicore.support.dumper import dump, dd
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
-
 class _UserInfo(Schema):
 
     # Actual database table name

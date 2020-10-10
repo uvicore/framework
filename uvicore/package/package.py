@@ -21,6 +21,7 @@ class _Package(PackageInterface):
 
 # IoC Class Instance
 # No because not to be used by the public
+Package: _Package = uvicore.ioc.make('Package', _Package, aliases=['package'])
 
 # Public API for import * and doc gens
 __all__ = ['_Package']

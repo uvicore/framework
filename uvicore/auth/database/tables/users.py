@@ -1,10 +1,10 @@
-import uvicore
 import sqlalchemy as sa
+
+import uvicore
 from uvicore.database.table import Schema, SchemaOLD
-from uvicore.support.dumper import dump, dd
+from uvicore.support.dumper import dd, dump
 
 
-#class _Table(metaclass=SchemaOLD):
 class _Users(Schema):
 
     # Actual database table name

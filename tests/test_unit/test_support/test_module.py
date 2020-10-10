@@ -47,13 +47,13 @@ def test_load_package():
     #     fullpath='uvicore.container',
     #     package='uvicore.container',
     #     file='/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/container/__init__.py')
-    x = module.load('uvicore.container')
-    assert "<module 'uvicore.container' from " in str(x.object)
-    assert x.name == 'container'
+    x = module.load('uvicore.configuration')
+    assert "<module 'uvicore.configuration' from " in str(x.object)
+    assert x.name == 'configuration'
     assert x.path == 'uvicore'
-    assert x.fullpath == 'uvicore.container'
-    assert x.package == 'uvicore.container'
-    assert 'uvicore/container/__init__.py' in x.file
+    assert x.fullpath == 'uvicore.configuration'
+    assert x.package == 'uvicore.configuration'
+    assert 'uvicore/configuration/__init__.py' in x.file
 
 
 def test_load_namespace():

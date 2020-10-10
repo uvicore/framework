@@ -10,6 +10,10 @@ from uvicore.support import module
 
 
 class _Dispatcher(DispatcherInterface):
+    """Event Dispatcher private class.
+
+    Do not import from this location.
+    Use the uvicore.events singleton global instead."""
 
     @property
     def events(self) -> Dict[str, Dict]:
@@ -157,7 +161,9 @@ class _Dispatcher(DispatcherInterface):
 
 
 # IoC Class Instance
-# No because not to be used by the public
-
-# Public API for import * and doc gens
-__all__ = ['_Dispatcher']
+# **Not meant to be imported from here**.  Use the uvicore.events singleton global instead.
+# Only here because uvicore bootstrap needs to import it without a service provider.
+# By using the default bind and make feature of the IoC we can swap the implimentation
+# at a high bootstrap level using our app configs 'bindings' dictionary.
+# The only two classes that do this are Application and the event Dispatcher.
+Dispatcher: _Dispatcher = uvicore.ioc.make('Dispatcher', _Dispatcher, singleton=True, aliases=['dispatcher', 'Event', 'event', 'Events', 'events'])

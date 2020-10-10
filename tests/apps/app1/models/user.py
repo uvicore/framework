@@ -5,8 +5,7 @@ from typing import List, Optional
 import uvicore
 from uvicore.auth.database.tables import users as table
 from uvicore.orm.fields import Field, HasMany, HasOne
-from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.model import Model
+from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.contracts import Model as ModelInterface
 from uvicore.support.dumper import dd, dump
 
@@ -117,14 +116,14 @@ User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
 
 
 
-from app1.models.contact import Contact
+from app1.models.contact import Contact  # isort:skip
 #Contact = uvicore.ioc.make('app1.models.contact.Contact')
 
-from uvicore.auth.models.user_info import UserInfo
+from uvicore.auth.models.user_info import UserInfo  # isort:skip
 #from uvicore.auth.models.user_info import UserInfoModel as UserInfo
 #UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
 
-from app1.models.post import Post
+from app1.models.post import Post  # isort:skip
 #Post = uvicore.ioc.make('app1.models.post.Post')
 
 

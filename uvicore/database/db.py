@@ -14,6 +14,10 @@ from sqlalchemy.engine.result import RowProxy
 
 
 class _Db(DatabaseInterface):
+    """Database private class.
+
+    Do not import from this location.
+    Use the uvicore.db singleton global instead."""
 
     @property
     def default(self) -> str:
@@ -172,7 +176,10 @@ class _Db(DatabaseInterface):
 
 
 # IoC Class Instance
-# No because not to be used by the public
+# Not to be imported by the public from here.
+# Use the uvicore.db singleton global instead.
+
+
 
 
 

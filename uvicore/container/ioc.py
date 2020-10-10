@@ -10,7 +10,12 @@ from uvicore.support.dumper import dd, dump
 
 T = TypeVar('T')
 
-class Ioc(IocInterface):
+class _Ioc(IocInterface):
+    """Inversion of Control private class.
+
+    Do not import from this location.
+    Use the uvicore.ioc singleton global instead."""
+
     @property
     def bindings(self) -> Dict[str, Binding]:
         return self._bindings
@@ -19,33 +24,39 @@ class Ioc(IocInterface):
     def aliases(self) -> Dict[str, str]:
         return self._aliases
 
-    def __init__(self) -> None:
+    def __init__(self, app_config: Dict) -> None:
         self._bindings: Dict[str, Binding] = {}
         self._aliases: Dict[str, str] = {}
+        self._app_config = app_config
+
 
         # Add default binding specific to uvicore framework
         # Only some early defaults are here.  The rest are bound in
         # their service providers register() method
+        # NO - Deprecated now that I can bind default and make
         self.bind_map({
-            'Application': {
-                'object': 'uvicore.foundation.application._Application',
-                'singleton': True,
-                'aliases': ['App', 'app', 'application'],
-            },
-            'ServiceProvider': {
-                'object': 'uvicore.package.provider._ServiceProvider',
-                'aliases': ['service', 'provider'],
-            },
-            'Package': {
-                'object': 'uvicore.package.package._Package',
-                'aliases': ['package'],
-            },
-            'Dispatcher': {
-                'object': 'uvicore.events.dispatcher._Dispatcher',
-                'singleton': True,
-                'aliases': ['dispatcher', 'Event', 'event', 'Events', 'events'],
-            },
+            #'Application': {
+            #    'object': 'uvicore.foundation.application._Application',
+            #    'singleton': True,
+            #    'aliases': ['App', 'app', 'application'],
+            #},
+            #'ServiceProvider': {
+            #    'object': 'uvicore.package.provider._ServiceProvider',
+            #    'aliases': ['service', 'provider'],
+            #},
+            #'Package': {
+            #    'object': 'uvicore.package.package._Package',
+            #    'aliases': ['package'],
+            #},
+            #'Dispatcher': {
+            #    'object': 'uvicore.events.dispatcher._Dispatcher',
+            #    'singleton': True,
+            #    'aliases': ['dispatcher', 'Event', 'event', 'Events', 'events'],
+            #},
         })
+
+    #def config(self, config: Dict) -> None:
+    #    self._app_config = config
 
     def binding(self, name: str) -> Binding:
         if name in self.bindings:
@@ -58,7 +69,7 @@ class Ioc(IocInterface):
             # Default was provided and no binding currently exists
             # Bind the default provided but look for bindings override in app_config
             object = default
-            app_config = uvicore.config('app')
+            app_config = self._app_config
 
             if app_config.get('bindings'):
                 object = app_config.get('bindings').get(name) or default

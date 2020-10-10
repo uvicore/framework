@@ -1,10 +1,12 @@
 from __future__ import annotations
-import uvicore
+
 from typing import Optional, TypeVar
+
+import uvicore
+from app1.contracts import Contact as ContactInterface
 from app1.database.tables import contacts as table
-from uvicore.orm.fields import Field, BelongsTo
-from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.model import Model
+from uvicore.orm.fields import BelongsTo, Field
+from uvicore.orm.model import Model, ModelMetaclass
 
 # from typing import TYPE_CHECKING
 # if TYPE_CHECKING:
@@ -17,7 +19,6 @@ from uvicore.orm.model import Model
 
 #E = TypeVar("E", bound='_Contact')
 
-from app1.contracts import Contact as ContactInterface
 #from app1.contracts import User as UserInterface
 #from app1.models.user import User
 #from uvicore.auth.models.user import User
@@ -82,7 +83,7 @@ Contact: ContactModel = uvicore.ioc.make('app1.models.contact.Contact', ContactM
 
 # Update forwrad refs (a work around to circular dependencies)
 
-from app1.models.user import User
+from app1.models.user import User  # isort:skip
 #from uvicore.auth.models.user import User
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
 

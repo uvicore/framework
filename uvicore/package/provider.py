@@ -12,19 +12,23 @@ from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 
 
-class _ServiceProvider(ProviderInterface):
+class _ServiceProvider:
+    """asdf"""
 
     @property
     def app(self) -> Application:
+        # """Uvicore application instance"""
         return self._app
 
     @property
-    def package(self) -> Package:
-        return self._package
+    def events(self) -> Dispatcher:
+        # """Event instance"""
+        return uvicore.events
 
     @property
-    def events(self) -> Dispatcher:
-        return uvicore.events
+    def package(self) -> Package:
+        # """The current package class.  Not available in boot()"""
+        return self._package
 
     @property
     def app_config(self) -> Dict:
@@ -53,6 +57,7 @@ class _ServiceProvider(ProviderInterface):
         singleton: bool = False,
         aliases: List = []
     ) -> None:
+        """bind here"""
         # Get override object from config if exists
         override = self.binding(name)
         object = override or object
@@ -206,7 +211,10 @@ class _ServiceProvider(ProviderInterface):
 
 
 # IoC Class Instance
-ServiceProvider: _ServiceProvider = uvicore.ioc.make('ServiceProvider', _ServiceProvider)
+_ServiceProviderIoc: _ServiceProvider = uvicore.ioc.make('ServiceProvider', _ServiceProvider, aliases=['service', 'provider'])
+
+class ServiceProvider(_ServiceProviderIoc, ProviderInterface):
+    pass
 
 # Public API for import * and doc gens
 __all__ = ['ServiceProvider', '_ServiceProvider']

@@ -8,6 +8,11 @@ from uvicore.support.dumper import dd, dump
 
 
 class _Configuration(ConfigInterface):
+    """Configuration private class.
+
+    Do not import from this location.
+    Use the uvicore.config singleton global instead."""
+
     #config: Dict = {}
     @property
     def items(self) -> Dict[str, Dict]:
@@ -63,7 +68,8 @@ class _Configuration(ConfigInterface):
 
 
 # IoC Class Instance
-# No because not to be used by the public
+# Not to be imported by the public from here.
+# Use the uvicore.config singleton global instead.
 
 # Public API for import * and doc gens
 __all__ = ['_Configuration']

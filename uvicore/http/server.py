@@ -17,6 +17,10 @@ from uvicore.support.dumper import dd, dump
 
 
 class _Server(ServerInterface):
+    """HTTP Server private class.
+
+    Do not import from this location.
+    Use the uvicore.app.http singleton global instead."""
 
     @property
     def server(self) -> _FastAPI:

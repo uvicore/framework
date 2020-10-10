@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 # Add ./testapp to pythonpath
-export PYTHONPATH="/home/mreschke/Code/mreschke/python/uvicore/uvicore/tests/apps:/home/mreschke/Code/mreschke/python"
+export PYTHONPATH="/home/mreschke/Code/mreschke/python/uvicore/uvicore/tests/apps"
 
 python uvicore.py ${@}

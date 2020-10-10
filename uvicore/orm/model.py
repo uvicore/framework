@@ -3,20 +3,20 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 from pydantic import BaseModel as PydanticBaseModel
 
 import uvicore
-from uvicore.contracts import Model as ModelInterface
-from uvicore.orm.fields import BelongsTo, Field, HasMany, HasOne
+from uvicore import contracts
 from uvicore.orm.mapper import Mapper
-from uvicore.orm.metaclass import ModelMetaclass
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
 from uvicore.support.dumper import dd, dump
 
+# Keep for public import usage.
+# Example: from uvicore.orm.model import Model, Metaclass, Field, BelongsTo...
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne  # isort:skip
+from uvicore.orm.metaclass import ModelMetaclass  # isort:skip
+
 E = TypeVar("E")
 
-#class _Model(Generic[E], ModelInterface, PydanticBaseModel):
-class _BaseModel(Generic[E], PydanticBaseModel):
-#class Model(Generic[E], PydanticBaseModel, metaclass=ModelMetaclass):
-#class _Model(PydanticBaseModel):
+class _Model(Generic[E], PydanticBaseModel):
 
     def __init__(self, **data: Any) -> None:
         # Call pydantic parent
@@ -162,12 +162,11 @@ class _BaseModel(Generic[E], PydanticBaseModel):
 
 
 # IoC Class Instance
-_Model: _BaseModel = uvicore.ioc.make('Model', _BaseModel)
-
+_ModelIoc: _Model = uvicore.ioc.make('Model', _Model)
 
 # Actual Usable Model Class Derived from IoC Inheritence
 #class Model(Generic[E], _BaseModel[E], ModelInterface[E], metaclass=ModelMetaclass):
-class Model(Generic[E], _Model[E], ModelInterface[E]):
+class Model(Generic[E], _ModelIoc[E], contracts.Model[E]):
     pass
 
 

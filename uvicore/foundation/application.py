@@ -17,7 +17,11 @@ from uvicore.support.hash import md5
 from uvicore.support.module import load, location
 
 
-class _Application(ApplicationInterface):
+class _Application:
+    """Application private class.
+
+    Do not import from this location.
+    Use the uvicore.app singleton global instead."""
 
     # Instance Variables
     @property
@@ -36,9 +40,9 @@ class _Application(ApplicationInterface):
     def http(self) -> ServerInterface:
         return self._http
 
-    @property
-    def template(self) -> TemplateInterface:
-        return self._template
+    # @property
+    # def template(self) -> TemplateInterface:
+    #     return self._template
 
     @property
     def config(self) -> ConfigInterface:
@@ -86,7 +90,6 @@ class _Application(ApplicationInterface):
         self._debug = False
         self._perfs = []
         self._http = None
-        self._template = None
         self._config = None  # None until config provider registered
         self._providers = collections.OrderedDict()
         self._registered = False
@@ -127,20 +130,6 @@ class _Application(ApplicationInterface):
 
         # Register and merge all providers
         self._register_providers(app_config)
-
-
-
-        # Experimental - Swap Imports
-        # dump('BEFORE', [x for x in sys.modules.items() if 'uvicore.auth.models' in x])
-        # from app1.models import user
-        # sys.modules['uvicore.auth.models.user'] = user
-        # sys.modules['app1.models.user'] = user
-        # dump(sys.path)
-        # dump('AFTER', [x for x in sys.modules.items() if 'uvicore.auth.models' in x])
-
-
-
-
 
         # Boot all providers
         #self._boot_providers()
@@ -257,7 +246,9 @@ class _Application(ApplicationInterface):
                     ))
 
             # Modules file path
-            package = uvicore.ioc.make('Package')(
+            from uvicore.package.package import Package
+            #package = uvicore.ioc.make('Package')(
+            package = Package(
                 name=package_config.get('name'),
                 location=location(package_name),
                 main=main,
@@ -319,15 +310,10 @@ class _Application(ApplicationInterface):
         dd(*args)
 
 
-# Note about Application
-# Do not make the main Application class
-# or you get an IoC circular dependency issue when you try to override it.
-# All other IoC classes work fine, just not the Application.
-# This is fine because no one should ever get app except from uvicore.app global
-
 # IoC Class Instance
-# NO - Circular issues on override
-# Application: ApplicationInterface = uvicore.ioc.make('Application')
-
-# Public API for import * and doc gens
-__all__ = ['_Application']
+# **Not meant to be imported from here**.  Use the uvicore.app singleton global instead.
+# Only here because uvicore bootstrap needs to import it without a service provider.
+# By using the default bind and make feature of the IoC we can swap the implimentation
+# at a high bootstrap level using our app configs 'bindings' dictionary.
+# The only two classes that do this are Application and the event Dispatcher.
+Application: _Application = uvicore.ioc.make('Application', _Application, singleton=True, aliases=['App', 'app', 'application'])

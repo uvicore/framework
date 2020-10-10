@@ -6,6 +6,9 @@ config = {
 
     # --------------------------------------------------------------------------
     # App Information
+    #
+    # name: The human readable name of this package/app.  Like 'Matts Wiki'
+    # main: The package name to run when this app is served/executed
     # --------------------------------------------------------------------------
     'name': 'App1',
     'main': 'app1',
@@ -14,8 +17,9 @@ config = {
 
     # --------------------------------------------------------------------------
     # Uvicorn Development Server
+    #
+    # Configure the dev server when you run `./uvicore http serve`
     # --------------------------------------------------------------------------
-    # This configures the dev server when you run `./uvicore http serve`
     'server': {
         'app': 'app1.http.server:http',
         'host': env('SERVER_HOST', '127.0.0.1'),
@@ -27,6 +31,8 @@ config = {
 
     # --------------------------------------------------------------------------
     # OpenAPI Auto API Doc Configuration
+    #
+    # Configure the OpenAPI endpoints and displayed title
     # --------------------------------------------------------------------------
     'openapi': {
         'title': 'App1 API Docs',
@@ -35,18 +41,35 @@ config = {
         'redoc_url': '/redoc',
     },
 
+
     # --------------------------------------------------------------------------
     # Package Dependencies (Service Providers)
-    # --------------------------------------------------------------------------
+    #
     # Packages add functionality to your applications.  In fact your app itself
-    # is a package that can be used inside any other app.  Uvicore framework is
-    # also split into packages which use services providers to inject core
-    # functionality.  Order matters for override/deep merge purposes.  Each
-    # package overrides items of the previous, so the last package wins.
-    # Example, configs defined with the same key are deep merged with last
-    # one winning. Defining your actual apps package last means it will win
-    # in all override battles.
-    # Overrides include: providers, configs, views, templates, assets
+    # is a package that can be used inside any other app.  Internally, Uvicore
+    # framework itself is split into many packages (Config, Event, ORM, Database,
+    # HTTP, Logging, etc...) which use services providers to inject the desired
+    # functionality.  Always build your packages as if they were going to be
+    # used as a library in someone elses app/package.  Uvicore is built for
+    # modularity where all apps are packages and all packages are apps.
+    #
+    # Order matters for override/deep merge purposes.  Each package overrides
+    # items of the previous, so the last package wins. Example, configs defined
+    # in a provider with the same config key are deep merged, last one wins.
+    # Defining your actual apps package last means it will win in all override
+    # battles.
+    #
+    # If your packages relys on other packages on its own, don't define those
+    # dependencies here.  Define your packages dependencnes in its package.py
+    # config file instead.  This is a list of all root packages your app relies
+    # on, not every dependency of those packages.
+    #
+    # If you want to override some classes inside any package, but not the
+    # entire package provider itself, best to use the quick and easy 'bindings'
+    # dictionary below.
+    #
+    # Overrides include: providers, configs, views, templates, assets and more
+    # --------------------------------------------------------------------------
     'packages': OrderedDict({
         # Application Service Providers
         'app1': {
@@ -71,17 +94,24 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Service Provider Binding Definitions
+    # IoC Binding Overrides
+    #
+    # All classes that bind themselves to the IoC will look to the main running
+    # apps 'bindings' config dictionary for an override location.  This is the
+    # quickest and simplest way to override nearly every class in uvicore
+    # and other 3rd party packages (assuming they are using the IoC correctly).
     # --------------------------------------------------------------------------
-    # Most service providers bind classes into the IoC.  Most uvicore framework
-    # providers will lookup this array to let you override which classes they
-    # actually bind into the container.  This lets you quickly override an
-    # existing service provider binding without actually using the 'services'
-    # array above to define your own complete service provider.  Often times
-    # simply overriding the bound class is good enough.
     'bindings': {
+        # Testing, override Users table and model
         'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users._Users',
         'uvicore.auth.models.user.User': 'app1.models.user.UserModel',
+
+        # Low level core uvicore libraries
+        # 'Application': 'mreschke.wiki.overrides.application.Application',
+        # 'ServiceProvider': 'mreschke.wiki.overrides.provider.ServiceProvider',
+        # 'Package': 'mreschke.wiki.overrides.package.Package',
+
+        # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',
         # 'Configuration': 'mreschke.wiki.overrides.configuration.Configuration',
         # 'Console': 'mreschke.wiki.overrides.console.cli',
@@ -95,36 +125,14 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Inversion of Control (IoC) Concrete Implimentation Overrides
-    # --------------------------------------------------------------------------
-    # Many core or small classes do not use service providers at all.  But all
-    # classes use the IoC for their implimentation to allow you to override
-    # anything, even the smallest of classes.  Use this section to override all
-    # other non service provider based classes.  If the array is empty the
-    # defaults in `uvicore/container/ioc.py` are used.
-    'ioc': {
-        # 'Application': {
-        #     'object': 'mreschke.wiki.overrides.application.Application',
-        #     'singleton': True,
-        #     'aliases': ['App', 'app', 'application']
-        # },
-        # 'ServiceProvider': {
-        #     'object': 'mreschke.wiki.overrides.provider.ServiceProvider',
-        #     'aliases': ['service', 'provider'],
-        # },
-        # 'Package': {
-        #     'object': 'mreschke.wiki.overrides.package.Package',
-        #     'aliases': ['package']
-        # },
-    },
-
-
-    # --------------------------------------------------------------------------
     # Logging Configuration
+    #
+    # The uvicore.logger packages does NOT provide its own config because it
+    # needs to load super early in the bootstrap process.  Do not attempt to
+    # override the logger config in the usual way of deep merging with the same
+    # config key.  This is the one and only location of logging config as it
+    # only applies to the running app (deep merge of all packages not needed).
     # --------------------------------------------------------------------------
-    # The uvicore.logger packages does NOT provide its own config
-    # because it needs to load super early in the bootstrap process.
-    # So we define the logger config right here instead.  Tweak as needed.
     'logger': {
         'console': {
             'enabled': False,
@@ -140,5 +148,50 @@ config = {
 
 
     # Add more laravel stuff, locale, timezone etc...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # OLD STUFF
+
+    # --------------------------------------------------------------------------
+    # Inversion of Control (IoC) Concrete Implimentation Overrides
+    # --------------------------------------------------------------------------
+    # Many core or small classes do not use service providers at all.  But all
+    # classes use the IoC for their implimentation to allow you to override
+    # anything, even the smallest of classes.  Use this section to override all
+    # other non service provider based classes.  If the array is empty the
+    # defaults in `uvicore/container/ioc.py` are used.
+
+    # No this is obsolete now thanks to the new bind default and make feature
+    # Now even core IoC instances like Application can be overwridded by the
+    # bindings array above!!!
+    #NO'ioc': {
+        # 'Application': {
+        #     'object': 'mreschke.wiki.overrides.application.Application',
+        #     'singleton': True,
+        #     'aliases': ['App', 'app', 'application']
+        # },
+        # 'ServiceProvider': {
+        #     'object': 'mreschke.wiki.overrides.provider.ServiceProvider',
+        #     'aliases': ['service', 'provider'],
+        # },
+        # 'Package': {
+        #     'object': 'mreschke.wiki.overrides.package.Package',
+        #     'aliases': ['package']
+        # },
+    #},
+
 
 }

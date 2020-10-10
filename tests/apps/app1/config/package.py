@@ -5,6 +5,7 @@ from collections import OrderedDict
 # wiki.py configuration however is meant to be overridden per use case.
 # This is merged inside the main wiki.py and accessible at
 # config('mreschke.wiki.package')
+
 config = {
 
     # --------------------------------------------------------------------------
@@ -14,19 +15,16 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Service Provider Dependencies
+    # Package Dependencies (Service Providers)
+    #
+    # Define all the packages that this package depends on.  At a minimum, only
+    # the uvicore.foundation package is required.  The foundation is very
+    # minimal and only depends on configuratino, logging and console itself.
+    # You must add other core services built into uvicore only if your package
+    # requires them.  Services like uvicore.database, uvicore.orm, uvicore.auth
+    # uvicore.http, etc...
     # --------------------------------------------------------------------------
-    # Packages add functionality to your applications.  In fact your app itself
-    # is a package that can be used inside any other app.  Uvicore framework is
-    # also split into packages which use services providers to inject core
-    # functionality.  Order matters for override/deep merge purposes.  Each
-    # package overrides items of the previous, so the last package wins.
-    # Example, configs defined with the same key are deep merged with last
-    # one winning. Defining your actual apps package last means it will win
-    # in all override battles.
-    # Overrides include: providers, configs, views, templates, assets
     'services': OrderedDict({
-        # Wiki uses database, orm, auth, http
         'uvicore.foundation': {
             'provider': 'uvicore.foundation.services.Foundation',
         },

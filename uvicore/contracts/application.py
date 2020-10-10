@@ -48,12 +48,6 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def template(self) -> Template:
-        """HTML Templating System"""
-        pass
-
-    @property
-    @abstractmethod
     def config(self) -> Config:
         """Configuration system"""
         pass

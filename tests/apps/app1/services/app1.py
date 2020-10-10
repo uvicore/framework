@@ -1,6 +1,6 @@
 import uvicore
 from uvicore.package import ServiceProvider
-
+from uvicore.support.dumper import dump, dd
 
 class App1(ServiceProvider):
 
@@ -10,6 +10,10 @@ class App1(ServiceProvider):
             {'key': self.name, 'module': 'app1.config.app1.config'},
             {'key': 'uvicore.auth', 'module': 'app1.config.auth.config'},
         ])
+
+
+
+
 
         # Bind Tables
         #self.bind('app1.database.tables.comments.Comments', 'app1.database.tables.comments._Comments', singleton=True)
@@ -34,6 +38,8 @@ class App1(ServiceProvider):
         #self.models([
         #    'app1.models.*',
         #])
+
+
 
         # # Define view and asset paths and configure the templating system
         # self.load_views()

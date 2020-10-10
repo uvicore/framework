@@ -1,14 +1,13 @@
 from __future__ import annotations
+
+from typing import List, Optional
+
 import uvicore
-from typing import Optional, List
-from app1.database.tables import posts as table
-from uvicore.orm.fields import Field, HasMany, BelongsTo, BelongsToMany
-from uvicore.orm.metaclass import ModelMetaclass
-from uvicore.orm.model import Model, _Model
-from uvicore.contracts import Model as ModelInterface
-
-
 from app1.contracts import Post as PostInterface
+from app1.database.tables import posts as table
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany
+from uvicore.orm.model import Model, ModelMetaclass
+
 
 class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 #class _PostModel(Model['PostModel'], PostInterface, metaclass=ModelMetaclass):
@@ -101,13 +100,13 @@ Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
 # If not (the reverse relation) use from xyz import abc
 
 
-#from uvicore.auth.models.user import User
-#from app1.models.user import User
-from app1.models.comment import Comment
-from app1.models.tag import Tag
+#from uvicore.auth.models.user import User  # isort:skip
+#from app1.models.user import User  # isort:skip
+from app1.models.comment import Comment  # isort:skip
+from app1.models.tag import Tag  # isort:skip
 
-#from uvicore.auth.models.user import User
-from app1.models.user import User
+#from uvicore.auth.models.user import User  # isort:skip
+from app1.models.user import User  # isort:skip
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
 #Comment = uvicore.ioc.make('app1.models.comment.Comment')
 #Tag = uvicore.ioc.make('app1.models.tag.Tag')

@@ -1,18 +1,28 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from uvicore.contracts import Application, Package
+from uvicore.contracts import Application, Package, Dispatcher
 
 
 class Provider(ABC):
 
     @property
     @abstractmethod
-    def app(self) -> Application: pass
+    def app(self) -> Application:
+        """Uvicore application instance"""
+        pass
 
     @property
     @abstractmethod
-    def package(self) -> Package: pass
+    def events(self) -> Dispatcher:
+        """Event instance"""
+        pass
+
+    @property
+    @abstractmethod
+    def package(self) -> Package:
+        """The current package class.  Not available in boot()"""
+        pass
 
     @property
     @abstractmethod
@@ -26,10 +36,10 @@ class Provider(ABC):
     def name(self) -> Dict: pass
 
     @abstractmethod
-    def register(self, app) -> None: pass
+    def register(self) -> None: pass
 
     @abstractmethod
-    def boot(self, app, package) -> None: pass
+    def boot(self) -> None: pass
 
     @abstractmethod
     def bind(self,
@@ -40,7 +50,8 @@ class Provider(ABC):
         kwargs: Dict = None,
         singleton: bool = False,
         aliases: List = []
-    ) -> None: pass
+    ) -> None:
+        pass
 
     @abstractmethod
     def views(self, package: Package, paths: List) -> None: pass
@@ -61,4 +72,6 @@ class Provider(ABC):
     def commands(self, package: Package, options: Dict) -> None: pass
 
     @abstractmethod
-    def configs(self, modules: List) -> None: pass
+    def configs(self, modules: List) -> None:
+        """Register your app configs with the configuration system"""
+        pass

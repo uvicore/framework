@@ -14,10 +14,7 @@ from .routes import Routes
 from .server import Server
 from .template import Template
 
-# __all__ = [
-#     'Application', 'Config', 'Dispatcher',
-#     'Server', 'Package', 'Provider',
-#     'ApiRouter', 'WebRouter', 'Routes',
-#     'Template', 'Ioc', 'Binding', 'Logger',
-#     'Database', 'Connection', 'Model',
-# ]
+
+# The contracts package uses a __init__.py because users will import these
+# methods from their own apps and we want a nicer import which looks
+# like - from uvicore.contracts import Model

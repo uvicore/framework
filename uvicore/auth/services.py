@@ -11,8 +11,8 @@ class Auth(ServiceProvider):
         you define your packages configs and IoC bindings.  Configs are deep merged only after
         all packages are registered.  No real work should be performed here as it
         is very early in the bootstraping process and most internal processes are not
-        instantiated yet.
-        """
+        instantiated yet."""
+
         # Register IoC bindings
         self.bind(
             name='Auth',
@@ -39,8 +39,7 @@ class Auth(ServiceProvider):
         """Bootstrap package into uvicore framework.
         Boot takes place after all packages are registered.  This means all package
         configs are deep merged to provide a complete and accurate view of all configs.
-        This is where you load views, assets, routes, commands...
-        """
+        This is where you load views, assets, routes, commands..."""
 
         # Define CLI commands to be added to the ./uvicore command line interface
         #self.load_commands()
@@ -64,8 +63,8 @@ class Auth(ServiceProvider):
         ])
 
     def load_commands(self) -> None:
-        """Define CLI commands to be added to the ./uvicore command line interface
-        """
+        """Define CLI commands to be added to the ./uvicore command line interface"""
+
         group = 'auth'
         self.commands([
             {
