@@ -1,11 +1,31 @@
 #!/usr/bin/env bash
 
-# uvicore-new-app ./wiki https://github.com/uvicore.app version-12
+# Uvicore Installer
+# mReschke 2020-10-10
 
+# Command line options
 path="$1"
 branch="$2"
 repo="$3"
 
+
+# Bash colors and output functions
+DEFAULT="\033[0;0m"; BLUE="\033[0;34m"; GREEN="\033[0;32m"; CYAN="\033[0;36m"
+RED="\033[0;31m"; PURPLE="\033[0;35m"; BROWN="\033[0;33m"; LIGHTGRAY="\033[0;37m"
+DARKGRAY="\033[1;30m"; LIGHTBLUE="\033[1;34m"; LIGHTGREEN="\033[1;32m"
+LIGHTCYAN="\033[1;36m"; LIGHTRED="\033[1;31m"; LIGHTPURPLE="\033[1;35m"
+YELLOW="\033[1;33m"; WHITE="\033[1;37m"
+function header() { echo -e "${BROWN}:: ${GREEN}$1 ${BROWN}::${DEFAULT}"; }
+function log() { echo -e "$1"; }
+function info() { echo -e "${WHITE}$1${DEFAULT}"; }
+function line() { echo -e "${GREEN}--------------------------------------------------------------------------------${DEFAULT}"; }
+function item() { echo -e "  ${BLUE}* ${DARKGRAY}$1${DEFAULT}"; }
+function message() { echo -e "${BLUE}MESSAGE: ${WHITE}$1${DEFAULT}"; }
+function notice() { echo -e "${PURPLE}NOTICE: ${WHITE}$1${DEFAULT}"; }
+function warning() { echo -e "${YELLOW}WARNING: ${WHITE}$1${DEFAULT}"; }
+function error() { echo -e "${LIGHTRED}ERROR: ${RED}$1${DEFAULT}"; }
+
+# Usage docs
 function usage() {
     cat << EOF
 Uvicore Application Installer
@@ -27,6 +47,7 @@ An Elegant Fullstack Python Web, API and CLI Framework
 EOF
 }
 
+# Ensure dependencies are installed
 function check_dependencies() {
     # python
     pass=1
@@ -40,31 +61,25 @@ function check_dependencies() {
     fi
 }
 
+# Install uvicore
 function install() {
-    echo
-    echo "---------------------------------------------------------------------"
-    echo
+    echo; header "Installing Uvicore App $branch $repo into $path"; line
 
     if [ -d "$path" ]; then
-       echo "Directory $path already exists.  Probably not what you wanted."
-       echo "Install failed. Exiting."
+       error "Directory $path already exists.  Probably not what you wanted."
+       error "Install failed. Exiting."
        exit 1
     fi
 
-    echo "Creating directory $path"
+    item "Creating directory $path"
     mkdir -p $path
-    echo
 
-    echo "Cloning $repo $branch branch into $path"
+    item "Cloning $repo $branch branch into $path"
     git clone --depth 1 $repo -b $branch $path
-    echo
 
     installer="$path/.install/install.py"
     if [ -f "$installer" ]; then
-        echo "Running the python installer $installer"
-        echo
-        echo "---------------------------------------------------------------------"
-        echo
+        item "Running the python installer script $installer"; echo
         python $installer
     else
         echo "Installer $installer not found."
@@ -73,6 +88,7 @@ function install() {
     fi
 }
 
+# Main
 check_dependencies
 if [ "$path" == "" ] || [ "$path" == "--help" ] || [ "$path" == "-h" ] || [ "$path" == "--version" ] || [ "$path" == "-v" ]; then
     usage
@@ -80,12 +96,16 @@ else
     if [ "$branch" == "" ]; then branch="master"; fi
     if [ "$repo" == "" ]; then repo="https://github.com/uvicore/app"; fi
 
-    #echo "You are about to create a new directory $path"
-    echo "You are about to clone branch $branch from $repo into $path"
-    echo "Once cloned, the $path/.install/install.py python script will be executed"
+    header "Uvicore Installer"; echo
+
+    info "Actions:"
+    item "You are about to create a new directory $path"
+    item "You are about to clone branch $branch from $repo into $path"
+    item "Once cloned, the $path/.install/install.py python script will be executed to ask install questions"
     echo
-    echo "Please ensure you TRUST the repository you are cloning if 3rd party!"
-    echo "Please ensure you have read the repositories .install/install.py file if unsure!"
+    warning ""
+    info "Please ensure you TRUST the repository you are cloning if 3rd party!"
+    info "Please ensure you have read the repositories .install/install.py file if unsure!"
     echo
 
     echo -n "Continue to clone and execute $path/.install/install.py (y/N)? "; read answer
@@ -93,29 +113,6 @@ else
         install
     else
         echo
-        echo "Install Cancelled.  Please try uvicore later!  Bye."
+        error "Install Cancelled.  Please try uvicore later!  Bye."
     fi
-
 fi
-
-#echo $path
-
-
-# Usage: uvicore [OPTIONS] COMMAND [ARGS]...
-
-#   Uvicore 0.1.0
-#   The Async Python Framework for Artisans.
-#   An Elegant Fullstack Python Web, API and CLI Framework
-
-#   Copyright (c) 2020 Matthew Reschke License http://mreschke.com/license/mit
-
-# Options:
-#   --version  Show the version and exit.
-#   --help     Show this message and exit.
-
-# Commands:
-#   db       Database Commands
-#   event    Uvicore Event Information
-#   http     Uvicore HTTP Commands
-#   package  Uvicore Package Information
-#   wiki     Wiki Commands
