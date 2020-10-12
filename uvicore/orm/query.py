@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import operator as operators
-from copy import copy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 
 import sqlalchemy as sa
@@ -62,6 +61,29 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     self.filter(filter[0], filter[1], filter[2])
         return self
 
+    def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+        # Sorts are for Many relations only
+        if type(column) == str:
+            self.query.sort.append((column, order.upper()))
+        elif type(column) == tuple:
+            # Multiple sort as a List[Tuple] (column, order)
+            for sort in column:
+                if type(sort) == tuple:
+                    if len(sort) == 1:
+                        column = sort[0]
+                        order = 'ASC'
+                    elif len(sort) == 2:
+                        column, order = sort
+                else:
+                    column = sort
+                    order = 'ASC'
+                self.sort(column, order)
+        else:
+            # Direct SQLAlchemy expression
+            self.query.sort.append(column)
+        return self
+
+
     def key_by(self, field: str) -> B[B, E]:
         self.query.keyed_by = field
         return self
@@ -75,7 +97,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         self.where(self._pk(), pk_value)
 
         # Build query
-        query, saquery = self._build_query('select', copy(self.query))
+        query, saquery = self._build_query('select', self.query.copy())
         #print(saquery)
 
         # Execute query (yes fetchall not fetchone)
@@ -96,12 +118,26 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # Build query
         # Query builder does not look at self variables, it is stand alone
         # because I use it multiple times for relations each with slightly
-        # different query parts
-        query, saquery = self._build_query('select', copy(self.query))
-        #print(saquery)  # Actual SQL
+        # different query parts.  Thus the .copy()
 
-        # Execute query
+        # First query
+        query = self.query.copy()
+        self._build_orm_relations(query)
+
+        # Add all selects where NOT HasMany
+        query.selects = self.entity.selectable_columns()
+        for relation in query.relations.values():
+            if type(relation) == HasOne or type(relation) == BelongsTo:
+                columns = relation.entity.selectable_columns()
+                for column in columns:
+                    query.selects.append(column.label(sa.sql.quoted_name(relation.name.replace('.', '__') + '__' + column.name, True)))
+
+        # Build first query
+        query, saquery = self._build_query('select', query)
+
+        # Execute first query
         results = await self.entity.fetchall(saquery)
+        #print(saquery)
 
         def results2dict(results):
             l = []
@@ -115,55 +151,51 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         #dump('RESULTS', results)
         #dump('RESULTS-2-DICT', results2dict(results))
 
+        # So we have our first query perfect
+        # Now we need to build a second or third query for all has_many
+        has_many = {}
+        for relation in query.relations.values():
+            if type(relation) == HasMany:
+                # New secondary relation query
+                query2 = self.query.copy()
+
+                # Build ORM Relations but force HasMany joins to INNER JOIN
+                self._build_orm_relations(query2, hasmany_innerjoin=False) # NO, innerjoin fails on multiple joined manys
+
+                # Set selects to primary table ID + relation column
+                #if '.' in relation.name:
+                #    dump(relation.name)
+                #    query2.selects = ['posts__id']
+                #else:
+                #    query2.selects = [relation.entity.pk]
+                for column in relation.entity.selectable_columns():
+                    query2.selects.append(column.label(sa.sql.quoted_name(relation.name.replace('.', '__') + '__' + column.name, True)))
+                #query2.selects.extend(relation.entity.selectable_columns())
+
+                # Add .filter() as .where()
+                query2.wheres.extend(query2.filters)
+
+                # Add where to show only joined record that were found
+                # Don't use innerjoin xxxxxxxxxxxxxxxxxxxxxxx
+                query2.wheres.append((relation.name + '.' + relation.entity.pk, '!=', None))
+
+                # Swap .sort() to .order_by
+                query2.order_by = query2.sort
+
+                # Build secondary relation query
+                query2, saquery2 = self._build_query('select', query2)
+
+                # Execute secondary relation query
+                results2 = await self.entity.fetchall(saquery2)
+                #print(saquery2)
+                #dump("SECOND RESULTS", results2)
+                #dump(results2[0].keys())
+
+                has_many[relation.name] = results2
+
+
         # Convert results to List of entities
-        entities = self._build_orm_results(query, results)
-
-        # # So we have our first query perfect
-        # # Now we need to build a second or third query for all has_many
-        # for relation in self.relations.values():
-        #     if type(relation) == HasMany:
-        #         dump('hi')
-        #         # {
-        #         #     'name': 'comments',
-        #         #     'type': 'has_many',
-        #         #     'field': Field(name='comments', primary=False, description='Post Comments Model', required=False, sortable=False, searchable=False, read_only=False, write_only=False, has_many=('app1.models.comment.Comment', 'post_id', 'id')),
-        #         #     'entity': app1.models.comment.CommentModel,  # class
-        #         #     'foreign': 'post_id',
-        #         #     'local': 'id'
-        #         # }
-
-        #         # First Query Remove
-        #         # any order_by with a comments. is removed
-        #         # any .filter() are removed
-
-        #         # Second Query
-        #         # any filters with comments. goto where() on second query
-        #         # any order_by with comments. goes here
-
-
-        #         # Append .filter() into .where()
-        #         self.wheres.extend(self.filters)
-
-
-        #         wheres.append(('one', '=', 'two'))
-
-
-        #         dump('WHERE', self.wheres)
-        #         dump('OR_WHERE', self.or_wheres)
-        #         dump('FILTER', self.filters)
-
-
-        #         table, query = self.build_query('select')
-        #         print(query)  # Actual SQL
-
-
-        #         #re = relation.entity
-        #         #x = await re.include('post').where('post.creator_id', 1).get()
-        #         #x = await re.include('post').get()
-
-
-        # Return List of entities
-        #dump('ENTITIES', entities)
+        entities = self._build_orm_results(query, results, has_many=has_many)
 
         # Experimental key_by
         if query.keyed_by:
@@ -173,6 +205,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             return keyed_entities
 
         # Return List of Entities
+        #dump('ENTITIES', entities)
         return entities
 
     def _build_query(self, method: str, query: Query) -> Tuple:
@@ -181,7 +214,9 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # translate those into regular .join() and derive our .select() columns.
 
         # Build ORM relations from .include() and add append to query.joins
-        self._build_orm_relations(query)
+        #self._build_orm_relations(query)
+
+        #dump(query)
 
 
         # NO!! Because if select is blank the base Builder adds ALL fields with proper alias based on JOIN!!!
@@ -225,14 +260,13 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # We use .distinct() because of joins for wheres but not for selects
         saquery = sa.select(selects).distinct()
         if query.joins is not None:
-            dump('xx', query.joins)
             saquery = saquery.select_from(query.joins)
 
             #<sqlalchemy.sql.selectable.Join at 0x7f3bba4d6b80; Join object on Join object on posts(139894517854416) and auth_users(139894518106720)(139894505433792) and comments(139894517857968)>
 
         return saquery
 
-    def _build_orm_relations(self, query: Query) -> None:
+    def _build_orm_relations(self, query: Query, hasmany_innerjoin: bool = False) -> None:
         if not query.includes: return
 
         def extract(field, value):
@@ -279,6 +313,12 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                         # Build Join and add to query
                         left = self._column(getattr(entity.table.c, relation.local_key))
                         right = self._column(getattr(relation.entity.table.c, relation.foreign_key))
+
+                        # All joins are outerjoins unless HasMany with an override
+                        method = 'outerjoin'
+                        if hasmany_innerjoin and type(relation) == HasMany: method = 'join'
+
+                        # Append new Join
                         join = Join(
                             table=relation.entity.table,
                             tablename=str(relation.entity.table.name),
@@ -286,7 +326,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                             right=right,
                             onclause=left.sacol == right.sacol,
                             alias=relation_name.replace('.', '__'),
-                            method='outerjoin'
+                            method=method
                         )
                         query.joins.append(join)
 
@@ -305,30 +345,68 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # Set query.relations
         query.relations = relations
 
-    def _build_orm_results(self, query: Query, results, multiple: bool = True):
+    def _build_orm_results(self, query: Query, results, *, multiple: bool = True, has_many: Dict = {}):
         if not results:
             if multiple: return []
             return None
 
+        # Loop each raw SQLAlchemy DB results and convert to Model entities with relations
+
         entities = []
         for row in results:
+            # Convert DB result to model (no relations, just main table)
             model = self.entity.mapper(row).model()
+
+            # Loop each relation and merge in results
             for relation in query.relations.values():
+
+                # Merge in single relations
                 if type(relation) == HasOne or type(relation) == BelongsTo:
-                    prefix = relation.name.replace('.', '__')
+                    relation_name = relation.name
+                    prefix = relation_name.replace('.', '__')
+                    current_model = model
                     if '.' in relation.name:
                         parts = relation.name.split('.')
-                        current_model = model
+                        relation_name = parts[-1]
                         for i in range(0, len(parts) - 1):
                             current_model = getattr(current_model, parts[i])
-                        setattr(current_model, parts[-1], relation.entity.mapper(row, prefix).model())
-                    else:
-                        setattr(model, relation.name, relation.entity.mapper(row, prefix).model())
+                    setattr(current_model, relation_name, relation.entity.mapper(row, prefix).model())
+
+                # Merge in multiple relations from secondary query results saved to has_many Dictionary
+                elif type(relation) == HasMany:
+                    if relation.name in has_many:
+                        relation_name = relation.name
+                        prefix = relation_name.replace('.', '__')
+                        current_model = model
+                        if '.' in relation.name:
+                            parts = relation.name.split('.')
+                            relation_name = parts[-1]
+                            for i in range(0, len(parts) -1):
+                                current_model = getattr(current_model, parts[i])
+
+                        if type(current_model) != list:
+                            related_entities = []
+                            for related_row in has_many[relation.name]:
+                                pk = prefix + '__' + relation.foreign_key
+                                if getattr(related_row, pk) == getattr(current_model, current_model.__class__.pk):
+                                    related_entities.append(relation.entity.mapper(related_row, prefix).model())
+                            setattr(current_model, relation_name, related_entities)
+                        else:
+                            # Current model is a HasMany, so this is multiple nested HasMany
+                            for related_model in current_model:
+                                related_entities = []
+                                for related_row in has_many[relation.name]:
+                                    pk = prefix + '__' + relation.foreign_key
+                                    if getattr(related_row, pk) == getattr(related_model, related_model.__class__.pk):
+                                        related_entities.append(relation.entity.mapper(related_row, prefix).model())
+                                setattr(related_model, relation_name, related_entities)
+
+            # Add complete model to list of entities
             entities.append(model)
-        if multiple:
-            return entities
-        else:
-            return entities[0]
+
+        # Return one or many results
+        if multiple: return entities
+        return entities[0]
 
     def _pk(self):
         return self.entity.pk

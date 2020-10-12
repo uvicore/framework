@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import operator as operators
-from copy import copy
+from copy import deepcopy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 
 import sqlalchemy as sa
@@ -65,6 +65,7 @@ class Query(Representation):
         'or_filters',
         'group_by',
         'order_by',
+        'sort',
         'limit',
         'offset',
         'keyed_by',
@@ -82,12 +83,29 @@ class Query(Representation):
         self.or_filters: List[Tuple] = []
         self.group_by: List = []
         self.order_by: List[Tuple] = []
+        self.sort: List[Tuple] = []
         self.limit: Optional[int] = None
         self.offset: Optional[int] = None
         self.keyed_by: Optional[str] = None
         self.relations: Dict[str, Relation] = {}
         self.joins: List[Join] = []
         self.table: sa.Table
+
+    def copy(self):
+        # Objects are always byref in python.  We want a complete deep clone
+        # of a query.  Must use deep or it won't copy the .joins since its a
+        # list of an actual class also.  Shallow copies all lists and dicts, but
+        # not classes or list of classes, they will be byref unless deep
+        table = self.table
+        self.table = None
+        newquery = deepcopy(self)
+        self.table = table
+
+        # Copy the original table by ref back or else SQLAlchemy will see a new
+        # table class ID and think you are joining 2 different tables.  We must keep
+        # the exact instance of each table.
+        newquery.table = table
+        return newquery
 
 
 class QueryBuilder(Generic[B, E]):
@@ -167,7 +185,7 @@ class QueryBuilder(Generic[B, E]):
         return self
 
     def sql(self, method: str = 'select') -> str:
-        query, saquery = self._build_query('select', copy(self.query))
+        query, saquery = self._build_query('select', self.query.copy())
         return str(saquery)
 
     def _build_query(self, method: str, query: Query) -> Tuple:
@@ -184,7 +202,7 @@ class QueryBuilder(Generic[B, E]):
         if method == 'select':
 
             # Build .select() query from tables and joins and selectable columns
-            saquery = self._build_select(query)
+            saquery = self._build_select(query).distinct()
 
             # Build .select_from() query from tables and joins
             saquery = self._build_from(query, saquery)
@@ -240,8 +258,6 @@ class QueryBuilder(Generic[B, E]):
         for join in query.joins:
             method = getattr(joins, join.method)
             joins = method(right=join.table, onclause=join.onclause)
-
-        # Return SQLAlchemy .select_from() query
         return saquery.select_from(joins)
 
     def _build_select(self, query: Query) -> sa.select:

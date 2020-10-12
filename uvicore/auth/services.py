@@ -58,9 +58,10 @@ class Auth(ServiceProvider):
         ])
 
         # Define data seeders
-        self.seeders([
-            'uvicore.auth.database.seeders.seeders.seed'
-        ])
+        # NO - Auth shouldn't do its own seeding.  Let the app do it all.
+        # self.seeders([
+        #     'uvicore.auth.database.seeders.seeders.seed'
+        # ])
 
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""

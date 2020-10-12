@@ -125,7 +125,7 @@ class _ModelMetaclass(PydanticMetaclass):
     #     if field: return field.column
     #     return fieldname
 
-    def _columns(entity) -> List[sa.Column]:
+    def selectable_columns(entity) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
 
         Why not just use the table to get all columns?  Because a table

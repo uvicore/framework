@@ -36,7 +36,7 @@ async def create_tables(connections: str):
     #log.header('Creating tables for connections: [' + connections + ']')
     metakeys = get_metakeys(connections)
     for metakey in metakeys:
-        engine = await db.engine(metakey=metakey)
+        engine = db.engine(metakey=metakey)
         log.header('Creating tables in {} in topologically order'.format(metakey))
         metadata = db.metadata(metakey=metakey)
         for table in metadata.sorted_tables:
@@ -50,7 +50,7 @@ async def drop_tables(connections: str):
     #log.header('Dropping tables for connections: [' + connections + ']')
     metakeys = get_metakeys(connections)
     for metakey in metakeys:
-        engine = await db.engine(metakey=metakey)
+        engine = db.engine(metakey=metakey)
         log.header('Dropping tables from {} in topologically order'.format(metakey))
         metadata = db.metadata(metakey=metakey)
         for table in reversed(metadata.sorted_tables):

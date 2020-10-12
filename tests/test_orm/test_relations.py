@@ -3,114 +3,8 @@ import uvicore
 from typing import List
 from uvicore.support.dumper import dump
 
-# Typechecking imports only
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from app1.models.comment import CommentModel
-    from app1.models.contact import ContactModel
-    from app1.models.post import PostModel
-    from app1.models.user import UserModel
-
-class User1:
-    id: int = ''
-    name: str = ''
-
-
 @pytest.mark.asyncio
-async def xtest_play(app1):
-    from uvicore.auth.models.user import User
-    from app1.models.contact import Contact
-    from app1.models.post import Post
-    from app1.models.comment import Comment
-
-
-    # def some(*args):
-    #     import inspect
-    #     x = inspect.currentframe()
-    #     y = inspect.getouterframes(x, 1)
-    #     a = y[1]
-    #     dump(x, a)
-    #     dump(*args)
-
-    # some(User1.name, User1.id)
-
-
-    #users: List[User] = await User.get()
-    # users: List[User] = (await User
-    #     .include(Contact)
-    #     .select(User.id, User.email, Contact.phone)
-    #     .where(Contact.phone == '555-555-5555')
-    #     .get()
-    # )
-
-
-    # Notes, .select() may not be possible with an ORM because
-    # pydantic will STILL show the fields, just NONE ,and they would
-    # all have to be optional anyhow
-    # users: List[User] = (await User
-    #     .include('contact', 'contact.address')
-    #     .includeThrough('contact', 'address')
-    #     .select('id', 'email', 'contact.phone', 'address.zip')
-    #     .where('contact.phone', '555-555-5555'),
-    #     .get()
-    # )
-
-
-    # If I could do the string inspection conversion, this would be cool!
-    # Impossible, why? becuase pydantic STRIPS your actual properties
-    # off the class.  So Post.creator doesn't even exists.  Even if you could
-    # add it back to in the metaclass, nesting Post.creator.contact behavior
-    # would be very hard.  And not sure how much pydantic would complain if
-    # I started added all the properties back.
-    # posts = (await Post.query()
-    #     .include(Post.creator, Post.comments)
-    #     .where(Post.id == 1)
-    #     .where(Post.creator.email == 'asdfasdf')
-    #     .where(Post.creator.contact.phone == '444')
-    #     .where('example' not in Post.creator.email)  # !like
-    #     .where('test' in Post.title)  # like
-    #     .where(Post.title is not None) # not Null
-    #     .where(Post.title != 'suck it')
-    #     .order_by(Post.title, 'desc')
-    #     .order_by(Post.comments, 'desc')  # Relation order by on second relation query
-    #     .filter(Post.comments.deleted == False)
-    #     .get()
-    # )
-
-
-
-    #users: List[User] = await User.get()
-    #users: List[User] = await User.include('contact').get()
-    # for user in users:
-    #     dump(user.contact.address)
-    #dump(users)
-
-    #user = await User.include('contact').find(3)
-    #dump(user)
-
-    #contact: Contact = await Contact.include('user').find(3)
-    #dump(contact.user.email)
-
-    #contacts: List[Contact] = await Contact.include('user').get()
-    #dump(contacts)
-
-    posts: List[Post] = await Post.include('creator').get()
-    dump(posts)
-
-
-
-
-
-    # table = User.table()
-    # query = table.select()
-    # results = await User.fetchall(query)
-    # dump(results)
-
-    assert 1 == 2
-
-
-@pytest.mark.asyncio
-async def test_one_to_one(app1):
+async def xtest_one_to_one(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -132,7 +26,7 @@ async def test_one_to_one(app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_one_inverse(app1):
+async def xtest_one_to_one_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -155,7 +49,7 @@ async def test_one_to_one_inverse(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many(app1):
+async def test_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.post import Post
@@ -331,15 +225,32 @@ async def xtest_one_to_many(app1):
     # d.dispost()
 
 
-    posts = (await Post.query()
-        .include('creator.contact')
-        .where('creator.id', 1)
-        #.where('creator.email', 'manager1@example.com')
-        #.where('creator.contact.phone', '111-111-1111')
-        .order_by('creator.contact.phone')
+    # posts = (await Post.query()
+    #     .include('creator.contact')
+    #     #.where('comments.post_id', 1)
+    #     #.where('creator.id', 1)
+    #     #.where('creator.email', 'manager1@example.com')
+    #     #.where('creator.contact.phone', '111-111-1111')
+    #     #.order_by('creator.contact.phone')
+
+    #     # Filter and Sort are for HasMany ONLY
+    #     #.sort('comments.title', 'DESC')
+    #     #.filter('comments.title', 'Post1 Comment2')
+
+    #     # Get
+    #     .get()
+    # )
+    # dump(posts)
+
+
+    users = (await User.query()
+        .include('contact', 'posts.comments')
+
         .get()
     )
-    dump(posts)
+    dump(users)
+    #dump(users[0].posts[0].comments)
+
 
 
     # dump('##########################################################')
@@ -373,7 +284,7 @@ async def xtest_one_to_many(app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_many_inverse(app1):
+async def xtest_one_to_many_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment

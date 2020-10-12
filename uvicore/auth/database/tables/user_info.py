@@ -1,8 +1,8 @@
-import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema, SchemaOLD
-from uvicore.support.dumper import dump, dd
 
+import uvicore
+from uvicore.database.table import Schema, SchemaOLD
+from uvicore.support.dumper import dd, dump
 
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')

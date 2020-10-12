@@ -63,7 +63,7 @@ function check_dependencies() {
 
 # Install uvicore
 function install() {
-    echo; header "Installing Uvicore App $branch $repo into $path"; line
+    echo; header "Installing Uvicore Package Schema $branch $repo into $path"; line
 
     if [ -d "$path" ]; then
        error "Directory $path already exists.  Probably not what you wanted."
