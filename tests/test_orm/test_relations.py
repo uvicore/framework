@@ -1,7 +1,7 @@
 import pytest
 import uvicore
 from typing import List
-from uvicore.support.dumper import dump
+from uvicore.support.dumper import dump, dd
 
 @pytest.mark.asyncio
 async def xtest_one_to_one(app1):

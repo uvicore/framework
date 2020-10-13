@@ -15,6 +15,26 @@ from uvicore.contracts import OrmQueryBuilder as BuilderInterface
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
+
+from dataclasses import dataclass
+
+# @dataclass
+# class Test1:
+#     name: str
+#     name2: str
+#     name3: str
+#     name4: str
+#     name5: str
+#     name6: str
+#     # def __init__(self, name: str):
+#     #     self.name = name
+
+
+# x = Test1('Matthew1', 'Matthew2', 'Matthew3', 'Matthew4', 'Matthew5', 'Matthew6')
+# dump(x)
+# dump(uvicore.app.packages)
+
+
 class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """ORM Query Builder"""
 
@@ -191,8 +211,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 #dump("SECOND RESULTS", results2)
                 #dump(results2[0].keys())
 
+                # Add secondary results to has_many Dictionary for _build_orm_results
                 has_many[relation.name] = results2
-
 
         # Convert results to List of entities
         entities = self._build_orm_results(query, results, has_many=has_many)

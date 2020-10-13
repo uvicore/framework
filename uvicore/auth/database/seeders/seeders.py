@@ -1,4 +1,4 @@
-from . import users, groups
+from . import users
 
 async def seed():
     # Order is critical for ForeignKey dependencies

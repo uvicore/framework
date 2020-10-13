@@ -170,5 +170,12 @@ class Model(Generic[E], _ModelIoc[E], contracts.Model[E]):
     pass
 
 
+# Add a prettyprinter Model registration
+from prettyprinter import register_pretty, pretty_call
+@register_pretty(Model)
+def pretty_myclass(value, ctx):
+    return pretty_call(ctx, Model, **value.__dict__)
+
+
 # Public API for import * and doc gens
 #__all__ = ['_Model', 'Model']
