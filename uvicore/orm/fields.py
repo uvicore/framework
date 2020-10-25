@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uvicore
 from typing import Dict, Tuple, Any, Optional, Callable
 from pydantic.fields import FieldInfo
@@ -25,7 +26,7 @@ class Relation(Representation):
         self.name = None
         self.entity = None
 
-    def fill(self, field: 'Field'):
+    def fill(self, field: Field):
         if not self.foreign_key:
             self.foreign_key = 'id'
         if not self.local_key:
@@ -34,7 +35,45 @@ class Relation(Representation):
         self._load_entity()
         return self
 
-    def _fill_reverse(self, field: 'Field'):
+    def is_one(self):
+        return type(self) == HasOne or type(self) == BelongsTo
+
+    def is_many(self):
+        return type(self) == HasMany or type(self) == BelongsToMany
+
+    def is_type(self, *args):
+        for arg in args:
+            if type(self) == arg:
+                return True
+        return False
+
+    def contains_many(self, relations, skip: List = []):
+        """Walk down all sub_relations by __ name and check if any are *Many"""
+        walk = ''
+        sub_relations = self.name.split('__')
+        i = 0
+        for sub_relation in sub_relations:
+            # Walk down by concatenation
+            walk += sub_relation
+
+            # Skip these sub_relations if desired
+            if len(skip) > i and skip[i] == sub_relation:
+                walk += '__'
+                i += 1
+                continue
+
+            # Check relation type for *Many
+            relation_type = type(relations.get(walk))
+            if relation_type == HasMany or relation_type == BelongsToMany:
+                return True
+
+            # Walk down
+            walk += '__'
+            i += 1
+        return False
+
+
+    def _fill_reverse(self, field: Field):
         if not self.foreign_key:
             self.foreign_key = str(field.name) + '_id'
         if not self.local_key:
@@ -51,41 +90,69 @@ class Relation(Representation):
             self.entity = module.load(self.model).object
 
 
+class HasOne(Relation):
+    """One-To-One Relationship"""
+    def fill(self, field: Field):
+        return self._fill_reverse(field)
 
 
-class BelongsToMany(Representation):
+class HasMany(Relation):
+    """One-To-Many Relationship"""
+    def fill(self, field: Field):
+        return self._fill_reverse(field)
+
+
+class BelongsTo(Relation):
+    """Inverse of One-To-One or One-To-Many Relationship"""
+    pass
+
+
+class BelongsToMany(Relation):
+    """Many-To-Many Relationship (Both Sides)
+
+    :param model: Related model as import string
+    :param join_tablename: Table name of join/intermediate/pivot table
+    :param left_key: The foreign key column of the model on which you are defining the relationship
+    :param right_key: The foreign key column of the model that you are joining to
+    """
+
     __slots__ = (
         'model',
+        'join_tablename',
+        'left_key',
+        'right_key',
+        'name',
+        'entity',
         'join_table',
-        'local_key',
-        'foreign_key',
     )
 
     def __init__(self,
         model: str,
-        join_table: str,
-        local_key: str,
-        foreign_key: str,
+        join_tablename: str,
+        left_key: str,
+        right_key: str,
     ) -> None:
         self.model = model
-        self.join_table = join_table
-        self.local_key = local_key
-        self.foreign_key = foreign_key
+        self.join_tablename = join_tablename
+        self.left_key = left_key
+        self.right_key = right_key
+        self.name = None
+        self.entity = None
+        self.join_table = None
+        # The left_key is the foreign key name of the model on which you are defining the relationship
+        # The right_key is the foreign key name of the model that you are joining to
 
-    def fill(self, field: 'Field'):
-        pass
+    def fill(self, field: Field):
+        """Fill in additional instance variables like entity and join_table
 
+        :param field: The model field that holds this relation
+        """
+        # Load entity
+        self._load_entity()
 
-class HasOne(Relation):
-    def fill(self, field: 'Field'):
-        return self._fill_reverse(field)
-
-class HasMany(Relation):
-    def fill(self, field: 'Field'):
-        return self._fill_reverse(field)
-
-class BelongsTo(Relation):
-    pass
+        # Get actual SQLAlchemy relation table
+        self.join_table = uvicore.db.table(self.join_tablename, self.entity.connection)
+        return self
 
 
 class Field(Representation):

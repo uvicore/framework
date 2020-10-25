@@ -172,6 +172,7 @@ async def test_where_or(app1):
         ])
         .get()
     )
+    dump(users)
     assert [
         'manager1@example.com',
         'manager2@example.com',

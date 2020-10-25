@@ -2,15 +2,15 @@ from app1.models.tag import Tag
 
 async def seed():
     tags = [
-        Tag(name='linux'),
-        Tag(name='mac'),
-        Tag(name='bsd'),
-        Tag(name='laravel'),
-        Tag(name='lumen'),
-        Tag(name='django'),
-        Tag(name='flask'),
-        Tag(name='fastapi'),
-        Tag(name='starlette'),
+        Tag(name='linux', creator_id=1),
+        Tag(name='mac', creator_id=1),
+        Tag(name='bsd', creator_id=2),
+        Tag(name='laravel', creator_id=2),
+        Tag(name='lumen', creator_id=3),
+        Tag(name='django', creator_id=3),
+        Tag(name='flask', creator_id=4),
+        Tag(name='fastapi', creator_id=4),
+        Tag(name='starlette', creator_id=4),
     ]
     await Tag.insert(tags)
 

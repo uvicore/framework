@@ -22,11 +22,13 @@ async def seed():
             'title': 'Test Post1',
             'other': 'other stuff1',
             'creator_id': 1,
+            'owner_id': 2,
             'comments': [
                 {
                     'title': 'Post1 Comment1',
                     'body': 'Body for post1 comment1',
                     #'post_id': 1,  # No id needed, thats what post.create() does
+                    'creator_id': 1,
                 }
             ],
         },
@@ -46,12 +48,12 @@ async def seed():
     await Post.insert([
         # 2 posts for admin
         #Post(slug='test-post1', title='Test Post1', other='other stuff1', creator_id=1),
-        Post(slug='test-post2', title='Test Post2', other=None, creator_id=1),
+        Post(slug='test-post2', title='Test Post2', other=None, creator_id=1, owner_id=2),
 
         # 3 posts for manager1
-        Post(slug='test-post3', title='Test Post3', other='other stuff2', creator_id=2),
-        Post(slug='test-post4', title='Test Post4', other=None, creator_id=2),
-        Post(slug='test-post5', title='Test Post5', other=None, creator_id=2),
+        Post(slug='test-post3', title='Test Post3', other='other stuff2', creator_id=2, owner_id=1),
+        Post(slug='test-post4', title='Test Post4', other=None, creator_id=2, owner_id=1),
+        Post(slug='test-post5', title='Test Post5', other=None, creator_id=2, owner_id=2),
 
         # 2 posts for user2
         #Post(slug='test-post6', title='Test Post6', other='other stuff3', creator_id=5),
@@ -76,11 +78,15 @@ async def seed():
                     'address': '444 User Dr.',
                     'phone': '444-444-4444'
                     # NO user_id=5
-                }
-            }
+                },
+                'info': {
+                    'extra1': 'user5 extra',
+                },
+            },
+            'owner_id': 3,
         }
     ])
 
     # You can insert a single model with .save()
-    post = Post(slug='test-post7', title='Test Post7', other=None, creator_id=5)
+    post = Post(slug='test-post7', title='Test Post7', other=None, creator_id=5, owner_id=4)
     await post.save()

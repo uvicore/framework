@@ -5,6 +5,7 @@ import logging.config
 import re
 import sys
 from logging import Formatter
+from logging import Logger as PythonLogger
 
 from colored import attr, bg, fg
 
@@ -58,7 +59,10 @@ class _Logger(LoggerInterface):
 
     def __init__(self, config):
         # Default Config
-        # Levels = NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
+        # Levels from logging._levelToName are
+        # {50: 'CRITICAL', 40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG', 0: 'NOTSET'}
+
+        # Levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
         default = {
             'console': {
                 'enabled': True,
@@ -81,8 +85,8 @@ class _Logger(LoggerInterface):
         self.config = config
 
         # New Logger
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
 
         # New Console Handler
         if config['console']['enabled']:
@@ -95,7 +99,7 @@ class _Logger(LoggerInterface):
                     fmt=config['console']['format'],
                     datefmt='%Y-%m-%d %H:%M:%S'
                 ))
-            logger.addHandler(ch)
+            self.logger.addHandler(ch)
 
         # New File Handler
         if config['file']['enabled']:
@@ -105,13 +109,27 @@ class _Logger(LoggerInterface):
                 fmt=config['file']['format'],
                 datefmt='%Y-%m-%d %H:%M:%S'
             ))
-            logger.addHandler(fh)
+            self.logger.addHandler(fh)
 
     def __call__(self, message):
         self.info(message)
 
+    @property
+    def console_handler(self) -> PythonLogger:
+        try:
+            return self.logger.handlers[0]
+        except IndexError:
+            return None
+
+    @property
+    def file_handler(self) -> PythonLogger:
+        try:
+            return self.logger.handlers[1]
+        except IndexError:
+            return None
+
     def info(self, message) -> LoggerInterface:
-        logging.info(message)
+        logging.info(str(message))
         return self
 
     def notice(self, message) -> LoggerInterface:
@@ -119,28 +137,31 @@ class _Logger(LoggerInterface):
         return self
 
     def warning(self, message) -> LoggerInterface:
-        logging.warning(message)
+        logging.warning(str(message))
         return self
 
     def debug(self, message) -> LoggerInterface:
-        logging.debug(message)
+        logging.debug(str(message))
         return self
 
     def error(self, message) -> LoggerInterface:
-        logging.error(message)
+        logging.error(str(message))
         return self
 
     def critical(self, message) -> LoggerInterface:
-        logging.critical(message)
+        logging.critical(str(message))
         return self
 
     def exception(self, message) -> LoggerInterface:
-        logging.exception(message)
+        logging.exception(str(message))
         return self
 
     def blank(self) -> LoggerInterface:
         logging.info('')
         return self
+
+    def nl(self) -> LoggerInterface:
+        return self.blank()
 
     def separator(self) -> LoggerInterface:
         logging.info('=' * 80)
@@ -151,35 +172,35 @@ class _Logger(LoggerInterface):
         return self
 
     def header(self, message) -> LoggerInterface:
-        logging.info(":: " + message + " ::")
+        logging.info(":: " + str(message) + " ::")
         return self
 
     def header2(self, message) -> LoggerInterface:
-        logging.info("## " + message + " ##")
+        logging.info("## " + str(message) + " ##")
         return self
 
     def header3(self, message) -> LoggerInterface:
-        logging.info("=== " + message + " ===")
+        logging.info("=== " + str(message) + " ===")
         return self
 
     def header4(self, message) -> LoggerInterface:
-        logging.info("---- " + message + " ----")
+        logging.info("---- " + str(message) + " ----")
         return self
 
     def item(self, message) -> LoggerInterface:
-        logging.info("* " + message)
+        logging.info("* " + str(message))
         return self
 
     def item2(self, message) -> LoggerInterface:
-        logging.info("- " + message)
+        logging.info("- " + str(message))
         return self
 
     def item3(self, message) -> LoggerInterface:
-        logging.info("+ " + message)
+        logging.info("+ " + str(message))
         return self
 
     def item4(self, message) -> LoggerInterface:
-        logging.info("> " + message)
+        logging.info("> " + str(message))
         return self
 
 
@@ -273,7 +294,7 @@ class ColoredFormatter(Formatter):
         elif (level == 'ERROR'):
             message = ('{0}{1}{2}').format(fg('red'), message, attr(0))
         elif (level == 'CRITICAL'):
-            message = ('{0}{1}{2}{3}').format(fg('white'), bg('red'), message, attr(0))
+            message = ('{0}{1}{2}{3}').format(fg('black'), bg('red'), message, attr(0))
 
         return message
 

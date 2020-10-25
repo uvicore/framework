@@ -90,7 +90,6 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
         return results
 
-
 # IoC Class Instance
 _DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
 

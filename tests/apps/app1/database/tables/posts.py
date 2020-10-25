@@ -28,6 +28,7 @@ class _Posts(Schema):
         sa.Column('title', sa.String(length=100)),
         sa.Column('other', sa.String(length=100), nullable=True),
         sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
+        sa.Column('owner_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

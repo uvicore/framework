@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import sqlalchemy as sa
+from prettyprinter import pretty_call, register_pretty
 from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic.main import ModelMetaclass as PydanticMetaclass
 from sqlalchemy.sql import ClauseElement
@@ -19,6 +20,7 @@ from uvicore.support.dumper import dd, dump
 # the static via User.email() and the instatnce from user.email.
 # See https://stackoverflow.com/questions/59341761/what-are-the-differences-between-a-classmethod-and-a-metaclass-method
 # for a detailed difference between using @classmethod for statics vs a metaclass
+
 
 class _ModelMetaclass(PydanticMetaclass):
 
@@ -125,15 +127,17 @@ class _ModelMetaclass(PydanticMetaclass):
     #     if field: return field.column
     #     return fieldname
 
-    def selectable_columns(entity) -> List[sa.Column]:
+    def selectable_columns(entity, table: sa.Table = None) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
 
         Why not just use the table to get all columns?  Because a table
         may have far more columns than the actual model.  So we use the model
         to infer a list of actual SQLA columns (excluding write_only fields)
         """
-        all_columns = entity.table.columns
+        if table is None: table = entity.table
+        all_columns = table.columns
         columns: List[sa.Column] = []
+        dump(all_columns)
         for (field_name, field) in entity.modelfields.items():
             if field.column and not field.write_only:
                 columns.append(getattr(all_columns, field.column))
@@ -203,7 +207,7 @@ class _ModelMetaclass(PydanticMetaclass):
                 namespace[field_name] = PydanticFieldInfo(**field_info_kwargs)
 
         # If we extend and overwrite our own models, then some information
-        # will be buried in the baseclass typle.  Loop each baseclass and
+        # will be buried in the bases tuple.  Loop each base and
         # pluck out these critical fields (for modelfields, APPEND them to allow extension)
         for base in bases:
             if hasattr(base, '__modelfields__'):
@@ -242,13 +246,17 @@ class _ModelMetaclass(PydanticMetaclass):
         # This is why I keep the originals in my new __modelfields__ attribute
         cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
 
-        #dump(cls.__dict__)
-
-
-
         # Meta is fired up more than once, sometimes pydantic has NOT
-        # actually populated all fields.  If no fields, ignore this __new__
+        # actually populated all fields.  If no fields, ignore rest of this custom __new__
         if not cls.__fields__: return cls
+
+        # Pretty Printer
+        # Register a pretty printer just for this entity.  Why not on the main
+        # Model class itself?  Because then it prints each record as if it were
+        # uvicore.orm.model.Model instead of the actual model class (ie: uvicore.auth.models.user.User)
+        @register_pretty(cls)
+        def pretty_entity(value, ctx):
+            return pretty_call(ctx, cls, **value.__dict__)
 
         #dump("Registering Schema in Metaclass")
 

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import operator as operators
 from copy import deepcopy
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
 
 import sqlalchemy as sa
+from prettyprinter import pretty_call, register_pretty
 from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
+from collections import OrderedDict as ODict
 
 import uvicore
 from uvicore.contracts import QueryBuilder as BuilderInterface
@@ -34,6 +36,10 @@ class Column(Representation):
         self.table = table
         self.tablename = tablename
 
+@register_pretty(Column)
+def pretty_query(value, ctx):
+    return pretty_call(ctx, Column, **{key: getattr(value, key) for key in Column.__slots__})
+
 
 class Join(Representation):
     __slots__ = (
@@ -53,6 +59,10 @@ class Join(Representation):
         self.onclause = onclause
         self.alias = alias
         self.method = method
+
+@register_pretty(Join)
+def pretty_query(value, ctx):
+    return pretty_call(ctx, Join, **{key: getattr(value, key) for key in Join.__slots__})
 
 
 class Query(Representation):
@@ -87,7 +97,7 @@ class Query(Representation):
         self.limit: Optional[int] = None
         self.offset: Optional[int] = None
         self.keyed_by: Optional[str] = None
-        self.relations: Dict[str, Relation] = {}
+        self.relations: OrderedDict[str, Relation] = ODict()
         self.joins: List[Join] = []
         self.table: sa.Table
 
@@ -107,15 +117,16 @@ class Query(Representation):
         newquery.table = table
         return newquery
 
+@register_pretty(Query)
+def pretty_query(value, ctx):
+    return pretty_call(ctx, Query, **{key: getattr(value, key) for key in Query.__slots__})
+
+
 
 class QueryBuilder(Generic[B, E]):
 
     def __init__(self):
         self.query = Query()
-
-    @property
-    def _connection(self):
-        return self._conn
 
     def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> B[B, E]:
         if type(column) == str:
@@ -312,6 +323,9 @@ class QueryBuilder(Generic[B, E]):
 
         return statements
 
+    def _connection(self):
+        return self._conn
+
     def _pk(self):
         for column in self.query.table.primary_key.columns:
             # Just take first PK for now???
@@ -325,7 +339,7 @@ class QueryBuilder(Generic[B, E]):
         alias = None
         table = query.table
         tablename = str(table.name)
-        conn = self._connection
+        conn = self._connection()
 
         if type(dotname) == str:
             # Get column information from a string
@@ -355,7 +369,7 @@ class QueryBuilder(Generic[B, E]):
         name = dotname
         table = query.table
         tablename = str(table.name)
-        conn = self._connection
+        conn = self._connection()
         if '.' in dotname:
             parts = dotname.split('.')
             if len(parts) == 2:
@@ -384,6 +398,8 @@ class QueryBuilder(Generic[B, E]):
             '<': operators.lt,
         }
         return ops[operator]
+
+
 
 
 # IoC Class Instance

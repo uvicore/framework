@@ -11,10 +11,6 @@ class App1(ServiceProvider):
             {'key': 'uvicore.auth', 'module': 'app1.config.auth.config'},
         ])
 
-
-
-
-
         # Bind Tables
         #self.bind('app1.database.tables.comments.Comments', 'app1.database.tables.comments._Comments', singleton=True)
         #self.bind('app1.database.tables.contacts.Contacts', 'app1.database.tables.contacts._Contacts', singleton=True)
@@ -39,16 +35,14 @@ class App1(ServiceProvider):
         #    'app1.models.*',
         #])
 
-
-
-        # # Define view and asset paths and configure the templating system
+        # Define view and asset paths and configure the templating system
         # self.load_views()
 
         # Define Web and API routers
         self.load_routes()
 
-        # # Define CLI commands to be added to the ./uvicore command line interface
-        # self.load_commands()
+        # Define CLI commands to be added to the ./uvicore command line interface
+        self.load_commands()
 
     def load_views(self) -> None:
         """Define view and asset paths and configure the templating system
@@ -106,16 +100,17 @@ class App1(ServiceProvider):
 
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""
-        group = 'wiki'
+        group = 'app1'
         self.commands([
             {
                 'group': {
                     'name': group,
                     'parent': 'root',
-                    'help': 'Wiki Commands',
+                    'help': 'App1 Commands',
                 },
                 'commands': [
-                    {'name': 'test', 'module': 'mreschke.wiki.commands.test.cli'},
+                    {'name': 'test', 'module': 'app1.commands.test.cli'},
+                    {'name': 'shell', 'module': 'app1.commands.shell.cli'},
                 ],
             },
             # {

@@ -4,6 +4,10 @@ from uvicore.database.table import Schema, SchemaOLD
 from uvicore.support.dumper import dump
 
 
+# Get related tablenames with proper prefixes
+users = uvicore.db.tablename('auth.users')
+
+
 class _Tags(Schema):
 #class Table(metaclass=SchemaOLD):
 
@@ -21,6 +25,7 @@ class _Tags(Schema):
     schema = [
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('name', sa.String(length=50), unique=True),
+        sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

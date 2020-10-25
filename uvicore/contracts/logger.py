@@ -1,9 +1,21 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Dict, Any
-
+from logging import Logger as PythonLogger
 
 class Logger(ABC):
+
+    @property
+    @abstractmethod
+    def console_handler(self) -> PythonLogger:
+        """Get the console logger"""
+        pass
+
+    @property
+    @abstractmethod
+    def file_handler(self) -> PythonLogger:
+        """Get the file logger"""
+        pass
 
     @abstractmethod
     def info(self, message) -> Logger:
@@ -42,6 +54,11 @@ class Logger(ABC):
 
     @abstractmethod
     def blank(self) -> Logger:
+        """Log a blank line"""
+        pass
+
+    @abstractmethod
+    def nl(self) -> Logger:
         """Log a blank line"""
         pass
 

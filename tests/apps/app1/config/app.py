@@ -135,13 +135,13 @@ config = {
     # --------------------------------------------------------------------------
     'logger': {
         'console': {
-            'enabled': False,
-            'level': 'WARNING',
-            'colors': False,
+            'enabled': True,
+            'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+            'colors': True,
         },
         'file': {
             'enabled': False,
-            'level': 'WARNING',
+            'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
             'file': '/dev/null',
         }
     },

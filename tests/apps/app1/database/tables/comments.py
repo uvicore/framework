@@ -6,6 +6,7 @@ from uvicore.support.dumper import dump
 
 # Get related tablenames with proper prefixes
 posts = uvicore.db.tablename('app1.posts')
+users = uvicore.db.tablename('auth.users')
 
 
 class _Comments(Schema):
@@ -27,6 +28,7 @@ class _Comments(Schema):
         sa.Column('title', sa.String(length=100)),
         sa.Column('body', sa.Text()),
         sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id"), nullable=False),
+        sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

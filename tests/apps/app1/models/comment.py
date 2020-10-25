@@ -53,6 +53,18 @@ class CommentModel(Model['CommentModel'], metaclass=ModelMetaclass):
         relation=BelongsTo('app1.models.post.Post'),
     )
 
+    creator_id: int = Field('creator_id',
+        description="Comment Creator UserID",
+        required=True,
+    )
+
+    # One-To-Many Inverse (One Post has One Creator)
+    creator: Optional[User] = Field(None,
+        description="Comment Creator User Model",
+        #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
+        relation=BelongsTo('uvicore.auth.models.user.User'),
+    )
+
 
     def cb_results(self):
         return self.slug + ' callback'
@@ -70,6 +82,7 @@ Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentM
 # Update forwrad refs (a work around to circular dependencies)
 
 from app1.models.post import Post  # isort:skip
+from app1.models.user import User  # isort:skip
 #Post = uvicore.ioc.make('app1.models.post.Post')
 Comment.update_forward_refs()
 #_Comment.update_forward_refs()

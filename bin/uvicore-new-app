@@ -100,7 +100,7 @@ else
 
     info "Actions:"
     item "You are about to create a new directory $path"
-    item "You are about to clone branch $branch from $repo into $path"
+    item "You are about to clone $branch branch from $repo into $path"
     item "Once cloned, the $path/.install/install.py python script will be executed to ask install questions"
     echo
     warning ""

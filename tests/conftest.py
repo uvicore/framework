@@ -27,9 +27,9 @@ async def app1(event_loop):
     from app1.database.seeders.seeders import seed
     engine = uvicore.db.engine()
     metadata = uvicore.db.metadata()
-    metadata.drop_all(engine)
-    metadata.create_all(engine)
-    await seed()
+    #metadata.drop_all(engine)
+    #metadata.create_all(engine)
+    #await seed()
 
 
     # Run ALL Tests

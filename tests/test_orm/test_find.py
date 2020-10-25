@@ -21,6 +21,7 @@ async def test_find(app1):
 async def test_select_all(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await User.get()
+    dump(users)
     assert [
         'administrator@example.com',
         'manager1@example.com',

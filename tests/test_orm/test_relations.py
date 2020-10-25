@@ -52,6 +52,7 @@ async def xtest_one_to_one_inverse(app1):
 async def test_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
+    from app1.models.contact import Contact
     from app1.models.post import Post
     from app1.models.comment import Comment
     from app1.models.tag import Tag
@@ -225,8 +226,10 @@ async def test_one_to_many(app1):
     # d.dispost()
 
 
-    # posts = (await Post.query()
-    #     .include('creator.contact')
+    # query = (Post.query()
+    #     .include('creator.contact', 'creator.info', 'comments', 'tags')
+    #     #.include('tags')
+    #     #.include('comments', 'tags')
     #     #.where('comments.post_id', 1)
     #     #.where('creator.id', 1)
     #     #.where('creator.email', 'manager1@example.com')
@@ -238,18 +241,59 @@ async def test_one_to_many(app1):
     #     #.filter('comments.title', 'Post1 Comment2')
 
     #     # Get
+    #     #.get()
+    # )
+    # print(query.sql())
+    # posts = await query.get()
+    # dump(posts)
+    # #dump(query.queries())
+
+
+    #posts = await Post.query().include('creator.contact', 'creator.info', 'owner.contact', 'owner.info', 'comments', 'comments').get()
+    posts = await Post.query().include('comments.creator').get()
+    dump(posts)
+
+
+
+    #tags = await Tag.query().include('posts.creator.contact', 'posts.comments').get()
+    #tags = await Tag.query().include('creator', 'posts.creator').get()
+    #dump(tags)
+
+
+
+
+
+# We have 3 relations
+# {
+#     'posts': BelongsToMany(model='app1.models.post.Post', join_tablename='post_tags', left_key='tag_id', right_key='post_id', name='posts', entity=<class 'app1.models.post.PostModel'>, join_table=Table('post_tags', MetaData(bind=None), Column('post_id', Integer(), ForeignKey('posts.id'), table=<post_tags>, primary_key=True, nullable=False), Column('tag_id', Integer(), ForeignKey('tags.id'), table=<post_tags>, primary_key=True, nullable=False), schema=None)),
+#     'posts.creator': BelongsTo(model='uvicore.auth.models.user.User', foreign_key='id', local_key='creator_id', name='posts.creator', entity=<class 'app1.models.user.UserModel'>),
+#     'posts.creator.contact': HasOne(model='app1.models.contact.Contact', foreign_key='user_id', local_key='id', name='posts.creator.contact', entity=<class 'app1.models.contact.ContactModel'>)
+# }
+
+
+# relation = posts
+#   current_model = tags
+#   HasMany
+
+# relation = posts.creator
+#   current_model = posts
+
+
+
+    # users = (await User.query()
+    #     .include('contact', 'posts.comments')
+
     #     .get()
     # )
-    # dump(posts)
-
-
-    users = (await User.query()
-        .include('contact', 'posts.comments')
-
-        .get()
-    )
-    dump(users)
+    # dump(users)
     #dump(users[0].posts[0].comments)
+
+
+    # contacts = (await Contact.query()
+    #     .include('user.posts.comments')
+    #     .get()
+    # )
+    # dump(contacts)
 
 
 

@@ -1,5 +1,6 @@
 from app1.models.comment import Comment
 from app1.models.post import Post
+from uvicore.support.dumper import dump, dd
 
 async def seed():
 
@@ -10,6 +11,7 @@ async def seed():
             'title': 'Post1 Comment2',
             'body': 'Body for post1 comment2',
             #'post_id': 1,  # No id needed, thats what post.create() does
+            'creator_id': 2,
         },
     ])
 
@@ -20,8 +22,8 @@ async def seed():
         #Comment(title='Post1 Comment2', body='Body for post1 comment2', post_id=1),
 
         # Post 2 has 3
-        Comment(title='Post3 Comment1', body='Body for post3 comment1', post_id=3),
-        Comment(title='Post3 Comment2', body='Body for post3 comment2', post_id=3),
+        Comment(title='Post3 Comment1', body='Body for post3 comment1', post_id=3, creator_id=3),
+        Comment(title='Post3 Comment2', body='Body for post3 comment2', post_id=3, creator_id=4),
         #NO-Comment(title='Post3 Comment3', body='Body for post3 comment3', post_id=3),
     ])
 
@@ -31,5 +33,6 @@ async def seed():
             'title': 'Post3 Comment3',
             'body': 'Body for post3 comment3',
             'post_id': 3,
+            'creator_id': 1,
         }
     ])

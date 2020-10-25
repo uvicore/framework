@@ -57,12 +57,22 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
         required=True,
     )
 
-    # One-To-Many Inverse (One Post has One User)
+    # One-To-Many Inverse (One Post has One Creator)
     creator: Optional[User] = Field(None,
         description="Post Creator User Model",
-
-        #belongs_to=('uvicore.auth.models.user.User', 'id', 'creator_id'),
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
+        relation=BelongsTo('uvicore.auth.models.user.User'),
+    )
+
+    owner_id: int = Field('owner_id',
+        description="Post Owner UserID",
+        required=True,
+    )
+
+    # One-To-Many Inverse (One Post has One Owner)
+    owner: Optional[User] = Field(None,
+        description="Post Owner User Model",
+        #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'owner_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
     )
 
@@ -77,12 +87,12 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     tags: Optional[List[Tag]] = Field(None,
-        description="Post Tags Model",
+        description="Post Tags",
         relation=BelongsToMany('app1.models.tag.Tag', 'post_tags', 'post_id', 'tag_id'),
     )
 
     def cb_results(self):
-        return str(self.slug) + ' callback'
+        return str(self.slug) + ' callback  asdfasdfasdf'
 
 # IoC Class Instance
 Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)

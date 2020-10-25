@@ -16,6 +16,7 @@ from uvicore.orm.metaclass import ModelMetaclass  # isort:skip
 
 E = TypeVar("E")
 
+
 class _Model(Generic[E], PydanticBaseModel):
 
     def __init__(self, **data: Any) -> None:
@@ -168,14 +169,6 @@ _ModelIoc: _Model = uvicore.ioc.make('Model', _Model)
 #class Model(Generic[E], _BaseModel[E], ModelInterface[E], metaclass=ModelMetaclass):
 class Model(Generic[E], _ModelIoc[E], contracts.Model[E]):
     pass
-
-
-# Add a prettyprinter Model registration
-from prettyprinter import register_pretty, pretty_call
-@register_pretty(Model)
-def pretty_myclass(value, ctx):
-    return pretty_call(ctx, Model, **value.__dict__)
-
 
 # Public API for import * and doc gens
 #__all__ = ['_Model', 'Model']

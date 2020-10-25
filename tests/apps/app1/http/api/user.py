@@ -12,6 +12,10 @@ async def users(include: str = ''):
     return await User.query().include(*include.split(',')).get()
 
 
+@route.get('/users/{id}', response_model=User)
+async def user(id: int, include: str = ''):
+    return await User.query().include(*include.split(',')).find(id)
+
 
 @route.get('/user-info', response_model=List[UserInfo])
 async def user_info(include: str = ''):
