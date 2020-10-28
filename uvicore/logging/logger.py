@@ -11,6 +11,7 @@ from colored import attr, bg, fg
 
 import uvicore
 from uvicore.contracts import Logger as LoggerInterface
+from uvicore.support.dumper import dump
 
 # # Sunfinity standardized log configuration
 # config = {
@@ -50,7 +51,6 @@ from uvicore.contracts import Logger as LoggerInterface
 # }
 
 
-
 class _Logger(LoggerInterface):
     """Logger private class.
 
@@ -68,13 +68,20 @@ class _Logger(LoggerInterface):
                 'enabled': True,
                 'level': 'DEBUG',
                 'colors': True,
-                'format': '%(message)s'
+                'format': '%(message)s',
+                'filters': [],
+                'exclude': [],
             },
             'file': {
                 'enabled': False,
                 'level': 'DEBUG',
                 'file': '/tmp/example.log',
-                'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)s | %(message)s'
+                'when': 'midnight',
+                'interval': 1,
+                'backup_count': 7,
+                'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)-22s | %(message)s',
+                'filters': [],
+                'exclude': [],
             }
         }
 
@@ -82,34 +89,41 @@ class _Logger(LoggerInterface):
         config = {**default, **config}
         if 'console' in config.keys(): config['console'] = {**default['console'], **config['console']}
         if 'file' in config.keys(): config['file'] = {**default['file'], **config['file']}
-        self.config = config
 
         # New Logger
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.DEBUG)
+        self._logger = logging.getLogger()
+        self._logger.setLevel(logging.DEBUG)
+        self._name = None
 
         # New Console Handler
         if config['console']['enabled']:
-            ch = logging.StreamHandler(stream=sys.stdout)
-            ch.setLevel(config['console']['level'])
+            handler = logging.StreamHandler(stream=sys.stdout)
+            handler.setLevel(config['console']['level'])
             if config['console']['colors']:
-                ch.setFormatter(ColoredFormatter(config['console']['format']))
+                handler.setFormatter(ColoredFormatter(config['console']['format']))
             else:
-                ch.setFormatter(logging.Formatter(
+                handler.setFormatter(logging.Formatter(
                     fmt=config['console']['format'],
                     datefmt='%Y-%m-%d %H:%M:%S'
                 ))
-            self.logger.addHandler(ch)
+            handler.addFilter(_OutputFilter(config['console']['filters'], config['console']['exclude']))
+            self._logger.addHandler(handler)
 
         # New File Handler
         if config['file']['enabled']:
-            fh = logging.FileHandler(filename=config['file']['file'], mode='a')
-            fh.setLevel(config['file']['level'])
-            fh.setFormatter(logging.Formatter(
+            #class logging.handlers.TimedRotatingFileHandler(filename, when='h', interval=1, backupCount=0, encoding=None, delay=False, utc=False, atTime=None, errors=None)
+            #handler = logging.FileHandler(filename=config['file']['file'], mode='a')
+            handler = logging.handlers.TimedRotatingFileHandler(filename=config['file']['file'], when=config['file']['when'], interval=config['file']['interval'], backupCount=config['file']['backup_count'])
+            handler.setLevel(config['file']['level'])
+            handler.setFormatter(logging.Formatter(
                 fmt=config['file']['format'],
                 datefmt='%Y-%m-%d %H:%M:%S'
             ))
-            self.logger.addHandler(fh)
+            #if config['file'].get('filter'): handler.addFilter(logging.Filter(name=config['file']['filter']))
+            handler.addFilter(_OutputFilter(config['file']['filters'], config['file']['exclude']))
+            self._logger.addHandler(handler)
+
+        self.config = config
 
     def __call__(self, message):
         self.info(message)
@@ -117,91 +131,186 @@ class _Logger(LoggerInterface):
     @property
     def console_handler(self) -> PythonLogger:
         try:
-            return self.logger.handlers[0]
+            return self._logger.handlers[0]
         except IndexError:
             return None
 
     @property
     def file_handler(self) -> PythonLogger:
         try:
-            return self.logger.handlers[1]
+            return self._logger.handlers[1]
         except IndexError:
             return None
 
-    def info(self, message) -> LoggerInterface:
-        logging.info(str(message))
+    @property
+    def logger(self):
+        if not self._name: return self._logger
+        return logging.getLogger(self._name)
+
+    def name(self, name: str):
+        self._name = name
         return self
 
-    def notice(self, message) -> LoggerInterface:
-        logging.info("NOTICE: " + message)
-        return self
+    def reset(self):
+        self._name = None
 
-    def warning(self, message) -> LoggerInterface:
-        logging.warning(str(message))
-        return self
+    def dump(self, *args):
+        self._dump_handler(*args, handler='file', filters=self.config['file']['filters'], excludes=self.config['file']['exclude'])
+        self._dump_handler(*args, handler='console', filters=self.config['console']['filters'], excludes=self.config['console']['exclude'])
+        self.reset()
 
-    def debug(self, message) -> LoggerInterface:
-        logging.debug(str(message))
-        return self
+    def _dump_handler(self, *args, handler: str, filters: List, excludes: List):
+        if not self._name: self.name == 'root'
+        show = False
 
-    def error(self, message) -> LoggerInterface:
-        logging.error(str(message))
-        return self
+        # Check filters
+        if not filters: show = True
+        if not show and self._name:
+            for filter in filters:
+                if self._name[0:len(filter)] == filter:
+                    show = True
+                    break
 
-    def critical(self, message) -> LoggerInterface:
-        logging.critical(str(message))
-        return self
+        # Check excludes
+        if show and excludes:
+            for exclude in excludes:
+                if self._name[0:len(exclude)] == exclude:
+                    show = False
+                    break
 
-    def exception(self, message) -> LoggerInterface:
-        logging.exception(str(message))
-        return self
+        if show:
+            if handler == 'console':
+                # Pretty Printer to Console
+                dump(*args)
+            else:
+                # Print as text to file handler
+                for arg in args:
+                    self.logger.debug(arg)
+
+    def info(self, message):
+        self.logger.info(str(message))
+        self.reset()
+
+    def notice(self, message):
+        self.logger.info("NOTICE: " + str(message))
+        self.reset()
+
+    def warning(self, message):
+        self.logger.warning(str(message))
+        self.reset()
+
+    def debug(self, message):
+        self.logger.debug(str(message))
+        self.reset()
+
+    def error(self, message):
+        self.logger.error(str(message))
+        self.reset()
+
+    def critical(self, message):
+        self.logger.critical(str(message))
+        self.reset()
+
+    def exception(self, message):
+        self.logger.exception(str(message))
+        self.reset()
 
     def blank(self) -> LoggerInterface:
-        logging.info('')
-        return self
+        self.logger.info('')
+        self.reset()
 
     def nl(self) -> LoggerInterface:
-        return self.blank()
-
-    def separator(self) -> LoggerInterface:
-        logging.info('=' * 80)
+        """nl() is a blank() that is chainable"""
+        self.logger.info('')
         return self
 
-    def line(self) -> LoggerInterface:
-        logging.info('-' * 80)
-        return self
+    def separator(self):
+        self.logger.info('=' * 80)
+        self.reset()
 
-    def header(self, message) -> LoggerInterface:
-        logging.info(":: " + str(message) + " ::")
-        return self
+    def line(self):
+        self.logger.info('-' * 80)
+        self.reset()
 
-    def header2(self, message) -> LoggerInterface:
-        logging.info("## " + str(message) + " ##")
-        return self
+    def header(self, message):
+        self.logger.info(":: " + str(message) + " ::")
+        self.reset()
 
-    def header3(self, message) -> LoggerInterface:
-        logging.info("=== " + str(message) + " ===")
-        return self
+    def header2(self, message):
+        self.logger.info("## " + str(message) + " ##")
+        self.reset()
 
-    def header4(self, message) -> LoggerInterface:
-        logging.info("---- " + str(message) + " ----")
-        return self
+    def header3(self, message):
+        self.logger.info("=== " + str(message) + " ===")
+        self.reset()
 
-    def item(self, message) -> LoggerInterface:
-        logging.info("* " + str(message))
-        return self
+    def header4(self, message):
+        self.logger.info("---- " + str(message) + " ----")
+        self.reset()
 
-    def item2(self, message) -> LoggerInterface:
-        logging.info("- " + str(message))
-        return self
+    def item(self, message):
+        self.logger.info("* " + str(message))
+        self.reset()
 
-    def item3(self, message) -> LoggerInterface:
-        logging.info("+ " + str(message))
-        return self
+    def item2(self, message):
+        self.logger.info("- " + str(message))
+        self.reset()
 
-    def item4(self, message) -> LoggerInterface:
-        logging.info("> " + str(message))
-        return self
+    def item3(self, message):
+        self.logger.info("+ " + str(message))
+        self.reset()
+
+    def item4(self, message):
+        self.logger.info("> " + str(message))
+        self.reset()
+
+
+class _OutputFilter(logging.Filter):
+    """Python logging custom filter class"""
+
+    def __init__(self, filters, excludes):
+        self.filters = filters
+        self.excludes = excludes
+        super().__init__(name='')
+
+    def filter(self, record):
+        # Not an exact filter match but a contains match.  This matches how default python
+        # logging filters are.  So you can filter on A.B and it will include
+        # names of A.B.C and up.
+        show = False
+        if self.filters:
+            for f in self.filters:
+                if record.name[0:len(f)] == f:
+                    show = True
+                    break
+        else:
+            show = True
+
+        if show and self.excludes:
+            for exclude in self.excludes:
+                if record.name[0:len(exclude)] == exclude:
+                    show = False
+                    break
+
+        return show
+
+
+
+class _ExcludeFilter(logging.Filter):
+    """Python logging custom exclude filter class"""
+
+    def __init__(self, excludes):
+        self.excludes = excludes
+        super().__init__(name='exclude')
+
+    def filter(self, record):
+        # Not an exact filter match but a contains match.  This matches how default python
+        # logging filters are.  So you can filter on A.B and it will include
+        # names of A.B.C and up.
+        for exclude in self.excludes:
+            print(exclude)
+            if record.name[0:len(exclude)] == exclude: return False
+        return True
 
 
 class ColoredFormatter(Formatter):

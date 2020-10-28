@@ -1,5 +1,6 @@
 import pytest
 from uvicore.support import module
+from uvicore.support.dumper import dump
 
 
 def test_location():
@@ -94,20 +95,22 @@ def test_load_file():
 
 def test_load_object():
     # Import class from inside a file
-    # Module(
-    #     object=<class 'uvicore.foundation.services.Foundation'>,
-    #     name='Foundation',
-    #     path='uvicore.foundation.services',
-    #     fullpath='uvicore.foundation.services.Foundation',
-    #     package='uvicore.foundation',
-    #     file='/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/foundation/services.py')
-    x = module.load('uvicore.foundation.services.Foundation')
-    assert "<class 'uvicore.foundation.services.Foundation'>" in str(x.object)
-    assert x.name == 'Foundation'
-    assert x.path == 'uvicore.foundation.services'
-    assert x.fullpath == 'uvicore.foundation.services.Foundation'
-    assert x.package == 'uvicore.foundation'
-    assert 'uvicore/foundation/services.py' in x.file
+    # uvicore.support.module.Module(
+    #     object=uvicore.container.ioc._Ioc,  # class
+    #     name='_Ioc',
+    #     path='uvicore.container.ioc',
+    #     fullpath='uvicore.container.ioc._Ioc',
+    #     package='uvicore.container',
+    #     file='/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/'
+    #         'container/ioc.py'
+    # )
+    x = module.load('uvicore.container.ioc._Ioc')
+    assert "<class 'uvicore.container.ioc._Ioc'>" in str(x.object)
+    assert x.name == '_Ioc'
+    assert x.path == 'uvicore.container.ioc'
+    assert x.fullpath == 'uvicore.container.ioc._Ioc'
+    assert x.package == 'uvicore.container'
+    assert 'uvicore/container/ioc.py' in x.file
 
 
 def test_load_invalid():

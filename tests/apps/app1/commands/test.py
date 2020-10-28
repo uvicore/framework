@@ -23,29 +23,29 @@ async def cli():
         .include(
             # One
             'creator',
-            'creator.info',
-            'creator.contact',
+            #'creator.info',
+            #'creator.contact',
 
             'owner',
-            'owner.info',
-            'owner.contact',
+            #'owner.info',
+            #'owner.contact',
 
             # One-To-Many Comments
             'comments',
             'comments.creator',
-            'comments.creator.info',
-            'comments.creator.contact',
+            #'comments.creator.info',
+            #'comments.creator.contact',
 
             # Many-To-Many Tags
             'tags',
-            'tags.creator',
-            'tags.creator.info',
-            'tags.creator.contact',
+            #'tags.creator',
+            #'tags.creator.info',
+            #'tags.creator.contact',
         )
         .get()
     )
     log.nl().header('Posts Model Results')
-    dump(posts)
+    #dump(posts)
 
     # tags
     #     posts

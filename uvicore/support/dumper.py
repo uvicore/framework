@@ -1,6 +1,9 @@
-import uvicore
 import logging
+import sys
+
 import prettyprinter
+
+import uvicore
 
 # Enable extras like @dataclass
 prettyprinter.install_extras(exclude=[
@@ -18,13 +21,21 @@ def dump(*args):
     """Dump variables using prettyprinter"""
 
     # Get current log level of Console logger
-    level = logging.getLevelName(uvicore.log.console_handler.level)
+    # Uvicore may not be loaded yet, if not, set default level to INFO
+    level = None
+    if uvicore.log:
+        level = logging.getLevelName(uvicore.log.console_handler.level)
+
+    # Detect if running in pytest
+    if "pytest" in sys.modules:
+        level = None
 
     # Only dump if Console log level is DEBUG or INFO
-    if level == 'INFO' or level == 'DEBUG':
+    if level == 'INFO' or level == 'DEBUG' or level is None:
         for arg in args:
             if type(arg) == str:
-                prettyprinter.cpprint(arg, width=10000, ribbon_width=10000)
+                #prettyprinter.cpprint(arg, width=10000, ribbon_width=10000)
+                print(arg)
             else:
                 prettyprinter.cpprint(arg)
 

@@ -25,7 +25,7 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
     def table(self, table: Union[str, sa.Table]) -> B[B, E]:
         if type(table) == str:
-            self.query.table = uvicore.db.table(table, self._connection)
+            self.query.table = uvicore.db.table(table, self._connection())
         else:
             self.query.table = table
         return self
@@ -37,7 +37,7 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
     def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
         # Get table and tablename
-        conn = self._connection
+        conn = self._connection()
         if type(table) == str:
             if '.' in table: conn, table = tuple(table.split('.'))
             table = uvicore.db.table(table, conn)
@@ -77,7 +77,7 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         query, saquery = self._build_query('select', copy(self.query))
 
         # Execute query
-        results = await uvicore.db.fetchone(saquery, connection=self._connection)
+        results = await uvicore.db.fetchone(saquery, connection=self._connection())
 
         return results
 
@@ -86,7 +86,7 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         query, saquery = self._build_query('select', copy(self.query))
 
         # Execute query
-        results = await uvicore.db.fetchall(saquery, connection=self._connection)
+        results = await uvicore.db.fetchall(saquery, connection=self._connection())
 
         return results
 

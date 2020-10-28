@@ -23,7 +23,7 @@ config = {
     'server': {
         'app': 'app1.http.server:http',
         'host': env('SERVER_HOST', '127.0.0.1'),
-        'port': env.int('SERVER_PORT', 9863),
+        'port': env.int('SERVER_PORT', 5000),
         'reload': env.bool('SERVER_RELOAD', True),
         'access_log': env.bool('SERVER_ACCESS_LOG', True),
     },
@@ -138,11 +138,23 @@ config = {
             'enabled': True,
             'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
             'colors': True,
+            'filters': ['root'],
+            #'filters': ['root', 'uvicore'],
+            #'filters': ['root', 'databases', 'uvicore.orm'],
+            'exclude': [
+                'uvicore',
+                #'databases',
+            ],
         },
         'file': {
             'enabled': False,
             'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-            'file': '/dev/null',
+            'file': '/tmp/app1.log',
+            #'when': 'midnight',
+            #'interval': 1,
+            #'backup_count': 7,
+            'filters': [],
+            'exclude': [],
         }
     },
 

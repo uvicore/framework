@@ -137,7 +137,6 @@ class _ModelMetaclass(PydanticMetaclass):
         if table is None: table = entity.table
         all_columns = table.columns
         columns: List[sa.Column] = []
-        dump(all_columns)
         for (field_name, field) in entity.modelfields.items():
             if field.column and not field.write_only:
                 columns.append(getattr(all_columns, field.column))

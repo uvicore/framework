@@ -14,4 +14,5 @@ if TYPE_CHECKING:
 async def test_callback(app1):
     from app1.models.post import Post
     post: PostModel = await Post.find(2)
+    dump(post)
     assert post.cb == 'test-post2 callback'

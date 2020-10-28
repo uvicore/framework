@@ -21,6 +21,7 @@ from uvicore.support.dumper import dd, dump
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
+
 class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """ORM Query Builder"""
 
@@ -29,6 +30,10 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         super().__init__()
         self.query.table = entity.table
         #self.query.joins = None
+
+    @property
+    def log(self):
+        return log.name('uvicore.orm')
 
     def include(self, *args) -> QueryBuilder[B, E]:
         # import inspect
@@ -118,8 +123,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
     async def get(self) -> Union[List[E], Dict[str, E]]:
         queries = self._build_orm_queries('select')
-        log.header('Raw SQL Queries')
-        log.info(self.sql('select', queries))
+        self.log.header('Raw SQL Queries')
+        self.log.info(self.sql('select', queries))
 
         # Execute each query
         results = None
@@ -157,7 +162,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             if not relation.contains_many(query.relations):
                 # Don't use the relation.entity table to get columns, use the join aliased table
                 table = self._get_join_table(query, relation.name)
-                #dump(table, 'xxx', relation.name)
                 columns = relation.entity.selectable_columns(table)
                 for column in columns:
                     #x = sa.alias(column, 'x')
@@ -617,14 +621,14 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # No primary results, return empty List
         if not primary: return []
 
-        log.nl().header('Relations')
-        dump(query.relations)
+        self.log.nl().header('Relations')
+        self.log.dump(query.relations)
 
-        log.nl().header('Primary Results')
-        dump(primary)
+        self.log.nl().header('Primary Results')
+        self.log.dump(primary)
 
-        log.nl().header('Has Many Data')
-        dump(secondary)
+        self.log.nl().header('Has Many Data')
+        self.log.dump(secondary)
 
         # Deepcopy relations Dict so I can remove relations I have already processed.
         # I process all secondary results first.  This means all left over relations are of
@@ -640,7 +644,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # Full any *One relations method
         def fill_one_relations(rel_name: str, data: List):
             """Fill only the *One relations (One-To-One, One-To-Many)"""
-            log.nl().header('Filling *One Relations for ' + rel_name)
+            self.log.nl().header('Filling *One Relations for ' + rel_name)
 
             # Determin if data is primary or secondary
             primary = (rel_name == 'primary')
@@ -655,9 +659,9 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     field: Field = entity.modelfields.get(rnpart)
                     entity = field.relation.fill(field).entity
 
-            #log.item('Field: ' + str(field))
-            log.item('Entity: ' + str(entity))
-            log.item('Data Keys: ' + str(data[0].keys()))
+            #self.log.item('Field: ' + str(field))
+            self.log.item('Entity: ' + str(entity))
+            self.log.item('Data Keys: ' + str(data[0].keys()))
 
             # Add a new List to our Dict of models
             models[rel_name] = {}
@@ -699,7 +703,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     if relation.contains_many(query.relations, skip=rel_name_parts): continue
 
                     # Log output
-                    if i == 0: log.item('Relation: ' + relation.name + ' - ' + str(relation))
+                    if i == 0: self.log.item('Relation: ' + relation.name + ' - ' + str(relation))
 
                     # RowProxy results lookup prefix
                     prefix = relation.name
@@ -709,7 +713,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     if not primary:
                         # Skip the first __ parts of rel_name
                         fieldnames = fieldnames[len(rel_name_parts):]
-                    if i == 0: log.item2('  Fieldnames: ' + ', '.join(fieldnames))
+                    if i == 0: self.log.item2('  Fieldnames: ' + ', '.join(fieldnames))
 
                     # Walk down the root model by fieldnames until you reach the nested
                     # model that has the right field to hold this converted sub model
@@ -723,8 +727,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     fieldname = fieldnames[-1] if fieldnames else relation.name
 
                     # Walkdown Log
-                    if i == 0: log.item2('  Model Field: ' + fieldname)
-                    if i == 0: log.item2('  Field Model: ' + str(model.__class__))
+                    if i == 0: self.log.item2('  Model Field: ' + fieldname)
+                    if i == 0: self.log.item2('  Field Model: ' + str(model.__class__))
 
                     # Convert this one rows relation data into a sub_relation model
                     # Only convert each unique *One record just once, or else pull from singles cache
@@ -770,13 +774,13 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
         # All relations left should be of *Many either for the primary results
         # or for any of the secondary results
-        log.nl().header('Leftover Relations are *Many')
-        dump(relations)
+        self.log.nl().header('Leftover Relations are *Many')
+        self.log.dump(relations)
 
         # All records in models Dict are *Many and the main Primary dataset
         # All remaining relations are the *Many which should match the models Dict key
         # Looping the *Many relations in REVERSE gives us the deepest relations first which is critical
-        log.nl().header('Combining Recursive *Many Models')
+        self.log.nl().header('Combining Recursive *Many Models')
         for relation in reversed(relations.values()):
 
             # Relation name parts
@@ -788,7 +792,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             children = models[relation.name]
             parents_name = 'primary'
             if len(relation_parts) > 1: parents_name = '__'.join(relation_parts[:-1])
-            dump(parents_name)
             if parents_name in models:
                 # Parent is a *Many so grab from models
                 parents = models[parents_name]
@@ -796,7 +799,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 # Parent is a *One, so grap from singles cache
                 parents = singles[query.relations.get(parents_name).entity.tablename]
 
-            log.item('Combining child: ' + children_name + ' into parent: ' + parents_name)
+            self.log.item('Combining child: ' + children_name + ' into parent: ' + parents_name)
 
             # Merge in Many-To-Many by using the original RowProxy result which contains
             # The pivot tables joining column (left_key)
@@ -804,11 +807,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 left_key = relation.name + '__' + relation.left_key
                 right_key = relation.name + '__' + relation.entity.mapper(relation.entity.pk).column()
 
-                dump(parents, left_key, right_key)
-
                 # Loop raw RowProxy to find proper pivot keys
                 for row in secondary[relation.name]:
-                    dump(row.keys())
                     left_id = getattr(row, left_key)
                     right_id = getattr(row, right_key)
 
@@ -840,11 +840,11 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     getattr(parent, field).append(child)
 
 
-        log.nl().header('Singles Cache')
-        dump(singles)
+        self.log.nl().header('Singles Cache')
+        self.log.dump(singles)
 
-        log.nl().header('Secondary *Many Models')
-        dump(models)
+        self.log.nl().header('Secondary *Many Models')
+        self.log.dump(models)
 
         # These models are already a Dict keyed by PK
         # Return existing primary model if user wanted keyby id
@@ -930,7 +930,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     def _column_from_string(self, dotname: str, query: Query) -> Tuple:
         if '.' in dotname:
             parts = dotname.split('.')
-            relation = query.relations.get('.'.join(parts[:-1]))
+            relation = query.relations.get('__'.join(parts[:-1]))
             table = self._get_join_table(query, relation.name)  # Get table from join alias since its a relation
             field = parts[-1]
             name = self.entity.mapper(field).column()

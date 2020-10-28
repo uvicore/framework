@@ -92,7 +92,7 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
     )
 
     def cb_results(self):
-        return str(self.slug) + ' callback  asdfasdfasdf'
+        return str(self.slug) + ' callback'
 
 # IoC Class Instance
 Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)

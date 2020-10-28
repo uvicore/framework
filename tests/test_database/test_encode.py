@@ -38,18 +38,31 @@ async def test_select_one(app1):
 
 @pytest.mark.asyncio
 async def test_join1(app1):
-    from app1.database.tables.posts import Posts
+    from app1.database.tables.contacts import Contacts
     from app1.database.tables.users import Users
 
-    posts = Posts.table
+    # Implied join on columns works only if there is one foreign key.
+    # Won't work on posts because posts has both a creator_id and owner_id
+    # posts = Posts.table
+    # users = Users.table
+    # query = (
+    #     sa.select([posts, users])
+    #     .select_from(posts.join(users))
+    #     .where(users.c.email == 'manager1@example.com')
+    #     .where(posts.c.id == 3)
+    # )
+    # results = await uvicore.db.fetchall(query, connection='app1')
+    # assert ['manager1@example.com'] == [x.email for x in results]
+
+    contacts = Contacts.table
     users = Users.table
     query = (
-        sa.select([posts, users])
-        .select_from(posts.join(users))
+        sa.select([contacts, users])
+        .select_from(contacts.join(users))
         .where(users.c.email == 'manager1@example.com')
-        .where(posts.c.id == 3)
     )
     results = await uvicore.db.fetchall(query, connection='app1')
+    dump(results)
     assert ['manager1@example.com'] == [x.email for x in results]
 
 

@@ -45,7 +45,7 @@ async def test_where(app1):
     print(query.sql())
     dump(results)
     dump(results[0].keys())
-    assert [(4, 'test-post4', 'Test Post4', None, 2)] == results
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
 
 
 @pytest.mark.asyncio

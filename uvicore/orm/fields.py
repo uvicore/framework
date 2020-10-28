@@ -72,7 +72,6 @@ class Relation(Representation):
             i += 1
         return False
 
-
     def _fill_reverse(self, field: Field):
         if not self.foreign_key:
             self.foreign_key = str(field.name) + '_id'

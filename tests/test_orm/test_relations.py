@@ -4,7 +4,7 @@ from typing import List
 from uvicore.support.dumper import dump, dd
 
 @pytest.mark.asyncio
-async def xtest_one_to_one(app1):
+async def test_one_to_one(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -26,7 +26,7 @@ async def xtest_one_to_one(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_one_inverse(app1):
+async def test_one_to_one_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.contact import Contact
 
@@ -49,7 +49,7 @@ async def xtest_one_to_one_inverse(app1):
 
 
 @pytest.mark.asyncio
-async def test_one_to_many(app1):
+async def xtest_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.user import User
     from app1.models.contact import Contact
@@ -328,7 +328,7 @@ async def test_one_to_many(app1):
 
 
 @pytest.mark.asyncio
-async def xtest_one_to_many_inverse(app1):
+async def test_one_to_many_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post
     from app1.models.comment import Comment
