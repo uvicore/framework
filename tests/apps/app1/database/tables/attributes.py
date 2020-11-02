@@ -5,14 +5,14 @@ from uvicore.support.dumper import dump
 
 
 # Get related tablenames with proper prefixes
-users = uvicore.db.tablename('auth.users')
+#users = uvicore.db.tablename('auth.users')
 
-class _Contacts(Schema):
+class _Attributes(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
     # Do not add a package prefix, leave that to the connection config
-    name = 'contacts'
+    name = 'attributes'
 
     # Connection for this database from your config file
     connection = 'app1'
@@ -21,14 +21,16 @@ class _Contacts(Schema):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('name', sa.String(length=100)),
-        sa.Column('title', sa.String(length=100)),
-        sa.Column('address', sa.String(length=100)),
-        sa.Column('phone', sa.String(length=100)),
+        #sa.Column('id', sa.Integer, primary_key=True),
+        # Polymorphic Relations
+        sa.Column('table_name', sa.String(length=50)),
+        sa.Column('table_pk', sa.Integer),
 
-        # One-To-One must be enforced with a UNIQUE ForeignKey
-        sa.Column('user_id', sa.Integer, sa.ForeignKey(f"{users}.id"), unique=True, nullable=False),
+        sa.Column('key', sa.String(length=100)),
+        sa.Column('value', sa.Text()),
+
+        # Multi Column Unique Key Constraint
+        sa.PrimaryKeyConstraint('table_name', 'table_pk', 'key'),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -38,4 +40,4 @@ class _Contacts(Schema):
 
 
 # IoC Class Instance
-Contacts: _Contacts = uvicore.ioc.make('app1.database.tables.contacts.Contacts', _Contacts, singleton=True)
+Attributes: _Attributes = uvicore.ioc.make('app1.database.tables.attributes.Attributes', _Attributes, singleton=True)

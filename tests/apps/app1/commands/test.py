@@ -17,35 +17,38 @@ async def cli():
     # SELECT * FROM posts
     #posts = await Post.query().get()
 
+    users = await User.query().include('posts', 'posts.comments', 'posts.comments.creator').where('posts.comments.creator.email', 'user1@example.com').get()
+    dump(users)
 
 
-    posts = (await Post.query()
-        .include(
-            # One
-            'creator',
-            #'creator.info',
-            #'creator.contact',
+    # posts = (await Post.query()
+    #     .include(
+    #         # One
+    #         'creator',
+    #         #'creator.info',
+    #         #'creator.contact',
 
-            'owner',
-            #'owner.info',
-            #'owner.contact',
+    #         'owner',
+    #         #'owner.info',
+    #         #'owner.contact',
 
-            # One-To-Many Comments
-            'comments',
-            'comments.creator',
-            #'comments.creator.info',
-            #'comments.creator.contact',
+    #         # One-To-Many Comments
+    #         'comments',
+    #         'comments.creator',
+    #         #'comments.creator.info',
+    #         #'comments.creator.contact',
 
-            # Many-To-Many Tags
-            'tags',
-            #'tags.creator',
-            #'tags.creator.info',
-            #'tags.creator.contact',
-        )
-        .get()
-    )
-    log.nl().header('Posts Model Results')
-    #dump(posts)
+    #         # Many-To-Many Tags
+    #         'tags',
+    #         #'tags.creator',
+    #         #'tags.creator.info',
+    #         #'tags.creator.contact',
+    #     )
+    #     .order_by('id')
+    #     .get()
+    # )
+    # log.nl().header('Posts Model Results')
+    # dump(posts)
 
     # tags
     #     posts

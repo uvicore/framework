@@ -138,12 +138,12 @@ config = {
             'enabled': True,
             'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
             'colors': True,
-            'filters': ['root'],
+            'filters': [],
             #'filters': ['root', 'uvicore'],
             #'filters': ['root', 'databases', 'uvicore.orm'],
             'exclude': [
                 'uvicore',
-                #'databases',
+                'databases',
             ],
         },
         'file': {

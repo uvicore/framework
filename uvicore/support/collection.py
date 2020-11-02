@@ -1,3 +1,15 @@
+from collections import OrderedDict
+
+def getvalue(object, key):
+    """Access a dict or class instance attribute value in a unified way"""
+    if type(object) == dict or type(object) == OrderedDict:
+        # Dict or OrderedDict
+        return object.get(key)
+    else:
+        # Class instance
+        return getattr(object, key)
+
+
 class Str:
     def __init__(self, data):
         self.__data = data

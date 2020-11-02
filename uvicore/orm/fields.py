@@ -146,6 +146,9 @@ class BelongsToMany(Relation):
 
         :param field: The model field that holds this relation
         """
+        # Fill in parameters
+        self.name = field.name
+
         # Load entity
         self._load_entity()
 

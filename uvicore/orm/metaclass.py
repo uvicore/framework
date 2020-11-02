@@ -37,8 +37,12 @@ class _ModelMetaclass(PydanticMetaclass):
     # Remember all metaclass method ARE @classmethods
     # Remember any method here DO NOT clash with pydantic field names
     # Remember any method here do NOT show up in code intellisense because its a metaclass
-    # If you want it in code intellisense, it myst be in model.py and ModelInterface
-    # but then it WILL clash with any pydantic fields of the same name.
+    #   If you want it in code intellisense, it myst be in model.py and ModelInterface
+    #   but then it WILL clash with any pydantic fields of the same name.
+    # Basically anything here should be used privately from inside the ORM.
+    #   If any method is to be public (either as a class method Post. or instance method post.
+    #   it should go in model.py and be in the ModelInterface
+
 
 
     ############################################################################

@@ -5,7 +5,8 @@ from uvicore.support.dumper import dump, dd
 async def seed():
 
     # You can use the parent with child relations for creating
-    post = await Post.find(1)
+    # Have to use Dict notation.  If you use Model pydantic class, post_id is required which defeats the purpose of auto ID linkage
+    post = await Post.query().find(1)
     await post.create('comments', [
         {
             'title': 'Post1 Comment2',

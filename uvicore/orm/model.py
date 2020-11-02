@@ -8,6 +8,7 @@ from uvicore.orm.mapper import Mapper
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
 from uvicore.support.dumper import dd, dump
+from uvicore.support.collection import getvalue
 
 # Keep for public import usage.
 # Example: from uvicore.orm.model import Model, Metaclass, Field, BelongsTo...
@@ -32,14 +33,40 @@ class _Model(Generic[E], PydanticBaseModel):
         return OrmQueryBuilder(entity)
 
     @classmethod
-    async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
+    async def insert(entity, models: Union[E, Dict, List[E], List[Dict]]) -> Any:
+        """Insert one or more entities as List of entities or List of Dictionaries
+
+        This bulk insert does NOT allow inserting child relations at the
+        same time as there is no way to get each parents PK out to
+        reference with each child in BULK. If you want to insert parent
+        and relations at the same time use the slower non-bulk
+        insert_with_relations() instead.
+        """
+
         # Convert List[Model] or List[Dict] into dict of mapped table columns ready for insert
         bulk = entity.mapper(models).table()
         query = entity.table.insert()
-        await entity.execute(query, bulk)
+
+        if type(bulk) == list:
+            # List, so bulk insert
+            return await entity.execute(query, bulk)
+        else:
+            # Single, so single insert, returning PK or silently passing if error
+            try:
+                return await entity.execute(query, bulk)
+            except:
+                pass
 
     @classmethod
     async def insert_with_relations(entity, models: List[Dict]) -> None:
+        """Insert one or more entities as List of Dict that DO have relations included
+
+        Because relations are included, this insert is NOT bulk and must
+        loop each row, insert the parent, get the PK, then insert each
+        children (or children first then parent depending on BelongsTo vs
+        HasOne or HasMany)
+        """
+
         # Note about bulk insert with nested relations Dictionary
         # Bulk insert does not give back the primary keys for each inserted record
         # So I have no way to know the PK of the parent when I insert the child relations
@@ -66,12 +93,14 @@ class _Model(Generic[E], PydanticBaseModel):
                 if not field: continue
                 if not field.relation: continue
                 relation = field.relation.fill(field)
-                if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
+                if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo or type(relation) == BelongsToMany:
                     # Cannot change a dict in place or you get error
                     # RuntimeError: dictionary keys changed during iteration
                     # Se we'll add to a list and delete it outside the loop
-                    relations[fieldname] = relation
-                    relation.data = value
+                    relations[fieldname] = {
+                        'relation': relation,
+                        'data': value
+                    }
 
             # Delete relations from parent model as they cannot be inserted
             for relation in relations.keys():
@@ -80,30 +109,34 @@ class _Model(Generic[E], PydanticBaseModel):
             # BelongTo relations are the inverse of HasOne or HasMany in that
             # the child has to be created BEFORE the parent
             for relation in relations.values():
+                data = relation['data']
+                relation = relation['relation']
                 if type(relation) == BelongsTo:
                     # Because we insert the children first, skip inserting
                     # children later down the method
                     skip_children = True
 
                     # Recursively insert child and get PK
-                    child_pk = await relation.entity.insert_with_relations([relation.data])
+                    child_pk = await relation.entity.insert_with_relations([data])
 
                     # Replace parent foreignKey with child_pk
                     model[relation.local_key] = child_pk
 
-            # Convert model Dict into table Dict
-            tabledata = entity.mapper(model).table()
+            # Convert model Dict into actual Model instance
+            model_instance = entity(**model)
 
-            # Insert the parent model
-            query = entity.table.insert()
-            parent_pk = await entity.execute(query, tabledata)
+            # Insert the parent model and retrieve parents new PK value
+            model_instance = await model_instance.save()
+            parent_pk = getattr(model_instance, entity.pk)
 
             # Don't insert children if we already did above with BelongsTo
             if not skip_children:
                 # Now insert each file relation
                 for relation in relations.values():
+                    data = relation['data']
+                    relation = relation['relation']
                     if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
-                        childmodels = relation.data
+                        childmodels = data
                         if type(childmodels) != list: childmodels = [childmodels]
 
                         # Handle One-To-Many
@@ -116,6 +149,12 @@ class _Model(Generic[E], PydanticBaseModel):
                         # we must also insert_with_relations()
                         await relation.entity.insert_with_relations(childmodels)
 
+                    elif type(relation) == BelongsToMany:
+                        #dump(relation.name, data, model_instance)
+                        #await entity.link(relation.name, data)
+                        #await model_instance.link(relation.name, data)
+                        await model_instance.create(relation.name, data)
+
             # Return parent_pk for recursion only
             # This method not meant to return anything valuable to the user
             return parent_pk
@@ -124,42 +163,166 @@ class _Model(Generic[E], PydanticBaseModel):
     def mapper(self_or_entity, *args) -> Mapper:
         return Mapper(self_or_entity, *args)
 
-    async def create(self, relation: str, values: Union[List[Dict], Dict]) -> None:
-        field = self.__class__.modelfields.get(relation)
+    async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Create related records and link them to this parent (self) model"""
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Get field and relation info
+        field = entity.modelfields.get(relation_name)
         relation = field.relation.fill(field)
 
-        # Only works with HasMany or or HasOne
-        # But NOT from the other way around (BelongsTo)
-        # and not for ManyToMany
+        # Convert to list
+        if type(models) != list: models = [models]
+
+        # Assume each does not yet exists, so create all
         if type(relation) == HasMany:
+
             relation_field = relation.foreign_key
             relation_value = getattr(self, relation.local_key)
 
             # Fill in relation foreign key vlaue
-            for value in values:
-                value[relation_field] = relation_value
+            for model in models:
+                model[relation_field] = relation_value
 
-        # Bulk insert new values with proper keys
-        await relation.entity.insert(values)
+            # Bulk insert new values with proper keys
+            await relation.entity.insert(models)
+
+        # Cannot assume a record has been created or linked, so loop each and test
+        elif type(relation) == BelongsToMany:
+            for model in models:
+                if type(model) == dict:
+                    # Model is a Dictionary, convert to actual model
+                    model = relation.entity(**model)
+
+                # If its PK is set, it already exists
+                create = getattr(model, relation.entity.pk) == None
+
+                if create:
+                    pk_value = await relation.entity.insert(model)
+                    setattr(model, relation.entity.pk, pk_value)
+
+                await self.link(relation_name, model)
 
     async def save(self) -> None:
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Hum, think about this.  Probably a BAD idea.  Imagine you already have a record
+        # and they change around relations, then type .save() would they expect ALL relations
+        # to insert/delete/update properly?  I think not.  This .save() shouldn't work on relations
+        # Pull out relations and try to insert/link them later
+        # relations = {}
+        # for fieldname in self.__dict__:
+        #     field = entity.modelfields.get(fieldname)
+        #     if not field: continue
+        #     if not field.relation: continue
+        #     data = getattr(self, fieldname)
+        #     if data:
+        #         relations[fieldname] = data
+        #         #relation = field.relation.fill(field)
+        #         # relations[fieldname] = {
+        #         #     'relation': relation,
+        #         #     'data': data
+        #         # }
+
         # Convert self model instance into Dict of mapped table columns
         values = self.mapper().table()
 
-        # FIXME: figure out UPSERT
-        table = self.__class__.table
-        query = table.insert().values(**values)
-        new_pk = await self.__class__.execute(query)
-        setattr(self, self.__class__.pk, new_pk)
+        # Check if exists
+        table = entity.table
+        query = table.select().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+        exists = await entity.fetchone(query)
+
+        if exists:
+            # Record exists, perform update
+            query = table.update().where(getattr(table.c, entity.pk) == getattr(self, entity.pk)).values(**values)
+            await entity.execute(query)
+        else:
+            # New record, perform insert
+            query = table.insert().values(**values)
+            new_pk = await entity.execute(query)
+            setattr(self, entity.pk, new_pk)
+
+        # This is a TRY version if if exists, not sure which is more efficient, a select first, or an insert attempt/failure
+        # try:
+        #     # Try insert first
+        #     query = table.insert().values(**values)
+        #     new_pk = await entity.execute(query)
+        #     setattr(self, entity.pk, new_pk)
+        # except:
+        #     # If fail, record already exists
+        #     query = table.update().where(getattr(table.c, entity.pk) == getattr(self, entity.pk)).values(**values)
+        #     await entity.execute(query)
+
+        # # Insert relations
+        # for relation_name, data in relations.items():
+        #     await self.create(relation_name, data)
+
+        # Return model with new PK value
+        return self
 
     async def delete(self) -> None:
-        dump('delete', self)
-        pass
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
 
-    async def link(self, relation: str, values: List):
-        """Link ManyToMany values to this model"""
-        query = OrmQueryBuilder(self)
-        await query.link(relation, values)
+        # Delete this main (self) model record from the db
+        table = entity.table
+        query = table.delete().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+        await entity.execute(query)
+
+    async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Get field and relation info
+        field = entity.modelfields.get(relation_name)
+        relation = field.relation.fill(field)
+
+        # Linking only works for Many-To-Many relations
+        if type(relation) != BelongsToMany: raise Exception('Linking is for Many-To-Many relations only.')
+
+        #dump(relation.entity.pk)
+        #dump(field, relation)
+        #dump('About to link these ' + relation_name, models, 'to this model', entity, 'on record with pk ' + str(pk), 'using pivot table ' + relation.join_tablename, '-------')
+
+        # Insert linkage data one link at a time so we can gracefully skip duplicates
+        if type(models) != list: models = [models]
+        for model in models:
+            # Set pivot relation data
+            data = {
+                relation.left_key: getvalue(self, entity.pk),
+                relation.right_key: getvalue(model, relation.entity.pk)
+            }
+
+            # Try insert, fail silently if exists
+            try:
+                query = relation.join_table.insert().values(**data)
+                await entity.execute(query)
+            except:
+                # Ignore Integrity Errors
+                pass
+
+    async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Get field and relation info
+        field = entity.modelfields.get(relation_name)
+        relation = field.relation.fill(field)
+
+        # Linking only works for Many-To-Many relations
+        if type(relation) != BelongsToMany: raise Exception('Linking is for Many-To-Many relations only.')
+
+        # Get table and start where on self ID
+        table = relation.join_table
+        query = table.delete().where(getattr(table.c, relation.left_key) == getattr(self, entity.pk))
+        if models is not None:
+            # Add in proper relation Ids
+            if type(models) != list: models = [models]
+            ids = [getvalue(x, relation.entity.pk) for x in models]
+            query = query.where(getattr(table.c, relation.right_key).in_(ids))
+        await entity.execute(query)
 
 
 # IoC Class Instance

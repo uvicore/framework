@@ -48,8 +48,8 @@ class Model(Generic[E], ABC):
         pass
 
     @abstractmethod
-    async def create(self, relation: str, values: Union[List[Dict], Dict]) -> None:
-        """Create related records and link them to the parent model"""
+    async def create(self, relation_name: str, values: Union[List[Dict], Dict]) -> None:
+        """Create related records and link them to this parent (self) model"""
         pass
 
     @abstractmethod
@@ -61,3 +61,11 @@ class Model(Generic[E], ABC):
     async def delete(self) -> None:
         """Delete this model from the database"""
         pass
+
+    @abstractmethod
+    async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Link records to relation using the Many-To-Many pivot table"""
+
+    @abstractmethod
+    async def link(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+        """Unlink records to relation using the Many-To-Many pivot table"""

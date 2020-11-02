@@ -94,10 +94,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         self.query.keyed_by = field
         return self
 
-    async def link(self, relation: str, values: List) -> None:
-        # NOT YET IN INTERFACE
-        dump('hiii')
-
     def sql(self, method: str = 'select', queries: List = None) -> str:
         """Get all SQL queries involved in this ORM statement"""
         if queries is None: queries = self._build_orm_queries(method)
@@ -212,6 +208,25 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     for column in columns:
                         query2.selects.append(column.label(quoted_name(sub_relation.name + '__' + column.name, True)))
 
+                # Remove any wheres that are relation based that begin with this relation
+                # But we must take only the first relation in reverse that matches
+                # Why? Because we want the where to filter the main parent table, but NOT actually
+                # filter the children relations
+                new_wheres = []
+                for where in query2.wheres:
+                    found = False
+                    for relation_name in reversed(query2.relations):
+                        if not query.relations.get(relation_name).is_many(): continue
+                        rel_dot = relation_name.replace('__', '.')
+                        if where[0][0:len(rel_dot)] == rel_dot:
+                            # Found matching where
+                            if relation_name == relation.name:
+                                found = True
+                            break
+                    if not found:
+                        new_wheres.append(where)
+                query2.wheres = new_wheres
+
                 # Add .filter() as .where()
                 query2.wheres.extend(query2.filters)
 
@@ -224,6 +239,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
                 # Build secondary relation query
                 query2, saquery2 = self._build_query(method, query2)
+                #dump(relation.name, query2)
                 queries.append({
                     'name': relation.name,
                     'query': query2,
@@ -646,6 +662,11 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             """Fill only the *One relations (One-To-One, One-To-Many)"""
             self.log.nl().header('Filling *One Relations for ' + rel_name)
 
+            # Skip if no data
+            if not data:
+                #models[rel_name] = {}
+                return
+
             # Determin if data is primary or secondary
             primary = (rel_name == 'primary')
 
@@ -671,6 +692,9 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             pk_column = entity.mapper(pk).column()
             if not primary: pk_column = rel_name + '__' + pk_column
 
+            # Track completed relations so I can remove from our relations list later
+            completed_relations = {}
+
             # Loop each row of raw data
             i = 0
             for row in data:
@@ -688,9 +712,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
                 # Get pk value
                 pk_value = getattr(root_model, pk)
-
-                # Track completed relations so I can remove from our relations list later
-                completed_relations = []
 
                 # Loop only *One relations that apply to this one "data" model
                 relation: Relation
@@ -750,7 +771,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     setattr(model, fieldname, sub_model)
 
                     # Mark relation as complete so I can delete from relations Dict later
-                    completed_relations.append(relation.name)
+                    completed_relations[relation.name] = 1
 
                 # All *One relations have been converted and merged
                 # Add this fully converted (including nested *One relations) model to List of models
@@ -758,7 +779,7 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 i += 1
 
             # Delete all completed relations from our relation deepcopy.  We will not need them again
-            for completed_relation in completed_relations:
+            for completed_relation in completed_relations.keys():
                 del relations[completed_relation]
 
 
@@ -786,6 +807,9 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             # Relation name parts
             relation_parts = relation.name.split('__')
             field = relation_parts[-1]
+
+            # If models does not contain this relation, skip the merge
+            if relation.name not in models: continue
 
             # Get parent and child Dict of models
             children_name = relation.name
@@ -829,7 +853,10 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             else:
                 # These are One-To-Many on the *Many side which means the id back to parent is in the model itself
                 for child in children.values():
-                    parent = parents[getattr(child, relation.foreign_key)]
+                    parent_pk_value = getattr(child, relation.foreign_key)
+                    if parent_pk_value not in parents: continue;
+
+                    parent = parents[parent_pk_value]
                     field = relation_parts[-1]
 
                     # Set None field to empty list

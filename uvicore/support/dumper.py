@@ -23,12 +23,10 @@ def dump(*args):
     # Get current log level of Console logger
     # Uvicore may not be loaded yet, if not, set default level to INFO
     level = None
-    if uvicore.log:
-        level = logging.getLevelName(uvicore.log.console_handler.level)
+    if uvicore.log: level = logging.getLevelName(uvicore.log.console_handler.level)
 
     # Detect if running in pytest
-    if "pytest" in sys.modules:
-        level = None
+    if "pytest" in sys.modules: level = None
 
     # Only dump if Console log level is DEBUG or INFO
     if level == 'INFO' or level == 'DEBUG' or level is None:

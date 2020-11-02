@@ -269,38 +269,3 @@ async def test_where_or_not_like(app1):
     ] == [x.email for x in users]
 
 
-@pytest.mark.asyncio
-async def test_where_relation(app1):
-    from uvicore.auth.models.user import User
-    from app1.models.post import Post
-
-    # Test relation where
-    users = await User.query().include('contact').where('contact.phone', '111-111-1111').get()
-    dump(users)
-    assert ['Manager1'] == [x.contact.title for x in users]
-
-    # Test muli-level where
-    posts = await Post.query().include('creator.contact').where('creator.contact.name', 'Manager One').get()
-    dump(posts)
-    assert [
-        'test-post3',
-        'test-post4',
-        'test-post5',
-    ] == [x.slug for x in posts]
-
-    # Test muli-level where
-    # Slug is also a column mapper, database colun is called `unique_slug`, we get that test too!
-    posts = (await Post.query()
-        .include('creator.contact')
-        .where('creator.contact.name', 'Manager One')
-        .or_where([
-            ('slug', 'test-post3'),
-            ('slug', 'test-post5')
-        ])
-        .get()
-    )
-    dump(posts)
-    assert [
-        'test-post3',
-        'test-post5',
-    ] == [x.slug for x in posts]
