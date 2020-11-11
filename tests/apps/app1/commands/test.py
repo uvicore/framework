@@ -17,7 +17,13 @@ async def cli():
     # SELECT * FROM posts
     #posts = await Post.query().get()
 
-    users = await User.query().include('posts', 'posts.comments', 'posts.comments.creator').where('posts.comments.creator.email', 'user1@example.com').get()
+    users = await User.query().include([
+        'posts',
+        'posts.comments',
+        'posts.comments.creator'
+    ]).where([
+        ('posts.comments.creator.email', 'user1@example.com'),
+    ]).get()
     dump(users)
 
 

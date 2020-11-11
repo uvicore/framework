@@ -43,6 +43,11 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # context = y[1].code_context
         # #dump(context)
         #args = ['creator.contact']
+
+        # Convert List to Args
+        if len(args) == 1 and type(args[0]) == list: args = args[0]
+
+        # Loop each arg and add to query.includes
         for include in args:
             self.query.includes.append(include)
         return self

@@ -5,6 +5,7 @@ from typing import Dict, Generic, TypeVar, Union, List, Tuple, Any
 from uvicore.orm.mapper import Mapper
 #from uvicore.orm.query import QueryBuilder
 from uvicore.contracts import OrmQueryBuilder
+from uvicore.support.dumper import dump, dd
 
 B = TypeVar("B")
 E = TypeVar("E")
@@ -15,6 +16,18 @@ class Model(Generic[E], ABC):
     def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
         """ORM query builder passthrough"""
         pass
+
+    # @abstractmethod
+    # async def get(entity) -> Union[List[E], Dict[str, E]]:
+    #     pass
+
+    # @abstractmethod
+    # async def find(entity, id: Any) -> Union[E, None]:
+    #     pass
+
+    # @abstractmethod
+    # def include(entity, *args) -> OrmQueryBuilder[OrmQueryBuilder, E]:
+    #     pass
 
     @abstractmethod
     async def insert(entity, models: Union[List[E], List[Dict]]) -> None:

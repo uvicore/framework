@@ -18,6 +18,22 @@ from uvicore.orm.metaclass import ModelMetaclass  # isort:skip
 E = TypeVar("E")
 
 
+# Any method here in the model WILL CLASH with your models field names
+# But any method you add to the meteclass will NOT clash with fieldnames but cannot
+# show up in an interface or code intellisense.
+# So reserved field names are:
+#   query
+#   insert
+#   insert_with_relations
+#   mapper
+#   create
+#   save
+#   delete
+#   link
+#   unlink
+# and other items inside pydantic itself (list here???)
+
+
 class _Model(Generic[E], PydanticBaseModel):
 
     def __init__(self, **data: Any) -> None:
@@ -31,6 +47,19 @@ class _Model(Generic[E], PydanticBaseModel):
     @classmethod
     def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
         return OrmQueryBuilder(entity)
+
+    # These are nice, but they polute the namespace of FIELDS, so use just query()
+    # @classmethod
+    # async def get(entity) -> List[Any]:
+    #     return await OrmQueryBuilder(entity).get()
+
+    # @classmethod
+    # async def find(entity, id: Any) -> Any:
+    #     return await OrmQueryBuilder(entity).find(id)
+
+    # @classmethod
+    # def include(entity, *args):
+    #     return OrmQueryBuilder(entity).include(*args)
 
     @classmethod
     async def insert(entity, models: Union[E, Dict, List[E], List[Dict]]) -> Any:

@@ -8,8 +8,7 @@ async def test_select_single(app1):
 
     # One User has One Contact (contact table has user_id as UNIQUE)
     # Fetch One
-    user = await User.include('contact').find(3)
-    dump(user)
+    user = await User.query().include('contact').find(3)
     assert user.contact.name == 'Manager Two'
 
 
@@ -29,7 +28,8 @@ async def test_select_all(app1):
 
     # One User has One Contact (contact table has user_id as UNIQUE)
     # Fetch multiple
-    users = await User.include('contact').get()
+    users = await User.query().include('contact').get()
+    #for u in users: u.
     dump(users)
     assert [
         'Administrator',
@@ -46,7 +46,7 @@ async def test_select_inverse_single(app1):
 
     # One Contact has One User (contact table has user_id as UNIQUE)
     # Fetch one
-    contact: ContactModel = await Contact.include('user').find(3)
+    contact: ContactModel = await Contact.query().include('user').find(3)
     dump(contact)
     assert contact.user.email == 'manager2@example.com'
 
@@ -57,7 +57,8 @@ async def test_select_inverse_multiple(app1):
 
     # One Contact has One User (contact table has user_id as UNIQUE)
     # Fetch multiple
-    contacts = await Contact.include('user').get()
+    contacts = await Contact.query().include('user').get()
+
     dump(contacts)
     assert [
         'administrator@example.com',
@@ -75,7 +76,7 @@ async def test_select_inverse_through_single(app1):
     # One Contact has One User (contact table has user_id as UNIQUE)
     # And that user has One Info
     # Fetch one
-    contact = await Contact.include('user', 'user.info').find(3)
+    contact = await Contact.query().include('user', 'user.info').find(3)
     dump(contact)
     assert contact.user.email == 'manager2@example.com'
     assert contact.user.info.extra1 == 'user3 extra'
@@ -89,7 +90,7 @@ async def test_select_single_through_one_to_many(app1):
     # One User has One Contact (contact table has user_id as UNIQUE)
     # But done through a Post with One-To-Many Comments
     # Fetch one
-    post = await Post.include(
+    post = await Post.query().include(
         'comments',  # This is the One-To-Many
         'comments.creator',  # This is the One through the Many
         'comments.creator.contact',  # This is the One through the Many second level
@@ -116,7 +117,7 @@ async def test_select_single_through_many_to_many(app1):
     # One User has One Contact (contact table has user_id as UNIQUE)
     # But done through a Post with Many-To-Many Tags
     # Fetch one
-    post = await Post.include(
+    post = await Post.query().include(
         'tags',  # This is the Many-To-Many
         'tags.creator' # This is the One through the Many
         'tags.creator.contact',  # This is the One through the Many second level

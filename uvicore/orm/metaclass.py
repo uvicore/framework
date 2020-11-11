@@ -37,10 +37,10 @@ class _ModelMetaclass(PydanticMetaclass):
     # Remember all metaclass method ARE @classmethods
     # Remember any method here DO NOT clash with pydantic field names
     # Remember any method here do NOT show up in code intellisense because its a metaclass
-    #   If you want it in code intellisense, it myst be in model.py and ModelInterface
+    #   If you want it in code intellisense, it must be in model.py and ModelInterface
     #   but then it WILL clash with any pydantic fields of the same name.
     # Basically anything here should be used privately from inside the ORM.
-    #   If any method is to be public (either as a class method Post. or instance method post.
+    #   If any method is to be public (either as a @classmethod Post. or instance method post.
     #   it should go in model.py and be in the ModelInterface
 
 
@@ -52,25 +52,25 @@ class _ModelMetaclass(PydanticMetaclass):
     ## supported in VSCode for autocomplete code intellisense but parent classes
     ## are.  So by using query() you get autocomplete on the full query builder!
     ############################################################################
-    async def get(entity) -> List[Any]:
-        """Query builder passthrough"""
-        return await OrmQueryBuilder(entity).get()
+    # async def get(entity) -> List[Any]:
+    #     """Query builder passthrough"""
+    #     return await OrmQueryBuilder(entity).get()
 
-    async def find(entity, id: Any) -> Any:
-        """Query builder passthrough"""
-        return await OrmQueryBuilder(entity).find(id)
+    # async def find(entity, id: Any) -> Any:
+    #     """Query builder passthrough"""
+    #     return await OrmQueryBuilder(entity).find(id)
 
-    def where(entity, column: Union[str, List[Tuple]], operator: str = None, value: Any = None):
-        """Query builder passthrough"""
-        return OrmQueryBuilder(entity).where(column, operator, value)
+    # def where(entity, column: Union[str, List[Tuple]], operator: str = None, value: Any = None):
+    #     """Query builder passthrough"""
+    #     return OrmQueryBuilder(entity).where(column, operator, value)
 
-    def or_where(entity, wheres: List):
-        """Query builder passthrough"""
-        return OrmQueryBuilder(entity).or_where(wheres)
+    # def or_where(entity, wheres: List):
+    #     """Query builder passthrough"""
+    #     return OrmQueryBuilder(entity).or_where(wheres)
 
-    def include(entity, *args):
-        """Query builder passthrough"""
-        return OrmQueryBuilder(entity).include(*args)
+    # def include(entity, *args):
+    #     """Query builder passthrough"""
+    #     return OrmQueryBuilder(entity).include(*args)
     ############################################################################
     ############################################################################
 
