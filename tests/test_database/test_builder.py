@@ -38,7 +38,7 @@ async def test_select_one(app1):
 async def test_where(app1):
     query = (uvicore.db.query('app1')
         .table('posts')
-        .where('creator_id', 2)
+        .where('creator_id', '=', 2)
         .where('unique_slug', 'test-post4')
     )
     results = await query.get()
@@ -46,6 +46,124 @@ async def test_where(app1):
     dump(results)
     dump(results[0].keys())
     assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_where_list(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where([
+            ('creator_id', '=', 2),
+            ('unique_slug', 'test-post4'),
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_where_in(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('unique_slug', 'in', [
+            'test-post1',
+            'test-post2',
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post2'] == [x.unique_slug for x in results]
+
+
+@pytest.mark.asyncio
+async def test_where_not_in(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('unique_slug', '!in', [
+            'test-post1',
+            'test-post2',
+            'test-post5',
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post3', 'test-post4', 'test-post6', 'test-post7'] == [x.unique_slug for x in results]
+
+
+@pytest.mark.asyncio
+async def test_where_like(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('other', 'like', 'other stuff%')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post3', 'test-post6'] == [x.unique_slug for x in results]
+
+
+@pytest.mark.asyncio
+async def test_where_not_like(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('other', '!like', '%1')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post3', 'test-post6'] == [x.unique_slug for x in results]
+
+
+@pytest.mark.asyncio
+async def test_where_null(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('other', 'null')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post2', 'test-post4', 'test-post5', 'test-post7'] == [x.unique_slug for x in results]
+    #assert 1 == 2
+
+
+@pytest.mark.asyncio
+async def test_where_not_null(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .where('other', '!=', 'null')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post3', 'test-post6'] == [x.unique_slug for x in results]
+
+
+@pytest.mark.asyncio
+async def test_or_where(app1):
+    query = (uvicore.db.query('app1')
+        .table('posts')
+        .or_where([
+            ('id', '=', 1),
+            ('id', 2)
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post2'] == [x.unique_slug for x in results]
 
 
 @pytest.mark.asyncio

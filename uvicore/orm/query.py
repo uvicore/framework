@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
 
 import sqlalchemy as sa
+from sqlalchemy.sql.expression import BinaryExpression
 from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
 
@@ -46,10 +47,10 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             self.query.includes.append(include)
         return self
 
-    def filter(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> B[B, E]:
+    def filter(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
         # Filters are for Many relations only
-        if type(column) == str:
-            # A single filter as a string
+        if type(column) == str or type(column) == sa.Column:
+            # A single where as a string or actual SQLAlchemy Column
             # .filter('relation.column', 'value')
             # .filter('relation.column, '=', 'value')
             if not value:
@@ -58,14 +59,36 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             #self.filters.append((column, operator.lower(), value))
             self.query.filters.append((column, operator.lower(), value))
         else:
-            # Multiple filters in one as a List[Tuple]
-            # .filter([('relation.column', 'value'), ('relation.column', '=', 'value')])
+            # Multiple filters in one as a List[Tuple] or List[BinaryExpression]
+            # .filter([('column', 'value'), ('column', '=', 'value')])
+            # .filter([table.column == 'value', table.column >= 'value'])
             for filter in column:
                 # Recursivelly add Tuple filters
-                if len(filter) == 2:
-                    self.filter(filter[0], '=', filter[1])
+                if type(filter) == tuple:
+                    if len(filter) == 2:
+                        self.filter(filter[0], '=', filter[1])
+                    else:
+                        self.filter(filter[0], filter[1], filter[2])
                 else:
-                    self.filter(filter[0], filter[1], filter[2])
+                    # SQLAlchemy Binary Expression
+                    self.filter(filter)
+        return self
+
+    def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+        # Or filter must be a list of tuple or BinaryExpression as it requires at least 2 statements
+        # .or_filter([('column', 'value'), ('column', '=', 'value')])
+        # .or_filter([table.column == value, table.column == value])
+        or_filters: List[Tuple] = []
+        for filter in filters:
+            if type(filter) == tuple:
+                if len(filter) == 2:
+                    or_filters.append((filter[0], '=', filter[1]))
+                else:
+                    or_filters.append((filter[0], filter[1].lower(), filter[2]))
+            else:
+                # SQLAlchemy Binary Expression
+                or_filters.append(filter)
+        self.query.or_filters.extend(or_filters)
         return self
 
     def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
@@ -208,27 +231,45 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     for column in columns:
                         query2.selects.append(column.label(quoted_name(sub_relation.name + '__' + column.name, True)))
 
+
+                # This one was an experiment to remove all wheres from all parents
+                # But I don't really want that.  Only the MAIN parent should be whered
+                # All children and sub children should show all their records
+                # ------------------------------------------------------------------------------
                 # Remove any wheres that are relation based that begin with this relation
                 # But we must take only the first relation in reverse that matches
                 # Why? Because we want the where to filter the main parent table, but NOT actually
                 # filter the children relations
+                # new_wheres = []
+                # for where in query2.wheres:
+                #     found = False
+                #     for relation_name in reversed(query2.relations):
+                #         if not query.relations.get(relation_name).is_many(): continue
+                #         rel_dot = relation_name.replace('__', '.')
+                #         if where[0][0:len(rel_dot)] == rel_dot:
+                #             # Found matching where
+                #             if relation_name == relation.name:
+                #                 found = True
+                #             break
+                #     if not found:
+                #         new_wheres.append(where)
+                # query2.wheres = new_wheres
+
                 new_wheres = []
                 for where in query2.wheres:
-                    found = False
-                    for relation_name in reversed(query2.relations):
-                        if not query.relations.get(relation_name).is_many(): continue
-                        rel_dot = relation_name.replace('__', '.')
-                        if where[0][0:len(rel_dot)] == rel_dot:
-                            # Found matching where
-                            if relation_name == relation.name:
-                                found = True
-                            break
-                    if not found:
-                        new_wheres.append(where)
+                    rel_dot = relation.name.replace('__', '.')
+                    if where[0][0:len(rel_dot)] == rel_dot:
+                        # Found matching where
+                        continue
+                    new_wheres.append(where)
                 query2.wheres = new_wheres
+
 
                 # Add .filter() as .where()
                 query2.wheres.extend(query2.filters)
+
+                # Add .or_filter() as .or_where()
+                query2.or_wheres.extend(query2.or_filters)
 
                 # Add where to show only joined record that were found
                 # Cant use INNER JOIN instead because it would limit further sub many-to-many
@@ -781,7 +822,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             # Delete all completed relations from our relation deepcopy.  We will not need them again
             for completed_relation in completed_relations.keys():
                 del relations[completed_relation]
-
 
         # Fill in all *One relations for all secondary results first.
         # as each relation is merged it will be removed from our local relations deepcopy.

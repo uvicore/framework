@@ -12,7 +12,8 @@ from uvicore.support.dumper import dd, dump
 @command()
 def list():
     """List all packages"""
-    log.header("List of all Packages (in exact order of registration dependency)").line()
+    log.header("List of all Packages (in exact order of registration dependency)")
+    log.line()
     dump(app.packages)
     # for package in app.packages.values():
     #     dump("Package: " + package.name)
@@ -32,10 +33,12 @@ def show(package: str):
         pkg = app.package(package)
 
     if pkg:
-        log.header("Package object for " + package).line()
+        log.header("Package object for " + package)
+        log.line()
         dump(pkg)
         print()
-        log.header("Deep merged configs for " + package).line()
+        log.header("Deep merged configs for " + package)
+        log.line()
         dump(pkg.config())
     else:
         exit(f"Package {package} not found")
@@ -47,7 +50,8 @@ def providers(json: bool):
     if json:
         print(JSON.dumps(app.providers))
     else:
-        log.header("Package provider graph (in exact order of registration dependency)").line()
+        log.header("Package provider graph (in exact order of registration dependency)")
+        log.line()
         for (name, detail) in app.providers.items():
             log.info(name)
             dump(detail)

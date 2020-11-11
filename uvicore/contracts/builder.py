@@ -12,11 +12,11 @@ E = TypeVar("E")  # Entity Model
 
 class QueryBuilder(Generic[B, E], ABC):
     @abstractmethod
-    def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> B[B, E]:
+    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
         pass
 
     @abstractmethod
-    def or_where(self, wheres: List[Union[Tuple, Any]]) -> B[B, E]:
+    def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
         pass
 
     @abstractmethod
@@ -71,7 +71,13 @@ class OrmQueryBuilder(QueryBuilder[B, E]):
         pass
 
     @abstractmethod
-    def filter(self, column: Union[str, List[Tuple]], operator: str = None, value: Any = None) -> B[B, E]:
+    def filter(self, column: Union[str, BinaryExpression, List[Tuple]], operator: str = None, value: Any = None) -> B[B, E]:
+        """Filter child relationship by this AND clause"""
+        pass
+
+    @abstractmethod
+    def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+        """Filter child relationship by this OR clause"""
         pass
 
     @abstractmethod

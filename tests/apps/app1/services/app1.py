@@ -35,6 +35,10 @@ class App1(ServiceProvider):
         #    'app1.models.*',
         #])
 
+        self.seeders([
+            'app1.database.seeders.seeders.seed',
+        ])
+
         # Define view and asset paths and configure the templating system
         # self.load_views()
 

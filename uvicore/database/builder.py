@@ -5,6 +5,8 @@ from copy import deepcopy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
 
 import sqlalchemy as sa
+from sqlalchemy.sql.expression import BinaryExpression
+
 from prettyprinter import pretty_call, register_pretty
 from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
@@ -51,7 +53,7 @@ class Join(Representation):
         'alias',
         'method'
     )
-    def __init__(self, table: sa.Table, tablename: str, left: Column, right: Column, onclause: sa.sql.expression.BinaryExpression, alias: str, method: str):
+    def __init__(self, table: sa.Table, tablename: str, left: Column, right: Column, onclause: BinaryExpression, alias: str, method: str):
         self.table = table
         self.tablename = tablename
         self.left = left
@@ -128,42 +130,49 @@ class QueryBuilder(Generic[B, E]):
     def __init__(self):
         self.query = Query()
 
-    def where(self, column: Union[str, List[Tuple], Any], operator: str = None, value: Any = None) -> B[B, E]:
-        if type(column) == str:
-            # A single where as a string
+    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+        if type(column) == str or type(column) == sa.Column:
+            # A single where as a string or actual SQLAlchemy Column
             # .where('column', 'value')
             # .where('column, '=', 'value')
             if not value:
                 value = operator
                 operator = '='
             self.query.wheres.append((column, operator.lower(), value))
-        elif type(column) == tuple:
-            # Multiple wheres in one as a List[Tuple]
+        elif type(column) == list:
+            # Multiple wheres in one as a List[Tuple] or List[BinaryExpression]
             # .where([('column', 'value'), ('column', '=', 'value')])
+            # .where([table.column == 'value', table.column >= 'value'])
             for where in column:
                 # Recursivelly add Tuple wheres
-                if len(where) == 2:
-                    self.where(where[0], '=', where[1])
+                if type(where) == tuple:
+                    if len(where) == 2:
+                        self.where(where[0], '=', where[1])
+                    else:
+                        self.where(where[0], where[1], where[2])
                 else:
-                    self.where(where[0], where[1], where[2])
+                    # SQLAlchemy Binary Expression
+                    self.where(where)
         else:
             # Direct SQLAlchemy expression
             self.query.wheres.append(column)
         return self
 
-    def or_where(self, wheres: List[Union[Tuple, Any]]) -> B[B, E]:
-        # Or where must be a list of tuple as it required at least 2 statements
+    def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+        # Or where must be a list of tuple or BinaryExpression as it requires at least 2 statements
         # .or_where([('column', 'value'), ('column', '=', 'value')])
-        or_where: List[Tuple] = []
+        # .or_where([table.column == value, table.column == value])
+        or_wheres: List[Tuple] = []
         for where in wheres:
             if type(where) == tuple:
                 if len(where) == 2:
-                    or_where.append((where[0], '=', where[1]))
+                    or_wheres.append((where[0], '=', where[1]))
                 else:
-                    or_where.append((where[0], where[1].lower(), where[2]))
+                    or_wheres.append((where[0], where[1].lower(), where[2]))
             else:
-                or_where.append(where)
-        self.query.or_wheres.extend(or_where)
+                # SQLAlchemy Binary Expression
+                or_wheres.append(where)
+        self.query.or_wheres.extend(or_wheres)
         return self
 
     def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:

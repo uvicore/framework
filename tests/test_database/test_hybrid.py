@@ -5,7 +5,7 @@ import uvicore
 from uvicore.support.dumper import dump
 
 # Hybrid is where I use my Database Query Builder but with SQLAlchemy
-# table.c columns operations and aggregate functions
+# table.c columns operations, aggregate functions and Binary Expressions
 
 @pytest.mark.asyncio
 async def test_select_count(app1):
@@ -77,6 +77,123 @@ async def test_selects(app1):
         (6, 'test-post6', 'user2@example.com', None),
         (7, 'test-post7', 'user2@example.com', None)
     ] == results
+
+
+@pytest.mark.asyncio
+async def test_where_column(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test where as SQLAlchemy Column name but still parameter based
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .where(posts.creator_id, '=', 2)
+        .where(posts.unique_slug, 'test-post4')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_where_column_list(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test where as SQLAlchemy Column name but still parameter based
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .where([
+            (posts.creator_id, '=', 2),
+            (posts.unique_slug, 'test-post4'),
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_where_expression(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test where as SQLAlchemy Binary Expression
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .where(posts.creator_id == 2)
+        .where(posts.unique_slug == 'test-post4')
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_where_expression_list(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test where as SQLAlchemy Binary Expression
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .where([
+            posts.creator_id == 2,
+            posts.unique_slug == 'test-post4',
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
+
+
+@pytest.mark.asyncio
+async def test_or_where_column(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test OR where as SQLAlchemy Column name but still parameter based
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .or_where([
+            (posts.creator_id, '=', 2),
+            (posts.unique_slug, 'test-post1'),
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post3', 'test-post4', 'test-post5'] == [x.unique_slug for x in results]
+    #assert 1 == 2
+
+
+@pytest.mark.asyncio
+async def test_or_where_expression(app1):
+    from app1.database.tables.posts import Posts
+
+    # Test OR where as SQLAlchemy Binary Expression
+    posts = Posts.table.c
+    query = (uvicore.db.query('app1')
+        .table(Posts.table)
+        .or_where([
+            posts.creator_id == 2,
+            posts.unique_slug == 'test-post1',
+        ])
+    )
+    results = await query.get()
+    print(query.sql())
+    dump(results)
+    dump(results[0].keys())
+    assert ['test-post1', 'test-post3', 'test-post4', 'test-post5'] == [x.unique_slug for x in results]
 
 
 @pytest.mark.asyncio

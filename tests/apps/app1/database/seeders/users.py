@@ -1,7 +1,9 @@
+from uvicore import log
 from uvicore.auth.models.user import User
 #from app1.models.user import User
 
 async def seed():
+    log.item('Seeding table users')
 
     # You can insert parent records with relations as Dict
     # Though its not BULK, its a loop in the ORM

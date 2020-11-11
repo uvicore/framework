@@ -1,8 +1,10 @@
 from app1.models.comment import Comment
 from app1.models.post import Post
 from uvicore.support.dumper import dump, dd
+from uvicore import log
 
 async def seed():
+    log.item('Seeding table comments')
 
     # You can use the parent with child relations for creating
     # Have to use Dict notation.  If you use Model pydantic class, post_id is required which defeats the purpose of auto ID linkage

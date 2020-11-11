@@ -51,27 +51,55 @@ class Provider(ABC):
         singleton: bool = False,
         aliases: List = []
     ) -> None:
+        """Bind a concrete class to an IoC name"""
         pass
 
     @abstractmethod
-    def views(self, package: Package, paths: List) -> None: pass
+    def views(self, package: Package, paths: List) -> None:
+        """Register packages view paths"""
+        pass
 
     @abstractmethod
-    def assets(self, package: Package, paths: List) -> None: pass
+    def assets(self, package: Package, paths: List) -> None:
+        """Register packages asset paths"""
+        pass
 
     @abstractmethod
-    def template(self, package: Package, options: Dict) -> None: pass
+    def template(self, package: Package, options: Dict) -> None:
+        """Register packages view templating options"""
+        pass
 
     @abstractmethod
-    def web_routes(self, package: Package, routes_class: Any) -> None: pass
+    def web_routes(self, package: Package, routes_class: Any) -> None:
+        """Register packages web routes"""
+        pass
 
     @abstractmethod
-    def api_routes(self, package: Package, routes_class: Any) -> None: pass
+    def api_routes(self, package: Package, routes_class: Any) -> None:
+        """Register packages API routes"""
+        pass
 
     @abstractmethod
-    def commands(self, package: Package, options: Dict) -> None: pass
+    def models(self, models: List[str]) -> None:
+        """Register packages database ORM models"""
+        pass
+
+    @abstractmethod
+    def tables(self, tables: List[str]) -> None:
+        """Register packages database tables"""
+        pass
+
+    @abstractmethod
+    def seeders(self, seeders: List[str]) -> None:
+        """Register packages database seeders"""
+        pass
+
+    @abstractmethod
+    def commands(self, package: Package, options: Dict) -> None:
+        """Register packages CLI commands"""
+        pass
 
     @abstractmethod
     def configs(self, modules: List) -> None:
-        """Register your app configs with the configuration system"""
+        """Register packages configs"""
         pass

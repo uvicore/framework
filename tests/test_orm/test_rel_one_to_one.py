@@ -211,31 +211,15 @@ async def test_where_through_one_to_many(app1):
         'posts.comments',
         'posts.comments.creator'
     ).where('posts.comments.creator.email', 'user1@example.com').get()
+    dump(users)
+
+    # Where should filter only the parent record
+    assert len(users) == 1
+
+    # But should not filter any children, not posts, not posts.comments
+    assert len(users[0].posts) == 3
     assert users[0].email == 'manager1@example.com'
-    comments = users[0].posts[0].comments
-    assert [
-        'Post3 Comment1',
-        'Post3 Comment2',
-        'Post3 Comment3',
-    ] == [x.title for x in comments]
-
-
-@pytest.mark.asyncio
-async def test_where_through_many_to_many(app1):
-    from app1.models.post import Post
-
-    # Remember these children level wheres only filter the parent (posts)
-    # but all tags for those parents are still shown.  Use .filter() to filter children.
-    posts = await Post.query().include('tags').where('tags.name', 'linux').get()
-    dump(posts)
-    assert [
-        'test-post1',
-        'test-post2',
-    ] == [x.slug for x in posts]
-
-
-
-
+    assert len(users[0].posts[0].comments) == 3
 
 
 

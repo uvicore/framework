@@ -11,7 +11,8 @@ from uvicore.console import command, argument
 @command()
 def list():
     """List all events"""
-    log.header("Events defined from all packages").line()
+    log.header("Events defined from all packages")
+    log.line()
     dump(uvicore.events.events)
 
 
@@ -19,7 +20,8 @@ def list():
 @argument('event')
 def show(event: str):
     """Show detailed info for one event"""
-    log.header("Event details for " + event).line()
+    log.header("Event details for " + event)
+    log.line()
     event = uvicore.events.event(event)
     if event:
         dump(event)

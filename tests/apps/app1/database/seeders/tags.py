@@ -1,6 +1,8 @@
+from uvicore import log
 from app1.models.tag import Tag
 
 async def seed():
+    log.item('Seeding table tags')
     tags = [
         Tag(name='linux', creator_id=1),
         Tag(name='mac', creator_id=1),

@@ -1,6 +1,9 @@
+from uvicore import log
 from app1.models.contact import Contact
 
 async def seed():
+    log.item('Seeding table contacts')
+
     contacts = [
         #NO - Contact(name='Administrator', title='God', address='777 Heaven Ln', phone='777-777-7777', user_id=1),
         Contact(name='Manager One', title='Manager1', address='111 Manager Way', phone='111-111-1111', user_id=2),

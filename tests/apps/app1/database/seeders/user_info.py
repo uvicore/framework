@@ -1,6 +1,8 @@
+from uvicore import log
 from uvicore.auth.models.user_info import UserInfo
 
 async def seed():
+    log.item('Seeding table user_info')
 
     # You can use .insert() as a List of model instances
     await UserInfo.insert([

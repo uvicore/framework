@@ -2,8 +2,10 @@ from app1.models.post import Post
 from app1.models.comment import Comment
 from app1.models.tag import Tag
 from uvicore.support.dumper import dump, dd
+from uvicore import log
 
 async def seed():
+    log.item('Seeding table posts')
 
     # Get all tags keyed by 'name' column
     tags = await Tag.query().key_by('name').get()
@@ -225,3 +227,8 @@ async def seed():
     # You can insert a single model with .save()
     post = Post(slug='test-post7', title='Test Post7', other=None, creator_id=5, owner_id=4)
     await post.save()
+    await post.create('tags', [
+        tags.get('linux'),
+        tags.get('bsd'),
+        tags.get('laravel'),
+    ])
