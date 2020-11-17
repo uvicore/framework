@@ -142,7 +142,7 @@ config = {
             #'filters': ['root', 'uvicore'],
             #'filters': ['root', 'databases', 'uvicore.orm'],
             'exclude': [
-                'uvicore',
+                #'uvicore',
                 'databases',
             ],
         },

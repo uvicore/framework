@@ -4,10 +4,11 @@ from typing import List, Optional
 
 import uvicore
 from uvicore.auth.database.tables import users as table
-from uvicore.orm.fields import Field, HasMany, HasOne
+from uvicore.orm.fields import Field, HasMany, HasOne, MorphOne
 from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.contracts import Model as ModelInterface
 from uvicore.support.dumper import dd, dump
+from app1.models.image import Image
 
 
 #from typing import TYPE_CHECKING
@@ -97,6 +98,13 @@ class UserModel(AuthOverride):
         relation=HasMany('app1.models.post.Post', 'creator_id')
         #relation=HasMany('app1.models.post.Post')
     )
+
+    # Polymorphic One-To-One image
+    image: Optional[Image] = Field(None,
+        description="Post Image",
+        relation=MorphOne('app1.models.image.Image', 'imageable')
+    )
+
 
 # IoC Class Instance
 User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)

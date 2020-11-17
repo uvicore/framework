@@ -12,6 +12,6 @@ export PYTHONPATH=./tests/apps
 
 pytest \
     --color=yes \
-    --log-level=WARNING \
+    --log-level=INFO \
     -W ignore::DeprecationWarning \
     ${@}

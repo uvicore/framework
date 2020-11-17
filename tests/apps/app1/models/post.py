@@ -5,9 +5,9 @@ from typing import List, Optional
 import uvicore
 from app1.contracts import Post as PostInterface
 from app1.database.tables import posts as table
-from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne
 from uvicore.orm.model import Model, ModelMetaclass
-
+from app1.models.image import Image
 
 class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 #class _PostModel(Model['PostModel'], PostInterface, metaclass=ModelMetaclass):
@@ -86,9 +86,17 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
         #relation=HasMany('app1.models.comment.Comment'),
     )
 
+    # Many-To-Many via post_tags pivot table
     tags: Optional[List[Tag]] = Field(None,
         description="Post Tags",
         relation=BelongsToMany('app1.models.tag.Tag', 'post_tags', 'post_id', 'tag_id'),
+    )
+
+    # Polymorphic One-To-One image
+    image: Optional[Image] = Field(None,
+        description="Post Image",
+        #relation=MorphOne('app1.models.image.Image', 'imageable', 'id') # Local key is optional
+        relation=MorphOne('app1.models.image.Image', 'imageable')
     )
 
     def cb_results(self):

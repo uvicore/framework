@@ -1,4 +1,4 @@
-from . import users, posts, contacts, comments, tags, user_info
+from . import users, posts, contacts, comments, tags, user_info, images
 
 async def seed():
     # Order is critical for ForeignKey dependencies
@@ -9,3 +9,6 @@ async def seed():
     await tags.seed()
     await posts.seed()
     await comments.seed()
+
+    # Poly
+    await images.seed()

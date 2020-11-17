@@ -16,7 +16,7 @@ from uvicore import log
 from uvicore.contracts import OrmQueryBuilder as BuilderInterface
 from uvicore.database.builder import Column, Join, Query, QueryBuilder
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, Relation)
+                                HasOne, Relation, MorphOne, MorphTo)
 from uvicore.support.dumper import dd, dump
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
@@ -628,13 +628,18 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                             left = self._column(getattr(main_table.c, relation.local_key))
                             right = self._column(getattr(join_table.c, relation.foreign_key))
 
+                            # Onclause
+                            onclause=left.sacol == right.sacol
+                            if type(relation) == MorphOne:
+                                poly_type = self._column(getattr(join_table.c, relation.foreign_type))
+
                             # Append new Join
                             join = Join(
                                 table=join_table,
                                 tablename=str(join_table.name),
                                 left=left,
                                 right=right,
-                                onclause=left.sacol == right.sacol,
+                                onclause=onclause,
                                 alias=alias,
                                 method='outerjoin'
                             )

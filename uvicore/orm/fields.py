@@ -35,6 +35,15 @@ class Relation(Representation):
         self._load_entity()
         return self
 
+    def _fill_reverse(self, field: Field):
+        if not self.foreign_key:
+            self.foreign_key = str(field.name) + '_id'
+        if not self.local_key:
+            self.local_key = 'id'
+        self.name = field.name
+        self._load_entity()
+        return self
+
     def is_one(self):
         return type(self) == HasOne or type(self) == BelongsTo
 
@@ -71,15 +80,6 @@ class Relation(Representation):
             walk += '__'
             i += 1
         return False
-
-    def _fill_reverse(self, field: Field):
-        if not self.foreign_key:
-            self.foreign_key = str(field.name) + '_id'
-        if not self.local_key:
-            self.local_key = 'id'
-        self.name = field.name
-        self._load_entity()
-        return self
 
     def _load_entity(self):
         # Fill actual entity class
@@ -155,6 +155,45 @@ class BelongsToMany(Relation):
         # Get actual SQLAlchemy relation table
         self.join_table = uvicore.db.table(self.join_tablename, self.entity.connection)
         return self
+
+class MorphOne(Relation):
+    __slots__ = (
+        'model',
+        'polyfix',
+        'foreign_type',
+        'foreign_key',
+        'local_key',
+        'name',
+        'entity',
+    )
+
+    def __init__(self,
+        model: str,
+        polyfix: str,
+        local_key: str = None,
+    ) -> None:
+        self.model = model
+        self.polyfix = polyfix
+        self.local_key = local_key
+
+        self.foreign_type = polyfix + '_type'
+        self.foreign_key = polyfix + '_id'
+        self.name = None
+        self.entity = None
+
+    def fill(self, field: Field):
+        self.name = field.name
+        if not self.local_key: self.local_key = 'id'
+        self._load_entity()
+        return self
+
+
+
+class MorphTo(Relation):
+
+    def __init__(self):
+        pass
+
 
 
 class Field(Representation):
