@@ -1,7 +1,13 @@
-# CUSTOM form .mreschke default
-/html
+# mReschke Python .gitignore file standard
+# mReschke 2020-11-17
 
-# OS files
+# NOTES:
+# Folders should be denoted with a trailing /
+# /env/ denotes only the root level ./env folder be ignored
+# env/ denotes ANY env folder be ignored, even in ./some/deep/folder/env
+# Sames goes for files
+
+# OS Files
 .DS_Store
 ._.DS_Store
 ._.TemporaryItems
@@ -10,45 +16,59 @@ Thumbs.db
 .nfs*
 .swp
 
+# OS Folders
+#
 
-# IDE files
-/.idea
-/.vscode
+# IDE Files
+#
 
-# Python files
-instance/
-venv/
-env/
-.env
+# IDE Folders
+/.idea/
+/.vscode/
+
+# Python Files
+/.env
+/.coverage
 *.pyc
-__pycache__/
 *.py[cod]
-.pytest_cache/
-.coverage
-htmlcov/
-sdist/
-dist/
-build/
 *.egg
-*.egg-info/
-eggs/
 .Python
-develop-eggs/
-.installed.cfg
+/.installed.cfg
 *.manifest
 *.spec
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Django Files
-/static
+# Python Folders
+/instance/
+/venv/
+/env/
+/htmlcov/
+/html/
+/sdist/
+/dist/
+/build/
+*.egg-info/
+eggs/
+develop-eggs/
+__pycache__/
+.pytest_cache/
 
-# JavaScript files
-/node_modules
+# Django Files
+#
+
+# Django Folders
+/static/
+
+# JavaScript Files
 npm-debug.log
 yarn-error.log
-#package-lock.json
 
-# Other files
-/.vagrant
+# Javascript Folders
+/node_modules/
+
+# Other Files
 /:memory
+
+# Other Folders
+/.vagrant/

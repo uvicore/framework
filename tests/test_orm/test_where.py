@@ -11,59 +11,6 @@ if TYPE_CHECKING:
     from app1.models.post import PostModel
 
 
-@pytest.mark.asyncio
-async def test_where_equal(app1):
-    # Test Ioc instead of import
-    #User = uvicore.ioc.make('uvicore.auth.models.user.User')
-    from uvicore.auth.models.user import User
-
-    # Test implicit =
-    users: List[UserModel] = await User.query().where('email', 'manager1@example.com').get()
-    dump(users)
-    assert ['manager1@example.com'] == [x.email for x in users]
-
-    # Test explicit =
-    users: List[UserModel] = await User.query().where('email', '=', 'manager1@example.com').get()
-    dump(users)
-    assert ['manager1@example.com'] == [x.email for x in users]
-
-
-@pytest.mark.asyncio
-async def test_where_column_mapper(app1):
-    from app1.models.post import Post
-
-    # The model field `slug` is table column `unique_slug`
-    # So we are testing that we can where on `slug` and it translate to table `unique_slug`
-    posts = await Post.query().where('slug', 'test-post3').get()
-    dump(posts)
-    assert ['Test Post3'] == [x.title for x in posts]
-
-
-@pytest.mark.asyncio
-async def test_where_notequal(app1):
-    from uvicore.auth.models.user import User
-
-    # Single where
-    users: List[UserModel] = await User.query().where('email', '!=', 'manager1@example.com').get()
-    assert [
-        'administrator@example.com',
-        'manager2@example.com',
-        'user1@example.com',
-        'user2@example.com',
-    ] == [x.email for x in users]
-
-    # Double where
-    users: List[UserModel] = await (User.query()
-        .where('email', '!=', 'manager1@example.com')
-        .where('email', '!=', 'manager2@example.com')
-        .get()
-    )
-    assert [
-        'administrator@example.com',
-        'user1@example.com',
-        'user2@example.com',
-    ] == [x.email for x in users]
-
 
 @pytest.mark.asyncio
 async def test_where_in(app1):

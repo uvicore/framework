@@ -25,18 +25,6 @@ async def test_select_all(app1):
 
 
 @pytest.mark.asyncio
-async def test_select_one(app1):
-    # This time import table from Model
-    from app1.models.post import Post
-
-    posts = Post.table
-    query = posts.select().where(posts.c.id == 1)
-    results = await uvicore.db.fetchone(query, connection='app1')
-    dump(results)
-    assert results.unique_slug == 'test-post1'
-
-
-@pytest.mark.asyncio
 async def test_join1(app1):
     from app1.database.tables.contacts import Contacts
     from app1.database.tables.users import Users

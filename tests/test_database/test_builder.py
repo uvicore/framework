@@ -35,36 +35,6 @@ async def test_select_one(app1):
 
 
 @pytest.mark.asyncio
-async def test_where(app1):
-    query = (uvicore.db.query('app1')
-        .table('posts')
-        .where('creator_id', '=', 2)
-        .where('unique_slug', 'test-post4')
-    )
-    results = await query.get()
-    print(query.sql())
-    dump(results)
-    dump(results[0].keys())
-    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
-
-
-@pytest.mark.asyncio
-async def test_where_list(app1):
-    query = (uvicore.db.query('app1')
-        .table('posts')
-        .where([
-            ('creator_id', '=', 2),
-            ('unique_slug', 'test-post4'),
-        ])
-    )
-    results = await query.get()
-    print(query.sql())
-    dump(results)
-    dump(results[0].keys())
-    assert [(4, 'test-post4', 'Test Post4', None, 2, 1)] == results
-
-
-@pytest.mark.asyncio
 async def test_where_in(app1):
     query = (uvicore.db.query('app1')
         .table('posts')
