@@ -6,8 +6,11 @@ from uvicore.contracts import Config as ConfigInterface
 from uvicore.support import dictionary
 from uvicore.support.dumper import dd, dump
 
-
-class _Configuration(ConfigInterface):
+@uvicore.service('uvicore.configuration.configuration.Configuration',
+    aliases=['Configuration', 'Config', 'config'],
+    singleton=True,
+)
+class Configuration(ConfigInterface):
     """Configuration private class.
 
     Do not import from this location.

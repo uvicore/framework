@@ -15,8 +15,22 @@ from uvicore.support.dumper import dd, dump
 # In classic FastAIP example, this is same as
 # app = FastAPI(), but I call it app.http
 
+# Bound from service provider instead of decorator
 
-class _Server(ServerInterface):
+
+@uvicore.service('uvicore.http.server.Server',
+    aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
+    singleton=True,
+    kwargs={
+        'debug': uvicore.config('app.debug'),
+        'title': uvicore.config('app.openapi.title'),
+        'version': uvicore.app.version,
+        'openapi_url': uvicore.config('app.openapi.url'),
+        'docs_url': uvicore.config('app.openapi.docs_url'),
+        'redoc_url': uvicore.config('app.openapi.redoc_url'),
+    },
+)
+class Server(ServerInterface):
     """HTTP Server private class.
 
     Do not import from this location.
@@ -57,4 +71,4 @@ class _Server(ServerInterface):
 #Server: ServerInterface = uvicore.ioc.make('Http')
 
 # Public API for import * and doc gens
-__all__ = ['_Server']
+#__all__ = ['_Server']

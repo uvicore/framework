@@ -7,8 +7,8 @@ from uvicore.support.dumper import dump
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
-
-class _Posts(Schema):
+@uvicore.table()
+class Posts(Schema):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name
@@ -38,4 +38,4 @@ class _Posts(Schema):
 
 
 # IoC Class Instance
-Posts: _Posts = uvicore.ioc.make('app1.database.tables.posts.Posts', _Posts, singleton=True)
+#Posts: _Posts = uvicore.ioc.make('app1.database.tables.posts.Posts', _Posts, singleton=True)

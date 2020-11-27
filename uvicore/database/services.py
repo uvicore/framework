@@ -3,7 +3,7 @@ from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Database(ServiceProvider):
 
     def register(self) -> None:
@@ -15,13 +15,13 @@ class Database(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        self.bind('Database', 'uvicore.database.db._Db',
-            singleton=True,
-            aliases=['database', 'db'],
-        )
+        # self.bind('Database', 'uvicore.database.db._Db',
+        #     singleton=True,
+        #     aliases=['database', 'db'],
+        # )
 
         # Set uvicore.log global
-        uvicore.db = uvicore.ioc.make('Database')
+        uvicore.db = uvicore.ioc.make('uvicore.database.db.Db')
 
         # Register event listeners
         # After all providers are registered (meaning configs merged)

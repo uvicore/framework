@@ -16,7 +16,8 @@ from uvicore.contracts import DbQueryBuilder as BuilderInterface
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
-class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
+@uvicore.service()
+class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """Database Query Builder"""
 
     def __init__(self, connection: str):
@@ -91,8 +92,8 @@ class _DbQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         return results
 
 # IoC Class Instance
-_DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
+#_DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
 
 # Actual Usable Model Class Derived from IoC Inheritence
-class DbQueryBuilder(Generic[B, E], _DbQueryBuilderIoc[B, E], BuilderInterface[B, E]):
-    pass
+#class DbQueryBuilder(Generic[B, E], _DbQueryBuilderIoc[B, E], BuilderInterface[B, E]):
+    #pass

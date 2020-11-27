@@ -12,8 +12,11 @@ from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
 from sqlalchemy.engine.result import RowProxy
 
-
-class _Db(DatabaseInterface):
+@uvicore.service('uvicore.database.db.Db',
+    aliases=['Database', 'database', 'db'],
+    singleton=True,
+)
+class Db(DatabaseInterface):
     """Database private class.
 
     Do not import from this location.

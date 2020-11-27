@@ -1,6 +1,8 @@
+import uvicore
 from uvicore import log
 from uvicore.auth.models.user_info import UserInfo
 
+@uvicore.seeder()
 async def seed():
     log.item('Seeding table user_info')
 

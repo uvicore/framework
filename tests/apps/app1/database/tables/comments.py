@@ -9,7 +9,8 @@ posts = uvicore.db.tablename('app1.posts')
 users = uvicore.db.tablename('auth.users')
 
 
-class _Comments(Schema):
+@uvicore.table()
+class Comments(Schema):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name
@@ -38,4 +39,4 @@ class _Comments(Schema):
 
 
 # IoC Class Instance
-Comments: _Comments = uvicore.ioc.make('app1.database.tables.comments.Comments', _Comments, singleton=True)
+#Comments: _Comments = uvicore.ioc.make('app1.database.tables.comments.Comments', _Comments, singleton=True)

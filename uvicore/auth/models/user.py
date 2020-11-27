@@ -37,7 +37,12 @@ from uvicore.support.dumper import dd, dump
 
 # UserModel for typehints only.  Import User for actual usage.
 #class UserModel(Model, metaclass=ModelMetaclass):
-class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
+
+
+#@uvicore.ioc.bind('uvicore.auth.models.user.User')
+
+@uvicore.model()
+class User(Model['User'], metaclass=ModelMetaclass):
 #class UserModel(Model['UserModel']):
     """Auth User Model"""
 
@@ -59,9 +64,8 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
     # One-To-One - User has ONE Contact
     info: Optional[UserInfo] = Field(None,
         description='User Info Model',
-        relation=HasOne('uvicore.auth.models.user_info.UserInfo', 'user_id'),
+        relation=HasOne('uvicore.auth.models.user_info.UserInfo', foreign_key='user_id'),
     )
-
 
     # class Config:
     #     extra = 'ignore'
@@ -69,7 +73,9 @@ class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 
 
 # IoC Class Instance
-User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+#User = UserModel
+#User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+#User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User')
 #class User(UserIoc, Model[UserModel], UserInterface): pass
 
 # class User(
@@ -80,6 +86,6 @@ User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
 
 
 
-#from uvicore.auth.models.user_info import UserInfo  # isort:skip
-UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
+from uvicore.auth.models.user_info import UserInfo  # isort:skip
+#UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
 User.update_forward_refs()

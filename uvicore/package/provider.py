@@ -12,7 +12,8 @@ from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 
 
-class _ServiceProvider:
+@uvicore.service(aliases=['ServiceProvider', 'Provider'])
+class ServiceProvider(ProviderInterface):
     """asdf"""
 
     @property
@@ -165,7 +166,7 @@ class _ServiceProvider:
         if not register: return
 
         # Main Click Group from Ioc
-        cli = uvicore.ioc.make('Console')
+        cli = uvicore.ioc.make('uvicore.console.console.cli')
 
         # Register each group and each groups commands
         click_groups = {}
@@ -211,10 +212,10 @@ class _ServiceProvider:
 
 
 # IoC Class Instance
-_ServiceProviderIoc: _ServiceProvider = uvicore.ioc.make('ServiceProvider', _ServiceProvider, aliases=['service', 'provider'])
+#_ServiceProviderIoc: _ServiceProvider = uvicore.ioc.make('ServiceProvider', _ServiceProvider, aliases=['service', 'provider'])
 
-class ServiceProvider(_ServiceProviderIoc, ProviderInterface):
-    pass
+#class ServiceProvider(_ServiceProviderIoc, ProviderInterface):
+#    pass
 
 # Public API for import * and doc gens
-__all__ = ['ServiceProvider', '_ServiceProvider']
+#__all__ = ['ServiceProvider', '_ServiceProvider']

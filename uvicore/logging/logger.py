@@ -51,7 +51,155 @@ from uvicore.support.dumper import dump
 # }
 
 
-class _Logger(LoggerInterface):
+class _OutputFilter(logging.Filter):
+    """Python logging custom filter class"""
+
+    def __init__(self, filters, excludes):
+        self.filters = filters
+        self.excludes = excludes
+        super().__init__(name='')
+
+    def filter(self, record):
+        # Not an exact filter match but a contains match.  This matches how default python
+        # logging filters are.  So you can filter on A.B and it will include
+        # names of A.B.C and up.
+        show = False
+        if self.filters:
+            for f in self.filters:
+                if record.name[0:len(f)] == f:
+                    show = True
+                    break
+        else:
+            show = True
+
+        if show and self.excludes:
+            for exclude in self.excludes:
+                if record.name[0:len(exclude)] == exclude:
+                    show = False
+                    break
+
+        return show
+
+
+
+class _ExcludeFilter(logging.Filter):
+    """Python logging custom exclude filter class"""
+
+    def __init__(self, excludes):
+        self.excludes = excludes
+        super().__init__(name='exclude')
+
+    def filter(self, record):
+        # Not an exact filter match but a contains match.  This matches how default python
+        # logging filters are.  So you can filter on A.B and it will include
+        # names of A.B.C and up.
+        for exclude in self.excludes:
+            print(exclude)
+            if record.name[0:len(exclude)] == exclude: return False
+        return True
+
+
+class ColoredFormatter(Formatter):
+
+    def __init__(self, patern):
+        Formatter.__init__(self, patern)
+
+    def format(self, record):
+        # Remember this is console output only, not file or other handlers
+        # See color chart https://pypi.org/project/colored/
+        level = record.levelname
+        message = logging.Formatter.format(self, record)
+
+        # Format header
+        if (level == 'INFO' and re.match("^:: ", message)):
+            message = re.sub("^:: ", "", message)
+            message = re.sub(" ::$", "", message)
+            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ':: ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ::', attr(0))
+
+        # Format header2
+        if (level == 'INFO' and re.match("^## ", message)):
+            message = re.sub("^## ", "", message)
+            message = re.sub(" ##$", "", message)
+            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '## ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ##', attr(0))
+
+        # Format header3
+        if (level == 'INFO' and re.match("^=== ", message)):
+            message = re.sub("^=== ", "", message)
+            message = re.sub(" ===$", "", message)
+            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '=== ', attr(0)) \
+                + ('{0}{1}{2}').format(fg('green'), message, attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ===', attr(0))
+
+        # Format header4
+        if (level == 'INFO' and re.match("^---- ", message)):
+            message = re.sub("^---- ", "", message)
+            message = re.sub(" ----$", "", message)
+            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '---- ', attr(0)) \
+                + ('{0}{1}{2}').format(fg('dark_green'), message, attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
+
+        # Format bullet * item
+        elif (level == 'INFO' and re.match("^\* ", message)):
+            message = re.sub("^\* ", "", message)
+            message = ('{0}{1}{2}').format(fg('green'), '   * ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+
+        # Format bullet2 - item
+        elif (level == 'INFO' and re.match("^- ", message)):
+            message = re.sub("^- ", "", message)
+            message = ('{0}{1}{2}').format(fg('cyan'), '   - ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+
+        # Format bullet3 + item
+        elif (level == 'INFO' and re.match("^\+ ", message)):
+            message = re.sub("^\+ ", "", message)
+            message = ('{0}{1}{2}').format(fg('red'), '   + ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+
+        # Format bullet4 > item
+        elif (level == 'INFO' and re.match("^> ", message)):
+            message = re.sub("^> ", "", message)
+            message = ('{0}{1}{2}').format(fg('magenta'), '   > ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+
+        # Format notice
+        elif (level == 'INFO' and re.match("^NOTICE: ", message)):
+            message = re.sub("^NOTICE: ", "", message)
+            message = ('{0}{1}{2}{3}').format(fg('yellow'), attr('bold'), 'NOTICE: ', attr(0)) \
+                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+
+        # Format separator
+        elif (level == 'INFO' and re.match("^====", message)):
+            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+
+        # Format line
+        elif (level == 'INFO' and re.match("^----", message)):
+            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+
+        elif (level == 'DEBUG'):
+            message = ('{0}{1}{2}').format(fg(241), message, attr(0))
+        elif (level == 'INFO'):
+            message = message
+        elif (level == 'WARNING'):
+            message = ('{0}{1}{2}').format(fg('orange_red_1'), message, attr(0))
+        elif (level == 'ERROR'):
+            message = ('{0}{1}{2}').format(fg('red'), message, attr(0))
+        elif (level == 'CRITICAL'):
+            message = ('{0}{1}{2}{3}').format(fg('black'), bg('red'), message, attr(0))
+
+        return message
+
+
+@uvicore.service('uvicore.logging.logger.Logger',
+    aliases=['Logger', 'logger', 'Log', 'log'],
+    singleton=True,
+    kwargs={'config': uvicore.config('app.logger')},
+)
+class Logger(LoggerInterface):
     """Logger private class.
 
     Do not import from this location.
@@ -265,152 +413,10 @@ class _Logger(LoggerInterface):
         self.reset()
 
 
-class _OutputFilter(logging.Filter):
-    """Python logging custom filter class"""
-
-    def __init__(self, filters, excludes):
-        self.filters = filters
-        self.excludes = excludes
-        super().__init__(name='')
-
-    def filter(self, record):
-        # Not an exact filter match but a contains match.  This matches how default python
-        # logging filters are.  So you can filter on A.B and it will include
-        # names of A.B.C and up.
-        show = False
-        if self.filters:
-            for f in self.filters:
-                if record.name[0:len(f)] == f:
-                    show = True
-                    break
-        else:
-            show = True
-
-        if show and self.excludes:
-            for exclude in self.excludes:
-                if record.name[0:len(exclude)] == exclude:
-                    show = False
-                    break
-
-        return show
-
-
-
-class _ExcludeFilter(logging.Filter):
-    """Python logging custom exclude filter class"""
-
-    def __init__(self, excludes):
-        self.excludes = excludes
-        super().__init__(name='exclude')
-
-    def filter(self, record):
-        # Not an exact filter match but a contains match.  This matches how default python
-        # logging filters are.  So you can filter on A.B and it will include
-        # names of A.B.C and up.
-        for exclude in self.excludes:
-            print(exclude)
-            if record.name[0:len(exclude)] == exclude: return False
-        return True
-
-
-class ColoredFormatter(Formatter):
-
-    def __init__(self, patern):
-        Formatter.__init__(self, patern)
-
-    def format(self, record):
-        # Remember this is console output only, not file or other handlers
-        # See color chart https://pypi.org/project/colored/
-        level = record.levelname
-        message = logging.Formatter.format(self, record)
-
-        # Format header
-        if (level == 'INFO' and re.match("^:: ", message)):
-            message = re.sub("^:: ", "", message)
-            message = re.sub(" ::$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ':: ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ::', attr(0))
-
-        # Format header2
-        if (level == 'INFO' and re.match("^## ", message)):
-            message = re.sub("^## ", "", message)
-            message = re.sub(" ##$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '## ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ##', attr(0))
-
-        # Format header3
-        if (level == 'INFO' and re.match("^=== ", message)):
-            message = re.sub("^=== ", "", message)
-            message = re.sub(" ===$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '=== ', attr(0)) \
-                + ('{0}{1}{2}').format(fg('green'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ===', attr(0))
-
-        # Format header4
-        if (level == 'INFO' and re.match("^---- ", message)):
-            message = re.sub("^---- ", "", message)
-            message = re.sub(" ----$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '---- ', attr(0)) \
-                + ('{0}{1}{2}').format(fg('dark_green'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
-
-        # Format bullet * item
-        elif (level == 'INFO' and re.match("^\* ", message)):
-            message = re.sub("^\* ", "", message)
-            message = ('{0}{1}{2}').format(fg('green'), '   * ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
-
-        # Format bullet2 - item
-        elif (level == 'INFO' and re.match("^- ", message)):
-            message = re.sub("^- ", "", message)
-            message = ('{0}{1}{2}').format(fg('cyan'), '   - ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
-
-        # Format bullet3 + item
-        elif (level == 'INFO' and re.match("^\+ ", message)):
-            message = re.sub("^\+ ", "", message)
-            message = ('{0}{1}{2}').format(fg('red'), '   + ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
-
-        # Format bullet4 > item
-        elif (level == 'INFO' and re.match("^> ", message)):
-            message = re.sub("^> ", "", message)
-            message = ('{0}{1}{2}').format(fg('magenta'), '   > ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
-
-        # Format notice
-        elif (level == 'INFO' and re.match("^NOTICE: ", message)):
-            message = re.sub("^NOTICE: ", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('yellow'), attr('bold'), 'NOTICE: ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
-
-        # Format separator
-        elif (level == 'INFO' and re.match("^====", message)):
-            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
-
-        # Format line
-        elif (level == 'INFO' and re.match("^----", message)):
-            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
-
-        elif (level == 'DEBUG'):
-            message = ('{0}{1}{2}').format(fg(241), message, attr(0))
-        elif (level == 'INFO'):
-            message = message
-        elif (level == 'WARNING'):
-            message = ('{0}{1}{2}').format(fg('orange_red_1'), message, attr(0))
-        elif (level == 'ERROR'):
-            message = ('{0}{1}{2}').format(fg('red'), message, attr(0))
-        elif (level == 'CRITICAL'):
-            message = ('{0}{1}{2}{3}').format(fg('black'), bg('red'), message, attr(0))
-
-        return message
-
 
 # IoC Class Instance
 # Not to be imported by the public from here.
 # Use the uvicore.log singleton global instead.
 
 # Public API for import * and doc gens
-__all__ = ['_Logger', 'ColoredFormatter']
+#__all__ = ['_Logger', 'ColoredFormatter']

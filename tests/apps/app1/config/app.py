@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from uvicore.configuration import env
 
-
 config = {
 
     # --------------------------------------------------------------------------
@@ -103,8 +102,9 @@ config = {
     # --------------------------------------------------------------------------
     'bindings': {
         # Testing, override Users table and model
-        'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users._Users',
-        'uvicore.auth.models.user.User': 'app1.models.user.UserModel',
+        'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users.Users',
+        'uvicore.auth.models.user.User': 'app1.models.user.User',
+        #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
 
         # Low level core uvicore libraries
         # 'Application': 'mreschke.wiki.overrides.application.Application',
@@ -142,7 +142,7 @@ config = {
             #'filters': ['root', 'uvicore'],
             #'filters': ['root', 'databases', 'uvicore.orm'],
             'exclude': [
-                #'uvicore',
+                'uvicore',
                 'databases',
             ],
         },

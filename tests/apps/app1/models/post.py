@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import uvicore
 from app1.contracts import Post as PostInterface
 from app1.database.tables import posts as table
-from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne, MorphMany
 from uvicore.orm.model import Model, ModelMetaclass
 from app1.models.image import Image
+from app1.models.attribute import Attribute
+from uvicore.support.dumper import dump, dd
 
-class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
+
+#@uvicore.ioc.bind('app1.models.post.Post')
+
+@uvicore.model()
+class Post(Model['Post'], metaclass=ModelMetaclass):
 #class _PostModel(Model['PostModel'], PostInterface, metaclass=ModelMetaclass):
 #class _PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 #class PostModel(Model['PostModel'], ModelInterface['PostModel'], metaclass=ModelMetaclass):
@@ -82,28 +88,67 @@ class PostModel(Model['PostModel'], metaclass=ModelMetaclass):
 
         #has_many=('app1.models.comment.Comment', 'post_id', 'id'),
         #relation=HasMany('app1.models.comment.Comment', 'post_id', 'id'),
-        relation=HasMany('app1.models.comment.Comment', 'post_id'),
+        relation=HasMany('app1.models.comment.Comment', foreign_key='post_id'),
         #relation=HasMany('app1.models.comment.Comment'),
     )
 
     # Many-To-Many via post_tags pivot table
     tags: Optional[List[Tag]] = Field(None,
         description="Post Tags",
-        relation=BelongsToMany('app1.models.tag.Tag', 'post_tags', 'post_id', 'tag_id'),
+        relation=BelongsToMany('app1.models.tag.Tag', join_tablename='post_tags', left_key='post_id', right_key='tag_id'),
     )
 
     # Polymorphic One-To-One image
     image: Optional[Image] = Field(None,
         description="Post Image",
         #relation=MorphOne('app1.models.image.Image', 'imageable', 'id') # Local key is optional
-        relation=MorphOne('app1.models.image.Image', 'imageable')
+        relation=MorphOne('app1.models.image.Image', polyfix='imageable')
+    )
+
+    # Polymorphic One-To-Many Attributes
+    #attributes: Optional[List[Attribute]] = Field(None,
+    attributes: Optional[Dict] = Field(None,
+        description="Post Attributes",
+        relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable', dict_key='key', dict_value='value')
+        #relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable')
     )
 
     def cb_results(self):
         return str(self.slug) + ' callback'
 
+    async def _before_save(self):
+        await super()._before_save()
+        dump('yyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
+        #if self.other is not None:
+            #self.other = self.other + ' !!!!!!!!!!!!!!!!!!!'
+
+
+
+# @uvicore.events.listen('app1.models.post.PostModel-BeforeSave')
+# def _event_inserting(event, payload):
+#     dump('HANDLER FOR ' + event.get('name'))
+#     #pass
+#     #dump("event inserting here")
+#     #dump(payload.model.extra1)
+#     #dump(payload)
+#     if payload.model.other is not None:
+#         payload.model.other = payload.model.other + ' !!!!!!!!!!!!!'
+#     #     #dump(payload.model.other)
+#     #     pass
+#     #payload.model.extra1 = 'user5 extra111'
+
+# # #uvicore.events.listen('app1-models-post-PostModel-events-Inserting', _event_inserting)
+
+
+# @uvicore.events.listen('app1.models.post.PostModel-AfterSave')
+# def _event_inserting(event, payload):
+#     dump('HANDLER FOR ' + event.get('name'))
+
+
+
+
 # IoC Class Instance
-Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
+#Post: PostModel = uvicore.ioc.make('app1.models.post.Post', PostModel)
 #class Post(PostIoc, Model[PostModel], PostInterface): pass
 
 # class Post(

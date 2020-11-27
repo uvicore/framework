@@ -11,7 +11,8 @@ from uvicore.orm.model import Model
 from uvicore.support.dumper import dd, dump
 
 
-class GroupModel(Model['GroupModel'], metaclass=ModelMetaclass):
+@uvicore.model()
+class Group(Model['Group'], metaclass=ModelMetaclass):
     """Auth Group Model"""
 
     # Database connection and table information
@@ -30,7 +31,7 @@ class GroupModel(Model['GroupModel'], metaclass=ModelMetaclass):
     )
 
 # IoC Class Instance
-Group: GroupModel = uvicore.ioc.make('uvicore.auth.models.group.Group', GroupModel)
+#Group: GroupModel = uvicore.ioc.make('uvicore.auth.models.group.Group', GroupModel)
 
 # class Group(
 #     _Group,

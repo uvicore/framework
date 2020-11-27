@@ -7,7 +7,10 @@ from uvicore.orm.model import Model, ModelMetaclass
 
 from app1.contracts import Tag as TagInterface
 
-class TagModel(Model['TagModel'], metaclass=ModelMetaclass):
+#@uvicore.ioc.bind('app1.models.tag.Tag')
+
+@uvicore.model()
+class Tag(Model['Tag'], metaclass=ModelMetaclass):
     """App1 Tags"""
 
     # Database table definition
@@ -41,13 +44,13 @@ class TagModel(Model['TagModel'], metaclass=ModelMetaclass):
 
     posts: Optional[List[Post]] = Field(None,
         description="Tag Posts Model",
-        relation=BelongsToMany('app1.models.post.Post', 'post_tags', 'tag_id', 'post_id'),
+        relation=BelongsToMany('app1.models.post.Post', join_tablename='post_tags', left_key='tag_id', right_key='post_id'),
     )
 
 
 
 # IoC Class Instance
-Tag: TagModel = uvicore.ioc.make('app1.models.tag.Tag', TagModel)
+#Tag: TagModel = uvicore.ioc.make('app1.models.tag.Tag', TagModel)
 
 
 from app1.models.user import User  # isort:skip

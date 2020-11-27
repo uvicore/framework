@@ -7,7 +7,19 @@ def getvalue(object, key):
         return object.get(key)
     else:
         # Class instance
-        return getattr(object, key)
+        if hasattr(object, key):
+            return getattr(object, key)
+        else:
+            return None
+
+def setvalue(object, key, value):
+    """Set a dict or class instance attribute value in a unified way"""
+    if type(object) == dict or type(object) == OrderedDict:
+        # Dict or OrderedDict
+        object[key] = value
+    else:
+        # Class instance
+        setattr(object, key, value)
 
 
 class Str:

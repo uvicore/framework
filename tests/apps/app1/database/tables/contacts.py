@@ -7,7 +7,8 @@ from uvicore.support.dumper import dump
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
-class _Contacts(Schema):
+@uvicore.table()
+class Contacts(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -38,4 +39,4 @@ class _Contacts(Schema):
 
 
 # IoC Class Instance
-Contacts: _Contacts = uvicore.ioc.make('app1.database.tables.contacts.Contacts', _Contacts, singleton=True)
+#Contacts: _Contacts = uvicore.ioc.make('app1.database.tables.contacts.Contacts', _Contacts, singleton=True)

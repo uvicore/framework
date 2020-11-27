@@ -2,7 +2,7 @@ import uvicore
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Console(ServiceProvider):
 
     def register(self) -> None:
@@ -14,9 +14,9 @@ class Console(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        self.bind('Console', 'uvicore.console.console._cli',
-            aliases=['console', 'cli']
-        )
+        # self.bind('Console', 'uvicore.console.console._cli',
+        #     aliases=['console', 'cli']
+        # )
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

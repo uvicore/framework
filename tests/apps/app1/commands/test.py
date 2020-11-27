@@ -7,24 +7,68 @@ from uvicore.support.dumper import dump, dd
 async def cli():
     """Play"""
 
-    from app1.models.post import Post
-    from app1.models.comment import Comment
-    from app1.models.tag import Tag
-    from app1.models.user import User
+    import sys
+
+    #from uvicore.auth.database.tables.users import Users
+    #from uvicore.auth.models.user import User
+    from app1.models import User, Post
+
+    #dump(User)
+
+
+    # from app1.models.user import User as User2
+
+
+    # print(sys.modules['uvicore.auth.models.user'])
+
+    # #dump(uvicore.app.providers)
+
+
+    # dump(id(User))
+    # dump(User)
+    # dump(id(User2))
+    # dump(User2)
+
+    # dump(id(sys.modules.get('uvicore.auth.models.user')))
+    # dump((sys.modules.get('uvicore.auth.models.user')))
+
+    # dump(id(sys.modules.get('app1.models.user')))
+    # dump((sys.modules.get('app1.models.user')))
+
+    # #dump(sys.modules)
+
+
+    #posts = await Post.query().include('creator.contact', 'attributes').get()
+    #dump(posts)
+
+    #dump(uvicore.ioc.bindings)
+
+
+
+    #dump(uvicore.ioc.bindings['uvicore.auth.database.tables.users.Users'])
+    #dump(uvicore.ioc.bindings)
+
+
+    dump('Play Done')
+
+    # from app1.models.post import Post
+    # from app1.models.comment import Comment
+    # from app1.models.tag import Tag
+    # from app1.models.user import User
 
 
     # All posts
     # SELECT * FROM posts
     #posts = await Post.query().get()
 
-    users = await User.query().include([
-        'posts',
-        'posts.comments',
-        'posts.comments.creator'
-    ]).where([
-        ('posts.comments.creator.email', 'user1@example.com'),
-    ]).get()
-    dump(users)
+    # users = await User.query().include([
+    #     'posts',
+    #     'posts.comments',
+    #     'posts.comments.creator'
+    # ]).where([
+    #     ('posts.comments.creator.email', 'user1@example.com'),
+    # ]).get()
+    # dump(users)
 
 
     # posts = (await Post.query()

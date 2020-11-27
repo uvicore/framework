@@ -6,11 +6,12 @@ T = TypeVar('T')
 
 
 @dataclass
-class Binding:
+class Binding(ABC):
     path: Optional[str]
     object: Optional[Any]
-    factory: Optional[Any]
     instance: Optional[Any]
+    type: Optional[str]
+    factory: Optional[Any]
     kwargs: Optional[Dict]
     singleton: bool
     aliases: List

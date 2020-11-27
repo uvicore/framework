@@ -9,7 +9,8 @@ posts = uvicore.db.tablename('app1.posts')
 tags = uvicore.db.tablename('app1.tags')
 
 
-class _PostTags(Schema):
+@uvicore.table()
+class PostTags(Schema):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name
@@ -36,4 +37,4 @@ class _PostTags(Schema):
 
 
 # IoC Class Instance
-PostTags: _PostTags = uvicore.ioc.make('app1.database.tables.post_tags.PostTags', _PostTags, singleton=True)
+#PostTags: _PostTags = uvicore.ioc.make('app1.database.tables.post_tags.PostTags', _PostTags, singleton=True)

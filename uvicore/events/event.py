@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, Optional
 
 #@dataclass
+@uvicore.service()
 class Event:
 
     def dispatch(self):

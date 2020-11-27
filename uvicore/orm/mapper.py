@@ -1,7 +1,11 @@
-from uvicore.support.dumper import dump, dd
+import uvicore
 import inspect
+from uvicore.support.dumper import dump, dd
+from uvicore.contracts import Mapper as MapperInterface
 
-class Mapper:
+
+@uvicore.service()
+class Mapper(MapperInterface):
     """Entity mapper for model->table or table->model conversions"""
 
     def __init__(self, entity, *args):
@@ -20,7 +24,7 @@ class Mapper:
             self.instance = entity
         self.args = args
 
-    def column(self):
+    def column(self) -> str:
         """Convert a model field name into a table column name"""
         fieldname = self.args[0]
         field = self.entity.modelfields.get(fieldname)
@@ -37,7 +41,40 @@ class Mapper:
         return column
 
     def model(self):
-        """Convert a table row (SQLAlchemy RowProxy) into a model instance"""
+        """Convert a dict or List[dict] into a model or List[Model]
+
+        Works on a single record as dict - entity.mapper(DictModel).model()
+        Works on a list of dict - entity.mapper(ListOfDictModel).model()
+        Passes through if already a Model or List[Model]
+        If mixed List of Dict and Model, converts all to Models
+        """
+
+        if self.args:
+            # Model(s) are being passed in (entity.mapper(models).table())
+            values = self.args[0]
+        else:
+            # No passed values, use self instance (model.mapper().table())
+            values = self.instance
+
+        single = False
+        if type(values) != list:
+            values = [values]
+            single = True
+
+        models = []
+        for value in values:
+            if type(value) == dict:
+                # Convert dict to actual Model instance
+                models.append(self.entity(**value))
+            else:
+                # Already a model instance
+                models.append(value)
+
+        if single: return models[0]
+        return models
+
+    def row_to_model(self):
+        """Convert a single table row (SQLAlchemy RowProxy) into a model instance"""
         row = self.args[0]
         prefix = None
         if len(self.args) == 2: prefix = self.args[1]
@@ -68,7 +105,7 @@ class Mapper:
             models = self.instance
 
         single = False
-        if not type(models) == list:
+        if type(models) != list:
             models = [models]
             single = True
 

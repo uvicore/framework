@@ -1,7 +1,8 @@
+from abc import ABC
 from dataclasses import dataclass
 
 @dataclass
-class Connection:
+class Connection(ABC):
     name: str
     #default: bool
     driver: str

@@ -1,5 +1,8 @@
-from . import contracts
 from typing import Dict
+
+from uvicore.foundation.decorators import model, seeder, service, table, provider
+
+from . import contracts
 
 # Uvicore version.  Also available in app.version
 __version__ = '0.1.0'
@@ -29,6 +32,7 @@ def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
 
     # Import Application (which is an IoC singleton) and set uvicore.app global
     from uvicore.foundation.application import Application
+    #uvicore.app = uvicore.ioc.make('uvicore.foundation.application.Application') # Also works
     uvicore.app = Application
 
     # Import Event Dispatcher (which is an IoC singleton) and set uvicore.events global

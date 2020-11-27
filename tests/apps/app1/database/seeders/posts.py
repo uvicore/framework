@@ -1,9 +1,12 @@
+import uvicore
 from app1.models.post import Post
 from app1.models.comment import Comment
 from app1.models.tag import Tag
+from app1.models.image import Image
 from uvicore.support.dumper import dump, dd
 from uvicore import log
 
+@uvicore.seeder()
 async def seed():
     log.item('Seeding table posts')
 
@@ -49,11 +52,43 @@ async def seed():
                     'creator_id': 4,
                },
             ],
+
+            # Polymorphic One-To-One
+            'image': {
+                'filename': 'post1-image.png',
+                'size': 1234932,
+            },
+
+            # Polymorphic One-To-Many Attributes
+            'attributes': [
+                {'key': 'post1-test1', 'value': 'value for post1-test1'},
+                {'key': 'post1-test2', 'value': 'value for post1-test2'},
+            ]
         },
     ])
 
-    # Get Post 1
+    # Example of adding attributes later
+    post = await Post.query().find(1)
+    # await post.add('attributes', [
+    #     {'key': 'post1-test3', 'value': {
+    #         'this': 'value',
+    #         'is': 'a dict itself!'
+    #     }},
+    #     {'key': 'post1-test4', 'value': ['one', 'two', 'three']}
+    # ])
+
+
+    # # Blow out all attributes and set this complete List
+    # await post.set('attributes', [
+    #     {'key': 'post1-test3', 'value': 'value for post1-test3'},
+    #     {'key': 'post1-test4', 'value': 'value for post1-test4'},
+    # ])
+
+
+
+    # Example of deleteing a HasOne child
     #post = await Post.query().find(1)
+    #await post.delete('image')
 
     # Link tags (does not create, only links EXISTING tags)
     # await post.link('tags', [
@@ -154,11 +189,25 @@ async def seed():
     # post.unlink('tags')  # unlink all tags
 
 
-    # You can insert one so you can insert tag right after
+    # You can insert one so you can insert relations right after
     post = await Post(slug='test-post2', title='Test Post2', other=None, creator_id=1, owner_id=2).save()
+    # Create AND Link if nto exist Many-To-Many tags
     await post.link('tags', [
         tags['linux'],
         tags['bsd'],
+    ])
+    # Create Polymorphic One-To-One
+    await post.create('image', {
+        #'imageable_type': 'posts',  # NO, inferred
+        #'imageable_id': 2,  # NO, inferred
+        'filename': 'post2-image.png',
+        'size': 2483282
+    })
+    # Create Polymorphic One-To-Many
+    # NOTE: .add is simplay an alias for .create()
+    await post.add('attributes', [
+        {'key': 'post2-test1', 'value': 'value for post2-test1'},
+        {'key': 'post2-test2', 'value': 'value for post2-test2'},
     ])
 
     # You can NOT insert relations right away, these tags will be IGNORED
@@ -176,7 +225,7 @@ async def seed():
     ).save()
 
     # Test an update
-    post.other = 'other stuff2',
+    post.other = 'other stuff3'
     await post.save()
 
     # You can use .insert() as a List of model instances
@@ -205,7 +254,7 @@ async def seed():
         {
             'slug': 'test-post6',
             'title': 'Test Post6',
-            'other': 'other stuff3',
+            'other': 'other stuff6',
             #NO - 'creator_id': 5,
             'creator': {
                 'email': 'user2@example.com',
@@ -221,6 +270,19 @@ async def seed():
                 },
             },
             'owner_id': 3,
+
+            # Polymorphic One-To-One
+            'image': {
+                'filename': 'post6-image.png',
+                'size': 3345432,
+            },
+
+            # Polymorphic One-To-Many
+            'attributes': [
+                {'key': 'post6-test1', 'value': 'value for post6-test1'},
+                {'key': 'post6-test2', 'value': 'value for post6-test2'},
+                {'key': 'post6-test3', 'value': 'value for post6-test3'},
+            ]
         }
     ])
 

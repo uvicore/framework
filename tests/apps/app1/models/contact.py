@@ -23,7 +23,10 @@ from uvicore.orm.model import Model, ModelMetaclass
 #from app1.models.user import User
 #from uvicore.auth.models.user import User
 
-class ContactModel(Model['ContactModel'], metaclass=ModelMetaclass):
+#@uvicore.ioc.bind('app1.models.contact.Contact')
+
+@uvicore.model()
+class Contact(Model['Contact'], metaclass=ModelMetaclass):
 #class ContactModel(Model['ContactModel'], metaclass=ModelMetaclass):
 #class ContactModel(Model['ContactModel']):
 #class _Contact2:
@@ -71,7 +74,7 @@ class ContactModel(Model['ContactModel'], metaclass=ModelMetaclass):
 
 
 # IoC Class Instance
-Contact: ContactModel = uvicore.ioc.make('app1.models.contact.Contact', ContactModel)
+#Contact: ContactModel = uvicore.ioc.make('app1.models.contact.Contact', ContactModel)
 #class Contact(ContactIoc, Model[ContactModel], ContactInterface): pass
 
 # class Contact(

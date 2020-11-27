@@ -8,7 +8,8 @@ from uvicore.contracts import WebRouter as RouterInterface
 from uvicore.support.dumper import dd, dump
 
 
-class _WebRouter(RouterInterface):
+@uvicore.service()
+class WebRouter(RouterInterface):
 
     @property
     def router(self) -> _StarletteRouter:
@@ -48,7 +49,7 @@ class _WebRouter(RouterInterface):
 
 
 # IoC Class Instance
-WebRouter: RouterInterface = uvicore.ioc.make('WebRouter', _WebRouter)
+#WebRouter: RouterInterface = uvicore.ioc.make('WebRouter', _WebRouter)
 
 # Public API for import * and doc gens
-__all__ = ['WebRouter', '_WebRouter']
+#__all__ = ['WebRouter', '_WebRouter']

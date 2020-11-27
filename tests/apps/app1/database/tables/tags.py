@@ -7,8 +7,8 @@ from uvicore.support.dumper import dump
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
-
-class _Tags(Schema):
+@uvicore.table()
+class Tags(Schema):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name
@@ -35,4 +35,4 @@ class _Tags(Schema):
 
 
 # IoC Class Instance
-Tags: _Tags = uvicore.ioc.make('app1.database.tables.tags.Tags', _Tags, singleton=True)
+#Tags: _Tags = uvicore.ioc.make('app1.database.tables.tags.Tags', _Tags, singleton=True)

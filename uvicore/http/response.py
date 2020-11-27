@@ -14,6 +14,7 @@ from starlette.responses import FileResponse as File
 # Get our current template system from the IoC
 templates = uvicore.ioc.make('Templates')
 
+@uvicore.service()
 def View(
     name: str,
     context: dict,

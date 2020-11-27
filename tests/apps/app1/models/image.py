@@ -2,11 +2,14 @@ from __future__ import annotations
 import uvicore
 from typing import Optional, Any
 from app1.database.tables import images as table
-from uvicore.orm.fields import Field, BelongsTo, MorphTo
+from uvicore.orm.fields import Field
 from uvicore.orm.model import Model, ModelMetaclass
 
 
-class ImageModel(Model['ImageModel'], metaclass=ModelMetaclass):
+#@uvicore.ioc.bind('app1.models.image.Image')
+
+@uvicore.model()
+class Image(Model['Image'], metaclass=ModelMetaclass):
     """App1 Polymorphic One-To-One Image"""
 
     # Database table definition
@@ -39,6 +42,9 @@ class ImageModel(Model['ImageModel'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic One-To-One dynamic model based on imageable_type and imageable_id
+    # I never coded this inverse relation.  This would be more difficult as joins wouldn't work
+    # I would have to query each distinct _type, then query each of those tables perhaps, unsure, but lots
+    # of work.  The inverse isn't so important to me yet.
     # imageable: Optional[Any] = Field(None,
     #     description="Polymorphic Imageable Model",
     #     relation=MorphTo()
@@ -68,7 +74,7 @@ class ImageModel(Model['ImageModel'], metaclass=ModelMetaclass):
 
 
 # IoC Class Instance
-Image: ImageModel = uvicore.ioc.make('app1.models.image.Image', ImageModel)
+#Image: ImageModel = uvicore.ioc.make('app1.models.image.Image', ImageModel)
 
 # Update forwrad refs (a work around to circular dependencies)
 #from app1.models.post import Post  # isort:skip

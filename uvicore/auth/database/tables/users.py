@@ -5,7 +5,8 @@ from uvicore.database.table import Schema, SchemaOLD
 from uvicore.support.dumper import dd, dump
 
 
-class _Users(Schema):
+@uvicore.table()
+class Users(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -26,6 +27,7 @@ class _Users(Schema):
     # Optional SQLAlchemy Table() instance kwargs
     schema_kwargs = {}
 
-
+#Users = Users()
 # IoC Class Instance
-Users: _Users = uvicore.ioc.make('uvicore.auth.database.tables.users.Users', _Users, singleton=True)
+#Users = _Users
+#Users: _Users = uvicore.ioc.make('uvicore.auth.database.tables.users.Users', _Users, singleton=True)

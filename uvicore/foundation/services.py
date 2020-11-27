@@ -1,9 +1,8 @@
 import uvicore
-#from uvicore.support.provider import ServiceProvider
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Foundation(ServiceProvider):
 
     def register(self):
@@ -36,6 +35,24 @@ class Foundation(ServiceProvider):
 
     def boot(self):
         pass
+        # Register Ioc commands
+        self.commands([
+            {
+                'group': {
+                    'name': 'ioc',
+                    'parent': 'root',
+                    'help': 'Uvicore Ioc (Inversion of Control) Information',
+                },
+                'commands': [
+                    {'name': 'bindings', 'module': 'uvicore.foundation.commands.ioc.bindings'},
+                    {'name': 'singletons', 'module': 'uvicore.foundation.commands.ioc.singletons'},
+                    {'name': 'type', 'module': 'uvicore.foundation.commands.ioc.type'},
+                    {'name': 'overridden', 'module': 'uvicore.foundation.commands.ioc.overridden'},
+                ],
+            }
+        ])
+
+
         # Register Package commands
         self.commands([
             {

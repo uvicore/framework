@@ -1,5 +1,7 @@
+import uvicore
 from uvicore.contracts import Application as ApplicationInterface
 
+@uvicore.service()
 class Handler:
 
     @property

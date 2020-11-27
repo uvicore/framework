@@ -4,7 +4,8 @@ from uvicore.database.table import Schema
 from uvicore.support.dumper import dump
 
 
-class _Images(Schema):
+@uvicore.table()
+class Images(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -46,4 +47,4 @@ class _Images(Schema):
 
 
 # IoC Class Instance
-Images: _Images = uvicore.ioc.make('app1.database.tables.images.Images', _Images, singleton=True)
+#Images: _Images = uvicore.ioc.make('app1.database.tables.images.Images', _Images, singleton=True)

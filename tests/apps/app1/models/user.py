@@ -37,12 +37,37 @@ from app1.contracts import User as UserInterface
 #from app1.contracts import Post as PostInterface
 
 
-from uvicore.auth.models.user import UserModel as AuthOverride
-#AuthOverride = uvicore.ioc.make('uvicore.auth.models.user.User')
+#ORIG HERE
+#from BASE.uvicore.auth.models.user import UserModel as AuthOverride
 
 
+
+# import importlib
+# import sys
+# fullname = 'uvicore.auth.models.user'
+# spec = importlib.util.spec_from_file_location(fullname, '/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/auth/models/user.py')
+# mod = importlib.util.module_from_spec(spec)
+# #x = sys.modules.get(fullname)
+# sys.modules[fullname] = mod
+# spec.loader.exec_module(mod)
+# #sys.modules[fullname] = x
+# dump(mod)
+
+
+
+
+#from uvicore.auth.database.tables.users import Users
+#dump('TABLE', Users)
+
+# Pull original User model from IoC _BASE
+AuthOverride = uvicore.ioc.make('uvicore.auth.models.user.User_BASE')
+
+#@uvicore.ioc.bind('app1.models.user.User')
 #class User(Model['User'], metaclass=ModelMetaclass):
-class UserModel(AuthOverride):
+
+@uvicore.model()
+class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
+
 
 #class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 #class UserModel(Model['UserModel']):
@@ -55,20 +80,20 @@ class UserModel(AuthOverride):
 
     # id: Optional[int] = Field('id',
     #     primary=True,
-    #     description='Users primary ID',
+    #     description='User Primary ID',
     #     sortable=True,
     #     searchable=True,
     # )
 
     # email: str = Field('email',
-    #     description='Users email and username',
+    #     description='User Email and Username',
     #     required=True,
     # )
 
     # # One-To-One - User has ONE Contact
-    # info: 'Optional[UserInfo]' = Field(None,
+    # info: Optional[UserInfo] = Field(None,
     #     description='User Info Model',
-    #     relation=HasOne('uvicore.auth.models.user_info.UserInfo', 'user_id'),
+    #     relation=HasOne('uvicore.auth.models.user_info.UserInfo', foreign_key='user_id'),
     # )
 
 
@@ -85,7 +110,7 @@ class UserModel(AuthOverride):
 
         #has_one=('app1.models.contact.Contact', 'user_id', 'id'),
         #relation=HasOne('app1.models.contact.Contact', 'user_id', 'id'),
-        relation=HasOne('app1.models.contact.Contact', 'user_id'),
+        relation=HasOne('app1.models.contact.Contact', foreign_key='user_id'),
         #relation=HasOne('app1.models.contact.Contact'),
     )
 
@@ -95,20 +120,23 @@ class UserModel(AuthOverride):
 
         #has_many=('app1.models.post.Post', 'creator_id', 'id'),
         #relation=HasMany('app1.models.post.Post', 'creator_id', 'id')
-        relation=HasMany('app1.models.post.Post', 'creator_id')
+        relation=HasMany('app1.models.post.Post', foreign_key='creator_id')
         #relation=HasMany('app1.models.post.Post')
     )
 
     # Polymorphic One-To-One image
     image: Optional[Image] = Field(None,
         description="Post Image",
-        relation=MorphOne('app1.models.image.Image', 'imageable')
+        relation=MorphOne('app1.models.image.Image', polyfix='imageable')
     )
 
 
 # IoC Class Instance
-User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+#User = UserModel
+#User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User', UserModel)
+#User: UserModel = uvicore.ioc.make('uvicore.auth.models.user.User')
 #class User(UserIoc, Model[UserModel], UserInterface): pass
+
 
 # class User(
 #     _User,
@@ -135,5 +163,5 @@ from app1.models.post import Post  # isort:skip
 #Post = uvicore.ioc.make('app1.models.post.Post')
 
 
-User.update_forward_refs()
+#User.update_forward_refs()
 #UserModel.update_forward_refs()

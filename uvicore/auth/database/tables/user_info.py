@@ -7,7 +7,9 @@ from uvicore.support.dumper import dd, dump
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
-class _UserInfo(Schema):
+
+@uvicore.table()
+class UserInfo(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -31,4 +33,4 @@ class _UserInfo(Schema):
 
 
 # IoC Class Instance
-UserInfo: _UserInfo = uvicore.ioc.make('uvicore.auth.database.tables.user_info.UserInfo', _UserInfo, singleton=True)
+#UserInfo: _UserInfo = uvicore.ioc.make('uvicore.auth.database.tables.user_info.UserInfo', _UserInfo, singleton=True)

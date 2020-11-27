@@ -4,7 +4,8 @@ from uvicore.database.table import Schema, SchemaOLD
 from uvicore.support.dumper import dump, dd
 
 
-class _Groups(Schema):
+@uvicore.table()
+class Groups(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -27,4 +28,4 @@ class _Groups(Schema):
 
 
 # IoC Class Instance
-Groups: _Groups = uvicore.ioc.make('uvicore.auth.database.tables.Groups.Groups', _Groups, singleton=True)
+#Groups: _Groups = uvicore.ioc.make('uvicore.auth.database.tables.Groups.Groups', _Groups, singleton=True)

@@ -15,7 +15,10 @@ from uvicore.orm.model import Model, ModelMetaclass
 from app1.contracts import Comment as CommentInterface
 
 
-class CommentModel(Model['CommentModel'], metaclass=ModelMetaclass):
+#@uvicore.ioc.bind('app1.models.comment.Comment')
+
+@uvicore.model()
+class Comment(Model['Comment'], metaclass=ModelMetaclass):
 #class CommentModel(Model['CommentModel']):
     """App1 Post Comments"""
 
@@ -71,7 +74,7 @@ class CommentModel(Model['CommentModel'], metaclass=ModelMetaclass):
 
 
 # IoC Class Instance
-Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentModel)
+#Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentModel)
 
 # class Comment(
 #     _Comment,

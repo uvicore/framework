@@ -1,6 +1,7 @@
 #import typer_async as typer
 from typing import Optional
 
+import uvicore
 from uvicore import app, db, log
 from uvicore.console import argument, click, command, option
 from uvicore.support import module

@@ -10,6 +10,7 @@ from sqlalchemy.sql.expression import BinaryExpression
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
+
 class QueryBuilder(Generic[B, E], ABC):
     @abstractmethod
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
@@ -36,7 +37,7 @@ class QueryBuilder(Generic[B, E], ABC):
         pass
 
 
-class DbQueryBuilder(QueryBuilder[B, E]):
+class DbQueryBuilder(QueryBuilder[B, E], ABC):
     @abstractmethod
     def table(self, table: Union[str, sa.Table]) -> B[B, E]:
         pass
@@ -65,7 +66,8 @@ class DbQueryBuilder(QueryBuilder[B, E]):
     async def get(self) -> List[RowProxy]:
         pass
 
-class OrmQueryBuilder(QueryBuilder[B, E]):
+
+class OrmQueryBuilder(QueryBuilder[B, E], ABC):
     @abstractmethod
     def include(self, *args) -> B[B, E]:
         pass

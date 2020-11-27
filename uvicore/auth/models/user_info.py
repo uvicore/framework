@@ -10,7 +10,11 @@ from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.support.dumper import dd, dump
 
 
-class UserInfoModel(Model['UserInfoModel'], metaclass=ModelMetaclass):
+#@uvicore.ioc.bind('uvicore.auth.models.user_info.UserInfo')
+#class UserInfoModel(Model['UserInfoModel'], metaclass=ModelMetaclass):
+
+@uvicore.model()
+class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
 #class UserModel(Model['UserModel']):
     """Auth User Model"""
 
@@ -42,7 +46,7 @@ class UserInfoModel(Model['UserInfoModel'], metaclass=ModelMetaclass):
     )
 
 # IoC Class Instance
-UserInfo: UserInfoModel = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo', UserInfoModel)
+#UserInfo: UserInfoModel = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo', UserInfoModel)
 #class UserInfo(UserInfoIoc, Model[UserInfoModel], UserInfoInterface): pass
 
 # class UserInfo(
@@ -53,6 +57,6 @@ UserInfo: UserInfoModel = uvicore.ioc.make('uvicore.auth.models.user_info.UserIn
 
 
 #from uvicore.auth.models.user import UserModel as User  # isort:skip
-#from uvicore.auth.models.user import User  # isort:skip
-User = uvicore.ioc.make('uvicore.auth.models.user.User')
+from uvicore.auth.models.user import User  # isort:skip
+#User = uvicore.ioc.make('uvicore.auth.models.user.User')
 UserInfo.update_forward_refs()

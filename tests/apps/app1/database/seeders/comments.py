@@ -1,8 +1,10 @@
+import uvicore
 from app1.models.comment import Comment
 from app1.models.post import Post
 from uvicore.support.dumper import dump, dd
 from uvicore import log
 
+@uvicore.seeder()
 async def seed():
     log.item('Seeding table comments')
 

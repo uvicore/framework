@@ -2,8 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Generic, TypeVar, Union, List, Tuple, Any
 
-from uvicore.orm.mapper import Mapper
-#from uvicore.orm.query import QueryBuilder
+from uvicore.contracts import Mapper
 from uvicore.contracts import OrmQueryBuilder
 from uvicore.support.dumper import dump, dd
 

@@ -9,7 +9,9 @@ from uvicore.support.module import load
 # Generic Router (APIRouter or WebRouter)
 R = TypeVar('R')
 
-class _Routes(RoutesInterface, Generic[R]):
+
+@uvicore.service()
+class Routes(RoutesInterface, Generic[R]):
 
     @property
     def app(self) -> ApplicationInterface:
@@ -61,7 +63,7 @@ class _Routes(RoutesInterface, Generic[R]):
 
 
 # IoC Class Instance
-Routes: RoutesInterface = uvicore.ioc.make('Routes', _Routes)
+#Routes: RoutesInterface = uvicore.ioc.make('Routes', _Routes)
 
 # Public API for import * and doc gens
-__all__ = ['Routes', '_Routes']
+#__all__ = ['Routes', '_Routes']

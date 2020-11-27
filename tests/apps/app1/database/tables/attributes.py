@@ -7,7 +7,8 @@ from uvicore.support.dumper import dump
 # Get related tablenames with proper prefixes
 #users = uvicore.db.tablename('auth.users')
 
-class _Attributes(Schema):
+@uvicore.table()
+class Attributes(Schema):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -21,16 +22,24 @@ class _Attributes(Schema):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        #sa.Column('id', sa.Integer, primary_key=True),
+        # Having an ID on a poly table ensures the clustered data is still inserted in order
+        # If we had no ID and clustered on imageable_id + imageable_type data would be re-ordered on insert
+        sa.Column('id', sa.Integer, primary_key=True),
+
         # Polymorphic Relations
-        sa.Column('table_name', sa.String(length=50)),
-        sa.Column('table_pk', sa.Integer),
+        sa.Column('attributable_type', sa.String(length=50)),
+        sa.Column('attributable_id', sa.Integer),
 
         sa.Column('key', sa.String(length=100)),
         sa.Column('value', sa.Text()),
 
-        # Multi Column Unique Key Constraint
-        sa.PrimaryKeyConstraint('table_name', 'table_pk', 'key'),
+        # Multi Column Unique Constraint.  By adding in the key we still ensure
+        # OneToMany can be used but it must be unique with the key.  This also creates
+        # a good composite index of type,id,key
+        sa.UniqueConstraint('attributable_type', 'attributable_id', 'key')
+
+        # If you don't want an ID primary_key, you could use the combined poly IDs as a PK
+        #sa.PrimaryKeyConstraint('attributable_type', 'attributable_id', 'key'),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -40,4 +49,4 @@ class _Attributes(Schema):
 
 
 # IoC Class Instance
-Attributes: _Attributes = uvicore.ioc.make('app1.database.tables.attributes.Attributes', _Attributes, singleton=True)
+#Attributes: _Attributes = uvicore.ioc.make('app1.database.tables.attributes.Attributes', _Attributes, singleton=True)

@@ -1,8 +1,8 @@
 import uvicore
 from uvicore.contracts import Package as PackageInterface
 
-
-class _Package(PackageInterface):
+@uvicore.service(aliases=['Package', 'package'])
+class Package(PackageInterface):
 
     def config(self, dotkey: str = None):
         if dotkey:
@@ -21,7 +21,7 @@ class _Package(PackageInterface):
 
 # IoC Class Instance
 # No because not to be used by the public
-Package: _Package = uvicore.ioc.make('Package', _Package, aliases=['package'])
+#Package: _Package = uvicore.ioc.make('Package', _Package, aliases=['package'])
 
 # Public API for import * and doc gens
-__all__ = ['_Package']
+#__all__ = ['_Package']

@@ -3,7 +3,7 @@ from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Orm(ServiceProvider):
 
     def register(self) -> None:

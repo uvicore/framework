@@ -5,8 +5,12 @@ from pydantic.fields import FieldInfo
 from pydantic.utils import Representation
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
+from uvicore.contracts import Relation as RelationInterface
+from uvicore.contracts import Field as FieldInterface
 
-class Relation(Representation):
+
+@uvicore.service()
+class Relation(Representation, RelationInterface):
     __slots__ = (
         'model',
         'foreign_key',
@@ -17,16 +21,19 @@ class Relation(Representation):
 
     def __init__(self,
         model: str,
+        *,
         foreign_key: str = None,
         local_key: str = None,
     ) -> None:
         self.model = model
         self.foreign_key = foreign_key
         self.local_key = local_key
+
+        # Set by self.fill later
         self.name = None
         self.entity = None
 
-    def fill(self, field: Field):
+    def fill(self, field: Field) -> Relation:
         if not self.foreign_key:
             self.foreign_key = 'id'
         if not self.local_key:
@@ -35,7 +42,7 @@ class Relation(Representation):
         self._load_entity()
         return self
 
-    def _fill_reverse(self, field: Field):
+    def _fill_reverse(self, field: Field) -> Relation:
         if not self.foreign_key:
             self.foreign_key = str(field.name) + '_id'
         if not self.local_key:
@@ -44,19 +51,19 @@ class Relation(Representation):
         self._load_entity()
         return self
 
-    def is_one(self):
-        return type(self) == HasOne or type(self) == BelongsTo
+    def is_one(self) -> bool:
+        return type(self) == HasOne or type(self) == MorphOne or type(self) == BelongsTo
 
-    def is_many(self):
-        return type(self) == HasMany or type(self) == BelongsToMany
+    def is_many(self) -> bool:
+        return type(self) == HasMany or type(self) == MorphMany or type(self) == BelongsToMany
 
-    def is_type(self, *args):
+    def is_type(self, *args) -> bool:
         for arg in args:
             if type(self) == arg:
                 return True
         return False
 
-    def contains_many(self, relations, skip: List = []):
+    def contains_many(self, relations, skip: List = []) -> bool:
         """Walk down all sub_relations by __ name and check if any are *Many"""
         walk = ''
         sub_relations = self.name.split('__')
@@ -73,7 +80,7 @@ class Relation(Representation):
 
             # Check relation type for *Many
             relation_type = type(relations.get(walk))
-            if relation_type == HasMany or relation_type == BelongsToMany:
+            if relation_type == HasMany or relation_type == MorphMany or relation_type == BelongsToMany:
                 return True
 
             # Walk down
@@ -89,23 +96,27 @@ class Relation(Representation):
             self.entity = module.load(self.model).object
 
 
+@uvicore.service()
 class HasOne(Relation):
     """One-To-One Relationship"""
     def fill(self, field: Field):
         return self._fill_reverse(field)
 
 
+@uvicore.service()
 class HasMany(Relation):
     """One-To-Many Relationship"""
     def fill(self, field: Field):
         return self._fill_reverse(field)
 
 
+@uvicore.service()
 class BelongsTo(Relation):
     """Inverse of One-To-One or One-To-Many Relationship"""
     pass
 
 
+@uvicore.service()
 class BelongsToMany(Relation):
     """Many-To-Many Relationship (Both Sides)
 
@@ -127,6 +138,7 @@ class BelongsToMany(Relation):
 
     def __init__(self,
         model: str,
+        *,
         join_tablename: str,
         left_key: str,
         right_key: str,
@@ -135,6 +147,8 @@ class BelongsToMany(Relation):
         self.join_tablename = join_tablename
         self.left_key = left_key
         self.right_key = right_key
+
+        # Set by self.fill later
         self.name = None
         self.entity = None
         self.join_table = None
@@ -156,47 +170,68 @@ class BelongsToMany(Relation):
         self.join_table = uvicore.db.table(self.join_tablename, self.entity.connection)
         return self
 
-class MorphOne(Relation):
+
+@uvicore.service()
+class Morph(Relation):
     __slots__ = (
         'model',
         'polyfix',
         'foreign_type',
         'foreign_key',
         'local_key',
+        'dict_key',
+        'dict_value',
         'name',
         'entity',
     )
 
     def __init__(self,
         model: str,
-        polyfix: str,
+        *,
+        polyfix: str = None,
+        foreign_type: str = None,
+        foreign_key: str = None,
         local_key: str = None,
+        dict_key: str = None,
+        dict_value: str = None,
     ) -> None:
         self.model = model
         self.polyfix = polyfix
-        self.local_key = local_key
+        self.foreign_type = foreign_type or polyfix + '_type'
+        self.foreign_key = foreign_key or polyfix + '_id'
+        self.local_key = local_key or 'id'
+        self.dict_key = dict_key
+        self.dict_value = dict_value
 
-        self.foreign_type = polyfix + '_type'
-        self.foreign_key = polyfix + '_id'
+        # Set by self.fill later
         self.name = None
         self.entity = None
 
     def fill(self, field: Field):
         self.name = field.name
-        if not self.local_key: self.local_key = 'id'
         self._load_entity()
         return self
 
 
-
-class MorphTo(Relation):
-
-    def __init__(self):
-        pass
+@uvicore.service()
+class MorphOne(Morph):
+    pass
 
 
+@uvicore.service()
+class MorphMany(Morph):
+    pass
 
-class Field(Representation):
+
+
+# class MorphTo(Relation):
+
+#     def __init__(self):
+#         pass
+
+
+@uvicore.service()
+class Field(Representation, FieldInterface):
 
     # Required for pretty Representaion
     __slots__ = (
@@ -213,6 +248,7 @@ class Field(Representation):
         'write_only',
         'callback',
         'relation',
+        'json',
         'properties'
     )
 
@@ -229,6 +265,7 @@ class Field(Representation):
         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         callback: Optional[Any] = None,
         relation: Optional[Relation] = None,
+        json: Optional[bool] = False,
         properties: Optional[Dict] = None,
     ):
         self.column = column
@@ -244,6 +281,7 @@ class Field(Representation):
         self.write_only = write_only
         self.callback = callback
         self.relation = relation
+        self.json = json
         self.properties = properties
 
 

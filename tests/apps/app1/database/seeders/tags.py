@@ -1,6 +1,8 @@
+import uvicore
 from uvicore import log
 from app1.models.tag import Tag
 
+@uvicore.seeder()
 async def seed():
     log.item('Seeding table tags')
     tags = [

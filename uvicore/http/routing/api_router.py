@@ -4,7 +4,9 @@ from typing import Any, Type, List, Callable
 from starlette.routing import BaseRoute
 from uvicore.contracts import ApiRouter as RouterInterface
 
-class _ApiRouter(RouterInterface):
+
+@uvicore.service()
+class ApiRouter(RouterInterface):
 
     @property
     def router(self) -> _FastAPIRouter:
@@ -56,7 +58,7 @@ class _ApiRouter(RouterInterface):
 
 
 # IoC Class Instance
-ApiRouter: RouterInterface = uvicore.ioc.make('ApiRouter', _ApiRouter)
+#ApiRouter: RouterInterface = uvicore.ioc.make('ApiRouter', _ApiRouter)
 
 # Public API for import * and doc gens
-__all__ = ['ApiRouter', '_ApiRouter']
+#__all__ = ['ApiRouter', '_ApiRouter']

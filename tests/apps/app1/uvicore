@@ -7,7 +7,6 @@ if apps_path not in sys.path: sys.path.append(apps_path)
 
 import uvicore  # isort:skip
 from app1.services import bootstrap  # isort:skip
-from uvicore.support.dumper import dump, dd  # isort:skip
 
 # Bootstrap the Uvicore application
 app = bootstrap.application(is_console=True)

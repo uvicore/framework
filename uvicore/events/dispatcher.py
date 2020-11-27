@@ -9,7 +9,11 @@ from uvicore.contracts import Dispatcher as DispatcherInterface
 from uvicore.support import module
 
 
-class _Dispatcher(DispatcherInterface):
+@uvicore.service('uvicore.events.dispatcher.Dispatcher',
+    aliases=['Dispatcher', 'dispatcher', 'Event', 'event'],
+    singleton=True,
+)
+class Dispatcher(DispatcherInterface):
     """Event Dispatcher private class.
 
     Do not import from this location.
@@ -41,7 +45,17 @@ class _Dispatcher(DispatcherInterface):
         # Merging allows override by other later defined packages
         self._events = {**self.events, **events}
 
-    def listen(self, events: Union[str, List], listener: Union[str, Callable]) -> None:
+    def handle(self, events: Union[str, List], ):
+        # Decorator to listen to events, same as uvicore.event.listen('someevent', handler)
+        def decorator(func):
+            self.listen(events, func)
+            return func
+        return decorator
+
+    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None) -> None:
+        # Decorator usage
+        if not listener: return self.handle(events)
+
         if type(events) == str: events = [events]
 
         # Do NOT check self.events for listener verification becuase self.events
@@ -80,12 +94,18 @@ class _Dispatcher(DispatcherInterface):
         event_meta = self.event(event)
 
         # Event not registered, dispatch nothing
-        if not event_meta: return
+        # No, because we have tons of dynamic events, like the ORM
+        #if not event_meta: return
 
         if type(event) == str:
             try:
-                # See if string event has a matching class.  If so, import and dispatch it
-                module.load(event).object(**payload).dispatch()
+                if '-' in event:
+                    self._dispatch(event, payload)
+                else:
+                    # See if string event has a matching class.  If so, import and dispatch it
+                    module.load(event).object(**payload).dispatch()
+
+
             except ModuleNotFoundError:
                 # No class found for this string.  This is OK because events can
                 # be strings without matching classes.  Dispatch it anyway
@@ -100,7 +120,8 @@ class _Dispatcher(DispatcherInterface):
         event_meta = self.event(event)
 
         # Event not registered, dispatch nothing
-        if not event_meta: return
+        # No, because we have tons of dynamic events, like the ORM
+        #if not event_meta: return
 
         if type(event) == str:
             # Event is a string.  Convert payload into an object
@@ -147,6 +168,13 @@ class _Dispatcher(DispatcherInterface):
             # dump('after', self.events.get(name))
             #return event_meta
             return self.events.get(name)
+        else:
+            # This event is NOT registered, but we still want it to work
+            # because of all the dynamic events like ORM makes
+            # So create a fake event meta
+            return {
+                'name': name
+            }
 
     def event_listeners(self, event: str) -> List:
         listeners = []
@@ -154,7 +182,10 @@ class _Dispatcher(DispatcherInterface):
             listeners += self.listeners[event]
 
         for wildcard in self.wildcards:
-            if re.search(wildcard, event):
+            regex = wildcard
+            #regex = wildcard.replace('*', '.*')
+            dump(regex)
+            if re.search(regex, event):
                 listeners += self.listeners[wildcard]
 
         return listeners
@@ -166,4 +197,4 @@ class _Dispatcher(DispatcherInterface):
 # By using the default bind and make feature of the IoC we can swap the implimentation
 # at a high bootstrap level using our app configs 'bindings' dictionary.
 # The only two classes that do this are Application and the event Dispatcher.
-Dispatcher: _Dispatcher = uvicore.ioc.make('Dispatcher', _Dispatcher, singleton=True, aliases=['dispatcher', 'Event', 'event', 'Events', 'events'])
+#Dispatcher: _Dispatcher = uvicore.ioc.make('Dispatcher', _Dispatcher, singleton=True, aliases=['dispatcher', 'Event', 'event', 'Events', 'events'])

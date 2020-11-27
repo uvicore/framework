@@ -1,3 +1,4 @@
+import uvicore
 import json as JSON
 from uvicore.console import command, argument, option
 from uvicore import app, log
@@ -48,6 +49,7 @@ def show(package: str):
 def providers(json: bool):
     """Show providers graph"""
     if json:
+        # This json stuff is just experimantal junk
         print(JSON.dumps(app.providers))
     else:
         log.header("Package provider graph (in exact order of registration dependency)")
@@ -56,3 +58,11 @@ def providers(json: bool):
             log.info(name)
             dump(detail)
             print()
+
+        log.nl()
+        log.line()
+        log.header("Package providers as seen from the Ioc")
+        bindings = {key:binding for (key, binding) in uvicore.ioc.bindings.items() if binding.type.lower() == 'provider'}
+        dump(bindings)
+
+

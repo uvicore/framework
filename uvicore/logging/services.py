@@ -3,6 +3,7 @@ from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
 
+@uvicore.provider()
 class Logging(ServiceProvider):
 
     def register(self) -> None:
@@ -22,14 +23,14 @@ class Logging(ServiceProvider):
         # as usual from your own app.  So instead, the logger config is in your actual app config
 
         # Register IoC bindings
-        self.bind('Logger', 'uvicore.logging.logger._Logger',
-            aliases=['Log', 'log', 'logger'],
-            kwargs={'config': self.app_config.get('logger')},
-            singleton=True
-        )
+        # self.bind('Logger', 'uvicore.logging.logger._Logger',
+        #     aliases=['Log', 'log', 'logger'],
+        #     kwargs={'config': self.app_config.get('logger')},
+        #     singleton=True
+        # )
 
         # Set uvicore.log global
-        uvicore.log = uvicore.ioc.make('Logger')
+        uvicore.log = uvicore.ioc.make('uvicore.logging.logger.Logger')
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

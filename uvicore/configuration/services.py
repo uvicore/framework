@@ -2,7 +2,7 @@ import uvicore
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Configuration(ServiceProvider):
 
     def register(self) -> None:
@@ -14,13 +14,13 @@ class Configuration(ServiceProvider):
         instantiated yet."""
 
         # Register IoC bindings
-        self.bind('Configuration', 'uvicore.configuration.configuration._Configuration',
-            aliases=['Config', 'config'],
-            singleton=True,
-        )
+        # self.bind('Configuration', 'uvicore.configuration.configuration._Configuration',
+        #     aliases=['Config', 'config'],
+        #     singleton=True,
+        # )
 
         # Set uvicore.log global
-        uvicore.config = uvicore.ioc.make('Config')
+        uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration.Configuration')
 
         # Set app.config for convenience (only after register since config is a service provider itself)
         self.app._config = uvicore.config

@@ -1,11 +1,16 @@
 import jinja2
+import uvicore
 from typing import Dict, List, Any
 from starlette.templating import Jinja2Templates as _Jinja2Templates
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Template as TemplateInterface
 
 
-class _Jinja(TemplateInterface, _Jinja2Templates):
+@uvicore.service('uvicore.http.templating.jinja.Jinja',
+    aliases=['Templates', 'templates'],
+    singleton=True,
+)
+class Jinja(TemplateInterface, _Jinja2Templates):
     """Jinja Template private class.
 
     Dont access templates directly.
@@ -100,4 +105,4 @@ class _Jinja(TemplateInterface, _Jinja2Templates):
 
 
 # Public API for import * and doc gens
-__all__ = ['_Jinja']
+#__all__ = ['_Jinja']

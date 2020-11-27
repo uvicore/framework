@@ -4,7 +4,7 @@
 ## Introduction
 
 Uvicore provides an observer (pub/sub) implementation allowing you to listen
-(subscribe) to events that occure in the framework and in your own packages.
+(subscribe) to events that occur in the framework and in your own packages.
 
 Events are a great way to decouple various aspects of your project.  A single
 event can have many listeners that need not depend on each other.  For example,

@@ -16,14 +16,16 @@ from uvicore import log
 from uvicore.contracts import OrmQueryBuilder as BuilderInterface
 from uvicore.database.builder import Column, Join, Query, QueryBuilder
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, Relation, MorphOne, MorphTo)
+                                HasOne, Relation, MorphOne, MorphMany)
 from uvicore.support.dumper import dd, dump
+from uvicore.support.collection import getvalue
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
 
-class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
+@uvicore.service()
+class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     """ORM Query Builder"""
 
     def __init__(self, entity: E):
@@ -629,9 +631,11 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                             right = self._column(getattr(join_table.c, relation.foreign_key))
 
                             # Onclause
-                            onclause=left.sacol == right.sacol
-                            if type(relation) == MorphOne:
+                            onclause = left.sacol == right.sacol
+                            if type(relation) == MorphOne or type(relation) == MorphMany:
+                                # In polymorphic, add the entity type to the onclause using and_
                                 poly_type = self._column(getattr(join_table.c, relation.foreign_type))
+                                onclause = sa.and_(poly_type.sacol == 'posts', left.sacol == right.sacol)
 
                             # Append new Join
                             join = Join(
@@ -644,8 +648,6 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                                 method='outerjoin'
                             )
                             query.joins.append(join)
-
-                            #dump(join)
 
                         # All other types of relations
                         # elif type(relation) == HasMany:
@@ -757,9 +759,11 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
                 # Convert this one row to model (just the main fields, not relations)
                 if primary:
-                    root_model = entity.mapper(row).model()
+                    #root_model = entity.mapper(row).model()
+                    root_model = entity.mapper(row).row_to_model()
                 else:
-                    root_model = entity.mapper(row, rel_name).model()
+                    #root_model = entity.mapper(row, rel_name).model()
+                    root_model = entity.mapper(row, rel_name).row_to_model()
 
                 # Get pk value
                 pk_value = getattr(root_model, pk)
@@ -811,15 +815,17 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     if relation.entity.tablename not in singles: singles[relation.entity.tablename] = {}
                     sub_model_pk = relation.name + '__' + relation.entity.mapper(entity.pk).column()
                     sub_model_pk_value = getattr(row, sub_model_pk)
-                    if sub_model_pk_value not in singles[relation.entity.tablename]:
-                        singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).model()
+                    if sub_model_pk_value is not None and sub_model_pk_value not in singles[relation.entity.tablename]:
+                        #singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).model()
+                        singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).row_to_model()
 
                     # Get sub_model from singles cache
-                    sub_model = singles[relation.entity.tablename][sub_model_pk_value]
-                    #sub_model = relation.entity.mapper(row, prefix).model() # No cache version
+                    if sub_model_pk_value is not None:
+                        sub_model = singles[relation.entity.tablename][sub_model_pk_value]
+                        #sub_model = relation.entity.mapper(row, prefix).model() # No cache version
 
-                    # Add this converted sub_model to the walked down parent model
-                    setattr(model, fieldname, sub_model)
+                        # Add this converted sub_model to the walked down parent model
+                        setattr(model, fieldname, sub_model)
 
                     # Mark relation as complete so I can delete from relations Dict later
                     completed_relations[relation.name] = 1
@@ -901,7 +907,21 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     )
 
             else:
-                # These are One-To-Many on the *Many side which means the id back to parent is in the model itself
+                # These are One-To-Many on the *Many side or Many-To-Many which means the id back to parent is in the model itself
+
+                # Determine if child *Many results should be displayed as a Dict or List
+                dict_key = getvalue(relation, 'dict_key')
+                dict_value = getvalue(relation, 'dict_value')
+
+                # Loop parents so we can at least set each child to empty [] instead of None.  We always want [] instead of None for empty children
+                for parent in parents.values():
+                    # Set empty [] or {}
+                    if dict_key:
+                        setattr(parent, field, {})
+                    else:
+                        setattr(parent, field, [])
+
+                # dump(children)
                 for child in children.values():
                     parent_pk_value = getattr(child, relation.foreign_key)
                     if parent_pk_value not in parents: continue;
@@ -909,12 +929,28 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                     parent = parents[parent_pk_value]
                     field = relation_parts[-1]
 
-                    # Set None field to empty list
-                    if getattr(parent, field) is None:
-                        setattr(parent, field, [])
+                    # # Set None field to empty list
+                    # if getattr(parent, field) is None:
+                    #     setattr(parent, field, [])
 
-                    # Append each *Many model
-                    getattr(parent, field).append(child)
+                    # Add each *Many model as a Dict
+                    if dict_key:
+                        if dict_value:
+                            if type(dict_value) == list:
+                                # Dict value is a list.  Create a dictionary from the lists keys
+                                value = {key:getattr(child, key) for key in dict_value}
+                            else:
+                                # Dict value is a string, use just that fields value
+                                value = getattr(child, relation.dict_value)
+                        else:
+                            # No dict value set, but there is a dict_key, so we want a dict.  Use the entire record as a dict
+                            value = child.dict()
+                        getattr(parent, field)[getattr(child, relation.dict_key)] = value
+                        #setattr(parent, field, 'x')
+
+                    # Append each *Many model as a List
+                    else:
+                        getattr(parent, field).append(child)
 
 
         self.log.nl().header('Singles Cache')
@@ -948,7 +984,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         entities = []
         for row in results:
             # Convert DB result to model (no relations, just main table)
-            model = self.entity.mapper(row).model()
+            #model = self.entity.mapper(row).model()
+            model = self.entity.mapper(row).row_to_model()
             #dump(model)
             #dump(query.relations)
 
@@ -976,7 +1013,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 # Merge in single relations
                 if type(relation) == HasOne or type(relation) == BelongsTo:
                     for related_model in current_model:
-                        related_data = relation.entity.mapper(row, prefix).model()
+                        #related_data = relation.entity.mapper(row, prefix).model()
+                        related_data = relation.entity.mapper(row, prefix).row_to_model()
                         rn = relation_name.split('__')[-1]
                         #setattr(related_model, relation_name, related_data)
                         setattr(related_model, rn, related_data)
@@ -987,7 +1025,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                         related_entities = []
                         for related_row in has_many[relation.name]:
                             if getattr(related_row, pk) == getattr(related_model, related_model.__class__.pk):
-                                related_entity = relation.entity.mapper(related_row, prefix).model()
+                                #related_entity = relation.entity.mapper(related_row, prefix).model()
+                                related_entity = relation.entity.mapper(related_row, prefix).row_to_model()
                                 #dump(related_entity)
                                 related_entities.append(related_entity)
                         setattr(related_model, relation_name, related_entities)
@@ -1035,8 +1074,8 @@ class _OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
 
 # IoC Class Instance
-_OrmQueryBuilderIoc: _OrmQueryBuilder = uvicore.ioc.make('OrmQueryBuilder', _OrmQueryBuilder)
+#_OrmQueryBuilderIoc: _OrmQueryBuilder = uvicore.ioc.make('OrmQueryBuilder', _OrmQueryBuilder)
 
 # Actual Usable Model Class Derived from IoC Inheritence
-class OrmQueryBuilder(Generic[B, E], _OrmQueryBuilderIoc[B, E], BuilderInterface[B, E]):
-    pass
+#class OrmQueryBuilder(Generic[B, E], _OrmQueryBuilderIoc[B, E], BuilderInterface[B, E]):
+    #pass

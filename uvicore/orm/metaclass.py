@@ -22,7 +22,8 @@ from uvicore.support.dumper import dd, dump
 # for a detailed difference between using @classmethod for statics vs a metaclass
 
 
-class _ModelMetaclass(PydanticMetaclass):
+@uvicore.service()
+class ModelMetaclass(PydanticMetaclass):
 
     # Testing of duplicate field
     # Only works if EACH model sets a metaclass=ModelMetaclass
@@ -101,6 +102,18 @@ class _ModelMetaclass(PydanticMetaclass):
     def modelfields(entity) -> Dict[str, Field]:
         """Helper for original uvicore model fields (not pydantic __fields__)"""
         return entity.__modelfields__
+
+    @property
+    def modelname(entity) -> str:
+        return entity.__name__
+
+    @property
+    def modelfqn(entity) -> str:
+        module = entity.__module__
+        if module is None or module == str.__module__:
+            return entity.__name__  # Avoid reporting __builtin__
+        else:
+            return module + '.' + entity.__name__
 
     async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
         """Database execute in the context of this entities connection"""
@@ -337,4 +350,4 @@ class _ModelMetaclass(PydanticMetaclass):
 
 
 # IoC Class Instance
-ModelMetaclass: _ModelMetaclass = uvicore.ioc.make('ModelMetaclass', _ModelMetaclass)
+#ModelMetaclass: _ModelMetaclass = uvicore.ioc.make('ModelMetaclass', _ModelMetaclass)

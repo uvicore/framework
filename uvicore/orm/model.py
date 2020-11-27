@@ -8,11 +8,11 @@ from uvicore.orm.mapper import Mapper
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
 from uvicore.support.dumper import dd, dump
-from uvicore.support.collection import getvalue
+from uvicore.support.collection import getvalue, setvalue
 
 # Keep for public import usage.
 # Example: from uvicore.orm.model import Model, Metaclass, Field, BelongsTo...
-from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne  # isort:skip
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne, MorphOne, MorphMany  # isort:skip
 from uvicore.orm.metaclass import ModelMetaclass  # isort:skip
 
 E = TypeVar("E")
@@ -34,7 +34,8 @@ E = TypeVar("E")
 # and other items inside pydantic itself (list here???)
 
 
-class _Model(Generic[E], PydanticBaseModel):
+@uvicore.service()
+class Model(Generic[E], PydanticBaseModel, contracts.Model[E]):
 
     def __init__(self, **data: Any) -> None:
         # Call pydantic parent
@@ -72,19 +73,41 @@ class _Model(Generic[E], PydanticBaseModel):
         insert_with_relations() instead.
         """
 
+        # Convert any type of dict or list to an actual Model or List[Model]
+        models = entity.mapper(models).model()
+
+        # Loop each model and call the before_save hook
+        if type(models) == list:
+            for model in models:
+                # Fire Models Pre-Save Hook
+                await model._before_save()
+        else:
+            await models._after_save()
+
         # Convert List[Model] or List[Dict] into dict of mapped table columns ready for insert
         bulk = entity.mapper(models).table()
         query = entity.table.insert()
 
+        result = None
         if type(bulk) == list:
             # List, so bulk insert
-            return await entity.execute(query, bulk)
+            result = await entity.execute(query, bulk)
         else:
             # Single, so single insert, returning PK or silently passing if error
             try:
-                return await entity.execute(query, bulk)
+                result = await entity.execute(query, bulk)
             except:
                 pass
+
+        # Loop each model and call the after_save hook
+        if type(models) == list:
+            for model in models:
+                await model._after_save()
+        else:
+            await models._after_save()
+
+        # Return insert results (if single will be PK)
+        return result
 
     @classmethod
     async def insert_with_relations(entity, models: List[Dict]) -> None:
@@ -111,9 +134,7 @@ class _Model(Generic[E], PydanticBaseModel):
         # uses a cursor where each row is added as a query, then the cursor is committed.
         # This is bulk insert, but no way to retrieve each PK from it.
 
-        bulk = []
         for model in models:
-
             # Check each field for relations and rename them before inserting parent
             relations = {}
             skip_children = False
@@ -122,14 +143,20 @@ class _Model(Generic[E], PydanticBaseModel):
                 if not field: continue
                 if not field.relation: continue
                 relation = field.relation.fill(field)
-                if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo or type(relation) == BelongsToMany:
-                    # Cannot change a dict in place or you get error
-                    # RuntimeError: dictionary keys changed during iteration
-                    # Se we'll add to a list and delete it outside the loop
-                    relations[fieldname] = {
-                        'relation': relation,
-                        'data': value
-                    }
+                # if (
+                #     type(relation) == HasMany or
+                #     type(relation) == HasOne or
+                #     type(relation) == BelongsTo or
+                #     type(relation) == BelongsToMany or
+                #     type(relation) == MorphOne
+                # ):
+                # Cannot change a dict in place or you get error
+                # RuntimeError: dictionary keys changed during iteration
+                # Se we'll add to a list and delete it outside the loop
+                relations[fieldname] = {
+                    'relation': relation,
+                    'data': value
+                }
 
             # Delete relations from parent model as they cannot be inserted
             for relation in relations.keys():
@@ -152,45 +179,60 @@ class _Model(Generic[E], PydanticBaseModel):
                     model[relation.local_key] = child_pk
 
             # Convert model Dict into actual Model instance
-            model_instance = entity(**model)
+            #model_instance = entity(**model)
+            model_instance = entity.mapper(model).model()
 
             # Insert the parent model and retrieve parents new PK value
             model_instance = await model_instance.save()
             parent_pk = getattr(model_instance, entity.pk)
 
-            # Don't insert children if we already did above with BelongsTo
-            if not skip_children:
-                # Now insert each file relation
-                for relation in relations.values():
-                    data = relation['data']
-                    relation = relation['relation']
-                    if type(relation) == HasMany or type(relation) == HasOne or type(relation) == BelongsTo:
-                        childmodels = data
-                        if type(childmodels) != list: childmodels = [childmodels]
+            # Now insert each child relation
+            for relation in relations.values():
+                data = relation['data']
+                relation = relation['relation']
+                childmodels = data
+                if type(childmodels) != list: childmodels = [childmodels]
 
-                        # Handle One-To-Many
-                        if type(relation) == HasMany or type(relation) == HasOne:
-                            # Replace child foreignKey with parent_pk
-                            for childmodel in childmodels:
-                                childmodel[relation.foreign_key] = parent_pk
+                # Insert BelongsTo (which is the only one that obeys skip_children)
+                if type(relation) == BelongsTo and not skip_children:
+                    await relation.entity.insert_with_relations(childmodels)
 
-                        # We don't know if this child has its own children, so
-                        # we must also insert_with_relations()
-                        await relation.entity.insert_with_relations(childmodels)
+                # Insert HasMany or HasOne (which are basically the same)
+                elif type(relation) == HasOne or type(relation) == HasMany:
+                    # Replace child foreignKey with parent_pk
+                    for childmodel in childmodels:
+                        childmodel[relation.foreign_key] = parent_pk
+                    await relation.entity.insert_with_relations(childmodels)
 
-                    elif type(relation) == BelongsToMany:
-                        #dump(relation.name, data, model_instance)
-                        #await entity.link(relation.name, data)
-                        #await model_instance.link(relation.name, data)
-                        await model_instance.create(relation.name, data)
+                # Insert Polymorphic OneToOne
+                elif type(relation) == MorphOne or type(relation) == MorphMany:
+                    for childmodel in childmodels:
+                        childmodel[relation.foreign_type] = entity.tablename
+                        childmodel[relation.foreign_key] = parent_pk
+                    await relation.entity.insert_with_relations(childmodels)
 
-            # Return parent_pk for recursion only
-            # This method not meant to return anything valuable to the user
-            return parent_pk
+                # Insert Many-To-Many
+                elif type(relation) == BelongsToMany:
+                    # By using .create, we are both linking the records in the pivot/relation table
+                    # and also createing the actual record if it does not exist
+                    await model_instance.create(relation.name, data)
+
+        # Return parent_pk for recursion only
+        # This method not meant to return anything valuable to the user
+        return parent_pk
 
     @hybridmethod
     def mapper(self_or_entity, *args) -> Mapper:
         return Mapper(self_or_entity, *args)
+
+    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        # Same as create, except it deletes all first, so it sets the entire children
+        await self.delete(relation_name)
+        await self.create(relation_name, models)
+
+    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        # Alias to create
+        await self.create(relation_name, models)
 
     async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Create related records and link them to this parent (self) model"""
@@ -204,34 +246,45 @@ class _Model(Generic[E], PydanticBaseModel):
         # Convert to list
         if type(models) != list: models = [models]
 
-        # Assume each does not yet exists, so create all
-        if type(relation) == HasMany:
-
-            relation_field = relation.foreign_key
-            relation_value = getattr(self, relation.local_key)
-
+        # Assume each does not yet exists, so create all as BULK insert
+        if type(relation) == HasOne or type(relation) == HasMany or type(relation) == MorphOne or type(relation) == MorphMany:
             # Fill in relation foreign key vlaue
             for model in models:
-                model[relation_field] = relation_value
+                # Set new relation value (works of model is a dict or a model class instance!)
+                setvalue(model, relation.foreign_key, getattr(self, relation.local_key))
+
+                if type(relation) == MorphOne or type(relation) == MorphMany:
+                    # For Polymorphic relations, also set type column
+                    setvalue(model, relation.foreign_type, entity.tablename)
+
+                    # # Check for Data types in values to serialize
+                    # dict_values = getvalue(relation, 'dict_value')
+                    # if dict_values:
+                    #     if type(dict_values) != list: dict_values = [dict_values]
+                    #     for dict_value in dict_values:
+                    #         value = getvalue(model, dict_value)
+                    #         if type(value) == dict or type(value) == list:
+                    #             value = str(value)
+                    #         setvalue(model, dict_value, value)
 
             # Bulk insert new values with proper keys
             await relation.entity.insert(models)
 
         # Cannot assume a record has been created or linked, so loop each and test
+        # Because of this, we cannot bulk insert
         elif type(relation) == BelongsToMany:
             for model in models:
-                if type(model) == dict:
-                    # Model is a Dictionary, convert to actual model
-                    model = relation.entity(**model)
-
                 # If its PK is set, it already exists
-                create = getattr(model, relation.entity.pk) == None
-
+                create = getvalue(model, relation.entity.pk) == None
                 if create:
                     pk_value = await relation.entity.insert(model)
-                    setattr(model, relation.entity.pk, pk_value)
+                    setvalue(model, relation.entity.pk, pk_value)
 
+                # Link in pivot table
                 await self.link(relation_name, model)
+
+        else:
+            raise Exception('Creating children does not work for this type of relation.')
 
     async def save(self) -> None:
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
@@ -254,6 +307,9 @@ class _Model(Generic[E], PydanticBaseModel):
         #         #     'relation': relation,
         #         #     'data': data
         #         # }
+
+        # Fire Models Pre-Save Hook
+        await self._before_save()
 
         # Convert self model instance into Dict of mapped table columns
         values = self.mapper().table()
@@ -291,14 +347,51 @@ class _Model(Generic[E], PydanticBaseModel):
         # Return model with new PK value
         return self
 
-    async def delete(self) -> None:
+    async def delete(self, relation_name: str = None) -> None:
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
-        # Delete this main (self) model record from the db
-        table = entity.table
-        query = table.delete().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
-        await entity.execute(query)
+        # Why not be able to say post.delete('image') ??
+        # Well it could only work for HasOne/MorphOne, or possibly HasMany.  But those tables can simply
+        # be deleted manually image.find(1).delete() for example.  For others like BelongsToMany we don't ever want
+        # to delete the record and it could be deleted to many other records through the pivot, so we use unlink() instead
+        # and we cna also manually delete it if we watned (tags.where(post=1).delete() etc...)
+        # So not sure I want a delete() to handle children?  If so maybe just HasOne and MorphOne?  Because with HasMany
+        # you would also have to speicy WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
+        # With a HasOne/MorphOne you could at least do post.delete('image') and thats quicker than image.find(post=1).delete() manually?
+        if relation_name is not None:
+            # Deleting children, do NOT delete the parent after the children, this is children only
+            field = entity.modelfields.get(relation_name)
+            relation = field.relation.fill(field)
+            rel_table = relation.entity.table
+
+            # Notice this will all fail if the child has other constraints
+            if type(relation) == HasOne:
+                query = (rel_table
+                    .delete()
+                    .where(getattr(rel_table.c, relation.foreign_key) == getattr(self, entity.pk))
+                )
+                await entity.execute(query)
+
+            elif type(relation) == MorphOne or type(relation) == MorphMany:
+                query = (rel_table
+                    .delete()
+                    .where(getattr(rel_table.c, relation.foreign_type) == entity.tablename)
+                    .where(getattr(rel_table.c, relation.foreign_key) == getattr(self, entity.pk))
+                )
+                await entity.execute(query)
+            else:
+                raise Exception('Deleteing children does not work for this type of relation.')
+
+            # Not sure I should implement OneToMany as you would need to be able to pass in WHICH items to delete
+            # but if you go through all that trouble to get the right children models to pass in, you could just
+            # delete from the actual child yourself (comments.where(post=1).delete() for example)
+
+        else:
+            # Delete this main parent (self) model record from the db
+            table = entity.table
+            query = table.delete().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+            await entity.execute(query)
 
     async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
@@ -340,7 +433,7 @@ class _Model(Generic[E], PydanticBaseModel):
         field = entity.modelfields.get(relation_name)
         relation = field.relation.fill(field)
 
-        # Linking only works for Many-To-Many relations
+        # Unlinking only works for Many-To-Many relations
         if type(relation) != BelongsToMany: raise Exception('Linking is for Many-To-Many relations only.')
 
         # Get table and start where on self ID
@@ -353,14 +446,31 @@ class _Model(Generic[E], PydanticBaseModel):
             query = query.where(getattr(table.c, relation.right_key).in_(ids))
         await entity.execute(query)
 
+    async def _before_save(self):
+        #dump('MODEL-HOOK-BEFORE-SAVE')
+
+        # Dispatch Before Save Event
+        event_name = self.__class__.modelfqn + '-BeforeSave'
+        uvicore.events.dispatch(event_name, {'model': self})
+
+    async def _after_save(self):
+        #dump('MODEL-HOOK-AFTER-SAVE')
+
+        # Dispatch Before Save Event
+        event_name = self.__class__.modelfqn + '-AfterSave'
+        uvicore.events.dispatch(event_name, {'model': self})
+
+
+
+
 
 # IoC Class Instance
-_ModelIoc: _Model = uvicore.ioc.make('Model', _Model)
+#_ModelIoc: _Model = uvicore.ioc.make('Model', _Model)
 
 # Actual Usable Model Class Derived from IoC Inheritence
 #class Model(Generic[E], _BaseModel[E], ModelInterface[E], metaclass=ModelMetaclass):
-class Model(Generic[E], _ModelIoc[E], contracts.Model[E]):
-    pass
+#class Model(Generic[E], _ModelIoc[E], contracts.Model[E]):
+    #pass
 
 # Public API for import * and doc gens
 #__all__ = ['_Model', 'Model']

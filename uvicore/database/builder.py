@@ -124,7 +124,7 @@ def pretty_query(value, ctx):
     return pretty_call(ctx, Query, **{key: getattr(value, key) for key in Query.__slots__})
 
 
-
+@uvicore.service()
 class QueryBuilder(Generic[B, E]):
 
     def __init__(self):

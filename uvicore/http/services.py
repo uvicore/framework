@@ -3,7 +3,7 @@ from typing import Dict, Any
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 
-
+@uvicore.provider()
 class Http(ServiceProvider):
 
     def register(self) -> None:
@@ -18,31 +18,31 @@ class Http(ServiceProvider):
         # Register IoC bindings only if running in HTTP mode
         if self.app.is_http:
 
-            # Bind HTTP Server
-            self.bind('Http', 'uvicore.http.server._Server',
-                aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
-                singleton=True,
-                kwargs={
-                    'debug': uvicore.config('app.debug'),
-                    'title': uvicore.config('app.openapi.title'),
-                    'version': uvicore.app.version,
-                    'openapi_url': uvicore.config('app.openapi.url'),
-                    'docs_url': uvicore.config('app.openapi.docs_url'),
-                    'redoc_url': uvicore.config('app.openapi.redoc_url'),
-                }
-            )
+            # # Bind HTTP Server
+            # self.bind('Http', 'uvicore.http.server._Server',
+            #     aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
+            #     singleton=True,
+            #     kwargs={
+            #         'debug': uvicore.config('app.debug'),
+            #         'title': uvicore.config('app.openapi.title'),
+            #         'version': uvicore.app.version,
+            #         'openapi_url': uvicore.config('app.openapi.url'),
+            #         'docs_url': uvicore.config('app.openapi.docs_url'),
+            #         'redoc_url': uvicore.config('app.openapi.redoc_url'),
+            #     }
+            # )
             # No because I added default to make
-            self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['uvicore.http.routing.web_router.WebRouter', 'web_router'])
-            self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['uvicore.http.routing.api_router.ApiRouter', 'api_router'])
-            self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['uvicore.http.routing.routes.Routes', 'routes'])
-            self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
+            #self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['uvicore.http.routing.web_router.WebRouter', 'web_router'])
+            #self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['uvicore.http.routing.api_router.ApiRouter', 'api_router'])
+            #self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['uvicore.http.routing.routes.Routes', 'routes'])
+            #self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
 
             # Default templating system is Jinja2.  Users can overwrite this
             # easily in their app configs 'bindings' dictionary.
-            self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', singleton=True, aliases=['templates'])
+            #self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', singleton=True, aliases=['templates'])
 
             # Set app instance variables
-            self.app._http = uvicore.ioc.make('Http')
+            self.app._http = uvicore.ioc.make('uvicore.http.server.Server')
 
             # Register event listeners
             # After all providers are booted we have a complete list of view paths
@@ -77,7 +77,7 @@ class Http(ServiceProvider):
 
     def mount_static_assets(self) -> None:
         """Mount /static route using all packages static paths"""
-        StaticFiles = uvicore.ioc.make('StaticFiles')
+        StaticFiles = uvicore.ioc.make('uvicore.http.static.StaticFiles')
 
         # Get all packages asset paths
         paths = []
@@ -94,7 +94,7 @@ class Http(ServiceProvider):
         """Create template environment with settings from all packages"""
 
         # Get the template singleton from the IoC
-        templates = uvicore.ioc.make('Templates')
+        templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
 
         # Add all package view paths to template environment
         for package in self.app.packages.values():

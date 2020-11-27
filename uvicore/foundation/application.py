@@ -8,7 +8,7 @@ import uvicore
 #from uvicore.configuration import Config
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
-from uvicore.contracts import Connection
+from uvicore.database.connection import Connection
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
@@ -17,7 +17,11 @@ from uvicore.support.hash import md5
 from uvicore.support.module import load, location
 
 
-class _Application:
+@uvicore.service('uvicore.foundation.application.Application',
+    aliases=['Application', 'application', 'App', 'app'],
+    singleton=True,
+)
+class Application:
     """Application private class.
 
     Do not import from this location.
@@ -246,9 +250,7 @@ class _Application:
                     ))
 
             # Modules file path
-            from uvicore.package.package import Package
-            #package = uvicore.ioc.make('Package')(
-            package = Package(
+            package = uvicore.ioc.make('uvicore.package.package.Package')(
                 name=package_config.get('name'),
                 location=location(package_name),
                 main=main,
@@ -316,4 +318,4 @@ class _Application:
 # By using the default bind and make feature of the IoC we can swap the implimentation
 # at a high bootstrap level using our app configs 'bindings' dictionary.
 # The only two classes that do this are Application and the event Dispatcher.
-Application: _Application = uvicore.ioc.make('Application', _Application, singleton=True, aliases=['App', 'app', 'application'])
+#Application: _Application = uvicore.ioc.make('Application', _Application, singleton=True, aliases=['App', 'app', 'application'])

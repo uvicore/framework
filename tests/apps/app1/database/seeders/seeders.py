@@ -1,5 +1,7 @@
+import uvicore
 from . import users, posts, contacts, comments, tags, user_info, images
 
+@uvicore.seeder()
 async def seed():
     # Order is critical for ForeignKey dependencies
     await users.seed()
