@@ -12,7 +12,7 @@ from starlette.responses import StreamingResponse as Stream
 from starlette.responses import FileResponse as File
 
 # Get our current template system from the IoC
-templates = uvicore.ioc.make('Templates')
+templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
 
 @uvicore.service()
 def View(

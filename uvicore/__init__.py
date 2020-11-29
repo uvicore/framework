@@ -31,9 +31,9 @@ def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
     uvicore.ioc = _Ioc(app_config)
 
     # Import Application (which is an IoC singleton) and set uvicore.app global
-    from uvicore.foundation.application import Application
+    from uvicore.foundation.application import _Application
     #uvicore.app = uvicore.ioc.make('uvicore.foundation.application.Application') # Also works
-    uvicore.app = Application
+    uvicore.app = _Application
 
     # Import Event Dispatcher (which is an IoC singleton) and set uvicore.events global
     # This cannot be a service provider because events are fired BEFORE any service providers

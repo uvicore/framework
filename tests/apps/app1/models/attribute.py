@@ -2,9 +2,9 @@ from __future__ import annotations
 import uvicore
 from typing import Optional, Any
 from app1.database.tables import attributes as table
-from uvicore.orm.fields import Field
-from uvicore.orm.model import Model, ModelMetaclass
-
+#from uvicore.orm.fields import Field
+#from uvicore.orm.model import Model, ModelMetaclass
+from uvicore.orm import Model, ModelMetaclass, Field
 
 #@uvicore.ioc.bind('app1.models.attribute.Attribute')
 

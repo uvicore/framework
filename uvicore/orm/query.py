@@ -4,28 +4,28 @@ import operator as operators
 import os
 from collections import OrderedDict as ODict
 from copy import deepcopy
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
+from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Union
 
 import sqlalchemy as sa
-from sqlalchemy.sql.expression import BinaryExpression
 from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
+from sqlalchemy.sql.expression import BinaryExpression
 
 import uvicore
-from uvicore import log
 from uvicore.contracts import OrmQueryBuilder as BuilderInterface
-from uvicore.database.builder import Column, Join, Query, QueryBuilder
+from uvicore.database.builder import _QueryBuilder, _Join, _Query
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, Relation, MorphOne, MorphMany)
-from uvicore.support.dumper import dd, dump
+                                HasOne, MorphMany, MorphOne)
+from uvicore.orm.fields import _Relation
 from uvicore.support.collection import getvalue
+from uvicore.support.dumper import dd, dump
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
 
 @uvicore.service()
-class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
+class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E]):
     """ORM Query Builder"""
 
     def __init__(self, entity: E):
@@ -36,9 +36,9 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
     @property
     def log(self):
-        return log.name('uvicore.orm')
+        return uvicore.log.name('uvicore.orm')
 
-    def include(self, *args) -> QueryBuilder[B, E]:
+    def include(self, *args) -> B[B, E]:
         # import inspect
         # x = inspect.currentframe()
         # y = inspect.getouterframes(x, 1)
@@ -184,6 +184,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         query.selects = self.entity.selectable_columns()
 
         # Add all selects where any nested relation is NOT a *Many
+        relation: _Relation
         for relation in query.relations.values():
             if not relation.contains_many(query.relations):
                 # Don't use the relation.entity table to get columns, use the join aliased table
@@ -204,7 +205,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
         # So we have our first query perfect
         # Now we need to build a second or third query for all *Many relations
-        relation: Relation
+        relation: _Relation
         for relation in query.relations.values():
             #if type(relation) == HasMany or type(relation) == BelongsToMany:
             if relation.is_many():
@@ -353,6 +354,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         self._build_orm_relations(query)
 
         # Add all selects where NOT HasMany
+        relation: _Relation
         query.selects = self.entity.selectable_columns()
         for relation in query.relations.values():
             if type(relation) == HasOne or type(relation) == BelongsTo:
@@ -385,6 +387,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # So we have our first query perfect
         # Now we need to build a second or third query for all has_many
         has_many = {}
+        relation: _Relation
         for relation in query.relations.values():
             if type(relation) == HasMany:
                 # New secondary relation query
@@ -434,7 +437,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         #dump('ENTITIES', entities)
         return entities
 
-    def _build_queryXX(self, method: str, query: Query) -> Tuple:
+    def _build_queryXX(self, method: str, query: _Query) -> Tuple:
 
         # Before we call the parent Builder we need to build our ORM relations,
         # translate those into regular .join() and derive our .select() columns.
@@ -469,13 +472,14 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # Call Parent _build_query()
         return super()._build_query(method, query)
 
-    def _build_selectXX(self, query: Query):
+    def _build_selectXX(self, query: _Query):
         # Get models selectable columns
         # Infer from model, not all columns in table as model may have less columns
         selects = self.entity.selectable_columns()
 
         # Add in relations selectable columns
         if query.relations:
+            relation: _Relation
             for relation in query.relations.values():
                 if type(relation) == HasOne or type(relation) == BelongsTo or 1 == 1:
                     columns = relation.entity.selectable_columns()
@@ -492,7 +496,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
         return saquery
 
-    def _build_orm_relations(self, query: Query) -> None:
+    def _build_orm_relations(self, query: _Query) -> None:
         if not query.includes: return
 
         def extract(field, value):
@@ -509,7 +513,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 entity = value
             return entity, foreign, local
 
-        relations: OrderedDict[str, Relation] = ODict()
+        relations: OrderedDict[str, _Relation] = ODict()
         for include in query.includes:
             parts = [include]
             if '.' in include: parts = include.split('.')
@@ -517,7 +521,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             entity = self.entity
             parts_added = []
             for part in parts:
-                field = entity.modelfields.get(part)
+                field: Field = entity.modelfields.get(part)
                 if not field: continue
                 if field.column is not None: continue
 
@@ -527,7 +531,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 # If any relation found
                 if field.relation:  #if relation_tuple:
                     # Get relation model class from IoC or dynamic Imports
-                    relation: Relation = field.relation.fill(field)
+                    relation = field.relation.fill(field)
 
                     # Set a new name based on relation_name dot notation for nested relations
                     relation.name = relation_name
@@ -570,7 +574,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
                             left = self._column(getattr(main_table.c, entity.pk))
                             right = self._column(getattr(pivot_join_table.c, relation.left_key))
-                            join = Join(
+                            join = _Join(
                                 #table=relation.join_table,
                                 table=pivot_join_table,
                                 tablename=relation.join_tablename,
@@ -593,7 +597,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
 
                             left = self._column(getattr(pivot_join_table.c, relation.right_key))
                             right = self._column(getattr(join_table.c, relation.entity.pk))
-                            join = Join(
+                            join = _Join(
                                 #table=relation.entity.table,
                                 table=join_table,
                                 tablename=relation.entity.tablename,
@@ -638,7 +642,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                                 onclause = sa.and_(poly_type.sacol == 'posts', left.sacol == right.sacol)
 
                             # Append new Join
-                            join = Join(
+                            join = _Join(
                                 table=join_table,
                                 tablename=str(join_table.name),
                                 left=left,
@@ -686,7 +690,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # Set query.relations
         query.relations = relations
 
-    def _build_orm_results(self, query: Query, primary: List, secondary: Dict = {}) -> List[E]:
+    def _build_orm_results(self, query: _Query, primary: List, secondary: Dict = {}) -> List[E]:
         # No primary results, return empty List
         if not primary: return []
 
@@ -769,7 +773,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
                 pk_value = getattr(root_model, pk)
 
                 # Loop only *One relations that apply to this one "data" model
-                relation: Relation
+                relation: _Relation
                 for relation in relations.values():
 
                     # Only look at relations that begin with this relation__ and are *One
@@ -858,6 +862,8 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # All remaining relations are the *Many which should match the models Dict key
         # Looping the *Many relations in REVERSE gives us the deepest relations first which is critical
         self.log.nl().header('Combining Recursive *Many Models')
+
+        relation: _Relation
         for relation in reversed(relations.values()):
 
             # Relation name parts
@@ -976,7 +982,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         # No keyby, convert primary models to a List
         return [x for x in models['primary'].values()]
 
-    def _build_orm_resultsXX(self, query: Query, results, has_many: Dict = {}) -> List[E]:
+    def _build_orm_resultsXX(self, query: _Query, results, has_many: Dict = {}) -> List[E]:
         # No results, return empty List
         if not results: return []
 
@@ -990,6 +996,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
             #dump(query.relations)
 
             # Loop each relation and merge in results
+            relation: _Relation
             for relation in query.relations.values():
                 relation_name = relation.name
                 prefix = relation_name
@@ -1043,7 +1050,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
     def _pk(self):
         return self.entity.pk
 
-    def _column_from_string(self, dotname: str, query: Query) -> Tuple:
+    def _column_from_string(self, dotname: str, query: _Query) -> Tuple:
         if '.' in dotname:
             parts = dotname.split('.')
             relation = query.relations.get('__'.join(parts[:-1]))
@@ -1058,7 +1065,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E]):
         column = table.columns.get(name)
         return (table, tablename, column, name, self._connection())
 
-    def _get_join_table(self, query: Query, tablename: str):
+    def _get_join_table(self, query: _Query, tablename: str):
         """Get the join table for this tablename"""
         # Get table from joins by tablename
         for join in query.joins:

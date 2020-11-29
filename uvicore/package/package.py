@@ -1,7 +1,12 @@
 import uvicore
 from uvicore.contracts import Package as PackageInterface
 
-@uvicore.service(aliases=['Package', 'package'])
+from dataclasses import dataclass
+from typing import Dict, List, NamedTuple
+from uvicore.contracts import Connection
+
+
+@uvicore.service('uvicore.package.Package', aliases=['Package', 'package'])
 class Package(PackageInterface):
 
     def config(self, dotkey: str = None):

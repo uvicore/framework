@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import List, Optional, Dict
 
 import uvicore
-from app1.contracts import Post as PostInterface
 from app1.database.tables import posts as table
-from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne, MorphMany
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne, MorphMany
+#from uvicore.orm.model import Model, ModelMetaclass
 from app1.models.image import Image
 from app1.models.attribute import Attribute
 from uvicore.support.dumper import dump, dd
 
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany, HasMany, MorphOne, MorphMany
 
 #@uvicore.ioc.bind('app1.models.post.Post')
 

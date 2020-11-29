@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import Optional
 
 import uvicore
-from uvicore.auth.contracts import UserInfo as UserInfoInterface
 from uvicore.auth.database.tables import user_info as table
-from uvicore.orm.fields import BelongsTo, Field
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import BelongsTo, Field
+#from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.support.dumper import dd, dump
-
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
 
 #@uvicore.ioc.bind('uvicore.auth.models.user_info.UserInfo')
 #class UserInfoModel(Model['UserInfoModel'], metaclass=ModelMetaclass):

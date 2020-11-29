@@ -18,8 +18,8 @@ from uvicore.support.dumper import dd, dump
 # Bound from service provider instead of decorator
 
 
-@uvicore.service('uvicore.http.server.Server',
-    aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
+@uvicore.service('uvicore.http.server._Server',
+    aliases=['http', 'HTTP'],
     singleton=True,
     kwargs={
         'debug': uvicore.config('app.debug'),
@@ -30,7 +30,7 @@ from uvicore.support.dumper import dd, dump
         'redoc_url': uvicore.config('app.openapi.redoc_url'),
     },
 )
-class Server(ServerInterface):
+class _Server(ServerInterface):
     """HTTP Server private class.
 
     Do not import from this location.

@@ -4,12 +4,12 @@ from typing import List, Optional
 
 import uvicore
 from uvicore.auth.database.tables import users as table
-from uvicore.orm.fields import Field, HasMany, HasOne, MorphOne
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import Field, HasMany, HasOne, MorphOne
+#from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.contracts import Model as ModelInterface
 from uvicore.support.dumper import dd, dump
 from app1.models.image import Image
-
+from uvicore.orm import Model, ModelMetaclass, Field, HasOne, HasMany, MorphOne
 
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
@@ -32,15 +32,6 @@ from app1.models.image import Image
 #     posts: 'Optional[List[Post]]'
 
 
-from app1.contracts import User as UserInterface
-#from app1.contracts import Contact as ContactInterface
-#from app1.contracts import Post as PostInterface
-
-
-#ORIG HERE
-#from BASE.uvicore.auth.models.user import UserModel as AuthOverride
-
-
 
 # import importlib
 # import sys
@@ -54,8 +45,6 @@ from app1.contracts import User as UserInterface
 # dump(mod)
 
 
-
-
 #from uvicore.auth.database.tables.users import Users
 #dump('TABLE', Users)
 
@@ -64,6 +53,7 @@ AuthOverride = uvicore.ioc.make('uvicore.auth.models.user.User_BASE')
 
 #@uvicore.ioc.bind('app1.models.user.User')
 #class User(Model['User'], metaclass=ModelMetaclass):
+
 
 @uvicore.model()
 class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):

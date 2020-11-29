@@ -53,6 +53,8 @@ class ServiceProvider(ProviderInterface):
         name: str,
         object: Any,
         *,
+        object_type: str = 'service',
+        override: bool = True,
         factory: Any = None,
         kwargs: Dict = None,
         singleton: bool = False,
@@ -65,6 +67,9 @@ class ServiceProvider(ProviderInterface):
 
         # Bind object to IoC
         uvicore.ioc.bind(name, object, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
+
+    def bind_override(self, name: str, object: str):
+        uvicore.ioc.bind_override(name, object)
 
     def binding(self, name: str) -> str:
         if self.app_config.get('bindings'):
@@ -166,7 +171,9 @@ class ServiceProvider(ProviderInterface):
         if not register: return
 
         # Main Click Group from Ioc
-        cli = uvicore.ioc.make('uvicore.console.console.cli')
+        #cli = uvicore.ioc.make('uvicore.console.console._cli')
+        #cli = uvicore.ioc.make('Console')
+        from uvicore.console.console import _cli as cli
 
         # Register each group and each groups commands
         click_groups = {}

@@ -99,7 +99,7 @@ class _ExcludeFilter(logging.Filter):
         return True
 
 
-class ColoredFormatter(Formatter):
+class _ColoredFormatter(Formatter):
 
     def __init__(self, patern):
         Formatter.__init__(self, patern)
@@ -194,12 +194,12 @@ class ColoredFormatter(Formatter):
         return message
 
 
-@uvicore.service('uvicore.logging.logger.Logger',
+@uvicore.service('uvicore.logging.logger._Logger',
     aliases=['Logger', 'logger', 'Log', 'log'],
     singleton=True,
     kwargs={'config': uvicore.config('app.logger')},
 )
-class Logger(LoggerInterface):
+class _Logger(LoggerInterface):
     """Logger private class.
 
     Do not import from this location.
@@ -248,7 +248,7 @@ class Logger(LoggerInterface):
             handler = logging.StreamHandler(stream=sys.stdout)
             handler.setLevel(config['console']['level'])
             if config['console']['colors']:
-                handler.setFormatter(ColoredFormatter(config['console']['format']))
+                handler.setFormatter(_ColoredFormatter(config['console']['format']))
             else:
                 handler.setFormatter(logging.Formatter(
                     fmt=config['console']['format'],

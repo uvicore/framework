@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 
 class Field:
     column: str
@@ -17,6 +17,7 @@ class Field:
     callback: Optional[Any]
     relation: Optional[Relation]
     json: Optional[bool]
+    properties: Optional[Dict]
 
 
 # At bottom due to circular issues between these two contracts

@@ -46,8 +46,8 @@ class Foundation(ServiceProvider):
                 'commands': [
                     {'name': 'bindings', 'module': 'uvicore.foundation.commands.ioc.bindings'},
                     {'name': 'singletons', 'module': 'uvicore.foundation.commands.ioc.singletons'},
+                    {'name': 'overrides', 'module': 'uvicore.foundation.commands.ioc.overrides'},
                     {'name': 'type', 'module': 'uvicore.foundation.commands.ioc.type'},
-                    {'name': 'overridden', 'module': 'uvicore.foundation.commands.ioc.overridden'},
                 ],
             }
         ])

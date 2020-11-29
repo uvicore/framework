@@ -5,7 +5,7 @@ from uvicore.contracts import Mapper as MapperInterface
 
 
 @uvicore.service()
-class Mapper(MapperInterface):
+class _Mapper(MapperInterface):
     """Entity mapper for model->table or table->model conversions"""
 
     def __init__(self, entity, *args):

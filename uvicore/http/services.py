@@ -42,7 +42,7 @@ class Http(ServiceProvider):
             #self.bind('Templates', 'uvicore.http.templating.jinja._Jinja', singleton=True, aliases=['templates'])
 
             # Set app instance variables
-            self.app._http = uvicore.ioc.make('uvicore.http.server.Server')
+            self.app._http = uvicore.ioc.make('uvicore.http.server._Server')
 
             # Register event listeners
             # After all providers are booted we have a complete list of view paths
@@ -77,7 +77,7 @@ class Http(ServiceProvider):
 
     def mount_static_assets(self) -> None:
         """Mount /static route using all packages static paths"""
-        StaticFiles = uvicore.ioc.make('uvicore.http.static.StaticFiles')
+        StaticFiles = uvicore.ioc.make('uvicore.http.static._StaticFiles')
 
         # Get all packages asset paths
         paths = []
@@ -94,7 +94,7 @@ class Http(ServiceProvider):
         """Create template environment with settings from all packages"""
 
         # Get the template singleton from the IoC
-        templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
+        templates = uvicore.ioc.make('uvicore.http.templating.jinja._Jinja')
 
         # Add all package view paths to template environment
         for package in self.app.packages.values():

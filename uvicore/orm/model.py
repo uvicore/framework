@@ -3,17 +3,14 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 from pydantic import BaseModel as PydanticBaseModel
 
 import uvicore
-from uvicore import contracts
-from uvicore.orm.mapper import Mapper
-from uvicore.orm.query import OrmQueryBuilder
+from uvicore.contracts import Model as ModelInterface
+from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
+                                HasOne, MorphMany, MorphOne)
+from uvicore.orm.mapper import _Mapper
+from uvicore.orm.query import _OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
-from uvicore.support.dumper import dd, dump
 from uvicore.support.collection import getvalue, setvalue
-
-# Keep for public import usage.
-# Example: from uvicore.orm.model import Model, Metaclass, Field, BelongsTo...
-from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne, MorphOne, MorphMany  # isort:skip
-from uvicore.orm.metaclass import ModelMetaclass  # isort:skip
+from uvicore.support.dumper import dd, dump
 
 E = TypeVar("E")
 
@@ -35,7 +32,7 @@ E = TypeVar("E")
 
 
 @uvicore.service()
-class Model(Generic[E], PydanticBaseModel, contracts.Model[E]):
+class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
     def __init__(self, **data: Any) -> None:
         # Call pydantic parent
@@ -46,8 +43,8 @@ class Model(Generic[E], PydanticBaseModel, contracts.Model[E]):
             setattr(self, key, callback(self))
 
     @classmethod
-    def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
-        return OrmQueryBuilder(entity)
+    def query(entity) -> _OrmQueryBuilder[_OrmQueryBuilder, E]:
+        return _OrmQueryBuilder(entity)
 
     # These are nice, but they polute the namespace of FIELDS, so use just query()
     # @classmethod
@@ -222,8 +219,8 @@ class Model(Generic[E], PydanticBaseModel, contracts.Model[E]):
         return parent_pk
 
     @hybridmethod
-    def mapper(self_or_entity, *args) -> Mapper:
-        return Mapper(self_or_entity, *args)
+    def mapper(self_or_entity, *args) -> _Mapper:
+        return _Mapper(self_or_entity, *args)
 
     async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         # Same as create, except it deletes all first, so it sets the entire children

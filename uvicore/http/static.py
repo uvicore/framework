@@ -2,8 +2,8 @@ import uvicore
 from typing import List
 from starlette.staticfiles import StaticFiles as _Static
 
-@uvicore.service('uvicore.http.static.StaticFiles', aliases=['StaticFiles'])
-class StaticFiles(_Static):
+@uvicore.service('uvicore.http.static._StaticFiles', aliases=['StaticFiles'])
+class _StaticFiles(_Static):
 
     def __init__(self, directories: List[str]):
         super().__init__()

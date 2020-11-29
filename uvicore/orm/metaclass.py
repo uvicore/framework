@@ -8,8 +8,6 @@ from sqlalchemy.sql import ClauseElement
 
 import uvicore
 from uvicore.orm.fields import Field
-from uvicore.orm.mapper import Mapper
-from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.dumper import dd, dump
 
 # Think of this metaclass as all the STATIC methods similar to @classmethod

@@ -3,23 +3,13 @@ import inspect
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 import uvicore
-from uvicore.contracts import Binding as BindingInterface
+
 from uvicore.contracts import Ioc as IocInterface
 from uvicore.support import module
 from uvicore.support.dumper import dd, dump
+from uvicore.container import Binding
 
 T = TypeVar('T')
-
-
-class Binding(BindingInterface):
-    path: Optional[str]
-    object: Optional[Any]
-    instance: Optional[Any]
-    type: Optional[str]
-    factory: Optional[Any]
-    kwargs: Optional[Dict]
-    singleton: bool
-    aliases: List
 
 
 class _Ioc(IocInterface):
@@ -33,6 +23,13 @@ class _Ioc(IocInterface):
         return self._bindings
 
     @property
+    def overrides(self) -> Dict[str, str]:
+        # Merge app config bindings with registered overrides (app config wins)
+        app_config_overrides = self._app_config.get('bindings') or {}
+        overrides = {**self._overrides, **app_config_overrides}
+        return overrides
+
+    @property
     def aliases(self) -> Dict[str, str]:
         return self._aliases
 
@@ -40,6 +37,7 @@ class _Ioc(IocInterface):
         self._bindings: Dict[str, Binding] = {}
         self._aliases: Dict[str, str] = {}
         self._app_config = app_config
+        self._overrides: Dict[str, str] = {}
 
 
         # Add default binding specific to uvicore framework
@@ -80,9 +78,10 @@ class _Ioc(IocInterface):
         if default is not None and self.binding(name) is None:
             # Default was provided and no binding currently exists
             # Bind the default provided but look for bindings override in app_config
-            object = default
-            bindings = self._app_config.get('bindings') or {}
-            object = bindings.get(name) or default
+            #object = default
+            #bindings = self._app_config.get('bindings') or {}
+            #object = bindings.get(name) or default
+            object = self.overrides.get(name) or default
             self.bind(name, object, **kwargs)
 
         binding = self.binding(name)
@@ -117,6 +116,7 @@ class _Ioc(IocInterface):
             # In case you are wondering, the singleton of the original IS the same singleton as the override!
             binding.instance = binding.object
             binding.object = binding.instance.__class__
+            is_singleton = True
 
         # Instantiate a singleton only once
         made = None
@@ -153,10 +153,17 @@ class _Ioc(IocInterface):
         return made
 
     def bind_from_decorator(self, cls, name: str = None, *, object_type: str = None, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
-        bindings = self._app_config.get('bindings') or {}
+        #overrides = self._app_config.get('bindings') or {}
+
+        # Merge app config bindings with registered overrides (app config wins)
+        #overrides = {**self.overrides, **overrides}
 
         # Check for an override binding in the running app_config
-        override = bindings.get(name)
+        #override = overrides.get(name)
+        override = self.overrides.get(name)
+
+        # We never override an existing binding from a decorator
+        #if name not in self.bindings:
         if override:
             self.bind(name=name, object=override, object_type=object_type, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
 
@@ -167,16 +174,29 @@ class _Ioc(IocInterface):
             # No override, so add binding to this cls object directly (not a string)
             self.bind(name, cls, object_type=object_type, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
 
+
+        # else:
+        #     # Binding already exists and decorators never override existing bindings.  If existing binding is the same class as this decorator is on
+        #     # add in the cls so .make() doesn't have to "import" the same class (causing circular import issues).  If its not the same class, .make() will
+        #     # make and import it as usual.
+        #     if self.bindings[name].path == name and self.bindings[name].object is None:
+        #         self._bindings[name].object = cls
+        #         self._bindings[name].type = object_type
+
         # Finally return the actual bind make, which if overridden, could be a completely different object!
         return self.make(name)
 
     def _bind_decorator(self, name: str = None, *, object_type: str = None, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
         def decorator(cls):
             bind_name = name or cls.__module__ + '.' + cls.__name__
-            return self.bind_from_decorator(cls, name=bind_name, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
+            # Decorator bindings are always override=False
+            return self.bind_from_decorator(cls, name=bind_name, override=False, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
         return decorator
 
-    def bind(self, name: str = None, object: Any = None, *, object_type: str = None, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
+    def bind_override(self, name: str, object: str):
+        self._overrides[name] = object
+
+    def bind(self, name: str = None, object: Any = None, *, object_type: str = 'service', override: bool = True, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
         # Decorator Usage
         if object is None: return self._bind_decorator(name, object_type=object_type, factory=factory, kwargs=kwargs, singleton=singleton, aliases=aliases)
 
@@ -196,19 +216,22 @@ class _Ioc(IocInterface):
             else:
                 path = name
 
-        # Add binding
-        self._bindings[name] = Binding(
-            path=path,
-            object=object,
-            instance=None,
-            type=object_type,
-            factory=factory,
-            kwargs=kwargs,
-            singleton=singleton,
-            aliases=aliases,
-        )
+        # Add binding, obeying override
+        if override == True or name not in self.bindings:
+            #print(name, '----', path)
+            self._bindings[name] = Binding(
+                path=path,
+                object=object,
+                instance=None,
+                type=object_type,
+                factory=factory,
+                kwargs=kwargs,
+                singleton=singleton,
+                aliases=aliases,
+            )
 
     def bind_map(self, mapping: Dict[str, Dict]) -> None:
+        # bind_map is not used anymore, though could be cool if passed through from provider class as well, if ever
         for name, options in mapping.items():
             self.bind(name, **options)
 

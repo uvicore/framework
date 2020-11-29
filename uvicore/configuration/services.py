@@ -20,7 +20,7 @@ class Configuration(ServiceProvider):
         # )
 
         # Set uvicore.log global
-        uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration.Configuration')
+        uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
 
         # Set app.config for convenience (only after register since config is a service provider itself)
         self.app._config = uvicore.config

@@ -2,24 +2,13 @@ from __future__ import annotations
 import uvicore
 from typing import Optional
 from app1.database.tables import comments as table
-from uvicore.orm.fields import Field, BelongsTo
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import Field, BelongsTo
+#from uvicore.orm.model import Model, ModelMetaclass
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
 
-# # Make Many
-# Field, BelongsTo, ModelMetaclass = uvicore.ioc.make('uvicore.orm', [
-#     'fields.Field',
-#     'Field.BelongsTo',
-#     'ModelMetaclass'
-# ])
-
-from app1.contracts import Comment as CommentInterface
-
-
-#@uvicore.ioc.bind('app1.models.comment.Comment')
 
 @uvicore.model()
 class Comment(Model['Comment'], metaclass=ModelMetaclass):
-#class CommentModel(Model['CommentModel']):
     """App1 Post Comments"""
 
     # Database table definition

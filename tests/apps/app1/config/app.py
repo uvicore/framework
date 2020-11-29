@@ -107,9 +107,9 @@ config = {
         #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
 
         # Low level core uvicore libraries
-        # 'Application': 'mreschke.wiki.overrides.application.Application',
+        'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
         # 'ServiceProvider': 'mreschke.wiki.overrides.provider.ServiceProvider',
-        # 'Package': 'mreschke.wiki.overrides.package.Package',
+        'uvicore.package.Package': 'app1.overrides.package.Package',
 
         # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',

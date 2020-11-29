@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from typing import Dict, Tuple, Any, Optional, Callable
+from typing import Dict, Tuple, Any, Optional, Callable, OrderedDict
 from pydantic.fields import FieldInfo
 from pydantic.utils import Representation
 from uvicore.support import module
@@ -10,7 +10,7 @@ from uvicore.contracts import Field as FieldInterface
 
 
 @uvicore.service()
-class Relation(Representation, RelationInterface):
+class _Relation(RelationInterface, Representation):
     __slots__ = (
         'model',
         'foreign_key',
@@ -33,7 +33,7 @@ class Relation(Representation, RelationInterface):
         self.name = None
         self.entity = None
 
-    def fill(self, field: Field) -> Relation:
+    def fill(self, field: Field) -> _Relation:
         if not self.foreign_key:
             self.foreign_key = 'id'
         if not self.local_key:
@@ -42,7 +42,7 @@ class Relation(Representation, RelationInterface):
         self._load_entity()
         return self
 
-    def _fill_reverse(self, field: Field) -> Relation:
+    def _fill_reverse(self, field: Field) -> _Relation:
         if not self.foreign_key:
             self.foreign_key = str(field.name) + '_id'
         if not self.local_key:
@@ -63,7 +63,7 @@ class Relation(Representation, RelationInterface):
                 return True
         return False
 
-    def contains_many(self, relations, skip: List = []) -> bool:
+    def contains_many(self, relations: OrderedDict, skip: List = []) -> bool:
         """Walk down all sub_relations by __ name and check if any are *Many"""
         walk = ''
         sub_relations = self.name.split('__')
@@ -97,27 +97,27 @@ class Relation(Representation, RelationInterface):
 
 
 @uvicore.service()
-class HasOne(Relation):
+class HasOne(_Relation):
     """One-To-One Relationship"""
-    def fill(self, field: Field):
+    def fill(self, field: Field) -> _Relation:
         return self._fill_reverse(field)
 
 
 @uvicore.service()
-class HasMany(Relation):
+class HasMany(_Relation):
     """One-To-Many Relationship"""
-    def fill(self, field: Field):
+    def fill(self, field: Field) -> _Relation:
         return self._fill_reverse(field)
 
 
 @uvicore.service()
-class BelongsTo(Relation):
+class BelongsTo(_Relation):
     """Inverse of One-To-One or One-To-Many Relationship"""
     pass
 
 
 @uvicore.service()
-class BelongsToMany(Relation):
+class BelongsToMany(_Relation):
     """Many-To-Many Relationship (Both Sides)
 
     :param model: Related model as import string
@@ -172,7 +172,7 @@ class BelongsToMany(Relation):
 
 
 @uvicore.service()
-class Morph(Relation):
+class Morph(_Relation):
     __slots__ = (
         'model',
         'polyfix',
@@ -231,7 +231,7 @@ class MorphMany(Morph):
 
 
 @uvicore.service()
-class Field(Representation, FieldInterface):
+class Field(FieldInterface, Representation):
 
     # Required for pretty Representaion
     __slots__ = (
@@ -264,7 +264,7 @@ class Field(Representation, FieldInterface):
         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         callback: Optional[Any] = None,
-        relation: Optional[Relation] = None,
+        relation: Optional[_Relation] = None,
         json: Optional[bool] = False,
         properties: Optional[Dict] = None,
     ):

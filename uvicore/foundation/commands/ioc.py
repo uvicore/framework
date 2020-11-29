@@ -32,7 +32,7 @@ def type(type: str):
 
 
 @command()
-def overridden():
+def overrides():
     """List all Ioc Bindings That Have Been Overridden"""
     uvicore.log.header("List of all Ioc bindings that have been overridden")
     uvicore.log.line()

@@ -1,6 +1,8 @@
+from typing import Any, Dict
 from collections import OrderedDict
 
-def getvalue(object, key):
+
+def getvalue(object: Any, key: Any):
     """Access a dict or class instance attribute value in a unified way"""
     if type(object) == dict or type(object) == OrderedDict:
         # Dict or OrderedDict
@@ -12,7 +14,8 @@ def getvalue(object, key):
         else:
             return None
 
-def setvalue(object, key, value):
+
+def setvalue(object: Any, key: Any, value: Any):
     """Set a dict or class instance attribute value in a unified way"""
     if type(object) == dict or type(object) == OrderedDict:
         # Dict or OrderedDict
@@ -20,6 +23,36 @@ def setvalue(object, key, value):
     else:
         # Class instance
         setattr(object, key, value)
+
+
+def dotget(object: Dict, dotpath: str, default = None):
+    """Access a dict or class instance attribute value by dot notation which handles nested null values well"""
+
+    # Eliminates the need to do this if you think a child attribute may not exist
+    # BAD  connection_default=custom_config.get('database').get('default') if 'database' in custom_config else None,
+    # GOOD connection_default=dotget(custom_config, 'database.default')
+
+    if '.' in dotpath:
+        paths = dotpath.split('.')
+    else:
+        paths = [dotpath]
+
+    node = object
+    for path in paths:
+        node = getvalue(node, path)
+        if node is None: return default
+    return node
+
+
+
+
+
+
+
+
+
+
+### Below is junk, experimental
 
 
 class Str:

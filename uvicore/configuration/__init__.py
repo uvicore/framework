@@ -8,7 +8,13 @@ from environs import Env
 # New environs Env instance
 env = Env()
 
+
+# No, not used publically, and is so early that uvicore.ioc is still None
+#from .configuration import Configuration
+
+
+
 # Public API for import * and doc gens
-__all__ = [
-    'Env', 'env',
-]
+# __all__ = [
+#     'Env', 'env',
+# ]

@@ -8,20 +8,23 @@ import uvicore
 #from uvicore.configuration import Config
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
-from uvicore.database.connection import Connection
+#from uvicore.database.connection import Connection
+from uvicore.database import Connection
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
 from uvicore.support.dumper import dd, dump
 from uvicore.support.hash import md5
 from uvicore.support.module import load, location
+from uvicore.package import Package
+from uvicore.support.collection import dotget
 
 
-@uvicore.service('uvicore.foundation.application.Application',
+@uvicore.service('uvicore.foundation.application._Application',
     aliases=['Application', 'application', 'App', 'app'],
     singleton=True,
 )
-class Application:
+class _Application:
     """Application private class.
 
     Do not import from this location.
@@ -199,76 +202,8 @@ class Application:
             # Load this packages custom config by config_prefix
             custom_config = self.config(config_prefix) or {}
 
-            # Detect if package is running as the actual main app
-            main = True if package_name == self.main else False
-
-            # Route prefix
-            web_route_prefix = None
-            api_route_prefix = None
-            if 'route' in custom_config:
-                web_route_prefix = custom_config.get('route').get('web_prefix')
-                api_route_prefix = custom_config.get('route').get('api_prefix')
-
-            # Database connections
-            connections = []
-            if 'database' in custom_config:
-                for name, connection in custom_config.get('database').get('connections').items():
-                    # Metakey cannot be the connection name.  If 2 connections share the exact
-                    # same database (host, port, dbname) then they need to also share the same
-                    # metedata for foreign keys to work properly.
-                    if connection.get('driver') == 'sqlite':
-                        url = 'sqlite:///' + connection.get('database')
-                        metakey = url
-                    else:
-                        url = (connection.get('driver')
-                            + '+' + connection.get('dialect')
-                            + '://' + connection.get('username')
-                            + ':' + connection.get('password')
-                            + '@' + connection.get('host')
-                            + ':' + str(connection.get('port'))
-                            + '/' + connection.get('database')
-                        )
-                        metakey = (connection.get('host')
-                            + ':' + str(connection.get('port'))
-                            + '/' + connection.get('database')
-                        )
-
-                    #self.db = Database("mysql+pymysql://root:techie@127.0.0.1:3306/uvicore_wiki")
-                    connections.append(Connection(
-                        name=name,
-                        #default=True if name == custom_config.get('database').get('default') else False,
-                        driver=connection.get('driver'),
-                        dialect=connection.get('dialect'),
-                        host=connection.get('host'),
-                        port=connection.get('port'),
-                        database=connection.get('database'),
-                        username=connection.get('username'),
-                        password=connection.get('password'),
-                        prefix=connection.get('prefix') or '',
-                        metakey=metakey,
-                        url=url,
-                    ))
-
-            # Modules file path
-            package = uvicore.ioc.make('uvicore.package.package.Package')(
-                name=package_config.get('name'),
-                location=location(package_name),
-                main=main,
-                web_route_prefix=web_route_prefix,
-                api_route_prefix=api_route_prefix,
-                view_paths=[],
-                asset_paths=[],
-                template_options={},
-                register_web_routes=custom_config.get('register_web_routes') or True,
-                register_api_routes=custom_config.get('register_api_routes') or True,
-                register_views=custom_config.get('register_views') or True,
-                register_assets=custom_config.get('register_assets') or True,
-                register_commands=custom_config.get('register_commands') or True,
-                connection_default=custom_config.get('database').get('default') if 'database' in custom_config else None,
-                connections=connections,
-                models=[],
-                seeders=[],
-            )
+            # Build package dataclass and append to all packages
+            package = self._build_package(package_name, custom_config)
             self._packages[package_name] = package
 
     def _boot_providers(self, app_config: Dict) -> None:
@@ -288,6 +223,69 @@ class Application:
         # Complete booting
         self._booted = True
         uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
+
+    def _build_package(self, name: str, custom_config: Dict):
+        return Package(
+            name=name,
+            location=location(name),
+            main=True if name == self.main else False,
+            web_route_prefix=dotget(custom_config, 'route.web_prefix'),
+            api_route_prefix=dotget(custom_config, 'route.api_prefix'),
+            view_paths=[],
+            asset_paths=[],
+            template_options={},
+            register_web_routes=custom_config.get('register_web_routes') or True,
+            register_api_routes=custom_config.get('register_api_routes') or True,
+            register_views=custom_config.get('register_views') or True,
+            register_assets=custom_config.get('register_assets') or True,
+            register_commands=custom_config.get('register_commands') or True,
+            connection_default=dotget(custom_config, 'database.default'),
+            connections=self._build_package_connections(custom_config),
+            models=[],
+            seeders=[],
+        )
+
+    def _build_package_connections(self, custom_config):
+        connections = []
+        if 'database' not in custom_config: return []
+        if 'connections' not in custom_config['database']: return []
+        for name, connection in custom_config['database']['connections'].items():
+            # Metakey cannot be the connection name.  If 2 connections share the exact
+            # same database (host, port, dbname) then they need to also share the same
+            # metedata for foreign keys to work properly.
+            if connection.get('driver') == 'sqlite':
+                url = 'sqlite:///' + connection.get('database')
+                metakey = url
+            else:
+                url = (connection.get('driver')
+                    + '+' + connection.get('dialect')
+                    + '://' + connection.get('username')
+                    + ':' + connection.get('password')
+                    + '@' + connection.get('host')
+                    + ':' + str(connection.get('port'))
+                    + '/' + connection.get('database')
+                )
+                metakey = (connection.get('host')
+                    + ':' + str(connection.get('port'))
+                    + '/' + connection.get('database')
+                )
+
+            #self.db = Database("mysql+pymysql://root:techie@127.0.0.1:3306/uvicore_wiki")
+            connections.append(Connection(
+                name=name,
+                #default=True if name == custom_config.get('database').get('default') else False,
+                driver=connection.get('driver'),
+                dialect=connection.get('dialect'),
+                host=connection.get('host'),
+                port=connection.get('port'),
+                database=connection.get('database'),
+                username=connection.get('username'),
+                password=connection.get('password'),
+                prefix=connection.get('prefix') or '',
+                metakey=metakey,
+                url=url,
+            ))
+        return connections
 
     def _get_package_config(self, package: str, options: Dict):
         config_module = package + '.config.package.config'  # Default if not defined

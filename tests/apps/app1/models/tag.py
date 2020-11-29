@@ -2,12 +2,10 @@ from __future__ import annotations
 import uvicore
 from typing import Optional, List
 from app1.database.tables import tags as table
-from uvicore.orm.fields import Field, BelongsToMany, BelongsTo
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import Field, BelongsToMany, BelongsTo
+#from uvicore.orm.model import Model, ModelMetaclass
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
 
-from app1.contracts import Tag as TagInterface
-
-#@uvicore.ioc.bind('app1.models.tag.Tag')
 
 @uvicore.model()
 class Tag(Model['Tag'], metaclass=ModelMetaclass):

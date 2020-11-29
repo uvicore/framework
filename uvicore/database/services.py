@@ -21,7 +21,7 @@ class Database(ServiceProvider):
         # )
 
         # Set uvicore.log global
-        uvicore.db = uvicore.ioc.make('uvicore.database.db.Db')
+        uvicore.db = uvicore.ioc.make('uvicore.database.db._Db')
 
         # Register event listeners
         # After all providers are registered (meaning configs merged)

@@ -19,7 +19,8 @@ from uvicore.support.dumper import dd, dump
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
-class Column(Representation):
+
+class _Column(Representation):
     __slots__ = (
         'sacol',
         'name',
@@ -38,12 +39,13 @@ class Column(Representation):
         self.table = table
         self.tablename = tablename
 
-@register_pretty(Column)
+
+@register_pretty(_Column)
 def pretty_query(value, ctx):
-    return pretty_call(ctx, Column, **{key: getattr(value, key) for key in Column.__slots__})
+    return pretty_call(ctx, _Column, **{key: getattr(value, key) for key in _Column.__slots__})
 
 
-class Join(Representation):
+class _Join(Representation):
     __slots__ = (
         'table',
         'tablename',
@@ -53,7 +55,7 @@ class Join(Representation):
         'alias',
         'method'
     )
-    def __init__(self, table: sa.Table, tablename: str, left: Column, right: Column, onclause: BinaryExpression, alias: str, method: str):
+    def __init__(self, table: sa.Table, tablename: str, left: _Column, right: _Column, onclause: BinaryExpression, alias: str, method: str):
         self.table = table
         self.tablename = tablename
         self.left = left
@@ -62,12 +64,12 @@ class Join(Representation):
         self.alias = alias
         self.method = method
 
-@register_pretty(Join)
+@register_pretty(_Join)
 def pretty_query(value, ctx):
-    return pretty_call(ctx, Join, **{key: getattr(value, key) for key in Join.__slots__})
+    return pretty_call(ctx, _Join, **{key: getattr(value, key) for key in _Join.__slots__})
 
 
-class Query(Representation):
+class _Query(Representation):
     __slots__ = (
         'includes',
         'selects',
@@ -100,7 +102,7 @@ class Query(Representation):
         self.offset: Optional[int] = None
         self.keyed_by: Optional[str] = None
         self.relations: OrderedDict[str, Relation] = ODict()
-        self.joins: List[Join] = []
+        self.joins: List[_Join] = []
         self.table: sa.Table
 
     def copy(self):
@@ -119,16 +121,21 @@ class Query(Representation):
         newquery.table = table
         return newquery
 
-@register_pretty(Query)
+@register_pretty(_Query)
 def pretty_query(value, ctx):
-    return pretty_call(ctx, Query, **{key: getattr(value, key) for key in Query.__slots__})
+    return pretty_call(ctx, _Query, **{key: getattr(value, key) for key in _Query.__slots__})
 
+
+# Private use only, not for public user access
+#Column = _Column
+#Join = _Join
+#Query = _Query
 
 @uvicore.service()
-class QueryBuilder(Generic[B, E]):
+class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
     def __init__(self):
-        self.query = Query()
+        self.query = _Query()
 
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
         if type(column) == str or type(column) == sa.Column:
@@ -208,7 +215,7 @@ class QueryBuilder(Generic[B, E]):
         query, saquery = self._build_query('select', self.query.copy())
         return str(saquery)
 
-    def _build_query(self, method: str, query: Query) -> Tuple:
+    def _build_query(self, method: str, query: _Query) -> Tuple:
         # Convert our Query into SQLAlchemy query
         #saquery: sa.sql.select = None
 
@@ -252,13 +259,13 @@ class QueryBuilder(Generic[B, E]):
         # Return query and SQLAlchemy query
         return (query, saquery)
 
-    def _build_group_by(self, query: Query, saquery):
+    def _build_group_by(self, query: _Query, saquery):
         for column in query.group_by:
             column = self._column(column, query)
             saquery = saquery.group_by(column.sacol)
         return saquery
 
-    def _build_order_by(self, query: Query, saquery):
+    def _build_order_by(self, query: _Query, saquery):
         for order_by in query.order_by:
             if type(order_by) == tuple:
                 column = self._column(order_by[0], query).sacol
@@ -273,14 +280,14 @@ class QueryBuilder(Generic[B, E]):
                 saquery = saquery.order_by(order_by)
         return saquery
 
-    def _build_from(self, query: Query, saquery) -> sa.select.select_from:
+    def _build_from(self, query: _Query, saquery) -> sa.select.select_from:
         joins = query.table
         for join in query.joins:
             method = getattr(joins, join.method)
             joins = method(right=join.table, onclause=join.onclause)
         return saquery.select_from(joins)
 
-    def _build_select(self, query: Query) -> sa.select:
+    def _build_select(self, query: _Query) -> sa.select:
         selects = []
 
         if not query.selects and not query.joins:
@@ -305,7 +312,7 @@ class QueryBuilder(Generic[B, E]):
         # Return SQLAlchemy .select() statment with above columns
         return sa.select(selects)
 
-    def _build_where(self, query: Query, wheres: List[Tuple]):
+    def _build_where(self, query: _Query, wheres: List[Tuple]):
         """Build all wheres"""
         statements = []
         for where in wheres:
@@ -340,7 +347,7 @@ class QueryBuilder(Generic[B, E]):
             # Just take first PK for now???
             return str(column.name)
 
-    def _column(self, dotname: Any, query: Query = None) -> Column:
+    def _column(self, dotname: Any, query: _Query = None) -> _Column:
         # Column() class builder from dotname
         if not query: query = self.query
         if dotname is None: return None
@@ -372,9 +379,9 @@ class QueryBuilder(Generic[B, E]):
                 alias = str(table.name) + '__' + name
 
         # Return new column class
-        return Column(column, name, alias, conn, table, tablename)
+        return _Column(column, name, alias, conn, table, tablename)
 
-    def _column_from_string(self, dotname: str, query: Query) -> Tuple:
+    def _column_from_string(self, dotname: str, query: _Query) -> Tuple:
         name = dotname
         table = query.table
         tablename = str(table.name)

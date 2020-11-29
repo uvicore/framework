@@ -14,9 +14,16 @@ class Console(ServiceProvider):
         instantiated yet.
         """
         # Register IoC bindings
-        # self.bind('Console', 'uvicore.console.console._cli',
-        #     aliases=['console', 'cli']
+        #from uvicore.console.console import cli
+        #dump('service------------')
+        # self.bind('uvicore.console.console.cli', 'uvicore.console.console.cli',
+        #     aliases=['Console', 'console', 'cli', 'cli2']
         # )
+
+        # self.bind('Console', 'uvicore.console.console.cli',
+        #     aliases=['uvicore.console.console.cli', 'console', 'cli', 'cli2']
+        # )
+
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

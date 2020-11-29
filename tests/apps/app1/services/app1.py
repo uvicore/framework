@@ -27,6 +27,12 @@ class App1(ServiceProvider):
         #self.bind('app1.models.post.Post', 'app1.models.post.PostModel')
 
 
+        # Test bind overrides instead of app.config bindings array
+        #self.bind_override('uvicore.auth.database.tables.users.Users', 'app1.database.tables.users.Users')
+        #self.bind_override('uvicore.auth.models.user.User', 'app1.models.user.User')
+
+
+
     def boot(self) -> None:
         # Using __init__.py now so just import it
         from app1 import models

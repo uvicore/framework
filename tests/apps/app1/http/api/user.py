@@ -3,7 +3,7 @@ from typing import List
 #from uvicore.auth.models.user import User
 from app1.models.user import User
 from uvicore.auth.models.user_info import UserInfo
-from uvicore.http.routing import ApiRouter
+from uvicore.http import ApiRouter
 
 route = ApiRouter()
 

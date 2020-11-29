@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Optional, TypeVar
 
 import uvicore
-from app1.contracts import Contact as ContactInterface
 from app1.database.tables import contacts as table
-from uvicore.orm.fields import BelongsTo, Field
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import BelongsTo, Field
+#from uvicore.orm.model import Model, ModelMetaclass
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
+
 
 # from typing import TYPE_CHECKING
 # if TYPE_CHECKING:

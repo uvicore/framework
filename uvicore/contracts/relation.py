@@ -1,8 +1,14 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional, Any
 
 class Relation(ABC):
+
+    model: str
+    foreign_key: Optional[str]
+    local_key: Optional[str]
+    name: Optional[str]
+    entity: Optional[Any]
 
     @abstractmethod
     def fill(self, field: Field) -> Relation:

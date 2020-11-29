@@ -5,18 +5,17 @@ from databases import Database as EncodeDatabase
 from sqlalchemy.sql import ClauseElement
 
 import uvicore
-from uvicore import app
 from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
-from uvicore.database.query import DbQueryBuilder
+from uvicore.database.query import _DbQueryBuilder
 from uvicore.support.dumper import dd, dump
 from sqlalchemy.engine.result import RowProxy
 
-@uvicore.service('uvicore.database.db.Db',
+@uvicore.service('uvicore.database.db._Db',
     aliases=['Database', 'database', 'db'],
     singleton=True,
 )
-class Db(DatabaseInterface):
+class _Db(DatabaseInterface):
     """Database private class.
 
     Do not import from this location.
@@ -71,13 +70,13 @@ class Db(DatabaseInterface):
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
 
-        if app.is_http:
-            @app.http.on_event("startup")
+        if uvicore.app.is_http:
+            @uvicore.app.http.on_event("startup")
             async def startup():
                 for database in self.databases.values():
                     await database.connect()
 
-            @app.http.on_event("shutdown")
+            @uvicore.app.http.on_event("shutdown")
             async def shutdown():
                 for database in self.databases.values():
                     await database.disconnect()
@@ -166,9 +165,9 @@ class Db(DatabaseInterface):
     #         await database.connect()
 
 
-    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
+    def query(self, connection: str = None) -> _DbQueryBuilder[_DbQueryBuilder, Any]:
         if not connection: connection = self.default
-        return DbQueryBuilder(connection)
+        return _DbQueryBuilder(connection)
 
 
     # def table(self, table: str):

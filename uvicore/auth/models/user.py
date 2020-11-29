@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Optional
 
 import uvicore
-from uvicore.auth.contracts import User as UserInterface
 from uvicore.auth.database.tables import users as table
-from uvicore.orm.fields import Field, HasOne
-from uvicore.orm.model import Model, ModelMetaclass
+#from uvicore.orm.fields import Field, HasOne
+#from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.support.dumper import dd, dump
+from uvicore.orm import Model, ModelMetaclass, Field, HasOne
 
 #Model: _Model = uvicore.ioc.make('Model', _Model)
 #import sys

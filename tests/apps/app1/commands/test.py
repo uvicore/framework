@@ -38,8 +38,8 @@ async def cli():
     # #dump(sys.modules)
 
 
-    #posts = await Post.query().include('creator.contact', 'attributes').get()
-    #dump(posts)
+    posts = await Post.query().include('creator.contact', 'attributes').get()
+    dump(posts)
 
     #dump(uvicore.ioc.bindings)
 
