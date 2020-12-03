@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import BinaryExpression
 from sqlalchemy.engine.result import RowProxy
 
 import uvicore
-from uvicore.database.builder import _QueryBuilder, _Join
+from uvicore.database.builder import _QueryBuilder, Join
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import DbQueryBuilder as BuilderInterface
 
@@ -58,7 +58,7 @@ class _DbQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E]
         if not alias: alias = tablename
 
         # Add new Join() expression
-        self.query.joins.append(_Join(table, tablename, left, right, onclause, alias, method))
+        self.query.joins.append(Join(table, tablename, left, right, onclause, alias, method))
         return self
 
     def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:

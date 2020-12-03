@@ -1,6 +1,6 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema, SchemaOLD
+from uvicore.database import Table
 from uvicore.support.dumper import dump
 
 
@@ -10,7 +10,7 @@ tags = uvicore.db.tablename('app1.tags')
 
 
 @uvicore.table()
-class PostTags(Schema):
+class PostTags(Table):
 #class Table(metaclass=SchemaOLD):
 
     # Actual database table name

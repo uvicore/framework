@@ -4,13 +4,16 @@ from uvicore.database import Table
 from uvicore.support.dumper import dump
 
 
+# Get related tablenames with proper prefixes
+hashtags = uvicore.db.tablename('app1.hashtags')
+
 @uvicore.table()
-class Images(Table):
+class Hashtaggables(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
     # Do not add a package prefix, leave that to the connection config
-    name = 'images'
+    name = 'hashtaggables'
 
     # Connection for this database from your config file
     connection = 'app1'
@@ -24,20 +27,19 @@ class Images(Table):
         sa.Column('id', sa.Integer, primary_key=True),
 
         # Polymorphic Relations
-        sa.Column('imageable_type', sa.String(length=50)),
-        sa.Column('imageable_id', sa.Integer),
+        sa.Column('hashtaggable_type', sa.String(length=50)),
+        sa.Column('hashtaggable_id', sa.Integer),
 
-        # Image data
-        sa.Column('filename', sa.String(length=100)),
-        sa.Column('size', sa.Integer),
+        sa.Column('hashtag_id', sa.Integer, sa.ForeignKey(f"{hashtags}.id"), nullable=False),
 
-        # Multi Column Unique Constraint, this ensures a true One-To-One
-        # and creates a composite index in the given order.
-        # This forced uniqueness is what makes the table slightly different than a One-To-Many table.
-        sa.UniqueConstraint('imageable_type', 'imageable_id')
+        # Multi Column Unique Constraint.  By adding in the key we still ensure
+        # OneToMany can be used but it must be unique with the key.  This also creates
+        # a good composite index of type,id,key
+        sa.UniqueConstraint('hashtaggable_type', 'hashtaggable_id', 'hashtag_id')
 
         # If you don't want an ID primary_key, you could use the combined poly IDs as a PK
-        #sa.PrimaryKeyConstraint('imageable_type', 'imageable_id'),
+        # But the ORM can't handle duel PKs at the moment
+        #sa.PrimaryKeyConstraint('hashtaggable_type', 'hashtaggable_id', 'key'),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
@@ -47,4 +49,4 @@ class Images(Table):
 
 
 # IoC Class Instance
-#Images: _Images = uvicore.ioc.make('app1.database.tables.images.Images', _Images, singleton=True)
+#Attributes: _Attributes = uvicore.ioc.make('app1.database.tables.attributes.Attributes', _Attributes, singleton=True)

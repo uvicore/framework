@@ -1,6 +1,6 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema, SchemaOLD
+from uvicore.database import Table
 from uvicore.support.dumper import dump, dd
 
 
@@ -28,7 +28,7 @@ base_schema = BaseUsers.schema
 # This is an override.  Do not import this Table, instead import
 # the original in uvicore.auth.database.tables
 @uvicore.table()
-class Users(Schema):
+class Users(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged

@@ -5,7 +5,7 @@ from typing import Dict, List
 from uvicore.support.dumper import dd, dump
 
 @uvicore.service()
-class Schema:
+class Table:
 
     @property
     def table(self):
@@ -30,26 +30,26 @@ class Schema:
         )
 
 
-class SchemaOLD(ABCMeta):
-    def __new__(mcs, name, bases, namespace, **kwargs):
-        # Set metadata based on connection string
-        namespace['metadata'] = uvicore.db.metadata(namespace.get('connection'))
+# class SchemaOLD(ABCMeta):
+#     def __new__(mcs, name, bases, namespace, **kwargs):
+#         # Set metadata based on connection string
+#         namespace['metadata'] = uvicore.db.metadata(namespace.get('connection'))
 
-        # Add prefix to table name
-        prefix = uvicore.db.connection(namespace.get('connection')).prefix
-        if prefix is not None:
-            namespace['name'] = str(prefix) + namespace['name']
+#         # Add prefix to table name
+#         prefix = uvicore.db.connection(namespace.get('connection')).prefix
+#         if prefix is not None:
+#             namespace['name'] = str(prefix) + namespace['name']
 
-        # Convert table List into actual SQLAlchemy table schema
-        namespace['schema'] = sa.Table(
-            namespace['name'],
-            namespace['metadata'],
-            *namespace['schema'],
-            **namespace.get('schema_kwargs')
-        )
+#         # Convert table List into actual SQLAlchemy table schema
+#         namespace['schema'] = sa.Table(
+#             namespace['name'],
+#             namespace['metadata'],
+#             *namespace['schema'],
+#             **namespace.get('schema_kwargs')
+#         )
 
-        # Return this new metaclass
-        return super().__new__(mcs, name, bases, namespace, **kwargs)
+#         # Return this new metaclass
+#         return super().__new__(mcs, name, bases, namespace, **kwargs)
 
 # class Table:
 #     def __init__(self,

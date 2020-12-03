@@ -102,14 +102,14 @@ config = {
     # --------------------------------------------------------------------------
     'bindings': {
         # Testing, override Users table and model
-        'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users.Users',
-        'uvicore.auth.models.user.User': 'app1.models.user.User',
+        #'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users.Users',
+        #'uvicore.auth.models.user.User': 'app1.models.user.User',
         #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
 
-        # Low level core uvicore libraries
+        # Low level core uvicore libraries (too early to override in a service provider, must be done here)
         'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
-        # 'ServiceProvider': 'mreschke.wiki.overrides.provider.ServiceProvider',
-        'uvicore.package.Package': 'app1.overrides.package.Package',
+        'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
+        'uvicore.package.package.Package': 'app1.overrides.package.Package',
 
         # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',

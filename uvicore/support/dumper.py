@@ -32,10 +32,14 @@ def dump(*args):
     if level == 'INFO' or level == 'DEBUG' or level is None:
         for arg in args:
             if type(arg) == str:
+                # I don't want string printed with dump because it adds quotes to the string
+                # which seems confusing at times.
                 #prettyprinter.cpprint(arg, width=10000, ribbon_width=10000)
                 print(arg)
             else:
-                prettyprinter.cpprint(arg)
+                #prettyprinter.cpprint(arg)
+                width = 150  # FIXME, could make this a config at some point
+                prettyprinter.cpprint(arg, width=width, ribbon_width=width)
 
 
 def dd(*args):

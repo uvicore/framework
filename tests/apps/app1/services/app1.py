@@ -27,9 +27,18 @@ class App1(ServiceProvider):
         #self.bind('app1.models.post.Post', 'app1.models.post.PostModel')
 
 
+        # These do not work as they are too high up in the bootstrap process.  They have already been loaded
+        # before this provider even hits.
+        #self.bind_override('uvicore.foundation.application._Application', 'app1.overrides.application.Application')
+        #self.bind_override('uvicore.package.Package', 'app1.overrides.package.Package')
+
+
+
         # Test bind overrides instead of app.config bindings array
-        #self.bind_override('uvicore.auth.database.tables.users.Users', 'app1.database.tables.users.Users')
-        #self.bind_override('uvicore.auth.models.user.User', 'app1.models.user.User')
+        self.bind_override('uvicore.auth.database.tables.users.Users', 'app1.database.tables.users.Users')
+        self.bind_override('uvicore.auth.models.user.User', 'app1.models.user.User')
+
+
 
 
 

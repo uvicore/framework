@@ -1,23 +1,36 @@
 from __future__ import annotations
-import uvicore
-from typing import Dict, Tuple, Any, Optional, Callable, OrderedDict
+
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional, OrderedDict, Tuple
+
 from pydantic.fields import FieldInfo
-from pydantic.utils import Representation
-from uvicore.support import module
-from uvicore.support.dumper import dump, dd
-from uvicore.contracts import Relation as RelationInterface
+
+import sqlalchemy as sa
+import uvicore
 from uvicore.contracts import Field as FieldInterface
+from uvicore.contracts import Relation as RelationInterface
+from uvicore.support import module
+from uvicore.support.dumper import dd, dump
 
 
+@dataclass
 @uvicore.service()
-class _Relation(RelationInterface, Representation):
-    __slots__ = (
-        'model',
-        'foreign_key',
-        'local_key',
-        'name',
-        'entity',
-    )
+class _Relation(RelationInterface):
+    # __slots__ = (
+    #     'model',
+    #     'foreign_key',
+    #     'local_key',
+    #     'name',
+    #     'entity',
+    # )
+
+    # By setting a default on these attributes of a dataclass
+    # When printed, only the ones actually set will show up, which makes output much smaller
+    model: str
+    foreign_key: Optional[str] = None
+    local_key: Optional[str] = None
+    name: Optional[str] = None
+    entity: Optional[Any] = None
 
     def __init__(self,
         model: str,
@@ -52,10 +65,10 @@ class _Relation(RelationInterface, Representation):
         return self
 
     def is_one(self) -> bool:
-        return type(self) == HasOne or type(self) == MorphOne or type(self) == BelongsTo
+        return type(self) == HasOne or type(self) == BelongsTo or type(self) == MorphOne
 
     def is_many(self) -> bool:
-        return type(self) == HasMany or type(self) == MorphMany or type(self) == BelongsToMany
+        return type(self) == HasMany or type(self) == BelongsToMany or type(self) == MorphMany or type(self) == MorphToMany
 
     def is_type(self, *args) -> bool:
         for arg in args:
@@ -80,7 +93,7 @@ class _Relation(RelationInterface, Representation):
 
             # Check relation type for *Many
             relation_type = type(relations.get(walk))
-            if relation_type == HasMany or relation_type == MorphMany or relation_type == BelongsToMany:
+            if relation_type == HasMany or relation_type == BelongsToMany or relation_type == MorphMany or relation_type == MorphToMany:
                 return True
 
             # Walk down
@@ -116,6 +129,7 @@ class BelongsTo(_Relation):
     pass
 
 
+@dataclass
 @uvicore.service()
 class BelongsToMany(_Relation):
     """Many-To-Many Relationship (Both Sides)
@@ -125,16 +139,13 @@ class BelongsToMany(_Relation):
     :param left_key: The foreign key column of the model on which you are defining the relationship
     :param right_key: The foreign key column of the model that you are joining to
     """
-
-    __slots__ = (
-        'model',
-        'join_tablename',
-        'left_key',
-        'right_key',
-        'name',
-        'entity',
-        'join_table',
-    )
+    model: str
+    join_tablename: str = None
+    left_key: str = None
+    right_key: str = None
+    name: Optional[str] = None
+    entity: Optional[Any] = None
+    join_table: Optional[sa.Table] = None
 
     def __init__(self,
         model: str,
@@ -171,24 +182,23 @@ class BelongsToMany(_Relation):
         return self
 
 
+@dataclass
 @uvicore.service()
-class Morph(_Relation):
-    __slots__ = (
-        'model',
-        'polyfix',
-        'foreign_type',
-        'foreign_key',
-        'local_key',
-        'dict_key',
-        'dict_value',
-        'name',
-        'entity',
-    )
+class _Morph(_Relation):
+    model: str
+    polyfix: str = None
+    foreign_type: Optional[str] = None
+    foreign_key: Optional[str] = None
+    local_key: Optional[str] = None
+    dict_key: Optional[str] = None
+    dict_value: Optional[str] = None
+    name: Optional[str] = None
+    entity: Optional[Any] = None
 
     def __init__(self,
         model: str,
-        *,
         polyfix: str = None,
+        *,
         foreign_type: str = None,
         foreign_key: str = None,
         local_key: str = None,
@@ -214,43 +224,80 @@ class Morph(_Relation):
 
 
 @uvicore.service()
-class MorphOne(Morph):
+class MorphOne(_Morph):
     pass
 
 
 @uvicore.service()
-class MorphMany(Morph):
+class MorphMany(_Morph):
     pass
 
 
+class MorphToMany(_Morph):
+    model: str
+    join_tablename: str
+    polyfix: str
+    right_key: str
+    left_type: Optional[str] = None
+    left_key: Optional[str] = None
+    name: Optional[str] = None
+    entity: Optional[Any] = None
+    join_table: Optional[sa.Table] = None
 
-# class MorphTo(Relation):
+    def __init__(self,
+        model: str,
+        *,
+        join_tablename: str,
+        polyfix: str,
+        right_key: str,
+        left_type: str = None,
+        left_key: str = None,
+    ) -> None:
+        self.model = model
+        self.join_tablename = join_tablename
+        self.polyfix = polyfix
+        self.right_key = right_key
+        self.left_type = left_type or polyfix + '_type'
+        self.left_key = left_key or polyfix + '_id'
 
-#     def __init__(self):
-#         pass
+        # Set by self.fill later
+        self.name = None
+        self.entity = None
+        self.join_table = None
+
+    def fill(self, field: Field):
+        # Fill in parameters
+        self.name = field.name
+
+        # Load entity
+        self._load_entity()
+
+        # Get actual SQLAlchemy relation table
+        self.join_table = uvicore.db.table(self.join_tablename, self.entity.connection)
+        return self
 
 
+
+
+
+@dataclass
 @uvicore.service()
-class Field(FieldInterface, Representation):
-
-    # Required for pretty Representaion
-    __slots__ = (
-        'column',
-        'name',
-        'primary',
-        'title',
-        'description',
-        'default',
-        'required',
-        'sortable',
-        'searchable',
-        'read_only',
-        'write_only',
-        'callback',
-        'relation',
-        'json',
-        'properties'
-    )
+class Field(FieldInterface):
+    column: str
+    name: Optional[str] = None
+    primary: Optional[bool] = False
+    title: Optional[str] = None
+    description: Optional[str] = None
+    default: Optional[Any] = None
+    required: Optional[bool] = False
+    sortable: Optional[bool] = None
+    searchable: Optional[bool] = None
+    read_only: Optional[bool] = None
+    write_only: Optional[bool] = None
+    callback: Optional[Any] = None
+    relation: Optional[_Relation] = None
+    json: Optional[bool] = False
+    properties: Optional[Dict] = None
 
     def __init__(self, column: str = None, *,
         name: Optional[str] = None,
@@ -283,6 +330,64 @@ class Field(FieldInterface, Representation):
         self.relation = relation
         self.json = json
         self.properties = properties
+
+
+
+
+
+# @uvicore.service()
+# class Field(FieldInterface, Representation):
+
+#     # Required for pretty Representaion
+#     __slots__ = (
+#         'column',
+#         'name',
+#         'primary',
+#         'title',
+#         'description',
+#         'default',
+#         'required',
+#         'sortable',
+#         'searchable',
+#         'read_only',
+#         'write_only',
+#         'callback',
+#         'relation',
+#         'json',
+#         'properties'
+#     )
+
+#     def __init__(self, column: str = None, *,
+#         name: Optional[str] = None,
+#         primary: Optional[bool] = False,
+#         title: Optional[str] = None,
+#         description: Optional[str] = None,
+#         default: Optional[Any] = None,
+#         required: Optional[bool] = False,
+#         sortable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
+#         searchable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
+#         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
+#         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
+#         callback: Optional[Any] = None,
+#         relation: Optional[_Relation] = None,
+#         json: Optional[bool] = False,
+#         properties: Optional[Dict] = None,
+#     ):
+#         self.column = column
+#         self.name = name
+#         self.primary = primary
+#         self.title = title
+#         self.description = description
+#         self.default = default
+#         self.required = required
+#         self.sortable = sortable
+#         self.searchable = searchable
+#         self.read_only = read_only
+#         self.write_only = write_only
+#         self.callback = callback
+#         self.relation = relation
+#         self.json = json
+#         self.properties = properties
 
 
 # class PydanticField(FieldInfo):

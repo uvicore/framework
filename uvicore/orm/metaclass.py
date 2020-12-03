@@ -113,6 +113,11 @@ class ModelMetaclass(PydanticMetaclass):
         else:
             return module + '.' + entity.__name__
 
+    def modelfield(entity, fieldname: str) -> Field:
+        field = entity.modelfields.get(fieldname)
+        if not field: raise Exception("Field {} not found in model {}".format(fieldname, entity.modelfqn))
+        return field
+
     async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
@@ -213,7 +218,8 @@ class ModelMetaclass(PydanticMetaclass):
 
                 # Convert uvicore model field into pydantic FieldInfo
                 field_info_kwargs = {}
-                for slot in field.__slots__:
+                for slot in field.__annotations__.keys():
+                #for slot in field.__slots__: # When using Field as Representation with slots
                     arg = slot
                     if slot == 'read_only': arg = 'readOnly'
                     if slot == 'write_only': arg = 'writeOnly'

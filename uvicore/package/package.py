@@ -6,7 +6,7 @@ from typing import Dict, List, NamedTuple
 from uvicore.contracts import Connection
 
 
-@uvicore.service('uvicore.package.Package', aliases=['Package', 'package'])
+@uvicore.service(aliases=['Package', 'package'])
 class Package(PackageInterface):
 
     def config(self, dotkey: str = None):

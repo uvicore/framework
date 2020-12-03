@@ -1,12 +1,12 @@
 import sqlalchemy as sa
 
 import uvicore
-from uvicore.database.table import Schema, SchemaOLD
+from uvicore.database import Table
 from uvicore.support.dumper import dd, dump
 
 
 @uvicore.table()
-class Users(Schema):
+class Users(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged

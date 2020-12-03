@@ -10,7 +10,7 @@ async def cli():
     import sys
 
     #from uvicore.auth.database.tables.users import Users
-    #from uvicore.auth.models.user import User
+    from uvicore.auth.models.user import User
     from app1.models import User, Post
 
     #dump(User)
@@ -39,7 +39,16 @@ async def cli():
 
 
     posts = await Post.query().include('creator.contact', 'attributes').get()
+    #posts = await User.query().include('info').get()
     dump(posts)
+
+    #dump("Hi there, my name is matthew reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?  Again, my name is Matthew Reschke, what is your name? Hi there, my name is matthew reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?")
+    #dump(123.32)
+
+    #db = await uvicore.db.database()
+    #await db.disconnect()
+    #dump(db)
+
 
     #dump(uvicore.ioc.bindings)
 
@@ -48,7 +57,14 @@ async def cli():
     #dump(uvicore.ioc.bindings['uvicore.auth.database.tables.users.Users'])
     #dump(uvicore.ioc.bindings)
 
+    #dump(User.modelfields)
 
+    # from uvicore.orm import Field
+    # x = Field('id', name='user_id')
+    # dump(x)
+
+
+    #await uvicore.db.disconnect_all()
     dump('Play Done')
 
     # from app1.models.post import Post
@@ -175,3 +191,8 @@ async def cli():
     # dump(comments)
 
     #posts = await Post.query().include('creator.contact', 'comments.creator.info', 'tags.creator.contact', 'tags.creator.info').get()
+
+
+# @cli.resultcallback()
+# await def after_command(result, **kwargs):
+#     await uvicore.db.disconnect_all()

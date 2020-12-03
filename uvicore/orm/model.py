@@ -3,9 +3,10 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 from pydantic import BaseModel as PydanticBaseModel
 
 import uvicore
+import sqlalchemy as sa
 from uvicore.contracts import Model as ModelInterface
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, MorphMany, MorphOne)
+                                HasOne, MorphMany, MorphOne, MorphToMany)
 from uvicore.orm.mapper import _Mapper
 from uvicore.orm.query import _OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
@@ -136,7 +137,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             relations = {}
             skip_children = False
             for (fieldname, value) in model.items():
-                field = entity.modelfields.get(fieldname)
+                field = entity.modelfields.get(fieldname)  # Using direct dictionary to skip bad values in dict
                 if not field: continue
                 if not field.relation: continue
                 relation = field.relation.fill(field)
@@ -209,7 +210,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     await relation.entity.insert_with_relations(childmodels)
 
                 # Insert Many-To-Many
-                elif type(relation) == BelongsToMany:
+                elif type(relation) == BelongsToMany or type(relation) == MorphToMany:
                     # By using .create, we are both linking the records in the pivot/relation table
                     # and also createing the actual record if it does not exist
                     await model_instance.create(relation.name, data)
@@ -224,7 +225,20 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
     async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         # Same as create, except it deletes all first, so it sets the entire children
-        await self.delete(relation_name)
+
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Get field and relation info
+        field = entity.modelfield(relation_name)
+        relation = field.relation.fill(field)
+
+        if type(relation) == BelongsToMany or type(relation) == MorphToMany:
+            # Delete does not work for these relations, only unlink
+            await self.unlink(relation_name)
+        else:
+            # Delete works for these relations
+            await self.delete(relation_name)
         await self.create(relation_name, models)
 
     async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
@@ -232,12 +246,12 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         await self.create(relation_name, models)
 
     async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
-        """Create related records and link them to this parent (self) model"""
+        """Create related child records and link them to this parent (self) model"""
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
         # Get field and relation info
-        field = entity.modelfields.get(relation_name)
+        field = entity.modelfield(relation_name)
         relation = field.relation.fill(field)
 
         # Convert to list
@@ -269,7 +283,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
         # Cannot assume a record has been created or linked, so loop each and test
         # Because of this, we cannot bulk insert
-        elif type(relation) == BelongsToMany:
+        elif type(relation) == BelongsToMany or type(relation) == MorphToMany:
             for model in models:
                 # If its PK is set, it already exists
                 create = getvalue(model, relation.entity.pk) == None
@@ -312,9 +326,12 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         values = self.mapper().table()
 
         # Check if exists
+        exists = None
         table = entity.table
-        query = table.select().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
-        exists = await entity.fetchone(query)
+        if getattr(self, entity.pk):
+            query = sa.select([getattr(table.c, entity.mapper(entity.pk).column())]).select_from(table).where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+            #query = table.select().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))  # Don't select *
+            exists = await entity.fetchone(query)  # Returns None if not exists
 
         if exists:
             # Record exists, perform update
@@ -348,17 +365,20 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
-        # Why not be able to say post.delete('image') ??
+        # COMMENT on deleting children
         # Well it could only work for HasOne/MorphOne, or possibly HasMany.  But those tables can simply
         # be deleted manually image.find(1).delete() for example.  For others like BelongsToMany we don't ever want
-        # to delete the record and it could be deleted to many other records through the pivot, so we use unlink() instead
-        # and we cna also manually delete it if we watned (tags.where(post=1).delete() etc...)
+        # to delete the record and it could be used by many other records through the pivot, so we use unlink() instead
+        # and we can also manually delete it if we watned (tags.where(post=1).delete() etc...)
         # So not sure I want a delete() to handle children?  If so maybe just HasOne and MorphOne?  Because with HasMany
         # you would also have to speicy WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
         # With a HasOne/MorphOne you could at least do post.delete('image') and thats quicker than image.find(post=1).delete() manually?
+
+        # Notice I have not yet added delete for HasMany (likd post comments).  May be a bit dangerous maybe?
+
         if relation_name is not None:
             # Deleting children, do NOT delete the parent after the children, this is children only
-            field = entity.modelfields.get(relation_name)
+            field = entity.modelfield(relation_name)
             relation = field.relation.fill(field)
             rel_table = relation.entity.table
 
@@ -395,53 +415,125 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         entity = self.__class__
 
         # Get field and relation info
-        field = entity.modelfields.get(relation_name)
+        field = entity.modelfield(relation_name)
         relation = field.relation.fill(field)
 
-        # Linking only works for Many-To-Many relations
-        if type(relation) != BelongsToMany: raise Exception('Linking is for Many-To-Many relations only.')
-
-        #dump(relation.entity.pk)
-        #dump(field, relation)
-        #dump('About to link these ' + relation_name, models, 'to this model', entity, 'on record with pk ' + str(pk), 'using pivot table ' + relation.join_tablename, '-------')
+        # Ensure models are always a list
+        if type(models) != list: models = [models]
 
         # Insert linkage data one link at a time so we can gracefully skip duplicates
-        if type(models) != list: models = [models]
-        for model in models:
-            # Set pivot relation data
-            data = {
-                relation.left_key: getvalue(self, entity.pk),
-                relation.right_key: getvalue(model, relation.entity.pk)
-            }
+        if type(relation) == BelongsToMany:
+            for model in models:
+                # Set pivot relation data
+                left_key_value = getvalue(self, entity.pk)
+                right_key_value = getvalue(model, relation.entity.pk)
+                pivot = {
+                    relation.left_key: left_key_value,
+                    relation.right_key: right_key_value
+                }
 
-            # Try insert, fail silently if exists
-            try:
-                query = relation.join_table.insert().values(**data)
-                await entity.execute(query)
-            except:
-                # Ignore Integrity Errors
-                pass
+                # Check if exists.
+                # The encode/databases layer does NOT abstract each backend DB libraries exceptions
+                # into a common interface so You cannot catch generic IntegrityError.  So instead of a
+                # try catch, I will see if the record exists manually first :( - See https://github.com/encode/databases/issues/162
+                table = relation.join_table
+                query = (
+                    sa.select([getattr(table.c, relation.left_key)]).select_from(table)
+                    .where(getattr(table.c, relation.left_key) == left_key_value)
+                    .where(getattr(table.c, relation.right_key) == right_key_value)
+                )
+                exists = await entity.fetchone(query)  # Returns None if not exists
+
+                if not exists:
+                    query = relation.join_table.insert().values(**pivot)
+                    await entity.execute(query)
+
+                # # Try insert, fail silently if exists
+                # try:
+                #     query = relation.join_table.insert().values(**pivot)
+                #     await entity.execute(query)
+                # except:
+                #     # Ignore Integrity Errors
+                #     pass
+
+        elif type(relation) == MorphToMany:
+            for model in models:
+                # Set polymorphic pivor relation data
+                left_type_value = entity.tablename
+                left_key_value = getvalue(self, entity.pk)
+                right_key_value = getvalue(model, relation.entity.pk)
+                pivot = {
+                    relation.left_type: left_type_value,
+                    relation.left_key: left_key_value,
+                    relation.right_key: right_key_value
+                }
+
+                # Check if exists.
+                # The encode/databases layer does NOT abstract each backend DB libraries exceptions
+                # into a common interface so You cannot catch generic IntegrityError.  So instead of a
+                # try catch, I will see if the record exists manually first :( - See https://github.com/encode/databases/issues/162
+                table = relation.join_table
+                query = (
+                    sa.select([getattr(table.c, relation.left_type)]).select_from(table)
+                    .where(getattr(table.c, relation.left_type) == left_type_value)
+                    .where(getattr(table.c, relation.left_key) == left_key_value)
+                    .where(getattr(table.c, relation.right_key) == right_key_value)
+                )
+                exists = await entity.fetchone(query)  # Returns None if not exists
+
+                if not exists:
+                    query = relation.join_table.insert().values(**pivot)
+                    await entity.execute(query)
+
+
+                # Try insert, fail silently if exists
+                # try:
+                #     query = relation.join_table.insert().values(**pivot)
+                #     await entity.execute(query)
+                # except pymysql.err.IntegrityError:
+                #     # Ignore Integrity Errors
+                #     pass
+
+        else:
+            # Linking only works for Many-To-Many relations
+            raise Exception('Linking is for Many-To-Many relations only.')
 
     async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
         # Get field and relation info
-        field = entity.modelfields.get(relation_name)
+        field = entity.modelfield(relation_name)
         relation = field.relation.fill(field)
 
-        # Unlinking only works for Many-To-Many relations
-        if type(relation) != BelongsToMany: raise Exception('Linking is for Many-To-Many relations only.')
-
-        # Get table and start where on self ID
-        table = relation.join_table
-        query = table.delete().where(getattr(table.c, relation.left_key) == getattr(self, entity.pk))
+        # Ensure model is a list
         if models is not None:
-            # Add in proper relation Ids
             if type(models) != list: models = [models]
             ids = [getvalue(x, relation.entity.pk) for x in models]
-            query = query.where(getattr(table.c, relation.right_key).in_(ids))
-        await entity.execute(query)
+
+        if type(relation) == BelongsToMany:
+            # Get table and start where on self ID
+            table = relation.join_table
+            query = table.delete().where(getattr(table.c, relation.left_key) == getattr(self, entity.pk))
+            if models is not None:
+                # Add in proper relation Ids
+                query = query.where(getattr(table.c, relation.right_key).in_(ids))
+            await entity.execute(query)
+
+        elif type(relation) == MorphToMany:
+            # Get table and start where on self ID
+            table = relation.join_table
+            query = (
+                table.delete()
+                .where(getattr(table.c, relation.left_type) == entity.tablename)
+                .where(getattr(table.c, relation.left_key) == getvalue(self, entity.pk))
+            )
+            if models is not None:
+                # Add in proper relation Ids
+                query = query.where(getattr(table.c, relation.right_key).in_(ids))
+            await entity.execute(query)
+        else:
+            raise Exception('Uninking is for Many-To-Many relations only.')
 
     async def _before_save(self):
         #dump('MODEL-HOOK-BEFORE-SAVE')

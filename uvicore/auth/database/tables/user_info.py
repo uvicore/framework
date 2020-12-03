@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
 import uvicore
-from uvicore.database.table import Schema, SchemaOLD
+from uvicore.database import Table
 from uvicore.support.dumper import dd, dump
 
 # Get related tablenames with proper prefixes
@@ -9,7 +9,7 @@ users = uvicore.db.tablename('auth.users')
 
 
 @uvicore.table()
-class UserInfo(Schema):
+class UserInfo(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged

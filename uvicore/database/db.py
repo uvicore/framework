@@ -133,6 +133,16 @@ class _Db(DatabaseInterface):
         #await self._connect(metakey=metakey)
         return self.databases.get(metakey)
 
+    async def disconnect(self, connection: str = None, metakey: str = None) -> None:
+        metakey = self.metakey(connection, metakey)
+        database = self.databases.get(metakey)
+        if database.is_connected:
+            await database.disconnect()
+
+    async def disconnect_all(self):
+        for database in self.databases.keys():
+            await self.disconnect(metakey=database)
+
     async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
         database = await self.database(connection, metakey)
         return await database.fetch_all(query, values)

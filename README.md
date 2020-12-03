@@ -23,3 +23,20 @@ Under heavy development.  Do NOT use this repository yet.
 * All new custom asynchronous ORM (NOT another django ORM clone) with support for every relationship including polymorphism.  Enjoy Laravel's Eloquent ORM?  You'll love this one.
 * Full python type hinting for IDE code intellisense across every module including ORM model fields and methods.
 
+
+
+## ToDo
+
+* Write complete ORM tests with 100% coverage
+* Need better ORM where AND with OR mixed around.  Currently it only does all ANDs then all WHEREs which won't work for complex queries.  For example grouping 2 where ANDs with an OR like so
+
+```sql
+SELECT DISTINCT posts.id, posts.unique_slug, posts.title, posts.other, posts.creator_id, posts.owner_id, attributes.*
+FROM posts LEFT OUTER JOIN attributes ON attributes.attributable_type = 'posts' AND posts.id = attributes.attributable_id
+WHERE
+(attributes.key = 'post1-test1' and attributes.value = 'value for post1-test1')
+or
+(attributes.key = 'post2-test1' and attributes.value = 'value for post2-test1')
+```
+
+* Cannot update attributes from a parent (post.add('attributes'))...IntegrityError.  See posts seeder for notes.

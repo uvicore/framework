@@ -10,7 +10,7 @@ from app1.models.image import Image
 from app1.models.attribute import Attribute
 from uvicore.support.dumper import dump, dd
 
-from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany, HasMany, MorphOne, MorphMany
+from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany, HasMany, MorphOne, MorphMany, MorphToMany
 
 #@uvicore.ioc.bind('app1.models.post.Post')
 
@@ -101,7 +101,6 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     # Polymorphic One-To-One image
     image: Optional[Image] = Field(None,
         description="Post Image",
-        #relation=MorphOne('app1.models.image.Image', 'imageable', 'id') # Local key is optional
         relation=MorphOne('app1.models.image.Image', polyfix='imageable')
     )
 
@@ -113,12 +112,20 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         #relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable')
     )
 
+    # Polymorphic Many-To-Many Hashtags
+    hashtags: Optional[List[Tag]] = Field(None,
+        description="Post Hashtags",
+        relation=MorphToMany('app1.models.hashtag.Hashtag', join_tablename='hashtaggables', polyfix='hashtaggable', right_key='hashtag_id')
+    )
+
+
+
     def cb_results(self):
         return str(self.slug) + ' callback'
 
     async def _before_save(self):
         await super()._before_save()
-        dump('yyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
+        #dump('yyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
         #if self.other is not None:
             #self.other = self.other + ' !!!!!!!!!!!!!!!!!!!'
 

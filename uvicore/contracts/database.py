@@ -89,6 +89,16 @@ class Database(ABC):
         pass
 
     @abstractmethod
+    async def disconnect(self, connection: str = None, metakey: str = None) -> None:
+        """Disconnect from database by connection str or metakey"""
+        pass
+
+    @abstractmethod
+    async def disconnect_all(self):
+        """Disconnect from all connected databases"""
+        pass
+
+    @abstractmethod
     async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[Mapping]:
         """Fetch List of records from a SQLAlchemy Core Query based on connection str or metakey"""
         pass

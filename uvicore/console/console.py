@@ -33,9 +33,23 @@ title_ideas = """
     License http://mreschke.com/license/mit
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')
-def _cli():
+async def _cli():
+    await before_command()
     pass
 
+
+async def before_command():
+    # FIXME, right here you can perform BEFORE any command code, like before_command event dispatch
+    # Could also do this in the command decorator?  No because all commands are loaded up front, so all fire
+    # before a single command does
+    #print('before command here')
+    pass
+
+
+@_cli.resultcallback()
+async def after_command(result, **kwargs):
+    # FIXME, right here you can perform AFTER any command code, like after_command event dispatch
+    await uvicore.db.disconnect_all()
 
 # IoC Class Instance
 # No because not to be used by the public

@@ -130,7 +130,7 @@ async def test_where_or(app1):
 async def test_where_and_or(app1):
     from uvicore.auth.models.user import User
     users: List[UserModel] = await (User.query()
-        .where('app1_extra', None)
+        .where('app1_extra', 'null')
         .or_where([
             ('email', 'manager1@example.com'),
             ('email', 'user2@example.com'),

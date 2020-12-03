@@ -1,11 +1,11 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema, SchemaOLD
+from uvicore.database import Table
 from uvicore.support.dumper import dump, dd
 
 
 @uvicore.table()
-class Groups(Schema):
+class Groups(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged

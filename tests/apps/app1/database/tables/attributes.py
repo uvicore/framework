@@ -1,6 +1,6 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema
+from uvicore.database import Table
 from uvicore.support.dumper import dump
 
 
@@ -8,7 +8,7 @@ from uvicore.support.dumper import dump
 #users = uvicore.db.tablename('auth.users')
 
 @uvicore.table()
-class Attributes(Schema):
+class Attributes(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged
@@ -39,6 +39,7 @@ class Attributes(Schema):
         sa.UniqueConstraint('attributable_type', 'attributable_id', 'key')
 
         # If you don't want an ID primary_key, you could use the combined poly IDs as a PK
+        # But the ORM can't handle duel PKs at the moment
         #sa.PrimaryKeyConstraint('attributable_type', 'attributable_id', 'key'),
     ]
 

@@ -1,6 +1,6 @@
 import uvicore
 import sqlalchemy as sa
-from uvicore.database.table import Schema
+from uvicore.database import Table
 from uvicore.support.dumper import dump
 
 
@@ -8,7 +8,7 @@ from uvicore.support.dumper import dump
 users = uvicore.db.tablename('auth.users')
 
 @uvicore.table()
-class Contacts(Schema):
+class Contacts(Table):
 
     # Actual database table name
     # Plural table names and singluar model names are encouraged

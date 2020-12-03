@@ -4,20 +4,17 @@ import sys
 from typing import Any, Dict, List, NamedTuple, OrderedDict, Tuple
 
 import uvicore
-#from uvicore import config
-#from uvicore.configuration import Config
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
-#from uvicore.database.connection import Connection
-from uvicore.database import Connection
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
+from uvicore.database import Connection
+from uvicore.package import Package
+from uvicore.support.collection import dotget
 from uvicore.support.dumper import dd, dump
 from uvicore.support.hash import md5
 from uvicore.support.module import load, location
-from uvicore.package import Package
-from uvicore.support.collection import dotget
 
 
 @uvicore.service('uvicore.foundation.application._Application',

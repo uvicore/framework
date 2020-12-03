@@ -7,10 +7,9 @@ from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import BinaryExpression
 
-from prettyprinter import pretty_call, register_pretty
-from pydantic.utils import Representation
 from sqlalchemy.sql import quoted_name
 from collections import OrderedDict as ODict
+from dataclasses import dataclass
 
 import uvicore
 from uvicore.contracts import QueryBuilder as BuilderInterface
@@ -20,131 +19,19 @@ B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
 
 
-class _Column(Representation):
-    __slots__ = (
-        'sacol',
-        'name',
-        'alias',
-        #'field',
-        'connection',
-        'table',
-        'tablename',
-    )
-    def __init__(self, sacol: sa.Column, name: str, alias: str, connection: str, table: sa.Table, tablename: str):
-        self.sacol = sacol
-        self.name = name
-        self.alias = alias
-        #self.field = field
-        self.connection = connection
-        self.table = table
-        self.tablename = tablename
-
-
-@register_pretty(_Column)
-def pretty_query(value, ctx):
-    return pretty_call(ctx, _Column, **{key: getattr(value, key) for key in _Column.__slots__})
-
-
-class _Join(Representation):
-    __slots__ = (
-        'table',
-        'tablename',
-        'left',
-        'right',
-        'onclause',
-        'alias',
-        'method'
-    )
-    def __init__(self, table: sa.Table, tablename: str, left: _Column, right: _Column, onclause: BinaryExpression, alias: str, method: str):
-        self.table = table
-        self.tablename = tablename
-        self.left = left
-        self.right = right
-        self.onclause = onclause
-        self.alias = alias
-        self.method = method
-
-@register_pretty(_Join)
-def pretty_query(value, ctx):
-    return pretty_call(ctx, _Join, **{key: getattr(value, key) for key in _Join.__slots__})
-
-
-class _Query(Representation):
-    __slots__ = (
-        'includes',
-        'selects',
-        'wheres',
-        'or_wheres',
-        'filters',
-        'or_filters',
-        'group_by',
-        'order_by',
-        'sort',
-        'limit',
-        'offset',
-        'keyed_by',
-        'relations',
-        'joins',
-        'table',
-    )
-
-    def __init__(self):
-        self.includes: List = []
-        self.selects: List = []
-        self.wheres: List[Tuple] = []
-        self.or_wheres: List[Tuple] = []
-        self.filters: List[Tuple] = []
-        self.or_filters: List[Tuple] = []
-        self.group_by: List = []
-        self.order_by: List[Tuple] = []
-        self.sort: List[Tuple] = []
-        self.limit: Optional[int] = None
-        self.offset: Optional[int] = None
-        self.keyed_by: Optional[str] = None
-        self.relations: OrderedDict[str, Relation] = ODict()
-        self.joins: List[_Join] = []
-        self.table: sa.Table
-
-    def copy(self):
-        # Objects are always byref in python.  We want a complete deep clone
-        # of a query.  Must use deep or it won't copy the .joins since its a
-        # list of an actual class also.  Shallow copies all lists and dicts, but
-        # not classes or list of classes, they will be byref unless deep
-        table = self.table
-        self.table = None
-        newquery = deepcopy(self)
-        self.table = table
-
-        # Copy the original table by ref back or else SQLAlchemy will see a new
-        # table class ID and think you are joining 2 different tables.  We must keep
-        # the exact instance of each table.
-        newquery.table = table
-        return newquery
-
-@register_pretty(_Query)
-def pretty_query(value, ctx):
-    return pretty_call(ctx, _Query, **{key: getattr(value, key) for key in _Query.__slots__})
-
-
-# Private use only, not for public user access
-#Column = _Column
-#Join = _Join
-#Query = _Query
-
 @uvicore.service()
 class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
     def __init__(self):
-        self.query = _Query()
+        self.query = Query()
 
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
             # .where('column', 'value')
             # .where('column, '=', 'value')
-            if not value:
-                value = operator
-                operator = '='
+            # Swap operator and value
+            if not value: value = operator; operator = '='
             self.query.wheres.append((column, operator.lower(), value))
         elif type(column) == list:
             # Multiple wheres in one as a List[Tuple] or List[BinaryExpression]
@@ -215,7 +102,7 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         query, saquery = self._build_query('select', self.query.copy())
         return str(saquery)
 
-    def _build_query(self, method: str, query: _Query) -> Tuple:
+    def _build_query(self, method: str, query: Query) -> Tuple:
         # Convert our Query into SQLAlchemy query
         #saquery: sa.sql.select = None
 
@@ -259,13 +146,13 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         # Return query and SQLAlchemy query
         return (query, saquery)
 
-    def _build_group_by(self, query: _Query, saquery):
+    def _build_group_by(self, query: Query, saquery):
         for column in query.group_by:
             column = self._column(column, query)
             saquery = saquery.group_by(column.sacol)
         return saquery
 
-    def _build_order_by(self, query: _Query, saquery):
+    def _build_order_by(self, query: Query, saquery):
         for order_by in query.order_by:
             if type(order_by) == tuple:
                 column = self._column(order_by[0], query).sacol
@@ -280,14 +167,14 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
                 saquery = saquery.order_by(order_by)
         return saquery
 
-    def _build_from(self, query: _Query, saquery) -> sa.select.select_from:
+    def _build_from(self, query: Query, saquery) -> sa.select.select_from:
         joins = query.table
         for join in query.joins:
             method = getattr(joins, join.method)
             joins = method(right=join.table, onclause=join.onclause)
         return saquery.select_from(joins)
 
-    def _build_select(self, query: _Query) -> sa.select:
+    def _build_select(self, query: Query) -> sa.select:
         selects = []
 
         if not query.selects and not query.joins:
@@ -312,7 +199,7 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         # Return SQLAlchemy .select() statment with above columns
         return sa.select(selects)
 
-    def _build_where(self, query: _Query, wheres: List[Tuple]):
+    def _build_where(self, query: Query, wheres: List[Tuple]):
         """Build all wheres"""
         statements = []
         for where in wheres:
@@ -347,7 +234,7 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             # Just take first PK for now???
             return str(column.name)
 
-    def _column(self, dotname: Any, query: _Query = None) -> _Column:
+    def _column(self, dotname: Any, query: Query = None) -> Column:
         # Column() class builder from dotname
         if not query: query = self.query
         if dotname is None: return None
@@ -379,9 +266,9 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
                 alias = str(table.name) + '__' + name
 
         # Return new column class
-        return _Column(column, name, alias, conn, table, tablename)
+        return Column(column, name, alias, conn, table, tablename)
 
-    def _column_from_string(self, dotname: str, query: _Query) -> Tuple:
+    def _column_from_string(self, dotname: str, query: Query) -> Tuple:
         name = dotname
         table = query.table
         tablename = str(table.name)
@@ -422,3 +309,140 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 # No need to IoC this one because it is always inherited
 # If you need to overrite it use the IoC to swap DbQueryBuilder or OrmQueryBuilder
 # and set a new parent from there.
+
+
+@dataclass
+@uvicore.service()
+class Column:
+    # Private Column dataclass.  Not meant to be imported by any user but not _Column for display purposes
+    # in logging and debugging.  I hate _ especially for dataclasses
+
+    # __slots__ = (
+    #     'sacol',
+    #     'name',
+    #     'alias',
+    #     #'field',
+    #     'connection',
+    #     'table',
+    #     'tablename',
+    # )
+    sacol: sa.Column
+    name: str
+    connection: str
+    table: sa.Table
+    tablename: str
+
+    def __init__(self, sacol: sa.Column, name: str, alias: str, connection: str, table: sa.Table, tablename: str):
+        self.sacol = sacol
+        self.name = name
+        self.alias = alias
+        #self.field = field
+        self.connection = connection
+        self.table = table
+        self.tablename = tablename
+
+
+@dataclass
+@uvicore.service()
+class Join:
+    # Private Join dataclass.  Not meant to be imported by any user but not _Join for display purposes
+    # in logging and debugging.  I hate _ especially for dataclasses
+
+    # __slots__ = (
+    #     'table',
+    #     'tablename',
+    #     'left',
+    #     'right',
+    #     'onclause',
+    #     'alias',
+    #     'method'
+    # )
+    table: sa.Table
+    tablename: str
+    left: Column
+    right: Column
+    onclause: BinaryExpression
+    alias: str
+    method: str
+
+    def __init__(self, table: sa.Table, tablename: str, left: Column, right: Column, onclause: BinaryExpression, alias: str, method: str):
+        self.table = table
+        self.tablename = tablename
+        self.left = left
+        self.right = right
+        self.onclause = onclause
+        self.alias = alias
+        self.method = method
+
+
+@dataclass
+@uvicore.service()
+class Query:
+    # Private Query dataclass.  Not meant to be imported by any user but not _Query for display purposes
+    # in logging and debugging.  I hate _ especially for dataclasses
+
+    # __slots__ = (
+    #     'includes',
+    #     'selects',
+    #     'wheres',
+    #     'or_wheres',
+    #     'filters',
+    #     'or_filters',
+    #     'group_by',
+    #     'order_by',
+    #     'sort',
+    #     'limit',
+    #     'offset',
+    #     'keyed_by',
+    #     'relations',
+    #     'joins',
+    #     'table',
+    # )
+    includes: List
+    selects: List
+    wheres: List
+    or_wheres: List[Tuple]
+    filters: List[Tuple]
+    or_filters: List[Tuple]
+    group_by: List
+    order_by: List[Tuple]
+    sort: List[Tuple]
+    limit: Optional[int]
+    offset: Optional[int]
+    keyed_by: Optional[str]
+    relations: OrderedDict[str, Relation]
+    joins: List[Join]
+    table: sa.Table
+
+    def __init__(self):
+        self.includes: List = []
+        self.selects: List = []
+        self.wheres: List[Tuple] = []
+        self.or_wheres: List[Tuple] = []
+        self.filters: List[Tuple] = []
+        self.or_filters: List[Tuple] = []
+        self.group_by: List = []
+        self.order_by: List[Tuple] = []
+        self.sort: List[Tuple] = []
+        self.limit: Optional[int] = None
+        self.offset: Optional[int] = None
+        self.keyed_by: Optional[str] = None
+        self.relations: OrderedDict[str, Relation] = ODict()
+        self.joins: List[Join] = []
+        self.table: sa.Table = None
+
+    def copy(self):
+        # Objects are always byref in python.  We want a complete deep clone
+        # of a query.  Must use deep or it won't copy the .joins since its a
+        # list of an actual class also.  Shallow copies all lists and dicts, but
+        # not classes or list of classes, they will be byref unless deep
+        table = self.table
+        self.table = None
+        newquery = deepcopy(self)
+        self.table = table
+
+        # Copy the original table by ref back or else SQLAlchemy will see a new
+        # table class ID and think you are joining 2 different tables.  We must keep
+        # the exact instance of each table.
+        newquery.table = table
+        return newquery
