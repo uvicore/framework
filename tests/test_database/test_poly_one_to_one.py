@@ -52,6 +52,6 @@ async def test_orm(app1):
 
 
 @pytest.mark.asyncio
-async def test_orm(app1):
+async def XXtest_orm(app1):
     dump('poly test done')
     assert False
