@@ -4,6 +4,40 @@ from uvicore.console import command
 from uvicore.support.dumper import dump, dd
 
 @command()
+async def cliX():
+
+    from uvicore.support import str
+
+
+    print(str.camel('AcmeApp'))
+    print(str.camel('acmeApp'))
+    print(str.camel('Acme_App'))
+    print(str.camel('Acme_app'))
+    print(str.camel('acme_App'))
+    print(str.camel('Acme-app'))
+    print(str.camel('Acme-App'))
+    print(str.camel('Acme App'))
+    print(str.camel('acme app'))
+    print(str.camel('Acme app'))
+    print(str.camel('acme App'))
+
+    print(str.camel('AcmeAppTwo'))
+    print(str.camel('acmeAppTwo'))
+    print(str.camel('Acme_App_Two'))
+    print(str.camel('Acme_app_two'))
+    print(str.camel('acme_App_Two'))
+    print(str.camel('Acme-app-two'))
+    print(str.camel('Acme-App-Two'))
+    print(str.camel('Acme App Two'))
+    print(str.camel('acme app two'))
+    print(str.camel('Acme app two'))
+    print(str.camel('acme App Two'))
+
+
+    print(str.camel("Hi don't 12 there! my$ name 'is' matthew reschke, what is your name please???"))
+
+
+@command()
 async def cli():
     """Play"""
 

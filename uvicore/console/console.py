@@ -49,7 +49,14 @@ async def before_command():
 @_cli.resultcallback()
 async def after_command(result, **kwargs):
     # FIXME, right here you can perform AFTER any command code, like after_command event dispatch
-    await uvicore.db.disconnect_all()
+
+    # Disconnect database
+    # Will fail if uvicore.database package is not loaded, so check first
+    if 'uvicore.database' in uvicore.app.providers:
+        try:
+            await uvicore.db.disconnect_all()
+        except:
+            pass
 
 # IoC Class Instance
 # No because not to be used by the public
