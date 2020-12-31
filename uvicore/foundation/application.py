@@ -132,6 +132,12 @@ class _Application:
         # Build recursive providers graph
         self._build_provider_graph(app_config)
 
+        # Failsafe if no http package, force console
+        # This solves a ./uvicore http serve error if you don't have the http package
+        if 'uvicore.http' not in self.providers:
+            self._is_console = True
+            self._is_http = False
+
         # Register and merge all providers
         self._register_providers(app_config)
 

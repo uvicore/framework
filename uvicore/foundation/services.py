@@ -34,9 +34,9 @@ class Foundation(ServiceProvider):
         # )
 
     def boot(self):
-        pass
-        # Register Ioc commands
+        # Regster commands
         self.commands([
+            # Register Ioc commands
             {
                 'group': {
                     'name': 'ioc',
@@ -49,12 +49,9 @@ class Foundation(ServiceProvider):
                     {'name': 'overrides', 'module': 'uvicore.foundation.commands.ioc.overrides'},
                     {'name': 'type', 'module': 'uvicore.foundation.commands.ioc.type'},
                 ],
-            }
-        ])
+            },
 
-
-        # Register Package commands
-        self.commands([
+            # Register Package commands
             {
                 'group': {
                     'name': 'package',
@@ -66,11 +63,9 @@ class Foundation(ServiceProvider):
                     {'name': 'list', 'module': 'uvicore.foundation.commands.package.list'},
                     {'name': 'show', 'module': 'uvicore.foundation.commands.package.show'},
                 ],
-            }
-        ])
+            },
 
-        # Register Event commands
-        self.commands([
+            # Register Event commands
             {
                 'group': {
                     'name': 'event',
@@ -81,5 +76,5 @@ class Foundation(ServiceProvider):
                     {'name': 'list', 'module': 'uvicore.events.commands.event.list'},
                     {'name': 'show', 'module': 'uvicore.events.commands.event.show'},
                 ],
-            }
+            },
         ])

@@ -27,4 +27,18 @@ class Orm(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
-        pass
+        # Register commands
+        self.commands([
+            # Extend schematic generator commands
+            {
+                'group': {
+                    'name': 'gen',
+                    'parent': 'root',
+                    'extend': True,
+                },
+                'commands': [
+                    {'name': 'model', 'module': 'uvicore.orm.commands.generators.model'},
+                ],
+            }
+        ])
+

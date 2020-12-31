@@ -14,7 +14,10 @@ from uvicore.support.module import load, location
 
 @uvicore.service(aliases=['ServiceProvider', 'Provider'])
 class ServiceProvider(ProviderInterface):
-    """asdf"""
+
+    # Class variable of all registered click groups from app packages
+    # Used to extend an existing group from other packages
+    __click_groups__ = {}
 
     @property
     def app(self) -> Application:
@@ -181,12 +184,20 @@ class ServiceProvider(ProviderInterface):
             group_name = group.get('group').get('name')
             group_parent = group.get('group').get('parent')
             group_help = group.get('group').get('help')
+            extend = group.get('group').get('extend') or False
             commands = group.get('commands') or []
 
-            # Create a new click group
-            @click_group(help=group_help)
-            def group():
-                pass
+            if extend and group_name in self.__class__.__click_groups__:
+                # Group already registered in a previous package, extend it
+                group = self.__class__.__click_groups__[group_name]
+            else:
+                # Create a new click group
+                @click_group(help=group_help)
+                def group():
+                    pass
+                self.__class__.__click_groups__[group_name] = group
+
+            # Track this one packages multiple groups
             click_groups[group_name] = group
 
             # Add each command to this new click group
