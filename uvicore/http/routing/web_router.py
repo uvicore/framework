@@ -41,6 +41,16 @@ class WebRouter(RouterInterface):
             methods=['GET']
         )
 
+    def post(self,
+        path: str,
+        name: str = None,
+    ) -> Callable:
+        return self._router.route(
+            path=path,
+            name=name,
+            methods=['POST']
+        )
+
     def include_router(self, router: "WebRouter") -> None:
         # Starlette does not have a _router.include_router  like FastAPI
         # This manually adds each route in the router to starlette router

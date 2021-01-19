@@ -7,7 +7,7 @@ class Foundation(ServiceProvider):
 
     def register(self):
 
-        # Register config
+        # Register configs
         self.configs([
             {'key': self.name, 'module': 'uvicore.foundation.config.foundation.config'}
         ])

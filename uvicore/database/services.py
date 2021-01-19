@@ -7,13 +7,6 @@ from uvicore.support.dumper import dump, dd
 class Database(ServiceProvider):
 
     def register(self) -> None:
-        """Register package into uvicore framework.
-        All packages are registered before the framework boots.  This is where
-        you define your packages configs and IoC bindings.  Configs are deep merged only after
-        all packages are registered.  No real work should be performed here as it
-        is very early in the bootstraping process and most internal processes are not
-        instantiated yet.
-        """
         # Register IoC bindings
         # self.bind('Database', 'uvicore.database.db._Db',
         #     singleton=True,
@@ -47,19 +40,15 @@ class Database(ServiceProvider):
         #         uvicore.db.add_connection(connection)
 
     def boot(self) -> None:
-        """Bootstrap package into uvicore framework.
-        Boot takes place after all packages are registered.  This means all package
-        configs are deep merged to provide a complete and accurate view of all configs.
-        This is where you load views, assets, routes, commands...
-        """
-
         # Define CLI commands to be added to the ./uvicore command line interface
         self.load_commands()
 
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface
         """
+        # Register commands
         self.commands([
+            # Register db commands
             {
                 'group': {
                     'name': 'db',
@@ -75,4 +64,18 @@ class Database(ServiceProvider):
                     {'name': 'connections', 'module': 'uvicore.database.commands.db.connections'},
                 ],
             },
+
+            # Extend schematic generator commands
+            {
+                'group': {
+                    'name': 'gen',
+                    'parent': 'root',
+                    'extend': True,
+                },
+                'commands': [
+                    {'name': 'table', 'module': 'uvicore.database.commands.generators.table'},
+                    {'name': 'seeder', 'module': 'uvicore.database.commands.generators.seeder'},
+                ],
+            }
+
         ])

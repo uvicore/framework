@@ -19,6 +19,18 @@ class Configuration(ServiceProvider):
         #     singleton=True,
         # )
 
+        # Register configuration system
+        self.register_configuration()
+
+    def boot(self) -> None:
+        """Bootstrap package into uvicore framework.
+        Boot takes place after all packages are registered.  This means all package
+        configs are deep merged to provide a complete and accurate view of all configs.
+        This is where you load views, assets, routes, commands..."""
+
+        pass
+
+    def register_configuration(self) -> None:
         # Set uvicore.log global
         uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
 
@@ -28,10 +40,7 @@ class Configuration(ServiceProvider):
         # Set main app config
         uvicore.config.set('app', self.app_config)
 
-    def boot(self) -> None:
-        """Bootstrap package into uvicore framework.
-        Boot takes place after all packages are registered.  This means all package
-        configs are deep merged to provide a complete and accurate view of all configs.
-        This is where you load views, assets, routes, commands..."""
-
-        pass
+    @staticmethod
+    def add_configs(c):
+        print('adding configs', c)
+        dump(uvicore.app.packages)

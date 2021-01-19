@@ -2,6 +2,7 @@ import uvicore
 from typing import List
 from starlette.staticfiles import StaticFiles as _Static
 
+
 @uvicore.service('uvicore.http.static._StaticFiles', aliases=['StaticFiles'])
 class _StaticFiles(_Static):
 

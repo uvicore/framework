@@ -1,3 +1,6 @@
+# This is the main auth config.  All items here can be overridden
+# when used inside other applications.  Accessible at config('uvicore.auth')
+
 config = {
 
     # --------------------------------------------------------------------------
@@ -6,11 +9,17 @@ config = {
     # This lets you control the service provider registrations.  If this app
     # is used as a package inside another app you might not want some things
     # registered in that context.
-    'register_web_routes': True,
-    'register_api_routes': True,
-    'register_views': True,
-    'register_assets': True,
-    'register_commands': True,
+    # 'registers': {
+    #     'web_routes': True,
+    #     'api_routes': True,
+    #     'middleware': True,
+    #     'views': True,
+    #     'assets': True,
+    #     'commands': True,
+    #     'models': True,
+    #     'tables': True,
+    #     'seeders': True,
+    # },
 
 
     # --------------------------------------------------------------------------
@@ -41,4 +50,5 @@ config = {
             },
         },
     },
+
 }

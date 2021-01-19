@@ -7,4 +7,4 @@ from uvicore.package.package import Package as _Package
 #     pass
 
 # Not sure I like proxy as it creates 2 classes on 2 different paths which can cause issues in type()
-from .package import Package
+from .package import Package, Registers

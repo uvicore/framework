@@ -53,18 +53,19 @@ class Auth(ServiceProvider):
         # Order does not matter as they are sorted topologically for ForeignKey dependencies
 
         # Using __init__.py now, so just import it
-        from uvicore.auth import models
-        #self.models([
-        #   'uvicore.auth.models.*',
-        #])
+        #from uvicore.auth import models
+        #dump(self.package)
+        self.models([
+           'uvicore.auth.models',
+        ])
 
         # Define data seeders
         # NO - Auth shouldn't do its own seeding.  Let the app do it all.
         # You think?  What if a package is an app, then it runs seeders, but if that app is used
         # inside another package, you can't stop it from seeding.  Need to figure out overrideing seeders array better
-        # self.seeders([
-        #     'uvicore.auth.database.seeders.seeders.seed'
-        # ])
+        self.seeders([
+            'uvicore.auth.database.seeders.seed'
+        ])
 
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""

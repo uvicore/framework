@@ -10,7 +10,7 @@ from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
 from uvicore.database import Connection
-from uvicore.package import Package
+from uvicore.package import Package, Registers
 from uvicore.support.collection import dotget
 from uvicore.support.dumper import dd, dump
 from uvicore.support.hash import md5
@@ -21,7 +21,7 @@ from uvicore.support.module import load, location
     aliases=['Application', 'application', 'App', 'app'],
     singleton=True,
 )
-class _Application:
+class _Application(ApplicationInterface):
     """Application private class.
 
     Do not import from this location.
@@ -114,6 +114,9 @@ class _Application:
         self._name = app_config.get('name')
         self._main = app_config.get('main')
 
+        # Merge running config/app.py paths dictionary with defaults and full path
+        self._build_paths(app_config)
+
         # Detect if running in console (to register commands)
         # Ensure console is False even when running ./uvicore http serve
         self._is_console = is_console
@@ -171,7 +174,7 @@ class _Application:
         for package, service in self.providers.items():
             self.perf('|---' + service['provider'])
 
-            # Instantiate the provider and call boot()
+            # Instantiate the provider and call register()
             provider = load(service['provider']).object(
                 app=self,
                 package=None,  # Not available in register()
@@ -200,10 +203,10 @@ class _Application:
             config_prefix = package_name
 
             # Add in package config with custom config
-            self.config.set(config_prefix + '.package', package_config)
+            uvicore.config.set(config_prefix + '.package', package_config)
 
             # Load this packages custom config by config_prefix
-            custom_config = self.config(config_prefix) or {}
+            custom_config = uvicore.config(config_prefix) or {}
 
             # Build package dataclass and append to all packages
             package = self._build_package(package_name, custom_config)
@@ -237,15 +240,23 @@ class _Application:
             view_paths=[],
             asset_paths=[],
             template_options={},
-            register_web_routes=custom_config.get('register_web_routes') or True,
-            register_api_routes=custom_config.get('register_api_routes') or True,
-            register_views=custom_config.get('register_views') or True,
-            register_assets=custom_config.get('register_assets') or True,
-            register_commands=custom_config.get('register_commands') or True,
+            registers=Registers(
+                web_routes=dotget(custom_config, 'registers.web_routes', True),
+                api_routes=dotget(custom_config, 'registers.api_routes', True),
+                middleware=dotget(custom_config, 'registers.middleware', True),
+                views=dotget(custom_config, 'registers.views', True),
+                assets=dotget(custom_config, 'registers.assets', True),
+                commands=dotget(custom_config, 'registers.commands', True),
+                models=dotget(custom_config, 'registers.models', True),
+                tables=dotget(custom_config, 'registers.tables', True),
+                seeders=dotget(custom_config, 'registers.seeders', True),
+            ),
             connection_default=dotget(custom_config, 'database.default'),
             connections=self._build_package_connections(custom_config),
-            models=[],
+            #models=[],
             seeders=[],
+            commands={},
+
         )
 
     def _build_package_connections(self, custom_config):
@@ -289,6 +300,34 @@ class _Application:
                 url=url,
             ))
         return connections
+
+    def _build_paths(self, app_config):
+        base = self.main.replace('.', '/')
+        defaults = {
+            'base': base,
+            'commands': 'commands',
+            'config': 'config',
+            'database': 'database',
+            'migrations': 'database/migrations',
+            'seeders': 'database/seeders',
+            'tables': 'database/tables',
+            'events': 'events',
+            'http': 'http',
+            'api': 'http/api',
+            'assets': 'http/assets',
+            'controllers': 'http/controllers',
+            'routes': 'http/routes',
+            'static': 'http/static',
+            'views': 'http/views',
+            'jobs': 'jobs',
+            'listeners': 'listeners',
+            'models': 'models',
+            'services': 'services',
+            'support': 'support',
+        }
+        app_config['paths'] = {**defaults, **app_config['paths']}
+        for key, value in app_config['paths'].items():
+            app_config['paths'][key] = os.path.realpath(self.path + '/' + self.main.replace('.', '/') + '/' + value)
 
     def _get_package_config(self, package: str, options: Dict):
         config_module = package + '.config.package.config'  # Default if not defined

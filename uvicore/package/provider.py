@@ -3,6 +3,7 @@ import sys
 from typing import Any, Dict, List, Union
 
 import uvicore
+from collections import OrderedDict
 #import typer_async as typer
 from uvicore.contracts import Application, Package
 from uvicore.contracts import Provider as ProviderInterface
@@ -83,7 +84,7 @@ class ServiceProvider(ProviderInterface):
         # Why? So we can inspect them from ./uvicore package list
 
         # Dont load views if config is disabled
-        if not self.package.register_views: return
+        if not self.package.registers.views: return
 
         for view in paths:
             # Find the actual file path of this view module
@@ -97,7 +98,7 @@ class ServiceProvider(ProviderInterface):
         # Why? So we can inspect them from ./uvicore package list
 
         # Dont load assets if config is disabled
-        if not self.package.register_assets: return
+        if not self.package.registers.assets: return
 
         for asset in paths:
             # Find the actual file path of this view module
@@ -106,13 +107,12 @@ class ServiceProvider(ProviderInterface):
             # Add path to package
             self.package.asset_paths.append(asset_path)
 
-
     def template(self, options: Dict) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used
         # Why? So we can inspect them from ./uvicore package list
 
         # Dont load templates if config is disabled
-        #if not package.register_views: return
+        if not self.package.registers.views: return
 
         # Add options to package
         self.package.template_options = options
@@ -122,7 +122,7 @@ class ServiceProvider(ProviderInterface):
         if uvicore.app.is_console: return
 
         # Dont load routes if config is disabled
-        if not self.package.register_web_routes: return
+        if not self.package.registers.web_routes: return
 
         # Import and instantiate apps WebRoutes class
         from uvicore.http.routing.web_router import WebRouter
@@ -135,7 +135,7 @@ class ServiceProvider(ProviderInterface):
         if uvicore.app.is_console: return
 
         # Dont load routes if config is disabled
-        if not self.package.register_api_routes: return
+        if not self.package.registers.api_routes: return
 
         # Import and instantiate apps APIRoutes class
         from uvicore.http.routing.api_router import ApiRouter
@@ -143,16 +143,36 @@ class ServiceProvider(ProviderInterface):
         routes = ApiRoutes(uvicore.app, self.package, ApiRouter, self.package.api_route_prefix)
         routes.register()
 
+    def middleware(self, middleware: OrderedDict):
+        # Dont load routes if running in CLI
+        if uvicore.app.is_console: return
+
+        # Dont load middleware if config is disabled
+        if not self.package.registers.middleware: return
+
+        dump('hi middleware')
+        dump(middleware)
+        dump(self.app.http)
+
     def models(self, models: List[str]) -> None:
+        # Dont load models if config is disabled
+        if not self.package.registers.models: return
+
         # Import all defined models so SQLAlchemy metedata is built
         for model in models:
-            if model not in self.package.models:
-                self.package.models.append(model)
-                #dd(model)
-                load(model)
+            #if model not in self.package.models:
+                #self.package.models.append(model)
+            load(model)
 
     def tables(self, tables: List[str]) -> None:
-        self.models(tables)
+        # Dont load tables if config is disabled
+        if not self.package.registers.tables: return
+
+        # Import all defined tables so SQLAlchemy metedata is built
+        for table in tables:
+            #if table not in self.package.tables:
+                #self.package.tables.append(model)
+            load(model)
 
     def seeders(self, seeders: List[str]) -> None:
         for seeder in seeders:
@@ -163,7 +183,7 @@ class ServiceProvider(ProviderInterface):
         # Only register command if running from the console
         # or from the http:serve command (register only the http group).
         # Do NOT register apps commands if apps config.register_commands if False
-        register = self.package.register_commands
+        register = self.package.registers.commands
         if uvicore.app.is_http: register = False
         for group in options:
             if group.get('group').get('name') == 'http':

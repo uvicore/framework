@@ -56,6 +56,9 @@ class Http(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
+        # Register HTTP Middleware
+        self.middleware(uvicore.config('app.middleware'))
+
         # Register HTTP Serve commands
         self.commands([
             {
@@ -70,8 +73,19 @@ class Http(ServiceProvider):
             }
         ])
 
+        # Alternative
+        # self.commands({
+        #     'root:http' {
+        #         'help': 'asdfasdf',
+        #         'extend': False,
+        #         'commands': [
+
+        #         ]
+        #     }
+        # })
+
     def booted(self, event: str, payload: Any) -> None:
-        """Custom event handler for uvicore.foundation.events.booted"""
+        """Custom event handler for uvicore.foundation.events.app.Booted"""
         self.mount_static_assets()
         self.create_template_environment()
 

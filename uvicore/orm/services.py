@@ -7,13 +7,7 @@ from uvicore.support.dumper import dump, dd
 class Orm(ServiceProvider):
 
     def register(self) -> None:
-        """Register package into uvicore framework.
-        All packages are registered before the framework boots.  This is where
-        you define your packages configs and IoC bindings.  Configs are deep merged only after
-        all packages are registered.  No real work should be performed here as it
-        is very early in the bootstraping process and most internal processes are not
-        instantiated yet.
-        """
+        pass
         # Register IoC bindings
         # Automatic - self.bind('Model', 'uvicore.orm.model._Model', aliases=['model'])
         # Automatic - self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
@@ -22,11 +16,10 @@ class Orm(ServiceProvider):
         #self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
     def boot(self) -> None:
-        """Bootstrap package into uvicore framework.
-        Boot takes place after all packages are registered.  This means all package
-        configs are deep merged to provide a complete and accurate view of all configs.
-        This is where you load views, assets, routes, commands...
-        """
+        # Define CLI commands to be added to the ./uvicore command line interface
+        self.load_commands()
+
+    def load_commands(self) -> None:
         # Register commands
         self.commands([
             # Extend schematic generator commands

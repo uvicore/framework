@@ -320,7 +320,7 @@ class _Logger(LoggerInterface):
                     break
 
         # Check excludes
-        if show and excludes:
+        if show and excludes and self._name is not None:
             for exclude in excludes:
                 if self._name[0:len(exclude)] == exclude:
                     show = False

@@ -27,7 +27,7 @@ class Console(ServiceProvider):
                 'group': {
                     'name': 'gen',
                     'parent': 'root',
-                    'help': 'Schematic Generators',
+                    'help': 'Generate new files (commands, models, views...)',
                 },
                 'commands': [
                     {'name': 'command', 'module': 'uvicore.console.commands.generators.command'},

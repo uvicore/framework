@@ -1,9 +1,14 @@
 import uvicore
 from uvicore.contracts import Package as PackageInterface
+from uvicore.contracts import Registers as RegistersInterface
+
 
 from dataclasses import dataclass
 from typing import Dict, List, NamedTuple
 from uvicore.contracts import Connection
+
+class Registers(RegistersInterface):
+    pass
 
 
 @uvicore.service(aliases=['Package', 'package'])
