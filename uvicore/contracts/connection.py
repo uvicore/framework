@@ -1,5 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
+from typing import Dict
 
 @dataclass
 class Connection(ABC):
@@ -15,3 +16,4 @@ class Connection(ABC):
     prefix: str
     metakey: str
     url: str
+    options: Dict

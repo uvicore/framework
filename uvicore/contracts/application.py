@@ -46,11 +46,11 @@ class Application(ABC):
         """HTTP Server Instance"""
         pass
 
-    @property
-    @abstractmethod
-    def config(self) -> Config:
-        """Configuration system"""
-        pass
+    # @property
+    # @abstractmethod
+    # def config(self) -> Config:
+    #     """Configuration system"""
+    #     pass
 
     @property
     @abstractmethod
@@ -121,12 +121,12 @@ class Application(ABC):
         """Add entry to debug performance counter"""
         pass
 
-    @abstractmethod
-    def dump(self, *args) -> None:
-        """Pretty print args to console"""
-        pass
+    # @abstractmethod
+    # def dump(self, *args) -> None:
+    #     """Pretty print args to console"""
+    #     pass
 
-    @abstractmethod
-    def dd(self, *args) -> None:
-        """Pretty print args to console and exit()"""
-        pass
+    # @abstractmethod
+    # def dd(self, *args) -> None:
+    #     """Pretty print args to console and exit()"""
+    #     pass

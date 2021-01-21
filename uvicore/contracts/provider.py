@@ -55,51 +55,54 @@ class Provider(ABC):
         pass
 
     @abstractmethod
-    def views(self, package: Package, paths: List) -> None:
-        """Register packages view paths"""
-        pass
-
-    @abstractmethod
-    def assets(self, package: Package, paths: List) -> None:
-        """Register packages asset paths"""
-        pass
-
-    @abstractmethod
-    def template(self, package: Package, options: Dict) -> None:
-        """Register packages view templating options"""
-        pass
-
-    @abstractmethod
-    def web_routes(self, package: Package, routes_class: Any) -> None:
-        """Register packages web routes"""
-        pass
-
-    @abstractmethod
-    def api_routes(self, package: Package, routes_class: Any) -> None:
-        """Register packages API routes"""
-        pass
-
-    @abstractmethod
-    def models(self, models: List[str]) -> None:
-        """Register packages database ORM models"""
-        pass
-
-    @abstractmethod
-    def tables(self, tables: List[str]) -> None:
-        """Register packages database tables"""
-        pass
-
-    @abstractmethod
-    def seeders(self, seeders: List[str]) -> None:
-        """Register packages database seeders"""
-        pass
-
-    @abstractmethod
-    def commands(self, package: Package, options: Dict) -> None:
-        """Register packages CLI commands"""
-        pass
-
-    @abstractmethod
     def configs(self, modules: List) -> None:
         """Register packages configs"""
         pass
+
+
+
+
+    # @abstractmethod
+    # def views(self, package: Package, paths: List) -> None:
+    #     """Register packages view paths"""
+    #     pass
+
+    # @abstractmethod
+    # def assets(self, package: Package, paths: List) -> None:
+    #     """Register packages asset paths"""
+    #     pass
+
+    # @abstractmethod
+    # def template(self, package: Package, options: Dict) -> None:
+    #     """Register packages view templating options"""
+    #     pass
+
+    # @abstractmethod
+    # def web_routes(self, package: Package, routes_class: Any) -> None:
+    #     """Register packages web routes"""
+    #     pass
+
+    # @abstractmethod
+    # def api_routes(self, package: Package, routes_class: Any) -> None:
+    #     """Register packages API routes"""
+    #     pass
+
+    # @abstractmethod
+    # def models(self, models: List[str]) -> None:
+    #     """Register packages database ORM models"""
+    #     pass
+
+    # @abstractmethod
+    # def tables(self, tables: List[str]) -> None:
+    #     """Register packages database tables"""
+    #     pass
+
+    # @abstractmethod
+    # def seeders(self, seeders: List[str]) -> None:
+    #     """Register packages database seeders"""
+    #     pass
+
+    # @abstractmethod
+    # def commands(self, package: Package, options: Dict) -> None:
+    #     """Register packages CLI commands"""
+    #     pass

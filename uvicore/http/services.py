@@ -2,9 +2,16 @@ import uvicore
 from typing import Dict, Any
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
+from uvicore.support.module import load, location
+from uvicore.support.dictionary import deep_merge
+from uvicore.support.collection import Dic
+from uvicore.console.provider import Cli
+from uvicore.http.provider import Http
+
+
 
 @uvicore.provider()
-class Http(ServiceProvider):
+class Http(ServiceProvider, Cli, Http):
 
     def register(self) -> None:
         """Register package into uvicore framework.
@@ -56,79 +63,123 @@ class Http(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
-        # Register HTTP Middleware
-        self.middleware(uvicore.config('app.middleware'))
+        # Define HTTP Middleware
+        #self.middleware(uvicore.config('app.middleware'))
 
-        # Register HTTP Serve commands
-        self.commands([
-            {
-                'group': {
-                    'name': 'http',
-                    'parent': 'root',
-                    'help': 'Uvicore HTTP Commands',
+        # Define CLI commands
+        self.commands({
+            'http': {
+                'help': 'Uvicore HTTP Commands',
+                'commands': {
+                    'serve': 'uvicore.http.commands.serve.cli',
                 },
-                'commands': [
-                    {'name': 'serve', 'module': 'uvicore.http.commands.serve.cli'},
-                ],
             }
-        ])
+        })
 
-        # Alternative
-        # self.commands({
-        #     'root:http' {
-        #         'help': 'asdfasdf',
-        #         'extend': False,
-        #         'commands': [
-
-        #         ]
-        #     }
-        # })
+        # Uvicore default template options.  Because this HTTP package is high up
+        # your package can easily override any of these default options!
+        from uvicore.http.templating import context_functions
+        self.template({
+            'context_functions': {
+                'url': context_functions.url
+            },
+        })
 
     def booted(self, event: str, payload: Any) -> None:
         """Custom event handler for uvicore.foundation.events.app.Booted"""
-        self.mount_static_assets()
-        self.create_template_environment()
+        # This function only runs if in HTTP mode, not CLI mode.
+        # So no need to check if running as HTTP in each function below!
+        # But we'll double check here just in case.
+        if self.app.is_console: return
 
-    def mount_static_assets(self) -> None:
+        # Loop each package with an HTTP definition and add to our HTTP server
+        asset_paths = []
+        view_paths = []
+        template_options = {}
+        for package in self.app.packages.values():
+            if not 'http' in package: continue
+
+            # Add web and API routes for this one package
+            self.add_web_routes(package)
+            self.add_api_routes(package)
+
+            # Append asset paths for later
+            for path in package.http.asset_paths or []:
+                path_location = location(path)
+                if path_location not in asset_paths: asset_paths.append(path_location)
+
+            # Append template paths
+            for path in package.http.view_paths or []:
+                view_paths.append(path)
+
+            # Deep merge template options
+            template_options = deep_merge(package.http.template_options or {}, template_options)
+
+        # Mount all static asset paths
+        self.mount_static_assets(package, asset_paths)
+
+        # Initialize new template environment from the options above
+        self.initialize_templates(view_paths, template_options)
+
+    def add_web_routes(self, package) -> None:
+        """Import and load this one packages web routes"""
+        # Dont load items if registration is disabled
+        if not package.registers.web_routes: return
+
+        # Do not load if no web_routes defined
+        if not 'web_routes' in package.http: return
+
+        # Import and instantiate apps WebRoutes class
+        from uvicore.http.routing.web_router import WebRouter
+        WebRoutes = load(package.http.web_routes).object
+        routes = WebRoutes(uvicore.app, package, WebRouter, package.http.web_route_prefix)
+        routes.register()
+
+    def add_api_routes(self, package) -> None:
+        """Import and load this one packages api routes"""
+        # Dont load items if registration is disabled
+        if not package.registers.api_routes: return
+
+        # Do not load if no web_routes defined
+        if not 'api_routes' in package.http: return
+
+        # Import and instantiate apps ApiRoutes class
+        from uvicore.http.routing.api_router import ApiRouter
+        ApiRoutes = load(package.http.api_routes).object
+        routes = ApiRoutes(uvicore.app, package, ApiRouter, package.http.api_route_prefix)
+        routes.register()
+
+    def mount_static_assets(self, package, asset_paths) -> None:
         """Mount /static route using all packages static paths"""
         StaticFiles = uvicore.ioc.make('uvicore.http.static._StaticFiles')
 
-        # Get all packages asset paths
-        paths = []
-        for package in self.app.packages.values():
-            for path in package.asset_paths:
-                if path not in paths:
-                    paths.append(path)
-
-        # Mount all directories to /assets
+        # Mount all directories to /assets in one go
         # Last directory defined WINS, which fits our last provider wins
-        self.app.http.mount('/static', StaticFiles(directories=paths), name='static')
+        self.app.http.mount('/static', StaticFiles(directories=asset_paths), name='static')
 
-    def create_template_environment(self) -> None:
-        """Create template environment with settings from all packages"""
-
+    def initialize_templates(self, paths, options) -> None:
+        """Initialize template system"""
         # Get the template singleton from the IoC
         templates = uvicore.ioc.make('uvicore.http.templating.jinja._Jinja')
 
-        # Add all package view paths to template environment
-        for package in self.app.packages.values():
-            for path in package.view_paths:
-                templates.include_path(path)
+        # Add all packages view paths
+        for path in paths:
+            templates.include_path(location(path))
 
-            # Add all package template options to template environment
-            options = package.template_options
-            if 'context_functions' in options:
-                for f in options['context_functions']:
-                    templates.include_context_function(**f)
-            if 'context_filters' in options:
-                for f in options['context_filters']:
-                    templates.include_context_filter(**f)
-            if 'filters' in options:
-                for f in options['filters']:
-                    templates.include_filter(**f)
-            if 'tests' in options:
-                for f in options['tests']:
-                    templates.include_test(**f)
+        # Add all packages deep_merged template options
+        if 'context_functions' in options:
+            for name, method in options['context_functions'].items():
+                templates.include_context_function(name, method)
+        if 'context_filters' in options:
+            for name, method in options['context_filters'].items():
+                templates.include_context_filter(name, method)
+        if 'filters' in options:
+            for name, method in options['filters'].items():
+                templates.include_filter(name, method)
+        if 'tests' in options:
+            for name, method in options['tests'].items():
+                templates.include_test(name, method)
 
-        # Initialize new template environment from the options above
+        # Initialize template system
         templates.init()
+

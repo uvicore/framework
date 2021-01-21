@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 import uvicore
 from uvicore.contracts import Config as ConfigInterface
-from uvicore.support import dictionary
+from uvicore.support.dictionary import deep_merge
 from uvicore.support.dumper import dd, dump
 
 @uvicore.service('uvicore.configuration.configuration._Configuration',
@@ -64,7 +64,7 @@ class _Configuration(ConfigInterface):
             # Perform deep merge on existing config
             # This overrides 'existing' data with 'value' data
             # And updates 'existing' with merged vlues
-            dictionary.deep_merge(value, existing)
+            existing = deep_merge(value, existing)
 
             # Finally set the new merged config
             self.set(dotkey, existing)

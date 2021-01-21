@@ -100,14 +100,17 @@ def location(module: str) -> str:
         return spec.submodule_search_locations[0]
     except:
         # Module is actual file or class/method inside a file
-        spec = find_spec('.'.join(module.split('.')[0:-1]))
-        if spec.submodule_search_locations:
-            # Module is actual file
-            return spec.submodule_search_locations[0]
-        else:
-            # Module is a class/method inside a file
-            spec = find_spec('.'.join(module.split('.')[0:-2]))
-            return spec.submodule_search_locations[0]
+        try:
+            spec = find_spec('.'.join(module.split('.')[0:-1]))
+            if spec.submodule_search_locations:
+                # Module is actual file
+                return spec.submodule_search_locations[0]
+            else:
+                # Module is a class/method inside a file
+                spec = find_spec('.'.join(module.split('.')[0:-2]))
+                return spec.submodule_search_locations[0]
+        except:
+            return None
 
 
 

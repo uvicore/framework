@@ -98,18 +98,17 @@ class Dispatcher(DispatcherInterface):
         #if not event_meta: return
 
         if type(event) == str:
-            try:
-                if '-' in event:
-                    self._dispatch(event, payload)
-                else:
-                    # See if string event has a matching class.  If so, import and dispatch it
-                    module.load(event).object(**payload).dispatch()
-
-
-            except ModuleNotFoundError:
-                # No class found for this string.  This is OK because events can
-                # be strings without matching classes.  Dispatch it anyway
+            if '-' in event:
                 self._dispatch(event, payload)
+            else:
+                # See if string event has a matching class.  If so, import and dispatch it
+                found = module.location(event)
+                if found:
+                    module.load(event).object(**payload).dispatch()
+                else:
+                    # No class found for this string.  This is OK because events can
+                    # be strings without matching classes.  Dispatch it anyway
+                    self._dispatch(event, payload)
         else:
             # Event is a class.  Call the actual classes dispatch method
             # in case the user overrode it, we still execute it

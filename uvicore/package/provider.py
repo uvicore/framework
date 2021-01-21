@@ -11,6 +11,7 @@ from uvicore.contracts import Dispatcher
 from uvicore.console import group as click_group
 from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
+from uvicore.support.collection import Dic
 
 
 @uvicore.service(aliases=['ServiceProvider', 'Provider'])
@@ -45,10 +46,11 @@ class ServiceProvider(ProviderInterface):
 
     @property
     def name(self) -> Dict:
-        return self._package_config.get('name')
+        return self._name
 
-    def __init__(self, app: Application, package: Package, app_config: Dict, package_config: Dict) -> None:
+    def __init__(self, app: Application, name: str, package: Package, app_config: Dict, package_config: Dict) -> None:
         self._app = app
+        self._name = name
         self._package = package
         self._app_config = app_config
         self._package_config = package_config
@@ -79,7 +81,30 @@ class ServiceProvider(ProviderInterface):
         if self.app_config.get('bindings'):
             return self.app_config.get('bindings').get(name)
 
-    def views(self, paths: List) -> None:
+    def configs(self, options: List[Dict]) -> None:
+        for config in options:
+            # Load module to get actual config value
+            value = load(config['module']).object
+
+            # Merge config value with complete config
+            uvicore.config.merge(config['key'], value)
+
+    def registers(self, options: Dict) -> None:
+        if options is not None:
+            self.package.registers = Dic(options)
+
+
+
+
+
+
+
+
+
+
+
+
+    def viewsOLD(self, paths: List) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used
         # Why? So we can inspect them from ./uvicore package list
 
@@ -93,7 +118,7 @@ class ServiceProvider(ProviderInterface):
             # Add path to package
             self.package.view_paths.append(view_path)
 
-    def assets(self, paths: List) -> None:
+    def assetsOLD(self, paths: List) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used
         # Why? So we can inspect them from ./uvicore package list
 
@@ -107,7 +132,7 @@ class ServiceProvider(ProviderInterface):
             # Add path to package
             self.package.asset_paths.append(asset_path)
 
-    def template(self, options: Dict) -> None:
+    def templateOLD(self, options: Dict) -> None:
         # We DO allow these to be added if in CLI, through they are not actuall used
         # Why? So we can inspect them from ./uvicore package list
 
@@ -117,7 +142,7 @@ class ServiceProvider(ProviderInterface):
         # Add options to package
         self.package.template_options = options
 
-    def web_routes(self, routes_class: str) -> None:
+    def web_routesOLD(self, routes_class: str) -> None:
         # Dont load routes if running in CLI
         if uvicore.app.is_console: return
 
@@ -130,7 +155,7 @@ class ServiceProvider(ProviderInterface):
         routes = WebRoutes(uvicore.app, self.package, WebRouter, self.package.web_route_prefix)
         routes.register()
 
-    def api_routes(self, routes_class: str) -> None:
+    def api_routesOLD(self, routes_class: str) -> None:
         # Dont load routes if running in CLI
         if uvicore.app.is_console: return
 
@@ -143,6 +168,10 @@ class ServiceProvider(ProviderInterface):
         routes = ApiRoutes(uvicore.app, self.package, ApiRouter, self.package.api_route_prefix)
         routes.register()
 
+
+
+
+
     def middleware(self, middleware: OrderedDict):
         # Dont load routes if running in CLI
         if uvicore.app.is_console: return
@@ -154,7 +183,11 @@ class ServiceProvider(ProviderInterface):
         dump(middleware)
         dump(self.app.http)
 
-    def models(self, models: List[str]) -> None:
+
+
+
+
+    def modelsOLD(self, models: List[str]) -> None:
         # Dont load models if config is disabled
         if not self.package.registers.models: return
 
@@ -164,7 +197,7 @@ class ServiceProvider(ProviderInterface):
                 #self.package.models.append(model)
             load(model)
 
-    def tables(self, tables: List[str]) -> None:
+    def tablesOLD(self, tables: List[str]) -> None:
         # Dont load tables if config is disabled
         if not self.package.registers.tables: return
 
@@ -174,12 +207,12 @@ class ServiceProvider(ProviderInterface):
                 #self.package.tables.append(model)
             load(model)
 
-    def seeders(self, seeders: List[str]) -> None:
+    def seedersOLD(self, seeders: List[str]) -> None:
         for seeder in seeders:
             if seeder not in self.package.seeders:
                 self.package.seeders.append(seeder)
 
-    def commands(self, options: Dict) -> None:
+    def commandsOLD(self, options: Dict) -> None:
         # Only register command if running from the console
         # or from the http:serve command (register only the http group).
         # Do NOT register apps commands if apps config.register_commands if False
@@ -240,13 +273,6 @@ class ServiceProvider(ProviderInterface):
                 # Add this click group to another parent group
                 click_groups[group_parent].add_command(group, group_name)
 
-    def configs(self, options: List[Dict]) -> None:
-        for config in options:
-            # Load module to get actual config value
-            value = load(config['module']).object
-
-            # Merge config value with complete config
-            uvicore.config.merge(config['key'], value)
 
 
 # IoC Class Instance

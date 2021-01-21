@@ -87,7 +87,8 @@ class _Db(DatabaseInterface):
             metakey = self.connection(connection).metakey
         packages = []
         for package in uvicore.app.packages.values():
-            for conn in package.connections:
+            if not 'database' in package: continue
+            for conn in package.database.connections:
                 if conn.metakey == metakey:
                     packages.append(package)
         return packages

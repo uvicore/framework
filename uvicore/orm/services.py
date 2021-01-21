@@ -2,9 +2,11 @@ import uvicore
 from typing import Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
+from uvicore.console.provider import Cli
+
 
 @uvicore.provider()
-class Orm(ServiceProvider):
+class Orm(ServiceProvider, Cli):
 
     def register(self) -> None:
         pass
@@ -21,17 +23,27 @@ class Orm(ServiceProvider):
 
     def load_commands(self) -> None:
         # Register commands
-        self.commands([
+        # self.commands([
+        #     # Extend schematic generator commands
+        #     {
+        #         'group': {
+        #             'name': 'gen',
+        #             'parent': 'root',
+        #             'extend': True,
+        #         },
+        #         'commands': [
+        #             {'name': 'model', 'module': 'uvicore.orm.commands.generators.model'},
+        #         ],
+        #     }
+        # ])
+
+        # NEW
+        self.commands({
             # Extend schematic generator commands
-            {
-                'group': {
-                    'name': 'gen',
-                    'parent': 'root',
-                    'extend': True,
+            'gen': {
+                'commands': {
+                    'model': 'uvicore.orm.commands.generators.model',
                 },
-                'commands': [
-                    {'name': 'model', 'module': 'uvicore.orm.commands.generators.model'},
-                ],
             }
-        ])
+        })
 

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from uvicore.support.collection import Odic
 
 # Package configuration is not meant to be overridden when used inside other
 # apps.  This information is always unchanged and consistent.  The main
@@ -9,9 +9,22 @@ from collections import OrderedDict
 config = {
 
     # --------------------------------------------------------------------------
-    # Package Information
+    # Registration Control
     # --------------------------------------------------------------------------
-    'name': 'uvicore.foundation',
+    # This lets you control the service provider registrations.  If this app
+    # is used as a package inside another app you might not want some things
+    # registered in that context.
+    'registers': {
+        'web_routes': False,
+        'api_routes': False,
+        'middleware': False,
+        'views': False,
+        'assets': False,
+        'commands': True,
+        'models': False,
+        'tables': False,
+        'seeders': False,
+    },
 
 
     # --------------------------------------------------------------------------
@@ -21,10 +34,10 @@ config = {
     # the uvicore.foundation package is required.  The foundation is very
     # minimal and only depends on configuratino, logging and console itself.
     # You must add other core services built into uvicore only if your package
-    # requires them.  Services like uvicore.database, uvicore.orm, uvicore.auth
-    # uvicore.http, etc...
+    # requires them.  Services like uvicore.database, uvicore.orm, uvicore.http
+    # uvicore.auth...
     # --------------------------------------------------------------------------
-    'services': OrderedDict({
+    'dependencies': Odic({
         # Careful to only define REQUIRED services for a minimal Uvicore.  Things
         # like auth, db, http, etc... are optional and specified in a packages
         # dependencies if needed.

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import jinja2
 import uvicore
 from typing import Dict, List, Any
@@ -53,18 +54,8 @@ class _Jinja(TemplateInterface, _Jinja2Templates):
         loader = jinja2.FileSystemLoader(self.paths)
         self._env = jinja2.Environment(loader=loader, autoescape=True)
 
-        # Define our own uvicore built-in options
-        self._define_context_functions()
-
         # Add user defined options
         self._register_options()
-
-    def _define_context_functions(self):
-        def url(context: dict, name: str, **path_params: Any) -> str:
-            request = context["request"]
-            return request.url_for(name, **path_params)
-
-        self.include_context_function('url', url)
 
     def _register_options(self):
         # Add Context Functions
@@ -98,7 +89,6 @@ class _Jinja(TemplateInterface, _Jinja2Templates):
 
     def include_test(self, name: str, method: Any) -> None:
         self._tests[name] = method
-
 
 # IoC Class Instance
 # No, not to be used by public by importing.  Use ioc.make instead.

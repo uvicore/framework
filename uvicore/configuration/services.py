@@ -27,7 +27,6 @@ class Configuration(ServiceProvider):
         Boot takes place after all packages are registered.  This means all package
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands..."""
-
         pass
 
     def register_configuration(self) -> None:
@@ -35,12 +34,8 @@ class Configuration(ServiceProvider):
         uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
 
         # Set app.config for convenience (only after register since config is a service provider itself)
-        self.app._config = uvicore.config
+        # No, don't want duplicate entry points everywhere
+        #self.app._config = uvicore.config
 
         # Set main app config
         uvicore.config.set('app', self.app_config)
-
-    @staticmethod
-    def add_configs(c):
-        print('adding configs', c)
-        dump(uvicore.app.packages)
