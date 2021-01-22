@@ -1,9 +1,10 @@
 import uvicore
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
+from uvicore.console.provider import Cli
 
 @uvicore.provider()
-class Configuration(ServiceProvider):
+class Configuration(ServiceProvider, Cli):
 
     def register(self) -> None:
         """Register package into uvicore framework.
@@ -27,15 +28,31 @@ class Configuration(ServiceProvider):
         Boot takes place after all packages are registered.  This means all package
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands..."""
-        pass
+
+        # Define commands
+        self.commands({
+            # Register db commands
+            'config': {
+                'help': 'Configuration Commands',
+                'commands': {
+                    'list': 'uvicore.configuration.commands.config.list',
+                    'get': 'uvicore.configuration.commands.config.get',
+                }
+            },
+        })
+
+
 
     def register_configuration(self) -> None:
         # Set uvicore.log global
-        uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
+        #uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
+        from uvicore.typing import Dict
+        uvicore.config = Dict()
 
         # Set app.config for convenience (only after register since config is a service provider itself)
         # No, don't want duplicate entry points everywhere
         #self.app._config = uvicore.config
 
         # Set main app config
-        uvicore.config.set('app', self.app_config)
+        #uvicore.config.set('app', self.app_config)
+        uvicore.config.app = self.app_config

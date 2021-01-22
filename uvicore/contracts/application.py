@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple, OrderedDict
+from typing import Any, Dict, List, Tuple
+from uvicore.typing import OrderedDict
 
 from .config import Config
 from .server import Server
@@ -85,7 +86,7 @@ class Application(ABC):
     @property
     @abstractmethod
     def packages(self) -> OrderedDict[str, Package]:
-        """List of all packages defined from providers"""
+        """OrderedDict of all packages defined from providers"""
         pass
 
     @property

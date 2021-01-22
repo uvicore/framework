@@ -1,8 +1,7 @@
 import uvicore
-from typing import Any
+from uvicore.typing import Any
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
-from uvicore.support.collection import Dic
 from uvicore.support.module import load
 from uvicore.console.provider import Cli
 
@@ -30,40 +29,7 @@ class Database(ServiceProvider, Cli):
         self.events.listen('uvicore.foundation.events.app.Booted', self.booted)
 
     def boot(self) -> None:
-        # Register commands
-        # self.commands([
-        #     # Register db commands
-        #     {
-        #         'group': {
-        #             'name': 'db',
-        #             'parent': 'root',
-        #             'help': 'Database Commands',
-        #         },
-        #         'commands': [
-        #             {'name': 'create', 'module': 'uvicore.database.commands.db.create'},
-        #             {'name': 'drop', 'module': 'uvicore.database.commands.db.drop'},
-        #             {'name': 'recreate', 'module': 'uvicore.database.commands.db.recreate'},
-        #             {'name': 'seed', 'module': 'uvicore.database.commands.db.seed'},
-        #             {'name': 'reseed', 'module': 'uvicore.database.commands.db.reseed'},
-        #             {'name': 'connections', 'module': 'uvicore.database.commands.db.connections'},
-        #         ],
-        #     },
-
-        #     # Extend schematic generator commands
-        #     {
-        #         'group': {
-        #             'name': 'gen',
-        #             'parent': 'root',
-        #             'extend': True,
-        #         },
-        #         'commands': [
-        #             {'name': 'table', 'module': 'uvicore.database.commands.generators.table'},
-        #             {'name': 'seeder', 'module': 'uvicore.database.commands.generators.seeder'},
-        #         ],
-        #     }
-        # ])
-
-        # NEW
+        # Define commands
         self.commands({
             # Register db commands
             'db': {

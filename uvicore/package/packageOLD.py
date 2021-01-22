@@ -1,14 +1,8 @@
 import uvicore
 from uvicore.contracts import Package as PackageInterface
-from uvicore.contracts import Registers as RegistersInterface
-
-
-from dataclasses import dataclass
-from typing import Dict, List, NamedTuple
+from typing import Dict, List, NamedTuple, Any
 from uvicore.contracts import Connection
-
-class Registers(RegistersInterface):
-    pass
+from uvicore.types import Dic
 
 
 # @uvicore.service(aliases=['Package', 'package'])
@@ -30,22 +24,23 @@ class Registers(RegistersInterface):
 
 
 
-from uvicore.support.collection import Dic
+@uvicore.service(aliases=['Package', 'package'])
 class Package(Dic):
 
-    def config(self, dotkey: str = None):
+    def config(self, dotkey: str = None) -> Any:
         if dotkey:
             return uvicore.config(self.name + '.' + dotkey)
         else:
             return uvicore.config(self.name)
 
-    def connection(self, name: str = None):
+    def connection(self, name: str = None) -> Connection:
+        if not self.database.connections: return None
         if name:
-            return next(connection for connection in self.connections if connection.name == name)
+            return next(connection for connection in self.database.connections if connection.name == name)
         else:
-            #return next(connection for connection in self.connections if connection.default == True)
-            if 'database' in self.config():
-                return next(connection for connection in self.connections if connection.name == self.config('database.default'))
+            return next(connection for connection in self.database.connections if connection.name == self.database.connection_default)
+            #if 'database' in self.config():
+            #    return next(connection for connection in self.connections if connection.name == self.config('database.default'))
 
 
 

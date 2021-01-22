@@ -1,8 +1,7 @@
 from uvicore.support.dumper import dump, dd
-from uvicore.support.collection import Dic
 from uvicore.support.module import location
 from uvicore.database import Connection
-from typing import Dict, List
+from uvicore.typing import Dict, List
 
 
 class Db:
@@ -10,7 +9,7 @@ class Db:
 
     def _add_db_definition(self, key, value):
         if 'database' not in self.package:
-            self.package['database'] = Dic()
+            self.package['database'] = Dict()
         self.package['database'][key] = value
 
     def connections(self, items: Dict, default: str):
@@ -49,7 +48,7 @@ class Db:
                 prefix=connection.get('prefix') or '',
                 metakey=metakey,
                 url=url,
-                options=Dic(connection.get('options') or {}),
+                options=Dict(connection.get('options') or {}),
             ))
         self._add_db_definition('connections', connections)
         self._add_db_definition('connection_default', default)

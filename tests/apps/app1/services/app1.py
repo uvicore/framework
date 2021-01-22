@@ -1,15 +1,18 @@
 import uvicore
 from uvicore.package import ServiceProvider
+from uvicore.http.provider import Http
+from uvicore.database.provider import Db
+from uvicore.console.provider import Cli
 from uvicore.support.dumper import dump, dd
 
 
 @uvicore.provider()
-class App1(ServiceProvider):
+class App1(ServiceProvider, Cli, Db, Http):
 
     def register(self) -> None:
         # Register configs
         self.configs([
-            {'key': self.name, 'module': 'app1.config.app1.config'},
+            {'key': self.name, 'module': 'app1.config.package.config'},
             {'key': 'uvicore.auth', 'module': 'app1.config.auth.config'},
         ])
 
@@ -39,20 +42,22 @@ class App1(ServiceProvider):
         self.bind_override('uvicore.auth.models.user.User', 'app1.models.user.User')
 
 
-
-
-
     def boot(self) -> None:
+
+        # Define Service Provider Registrations
+        self.registers(self.package.config('registers'))
+
+        # Define Database Connections
+        self.connections(self.package.config('database.connections'), self.package.config('database.default'))
+
         # Using __init__.py now so just import it
-        from app1 import models
+        #from app1 import models
         # self.tables([
         #    'app1.database.tables.*',
         # ])
-
-        #NO
-        # self.models([
-        #     'app1.models.*',
-        # ])
+        self.models([
+            'app1.models',
+        ])
 
         self.seeders([
             'app1.database.seeders.seeders.seed',
@@ -79,74 +84,20 @@ class App1(ServiceProvider):
             'mreschke.wiki.http.static',  # wiki override example - RED
         ])
 
-        def url_method(context: dict, name: str, **path_params: any) -> str:
-            request = context["request"]
-            return request.url_for(name, **path_params)
-
-        def up_filter(input):
-            return input.upper()
-
-        def up_filter2(context, input):
-            return input.upper()
-
-        def is_prime(n):
-            import math
-            if n == 2:
-                return True
-            for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
-                if n % i == 0:
-                    return False
-            return True
-
-        # Add custom template options
-        self.template({
-            'context_functions': [
-                {'name': 'url2', 'method': url_method}
-            ],
-            'context_filters': [
-                {'name': 'up', 'method': up_filter2}
-            ],
-            'filters': [
-                {'name': 'up', 'method': up_filter}
-            ],
-            'tests': [
-                {'name': 'prime', 'method': is_prime}
-            ],
-        })
-        # Optionally, hack jinja to add anything possible like so
-        #app.jinja.env.globals['whatever'] = somefunc
-
     def load_routes(self) -> None:
         """Define Web and API router"""
-        #self.web_routes('app1.http.routes.web.Web')
-        self.api_routes('app1.http.routes.api.Api')
+        #self.web_routes('app1.http.routes.web.Web', self.package.config('route.web_prefix'))
+        self.api_routes('app1.http.routes.api.Api', self.package.config('route.api_prefix'))
 
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""
         group = 'app1'
-        self.commands([
-            {
-                'group': {
-                    'name': group,
-                    'parent': 'root',
-                    'help': 'App1 Commands',
+        self.commands({
+            'app1': {
+                'help': 'App1 Commands',
+                'commands': {
+                    'test': 'app1.commands.test.cli',
+                    'shell': 'app1.commands.shell.cli',
                 },
-                'commands': [
-                    {'name': 'test', 'module': 'app1.commands.test.cli'},
-                    {'name': 'shell', 'module': 'app1.commands.shell.cli'},
-                ],
-            },
-            # {
-            #     'group': {
-            #         'name': 'db',
-            #         'parent': group,
-            #         'help': 'Wiki DB Commands',
-            #     },
-            #     'commands': [
-            #         {'name': 'create', 'module': 'mreschke.wiki.commands.db.create'},
-            #         {'name': 'drop', 'module': 'mreschke.wiki.commands.db.drop'},
-            #         {'name': 'recreate', 'module': 'mreschke.wiki.commands.db.recreate'},
-            #         {'name': 'seed', 'module': 'mreschke.wiki.commands.db.seed'},
-            #     ],
-            # }
-        ])
+            }
+        })

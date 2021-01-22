@@ -61,6 +61,9 @@ class Auth(ServiceProvider, Db, Http):
             'uvicore.auth.database.seeders.seed'
         ])
 
+        #dd(self.package.database.connections[0].driver)
+
+
     def load_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""
         pass

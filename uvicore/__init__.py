@@ -1,8 +1,7 @@
-from typing import Dict
-
+from . import contracts
+from uvicore.typing import Dict
 from uvicore.foundation.decorators import model, seeder, service, table, provider
 
-from . import contracts
 
 # Uvicore version.  Also available in app.version
 __version__ = '0.1.0'
@@ -13,7 +12,8 @@ events: contracts.Dispatcher = None
 app: contracts.Application = None
 
 # Core (service provider based) singletons as globals
-config: contracts.Config = None
+#config: contracts.Config = None
+config: Dict()
 log: contracts.Logger = None
 db: contracts.Database = None
 
@@ -23,6 +23,32 @@ def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
 
     # Order of imports is critical for proper IoC binding and override
     import uvicore
+    from uvicore.support.dumper import dump, dd
+
+    # from uvicore.typing import OrderedDict
+    # value = {
+    #     'name': 'asdf',
+    #     'registers': {
+    #         'adsf': True
+    #     },
+    #     'deps': OrderedDict({
+    #         'uvicore.foundation': {
+    #             'provider': 'uvicore.foundation.services.Foundation',
+    #         },
+    #         'uvicore.database': {
+    #             'provider': 'uvicore.database.services.Database',
+    #         },
+    #     })
+    # }
+
+    # dd(value)
+
+
+
+
+
+    # Ensure app_config is a Uvicore Types Dict
+    app_config = Dict(app_config)
 
     # Initialize the singleton IoC container
     # Before importing Application and Dispatcher which lets the IoC from app_config

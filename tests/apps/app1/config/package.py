@@ -1,18 +1,67 @@
 from collections import OrderedDict
 
-# Package configuration is not meant to be overridden when used inside other
-# apps.  This information is always unchanged and consistent.  The main
-# wiki.py configuration however is meant to be overridden per use case.
-# This is merged inside the main wiki.py and accessible at
-# config('mreschke.wiki.package')
+# This is the main app1 config.  All items here can be overridden
+# when used inside other applications.  Accessible at config('acme.app1')
 
 config = {
 
     # --------------------------------------------------------------------------
-    # Package Information
+    # Route Configuration
     # --------------------------------------------------------------------------
-    'name': 'app1',
+    # Or like so, no underscores, so in dot notation config('blog.route.prefix')
+    # have to do deep merges
+    'route': {
+        'web_prefix': '/app1',
+        'api_prefix': '/app1/api',
+    },
 
+
+    # --------------------------------------------------------------------------
+    # Database Connections
+    # --------------------------------------------------------------------------
+    'database': {
+        'default': 'app1',
+        'connections': {
+            # SQLite
+            # 'app1': {
+            #     'driver': 'sqlite',
+            #     #'dialect': 'pysqlite',
+            #     'database': ':memory',
+            # },
+
+            # MySQL
+            'app1': {
+                'driver': 'mysql',
+                'dialect': 'pymysql',
+                'host': '127.0.0.1',
+                'port': 3306,
+                'database': 'uvicore_test',
+                'username': 'root',
+                'password': 'techie',
+                'prefix': None,
+            },
+        },
+    },
+
+
+    # --------------------------------------------------------------------------
+    # Registration Control
+    # --------------------------------------------------------------------------
+    # This lets you control the service provider registrations.  If this app
+    # is used as a package inside another app you might not want some things
+    # registered in that context.  Use config overrides in your app to change
+    # registrations
+    # 'registers': {
+    #     'web_routes': False,
+    #     'api_routes': False,
+    #     'middleware': False,
+    #     'views': False,
+    #     'assets': False,
+    #     'commands': False,
+    #     'models': False,
+    #     'tables': False,
+    #     'seeders': False,
+    # },
 
     # --------------------------------------------------------------------------
     # Package Dependencies (Service Providers)
@@ -24,7 +73,7 @@ config = {
     # requires them.  Services like uvicore.database, uvicore.orm, uvicore.auth
     # uvicore.http, etc...
     # --------------------------------------------------------------------------
-    'services': OrderedDict({
+    'dependencies': OrderedDict({
         'uvicore.foundation': {
             'provider': 'uvicore.foundation.services.Foundation',
         },

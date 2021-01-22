@@ -1,4 +1,4 @@
-from uvicore.support.collection import Odic
+from uvicore.typing import OrderedDict
 
 # Package configuration is not meant to be overridden when used inside other
 # apps.  This information is always unchanged and consistent.  The main
@@ -14,17 +14,17 @@ config = {
     # This lets you control the service provider registrations.  If this app
     # is used as a package inside another app you might not want some things
     # registered in that context.
-    'registers': {
-        'web_routes': False,
-        'api_routes': False,
-        'middleware': False,
-        'views': False,
-        'assets': False,
-        'commands': True,
-        'models': False,
-        'tables': False,
-        'seeders': False,
-    },
+    # 'registers': {
+    #     'web_routes': False,
+    #     'api_routes': False,
+    #     'middleware': False,
+    #     'views': False,
+    #     'assets': False,
+    #     'commands': True,
+    #     'models': False,
+    #     'tables': False,
+    #     'seeders': False,
+    # },
 
 
     # --------------------------------------------------------------------------
@@ -37,7 +37,7 @@ config = {
     # requires them.  Services like uvicore.database, uvicore.orm, uvicore.http
     # uvicore.auth...
     # --------------------------------------------------------------------------
-    'dependencies': Odic({
+    'dependencies': OrderedDict({
         # Careful to only define REQUIRED services for a minimal Uvicore.  Things
         # like auth, db, http, etc... are optional and specified in a packages
         # dependencies if needed.
@@ -45,6 +45,8 @@ config = {
         # Configuration is used right away in provider register()
         'uvicore.configuration': {
             'provider': 'uvicore.configuration.services.Configuration',
+            'test': 'one',
+            'test2': 'two',
         },
 
         # I want logging quick as it may be used in providers register() and boot()

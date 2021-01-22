@@ -9,7 +9,7 @@ from .ioc import Binding, Ioc
 from .logger import Logger
 from .mapper import Mapper
 from .model import Model
-from .package import Package, Registers
+from .package import Package
 from .provider import Provider
 from .relation import Relation
 from .router import ApiRouter, WebRouter

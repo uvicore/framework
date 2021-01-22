@@ -26,7 +26,7 @@ def list():
 
 @command()
 @argument('package')
-def show(package: str):
+def get(package: str):
     """Show detailed info for one package"""
     if package == 'main':
         pkg = app.package(main=True)
@@ -38,6 +38,7 @@ def show(package: str):
         log.line()
         dump(pkg)
         print()
+
         log.header("Deep merged configs for " + package)
         log.line()
         dump(pkg.config())

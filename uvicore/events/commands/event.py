@@ -18,7 +18,7 @@ def list():
 
 @command()
 @argument('event')
-def show(event: str):
+def get(event: str):
     """Show detailed info for one event"""
     log.header("Event details for " + event)
     log.line()

@@ -1,16 +1,16 @@
 import os
 import sys
-from typing import Any, Dict, List, NamedTuple, Tuple
 
 import uvicore
+from uvicore.typing import Any, List, NamedTuple, Tuple, Dict, OrderedDict
+from uvicore import package
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
 from uvicore.database import Connection
-from uvicore.package import Package, Registers
-from uvicore.support.collection import dotget, Dic, Odic
+from uvicore.support.collection import dotget
 from uvicore.support.dumper import dd, dump
 from uvicore.support.hash import md5
 from uvicore.support.module import load, location
@@ -49,7 +49,7 @@ class _Application(ApplicationInterface):
     #     return self._config
 
     @property
-    def providers(self) -> Odic[str, Dict]:
+    def providers(self) -> OrderedDict[str, Dict]:
         return self._providers
 
     @property
@@ -69,7 +69,7 @@ class _Application(ApplicationInterface):
         return self._is_http
 
     @property
-    def packages(self) -> Odic[str, PackageInterface]:
+    def packages(self) -> OrderedDict[str, PackageInterface]:
         return self._packages
 
     @property
@@ -91,12 +91,12 @@ class _Application(ApplicationInterface):
         self._perfs = []
         self._http = None
         #self._config = None  # None until config provider registered
-        self._providers = Odic()
+        self._providers = OrderedDict()
         self._registered = False
         self._booted = False
         self._is_console = False
         self._is_http = False
-        self._packages = Odic()
+        self._packages = OrderedDict()
         self._path = None
         self._name = None
         self._main = None
@@ -109,8 +109,8 @@ class _Application(ApplicationInterface):
 
         # App name and path
         self._path = path
-        self._name = app_config.get('name')
-        self._main = app_config.get('main')
+        self._name = app_config.name
+        self._main = app_config.main
 
         # Merge running config/app.py paths dictionary with defaults and full path
         self._build_paths(app_config)
@@ -122,7 +122,7 @@ class _Application(ApplicationInterface):
         self._is_http = not self.is_console
 
         # Detect debug flag from main app config
-        self._debug = app_config['debug']
+        self._debug = app_config.debug
 
         # Build recursive providers graph
         self._build_provider_graph(app_config)
@@ -143,6 +143,8 @@ class _Application(ApplicationInterface):
         #self._boot_providers()
         self._boot_providers(app_config)
 
+        #dd(self.packages)
+
         # Return application
         return self
 
@@ -160,8 +162,8 @@ class _Application(ApplicationInterface):
             for service, details in services.items():
                 recurse(service, details)
 
-            # Add to providers Odic. Notice this will OVERWRITE if new provider defined last.
-            # This gives the perfect LAST provider WINS!  Also because this is an Odict the
+            # Add to providers OrderedDict. Notice this will OVERWRITE if new provider defined last.
+            # This gives the perfect LAST provider WINS!  Also because this is an OrderedDict the
             # last provider will overrite the value but the defined ORDER will remain the
             # same.  Perfect!
             self._providers[package] = options
@@ -180,12 +182,16 @@ class _Application(ApplicationInterface):
             # service = {'provider': 'uvicore.configuration.services.Configuration'}
 
             # Start a new package definition
-            self._packages[package_name] = Package({
+            #x = OrderedDict()
+            #x.dotset(package_name, package.Definition({
+            self._packages[package_name] = package.Definition({
                 'name': package_name,
                 'main': True if package_name == self.main else False,
                 'path': location(package_name),
-                'registers': Dic(),
             })
+            #self._packages.merge(x)
+            #self._packages[package_name] = package.Definition({
+            #dd(self.packages)
 
             # Instantiate the provider and call the register() method
             provider = load(service['provider']).object(
@@ -208,6 +214,8 @@ class _Application(ApplicationInterface):
             # service = {'provider': 'uvicore.configuration.services.Configuration'}
 
             # Import the provider and call boot()
+            #dd(self.package(main=True))
+            #dd(self.package(package_name))
             provider = load(service['provider']).object(
                 app=self,
                 name=package_name,
@@ -221,7 +229,7 @@ class _Application(ApplicationInterface):
         self._booted = True
         uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
 
-    def _build_paths(self, app_config):
+    def _build_paths(self, app_config: Dict):
         base = self.main.replace('.', '/')
         defaults = {
             'base': base,
@@ -245,24 +253,30 @@ class _Application(ApplicationInterface):
             'services': 'services',
             'support': 'support',
         }
-        app_config['paths'] = {**defaults, **app_config['paths']}
+        #dd(app_config)
+        app_config['paths'].defaults(defaults)
+        # = {**defaults, **app_config['paths']}
         for key, value in app_config['paths'].items():
             app_config['paths'][key] = os.path.realpath(self.path + '/' + self.main.replace('.', '/') + '/' + value)
 
-    def _get_package_config(self, package: str, options: Dict):
+    def _get_package_config(self, package: str, options: Dict) -> Dict:
         config_module = package + '.config.package.config'  # Default if not defined
         if 'config' in options: config_module = options['config']
+        config = Dict()
         try:
-            return load(config_module).object
+            config = Dict(load(config_module).object)
         except:
             # Often we won't have any config for a package, if so return empty Dict
-            return {}
+            pass
+        return config
 
     def package(self, package: str = None, *, main: bool = False) -> PackageInterface:
         if package:
             return self.packages.get(package)
+            #return self.packages.dotget(package)
         elif main:
             return next(package for package in self.packages.values() if package.main == True)
+            #return self.packages.dotget(self.main)
 
     def perf(self, item) -> None:
         if self.debug:

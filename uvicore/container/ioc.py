@@ -1,13 +1,11 @@
-import importlib
-import inspect
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
-
 import uvicore
-
-from uvicore.contracts import Ioc as IocInterface
+import inspect
+import importlib
 from uvicore.support import module
-from uvicore.support.dumper import dd, dump
 from uvicore.container import Binding
+from uvicore.support.dumper import dd, dump
+from uvicore.contracts import Ioc as IocInterface
+from uvicore.typing import Any, Callable, List, Optional, Type, TypeVar, Dict
 
 T = TypeVar('T')
 
@@ -34,10 +32,10 @@ class _Ioc(IocInterface):
         return self._aliases
 
     def __init__(self, app_config: Dict) -> None:
-        self._bindings: Dict[str, Binding] = {}
-        self._aliases: Dict[str, str] = {}
+        self._bindings: Dict[str, Binding] = Dict()
+        self._aliases: Dict[str, str] = Dict()
         self._app_config = app_config
-        self._overrides: Dict[str, str] = {}
+        self._overrides: Dict[str, str] = Dict()
 
 
         # Add default binding specific to uvicore framework

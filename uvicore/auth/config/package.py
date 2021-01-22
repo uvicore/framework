@@ -1,4 +1,4 @@
-from uvicore.support.collection import Odic
+from uvicore.typing import OrderedDict
 
 # This is the main auth config.  All items here can be overridden
 # when used inside other applications.  Accessible at config('uvicore.auth')
@@ -65,6 +65,6 @@ config = {
     # requires them.  Services like uvicore.database, uvicore.orm, uvicore.http
     # uvicore.auth...
     # --------------------------------------------------------------------------
-    # 'dependencies': Odict({})
+    # 'dependencies': OrderedDict({})
 
 }

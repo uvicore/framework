@@ -1,14 +1,13 @@
 from uvicore.support.dumper import dump, dd
-from uvicore.support.collection import Dic
 from uvicore.support.module import location
-from typing import List
+from uvicore.typing import List, Dict
 
 class Http:
     """Http Service Provider Mixin"""
 
     def _add_http_definition(self, key, value):
         if 'http' not in self.package:
-            self.package['http'] = Dic()
+            self.package['http'] = Dict()
         self.package['http'][key] = value
 
     def web_routes(self, item: str, prefix: str):
@@ -53,10 +52,10 @@ class Http:
         if self.package.registers.assets:
             self._add_http_definition('asset_paths', items)
 
-    def template(self, items: str):
+    def template(self, items: Dict):
         # Default registration - template obeys view registration
         self.package.registers.defaults({'views': True})
 
         # Register templates only if [views] allowed
         if self.package.registers.views:
-            self._add_http_definition('template_options', items)
+            self._add_http_definition('template_options', Dict(items))

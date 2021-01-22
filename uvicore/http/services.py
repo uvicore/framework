@@ -1,10 +1,9 @@
 import uvicore
-from typing import Dict, Any
+from uvicore.typing import Dict, Any
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import load, location
 from uvicore.support.dictionary import deep_merge
-from uvicore.support.collection import Dic
 from uvicore.console.provider import Cli
 from uvicore.http.provider import Http
 

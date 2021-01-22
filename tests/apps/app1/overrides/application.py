@@ -8,6 +8,8 @@ from uvicore.support.collection import dotget
 # Pull original from Ioc
 Base = uvicore.ioc.make('uvicore.foundation.application._Application_BASE')
 
+# ALL BROKEN and disabled in config now that I moved to dynamic package definitions
+
 class Application(Base):
     def _build_package(self, name: str, custom_config: Dict):
         return Package(

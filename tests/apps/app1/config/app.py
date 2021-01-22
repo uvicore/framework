@@ -107,7 +107,7 @@ config = {
         #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
 
         # Low level core uvicore libraries (too early to override in a service provider, must be done here)
-        'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
+        #'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
         'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
         'uvicore.package.package.Package': 'app1.overrides.package.Package',
 
@@ -121,6 +121,20 @@ config = {
         # 'Routes': 'mreschke.wiki.overrides.routes.Routes',
         # 'StaticFiles': 'mreschke.wiki.overrides.static.StaticFiles',
         # 'Templates': 'mreschke.wiki.overrides.templates.Templates',
+    },
+
+
+
+    # --------------------------------------------------------------------------
+    # Path Overrides
+    #
+    # Override the default paths for your packages items (views, models,
+    # tables, routes...).  All paths relative to your uvicore packages
+    # PYTHON module root, not the actual package root. If item is not defined,
+    # defaults will be assumed.
+    # --------------------------------------------------------------------------
+    'paths': {
+        #
     },
 
 

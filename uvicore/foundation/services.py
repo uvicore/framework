@@ -36,61 +36,22 @@ class Foundation(ServiceProvider, Cli):
         # )
 
     def boot(self):
-        # Regster commands
-        # self.commands([
-        #     # Register Ioc commands
-        #     {
-        #         'group': {
-        #             'name': 'ioc',
-        #             'parent': 'root',
-        #             'help': 'Uvicore Ioc (Inversion of Control) Information',
-        #         },
-        #         'commands': [
-        #             {'name': 'bindings', 'module': 'uvicore.foundation.commands.ioc.bindings'},
-        #             {'name': 'singletons', 'module': 'uvicore.foundation.commands.ioc.singletons'},
-        #             {'name': 'overrides', 'module': 'uvicore.foundation.commands.ioc.overrides'},
-        #             {'name': 'type', 'module': 'uvicore.foundation.commands.ioc.type'},
-        #         ],
-        #     },
+        # Define service provider registration control
+        self.registers(self.package.config('registers'))
 
-        #     # Register Package commands
-        #     {
-        #         'group': {
-        #             'name': 'package',
-        #             'parent': 'root',
-        #             'help': 'Uvicore Package Information',
-        #         },
-        #         'commands': [
-        #             {'name': 'providers', 'module': 'uvicore.foundation.commands.package.providers'},
-        #             {'name': 'list', 'module': 'uvicore.foundation.commands.package.list'},
-        #             {'name': 'show', 'module': 'uvicore.foundation.commands.package.show'},
-        #         ],
-        #     },
-
-        #     # Register Event commands
-        #     {
-        #         'group': {
-        #             'name': 'event',
-        #             'parent': 'root',
-        #             'help': 'Uvicore Event Information',
-        #         },
-        #         'commands': [
-        #             {'name': 'list', 'module': 'uvicore.events.commands.event.list'},
-        #             {'name': 'show', 'module': 'uvicore.events.commands.event.show'},
-        #         ],
-        #     },
-        # ])
-
-        # NEW
+        # Define commands
+        # Why here in foundation?  Because these items are not actual packages
+        # with their own service providers to register themselves.
         self.commands({
             # Register Ioc commands
             'ioc': {
                 'help': 'Uvicore Ioc (Inversion of Control) Information',
                 'commands': {
-                    'bindings': 'uvicore.foundation.commands.ioc.bindings',
-                    'singletons': 'uvicore.foundation.commands.ioc.singletons',
-                    'overrides': 'uvicore.foundation.commands.ioc.overrides',
-                    'type': 'uvicore.foundation.commands.ioc.type',
+                    'list': 'uvicore.container.commands.ioc.list',
+                    'singletons': 'uvicore.container.commands.ioc.singletons',
+                    'overrides': 'uvicore.container.commands.ioc.overrides',
+                    'type': 'uvicore.container.commands.ioc.type',
+                    'get': 'uvicore.container.commands.ioc.get',
                 },
             },
 
@@ -98,9 +59,9 @@ class Foundation(ServiceProvider, Cli):
             'package': {
                 'help': 'Uvicore Package Information',
                 'commands': {
-                    'providers': 'uvicore.foundation.commands.package.providers',
-                    'list': 'uvicore.foundation.commands.package.list',
-                    'show': 'uvicore.foundation.commands.package.show',
+                    'providers': 'uvicore.package.commands.package.providers',
+                    'list': 'uvicore.package.commands.package.list',
+                    'get': 'uvicore.package.commands.package.get',
                 },
             },
 
@@ -109,7 +70,7 @@ class Foundation(ServiceProvider, Cli):
                 'help': 'Uvicore Event Information',
                 'commands': {
                     'list': 'uvicore.events.commands.event.list',
-                    'show': 'uvicore.events.commands.event.show',
+                    'get': 'uvicore.events.commands.event.get',
                 },
             },
         })

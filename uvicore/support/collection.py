@@ -48,79 +48,9 @@ def dotget(object: Dict, dotpath: str, default = None):
     return node
 
 
-class _Dict:
-    def __getattr__(self, key):
-        """Getting a value by dot notation, pull from dictionary"""
-        ret = self.get(key)
-
-        # If key not in self dict, throw error
-        # This also hits if you do hasattr(x, y)
-        # NO, or else I can't do mydict.services or None of key doesn't exist
-        # This means I cannot use hasattr(x, y)
-        #if key not in self:
-        #    raise AttributeError()
-
-        # If key does exist but is None AND starts with __
-        if not ret and key.startswith("__"):
-            raise AttributeError()
-
-        # Key exists, even None, return value
-        return ret
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def __getstate__(self):
-        return self
-
-    def __setstate__(self, d):
-        self.update(d)
-
-    def copy(self):
-        """Create a clone copy of this dict"""
-        return self.__class__(dict(self).copy())
-
-    def update(self, d):
-        """Extend a dictionary with another dictionary"""
-        super(self.__class__, self).update(d)
-        return self
-
-    def merge(self, d):
-        """Deep merge self with this new dictionary"""
-        self.update(deep_merge(d, self))
-        return self
-
-    def defaults(self, d):
-        """Provide defaults, essentially a reverse merge"""
-        self.update(deep_merge(self, d))
-        return self
-
-    def extend(self, d):
-        """Alias for update"""
-        return self.update(d)
-
-    def clone(self):
-        """Alias of copy"""
-        return self.copy()
-
-    def hasattr(self, key):
-        return key in self
-
-
-class Dic(dict, _Dict):
-    """Dictionary that you can access like a class using dot notation attributes"""
-    pass
-
-
-class Odic(OrderedDict, _Dict):
-    """Ordered Dictionary that you can access like a class using dot notation attributes"""
-    pass
-
-
-
 
 ### Below is junk, experimental
-
+# These once actually used, would go into uvicore.types instead
 
 class Str:
     def __init__(self, data):
