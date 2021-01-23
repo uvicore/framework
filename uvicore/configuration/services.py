@@ -45,13 +45,10 @@ class Configuration(ServiceProvider, Cli):
     def register_configuration(self) -> None:
         # Set uvicore.log global
         uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
-        #from uvicore.typing import Dict
-        #uvicore.config = Dict()
 
         # Set app.config for convenience (only after register since config is a service provider itself)
         # No, don't want duplicate entry points everywhere
         #self.app._config = uvicore.config
 
         # Set main app config
-        #uvicore.config.set('app', self.app_config)
         uvicore.config.app = self.app_config

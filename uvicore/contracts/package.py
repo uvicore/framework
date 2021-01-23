@@ -6,7 +6,7 @@ from uvicore.typing import Dict, List, Any
 
 
 class Package(Dict):
-    """Package Definition as a Dynamic Dic"""
+    """Package Definition"""
 
     # These class level properties for for type annotations only.
     # They do not restrict of define valid properties like a dataclass would.

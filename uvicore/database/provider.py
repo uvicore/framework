@@ -7,7 +7,7 @@ from uvicore.typing import Dict, List
 class Db:
     """Database Service Provider Mixin"""
 
-    def _add_db_definition(self, key, value):
+    #def _add_db_definition(self, key, value):
         # if type(value) == list:
         #     if not self.package.database[key]: self.package.database[key] = []
         #     self.package.database[key].extend(value)
@@ -16,7 +16,7 @@ class Db:
         # else:
         #     self.package.database[key] = value
 
-        self.package.database[key] = value
+        #self.package.database[key] = value
 
         # if 'database' not in self.package:
         #     self.package.database = Dict()
@@ -27,6 +27,46 @@ class Db:
         #     self.package['database'][key] = value
 
     def connections(self, config: Dict, default: str):
+        #connections = []
+        for name, connection in config.items():
+
+            # Build URL and metakey
+            # Metakey cannot be the connection name.  If 2 connections share the exact
+            # same database (host, port, dbname) then they need to also share the same
+            # metedata for foreign keys to work properly.
+            if connection.driver == 'sqlite':
+                url = 'sqlite:///' + connection.database
+                metakey = url
+            else:
+                url = (
+                    connection.driver
+                    + '+' + connection.dialect
+                    + '://' + connection.username
+                    + ':' + connection.password
+                    + '@' + connection.host
+                    + ':' + str(connection.port)
+                    + '/' + connection.database
+                )
+                metakey = (
+                    connection.host
+                    + ':' + str(connection.port)
+                    + '/' + connection.database
+                )
+
+            # Merge new values into connection SuperDict
+            if not connection.prefix: connection.prefix = ''
+            connection.merge({
+                'name': name,
+                'metakey': metakey,
+                'url': url
+            })
+            #connections.append(connection)
+
+        self.package.database.connections = config
+        self.package.database.connection_default = default
+
+
+    def connectionsORIG(self, config: Dict, default: str):
         # Here we translate a config connectoin dictionary into an actual Connection Class
         connections = []
         for name, connection in config.items():
@@ -62,10 +102,10 @@ class Db:
                 prefix=connection.get('prefix') or '',
                 metakey=metakey,
                 url=url,
-                options=Dict(connection.get('options') or {}),
             ))
         self._add_db_definition('connections', connections)
         self._add_db_definition('connection_default', default)
+
 
     def models(self, items: List):
         # Default registration
@@ -73,7 +113,7 @@ class Db:
 
         # Register models only if allowed
         if self.package.registers.models:
-            self._add_db_definition('models', items)
+            self.package.database.models = items
 
     def tables(self, items: List):
         # Default registration
@@ -81,7 +121,7 @@ class Db:
 
         # Register tables only if allowed
         if self.package.registers.tables:
-            self._add_db_definition('tables', items)
+            self.package.database.tables = items
 
     def seeders(self, items: List):
         # Default registration
@@ -89,4 +129,4 @@ class Db:
 
         # Register seeders only if allowed
         if self.package.registers.seeders:
-            self._add_db_definition('seeders', items)
+            self.package.database.seeders = items

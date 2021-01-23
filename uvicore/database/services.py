@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.typing import Any
+from uvicore.typing import Any, Dict
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import load
@@ -79,7 +79,8 @@ class Database(ServiceProvider, Cli):
         """Custom event handler for uvicore.foundation.events.app.Booted"""
 
         # Gather all connections, models, tables and seeders
-        connections = []; models = []; tables = []; seeders = []
+        connections = Dict()
+        models = []; tables = []; seeders = []
         last_default = None; app_default = None
         for package in self.app.packages.values():
             if not 'database' in package: continue
@@ -91,7 +92,9 @@ class Database(ServiceProvider, Cli):
             if package.main and package.database.connection_default: app_default = package.database.connection_default
 
             # Append connections
-            connections.extend(package.database.connections or [])
+            #connections.extend(package.database.connections or [])
+            connections.merge(package.database.connections)
+            #connections.merge(package.database)
 
             # Append models
             models.extend(package.database.models or [])

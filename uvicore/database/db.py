@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, Dict, List, Mapping, Optional, Union
+from uvicore.typing import Any, AsyncGenerator, Dict, List, Mapping, Optional, Union
 
 import sqlalchemy as sa
 from databases import Database as EncodeDatabase
@@ -43,14 +43,21 @@ class _Db(DatabaseInterface):
 
     def __init__(self) -> None:
         self._default = None
-        self._connections = {}
-        self._engines = {}
-        self._databases = {}
-        self._metadatas = {}
+        self._connections = Dict()
+        self._engines = Dict()
+        self._databases = Dict()
+        self._metadatas = Dict()
 
-    def init(self, default: str, connections: List[Connection]) -> None:
+    def init(self, default: str, connections: Dict[str, Connection]) -> None:
         self._default = default
-        for connection in connections:
+        self._connections = connections
+
+        # For each unique metakey, create engines, encode databases and metadatas
+        for connection in connections.values():
+            # Check if we have already handled this unique metakey
+            if connection.metakey in self.metadatas: continue
+
+            # Build encode/databases specific connection URL
             # connection.url has a dialect in it, which we need for engines
             # but don't need for encode/databases library
             if connection.driver == 'sqlite':
@@ -65,7 +72,6 @@ class _Db(DatabaseInterface):
                     + ':' + str(connection.port)
                     + '/' + connection.database
                 )
-            self._connections[connection.name] = connection
             self._engines[connection.metakey] = sa.create_engine(connection.url)
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()

@@ -1,11 +1,12 @@
-from abc import ABC
-from dataclasses import dataclass
-from typing import Dict
+from uvicore.typing import Dict
 
-@dataclass
-class Connection(ABC):
+class Connection(Dict):
+    """Database Connection Definition"""
+
+    # These class level properties for for type annotations only.
+    # They do not restrict of define valid properties like a dataclass would.
+    # This is still a fully dynamic SuperDict!
     name: str
-    #default: bool
     driver: str
     dialect: str
     host: str
@@ -16,4 +17,23 @@ class Connection(ABC):
     prefix: str
     metakey: str
     url: str
-    options: Dict
+
+
+
+#from abc import ABC
+#from dataclasses import dataclass
+# @dataclass
+# class Connection(ABC):
+#     name: str
+#     #default: bool
+#     driver: str
+#     dialect: str
+#     host: str
+#     port: int
+#     database: str
+#     username: str
+#     password: str
+#     prefix: str
+#     metakey: str
+#     url: str
+
