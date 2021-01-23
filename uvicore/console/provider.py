@@ -7,15 +7,30 @@ from uvicore.database import Connection
 class Cli:
     """CLI Service Provider Mixin"""
 
-    def _add_cli_definition(self, key, value):
-        if 'console' not in self.package:
-            self.package['console'] = Dict()
-        self.package['console'][key] = value
+    def commands(self, items: Dict = None, *, group: str = None, help: str = None, commands: Dict = None):
+        """Add commands as a dictionary or kwargs"""
 
-    def commands(self, items: Dict):
         # Default registration
         self.package.registers.defaults({'commands': True})
 
         # Register commands only if allowed
-        if self.package.registers.commands:
-            self._add_cli_definition('groups', Dict(items))
+        if not self.package.registers.commands: return
+
+        if items:
+            # Add as dictionary
+            self.package.console.groups.merge(items)
+        else:
+            # Add as kwargs
+            if help:
+                self.package.console.groups.merge({
+                    group: {
+                        'help': help,
+                        'commands': commands
+                    }
+                })
+            else:
+                self.package.console.groups.merge({
+                    group: {
+                        'commands': commands
+                    }
+                })

@@ -3,7 +3,7 @@ import sys
 
 import uvicore
 from uvicore.typing import Any, List, NamedTuple, Tuple, Dict, OrderedDict
-from uvicore import package
+from uvicore.package import Package
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
 from uvicore.contracts import Package as PackageInterface
@@ -184,7 +184,7 @@ class _Application(ApplicationInterface):
             # Start a new package definition
             #x = OrderedDict()
             #x.dotset(package_name, package.Definition({
-            self._packages[package_name] = package.Definition({
+            self._packages[package_name] = Package({
                 'name': package_name,
                 'main': True if package_name == self.main else False,
                 'path': location(package_name),

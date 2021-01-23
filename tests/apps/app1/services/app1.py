@@ -45,10 +45,10 @@ class App1(ServiceProvider, Cli, Db, Http):
     def boot(self) -> None:
 
         # Define Service Provider Registrations
-        self.registers(self.package.config('registers'))
+        self.registers(self.package.config.registers)
 
         # Define Database Connections
-        self.connections(self.package.config('database.connections'), self.package.config('database.default'))
+        self.connections(self.package.config.database.connections, self.package.config.database.default)
 
         # Using __init__.py now so just import it
         #from app1 import models
@@ -64,15 +64,15 @@ class App1(ServiceProvider, Cli, Db, Http):
         ])
 
         # Define view and asset paths and configure the templating system
-        # self.load_views()
+        # self.define_views()
 
         # Define Web and API routers
-        self.load_routes()
+        self.define_routes()
 
         # Define CLI commands to be added to the ./uvicore command line interface
-        self.load_commands()
+        self.define_commands()
 
-    def load_views(self) -> None:
+    def define_views(self) -> None:
         """Define view and asset paths and configure the templating system
         """
         # Add view paths
@@ -84,20 +84,20 @@ class App1(ServiceProvider, Cli, Db, Http):
             'mreschke.wiki.http.static',  # wiki override example - RED
         ])
 
-    def load_routes(self) -> None:
+    def define_routes(self) -> None:
         """Define Web and API router"""
-        #self.web_routes('app1.http.routes.web.Web', self.package.config('route.web_prefix'))
-        self.api_routes('app1.http.routes.api.Api', self.package.config('route.api_prefix'))
+        self.api_routes(
+            module='app1.http.routes.api.Api',
+            prefix=self.package.config.route.api_prefix
+        )
 
-    def load_commands(self) -> None:
+    def define_commands(self) -> None:
         """Define CLI commands to be added to the ./uvicore command line interface"""
-        group = 'app1'
-        self.commands({
-            'app1': {
-                'help': 'App1 Commands',
-                'commands': {
-                    'test': 'app1.commands.test.cli',
-                    'shell': 'app1.commands.shell.cli',
-                },
+        self.commands(
+            group='app1',
+            help='App1 Commands',
+            commands={
+                'test': 'app1.commands.test.cli',
+                'shell': 'app1.commands.shell.cli',
             }
-        })
+        )

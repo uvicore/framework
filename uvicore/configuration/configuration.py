@@ -1,16 +1,30 @@
-import os
-from typing import Any, Dict
-
 import uvicore
-from uvicore.contracts import Config as ConfigInterface
-from uvicore.support.dictionary import deep_merge
 from uvicore.support.dumper import dd, dump
+from uvicore.contracts import Config as ConfigInterface
+
 
 @uvicore.service('uvicore.configuration.configuration._Configuration',
-    aliases=['Configuration', 'Config', 'config'],
+    aliases=['Configuration', 'Config', 'configuration', 'config'],
     singleton=True,
 )
 class _Configuration(ConfigInterface):
+    pass
+
+
+
+
+
+
+
+
+
+
+# OBSOLETE, now SuperDict!
+
+import os
+from typing import Any, Dict
+from uvicore.support.dictionary import deep_merge
+class _ConfigurationOBSOLETE(ConfigInterface):
     """Configuration private class.
 
     Do not import from this location.
@@ -75,4 +89,4 @@ class _Configuration(ConfigInterface):
 # Use the uvicore.config singleton global instead.
 
 # Public API for import * and doc gens
-__all__ = ['_Configuration']
+#__all__ = ['_Configuration']

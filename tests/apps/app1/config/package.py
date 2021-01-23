@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from uvicore.typing import OrderedDict
 
 # This is the main app1 config.  All items here can be overridden
 # when used inside other applications.  Accessible at config('acme.app1')
@@ -62,6 +62,7 @@ config = {
     #     'tables': False,
     #     'seeders': False,
     # },
+
 
     # --------------------------------------------------------------------------
     # Package Dependencies (Service Providers)

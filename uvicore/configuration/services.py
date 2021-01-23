@@ -29,25 +29,24 @@ class Configuration(ServiceProvider, Cli):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands..."""
 
+        # Define service provider registration control
+        # No - Never allow this packages registrations to be disabled from other configs
+
         # Define commands
-        self.commands({
-            # Register db commands
-            'config': {
-                'help': 'Configuration Commands',
-                'commands': {
-                    'list': 'uvicore.configuration.commands.config.list',
-                    'get': 'uvicore.configuration.commands.config.get',
-                }
-            },
-        })
-
-
+        self.commands(
+            group='config',
+            help='Configuration Information',
+            commands={
+                'list': 'uvicore.configuration.commands.config.list',
+                'get': 'uvicore.configuration.commands.config.get',
+            }
+        )
 
     def register_configuration(self) -> None:
         # Set uvicore.log global
-        #uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
-        from uvicore.typing import Dict
-        uvicore.config = Dict()
+        uvicore.config = uvicore.ioc.make('uvicore.configuration.configuration._Configuration')
+        #from uvicore.typing import Dict
+        #uvicore.config = Dict()
 
         # Set app.config for convenience (only after register since config is a service provider itself)
         # No, don't want duplicate entry points everywhere

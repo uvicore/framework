@@ -8,14 +8,28 @@ class Db:
     """Database Service Provider Mixin"""
 
     def _add_db_definition(self, key, value):
-        if 'database' not in self.package:
-            self.package['database'] = Dict()
-        self.package['database'][key] = value
+        # if type(value) == list:
+        #     if not self.package.database[key]: self.package.database[key] = []
+        #     self.package.database[key].extend(value)
+        # elif type(value) == dict:
+        #     self.package.database[key].merge(value)
+        # else:
+        #     self.package.database[key] = value
 
-    def connections(self, items: Dict, default: str):
+        self.package.database[key] = value
+
+        # if 'database' not in self.package:
+        #     self.package.database = Dict()
+        # if type(value) == list:
+        #     if key not in self.package.database: self.package.database = []
+        #     self.package['database'][key].extend(value)
+        # else:
+        #     self.package['database'][key] = value
+
+    def connections(self, config: Dict, default: str):
         # Here we translate a config connectoin dictionary into an actual Connection Class
         connections = []
-        for name, connection in items.items():
+        for name, connection in config.items():
             # Metakey cannot be the connection name.  If 2 connections share the exact
             # same database (host, port, dbname) then they need to also share the same
             # metedata for foreign keys to work properly.

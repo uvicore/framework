@@ -62,6 +62,9 @@ class Http(ServiceProvider, Cli, Http):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
+        # Define service provider registration control
+        self.registers(self.package.config.registers)
+
         # Define HTTP Middleware
         #self.middleware(uvicore.config('app.middleware'))
 

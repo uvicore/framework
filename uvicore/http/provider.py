@@ -10,22 +10,22 @@ class Http:
             self.package['http'] = Dict()
         self.package['http'][key] = value
 
-    def web_routes(self, item: str, prefix: str):
+    def web_routes(self, module: str, prefix: str):
         # Default registration
         self.package.registers.defaults({'web_routes': True})
 
         # Register WEB routes only if allowed
         if self.package.registers.web_routes:
-            self._add_http_definition('web_routes', item)
+            self._add_http_definition('web_routes', module)
             self._add_http_definition('web_route_prefix', prefix)
 
-    def api_routes(self, item: str, prefix: str):
+    def api_routes(self, module: str, prefix: str):
         # Default registration
         self.package.registers.defaults({'api_routes': True})
 
         # Register API routes only if allowed
         if self.package.registers.api_routes:
-            self._add_http_definition('api_routes', item)
+            self._add_http_definition('api_routes', module)
             self._add_http_definition('api_route_prefix', prefix)
 
     def middleware(self, items: List):

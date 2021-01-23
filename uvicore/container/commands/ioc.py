@@ -5,7 +5,7 @@ from uvicore.support.dumper import dd, dump
 
 @command()
 @option('--raw', is_flag=True, help='Show output without prettyprinter')
-def list(raw: bool = False):
+def bindings(raw: bool = False):
     """List all Ioc Bindings"""
     if not raw:
         uvicore.log.header("List of all Ioc bindings")

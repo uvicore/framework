@@ -35,10 +35,13 @@ class Auth(ServiceProvider, Db, Http):
 
     def boot(self) -> None:
         # Define service provider registration control
-        self.registers(self.package.config('registers'))
+        self.registers(self.package.config.registers)
 
-        # Define database connections
-        self.connections(self.package.config('database.connections'), self.package.config('database.default'))
+        # Define Database Connections
+        self.connections(
+            config=self.package.config.database.connections,
+            default=self.package.config.database.default
+        )
 
         # Define all tables/models used by this package.
         # The goal is to load up all SQLAlchemy tables for complete metedata definitions.
@@ -62,35 +65,3 @@ class Auth(ServiceProvider, Db, Http):
         ])
 
         #dd(self.package.database.connections[0].driver)
-
-
-    def load_commands(self) -> None:
-        """Define CLI commands to be added to the ./uvicore command line interface"""
-        pass
-        # group = 'auth'
-        # self.commands([
-        #     {
-        #         'group': {
-        #             'name': group,
-        #             'parent': 'root',
-        #             'help': 'Auth Commands',
-        #         },
-        #         #'commands': []
-        #            #{'name': 'test', 'module': 'mreschke.wiki.commands.test.cli'},
-        #         #],
-        #     },
-        #     {
-        #         'group': {
-        #             'name': 'db',
-        #             'parent': group,
-        #             'help': 'Auth DB Commands',
-        #         },
-        #         'commands': [
-        #             {'name': 'create', 'module': 'uvicore.auth.commands.db.create'},
-        #             {'name': 'drop', 'module': 'uvicore.auth.commands.db.drop'},
-        #             {'name': 'recreate', 'module': 'uvicore.auth.commands.db.recreate'},
-        #             {'name': 'seed', 'module': 'uvicore.auth.commands.db.seed'},
-        #         ],
-        #     }
-        # ])
-

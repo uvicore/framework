@@ -38,4 +38,6 @@ class Logging(ServiceProvider):
         configs are deep merged to provide a complete and accurate view of all configs.
         This is where you load views, assets, routes, commands...
         """
-        pass
+        # Define service provider registration control
+        # No - Never allow this packages registrations to be disabled from other configs
+        # ?? course I don't have any registrations for now, maybe later

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from uvicore.typing import OrderedDict
 from uvicore.configuration import env
 
 config = {
@@ -107,9 +107,11 @@ config = {
         #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
 
         # Low level core uvicore libraries (too early to override in a service provider, must be done here)
+
+        # FIXME, broken with new SuperDict
         #'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
-        'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
-        'uvicore.package.package.Package': 'app1.overrides.package.Package',
+        #'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
+        #'uvicore.package.package.Package': 'app1.overrides.package.Package',
 
         # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',
@@ -173,51 +175,11 @@ config = {
     },
 
 
-    # Add more laravel stuff, locale, timezone etc...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # OLD STUFF
-
     # --------------------------------------------------------------------------
-    # Inversion of Control (IoC) Concrete Implimentation Overrides
+    # Pretty Printer Configuration
     # --------------------------------------------------------------------------
-    # Many core or small classes do not use service providers at all.  But all
-    # classes use the IoC for their implimentation to allow you to override
-    # anything, even the smallest of classes.  Use this section to override all
-    # other non service provider based classes.  If the array is empty the
-    # defaults in `uvicore/container/ioc.py` are used.
-
-    # No this is obsolete now thanks to the new bind default and make feature
-    # Now even core IoC instances like Application can be overwridded by the
-    # bindings array above!!!
-    #NO'ioc': {
-        # 'Application': {
-        #     'object': 'mreschke.wiki.overrides.application.Application',
-        #     'singleton': True,
-        #     'aliases': ['App', 'app', 'application']
-        # },
-        # 'ServiceProvider': {
-        #     'object': 'mreschke.wiki.overrides.provider.ServiceProvider',
-        #     'aliases': ['service', 'provider'],
-        # },
-        # 'Package': {
-        #     'object': 'mreschke.wiki.overrides.package.Package',
-        #     'aliases': ['package']
-        # },
-    #},
-
+    'dump': {
+        'width': 110
+    },
 
 }

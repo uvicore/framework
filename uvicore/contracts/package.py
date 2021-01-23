@@ -20,7 +20,7 @@ class Package(Dict):
     console: _Console
 
     @abstractmethod
-    def config(self, dotkey: str = None) -> Any:
+    def config(self, dotkey: str = None) -> Dict:
         """Helper to access this packages configs"""
         pass
 

@@ -2,10 +2,10 @@ import uvicore
 from typing import Any
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
-from uvicore.support.dictionary import deep_merge
 from uvicore.console.provider import Cli
 from uvicore.support.module import load
 from uvicore.console import group as cli_group
+from uvicore.typing import Dict
 
 
 @uvicore.provider()
@@ -27,37 +27,25 @@ class Console(ServiceProvider, Cli):
         self.events.listen('uvicore.foundation.events.app.Booted', self.booted)
 
     def boot(self) -> None:
-        # Register commands
-        # self.commands([
-        #     # Register schematic generator commands
-        #     {
-        #         'group': {
-        #             'name': 'gen',
-        #             'parent': 'root',
-        #             'help': 'Generate new files (commands, models, views...)',
-        #         },
-        #         'commands': [
-        #             {'name': 'command', 'module': 'uvicore.console.commands.generators.command'},
-        #         ],
-        #     }
-        # ])
 
-        # NEW
-        self.commands({
-            'gen': {
-                'help': 'Generate new files (commands, models, views...)',
-                'commands': {
-                    'command': 'uvicore.console.commands.generators.command'
-                }
+        # Define service provider registration control
+        # No - Never allow this packages registrations to be disabled from other configs
+
+        # Define commands
+        self.commands(
+            group='gen',
+            help='Generate New Schematics (commands, models, views...)',
+            commands={
+                'command': 'uvicore.console.commands.generators.command'
             }
-        })
+        )
 
     def booted(self, event: str, payload: Any) -> None:
         """Custom event handler for uvicore.foundation.events.app.Booted"""
         from uvicore.console.console import _cli as cli
 
         # Deep merge all command groups, this allows simple command extension!
-        groups = {}
+        groups = Dict()
         for package in self.app.packages.values():
             if not 'console' in package: continue
 
@@ -69,7 +57,7 @@ class Console(ServiceProvider, Cli):
             is_console = uvicore.app.is_console
             for key, group in package.console['groups'].items():
                 if (register and is_console) or key == 'http':
-                    groups = deep_merge({key: group}, groups)
+                    groups.merge({key: group})
 
         # Register each group and each groups commands
         click_groups = {}
@@ -89,7 +77,7 @@ class Console(ServiceProvider, Cli):
             #click_group = click_groups[key]
 
             # Add all commands into this click_group
-            for command_name, command_module in group['commands'].items():
+            for command_name, command_module in group.commands.items():
                 # Dynamically import the commands module
                 module = load(command_module).object
                 click_group.add_command(module, command_name)
@@ -101,39 +89,3 @@ class Console(ServiceProvider, Cli):
             else:
                 # Sub group
                 click_groups[parent].add_command(click_group, name)
-
-
-
-
-            # if not 'console' in package: continue
-
-            # # Only register command if running from the console
-            # # or from the http:serve command (register only the http group).
-            # # Do NOT register apps commands if apps config.register_commands if False
-            # register = package.registers.commands
-            # if uvicore.app.is_http: register = False
-
-            # # FIXME
-            # # for group in options:
-            # #     if group.get('group').get('name') == 'http':
-            # #         for command in group.get('commands'):
-            # #             if command.get('name') == 'serve':
-            # #                 register = True
-            # #                 break;
-
-            # if not register: return
-
-
-            # from uvicore.console.console import _cli as cli
-
-
-
-            # dump(package.console.groups)
-
-
-
-            # dump('do stuff')
-
-
-
-

@@ -18,26 +18,10 @@ class Orm(ServiceProvider, Cli):
         #self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
     def boot(self) -> None:
-        # Define CLI commands to be added to the ./uvicore command line interface
-        self.load_commands()
+        # Define service provider registration control
+        self.registers(self.package.config.registers)
 
-    def load_commands(self) -> None:
-        # Register commands
-        # self.commands([
-        #     # Extend schematic generator commands
-        #     {
-        #         'group': {
-        #             'name': 'gen',
-        #             'parent': 'root',
-        #             'extend': True,
-        #         },
-        #         'commands': [
-        #             {'name': 'model', 'module': 'uvicore.orm.commands.generators.model'},
-        #         ],
-        #     }
-        # ])
-
-        # NEW
+        # Define commands
         self.commands({
             # Extend schematic generator commands
             'gen': {
@@ -46,4 +30,3 @@ class Orm(ServiceProvider, Cli):
                 },
             }
         })
-

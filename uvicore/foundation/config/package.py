@@ -27,6 +27,40 @@ config = {
     # },
 
 
+    'commands': {
+        # Register Ioc commands
+        'ioc': {
+            'help': 'Uvicore Ioc (Inversion of Control) Information',
+            'commands': {
+                'bindings': 'uvicore.container.commands.ioc.bindings',
+                'singletons': 'uvicore.container.commands.ioc.singletons',
+                'overrides': 'uvicore.container.commands.ioc.overrides',
+                'type': 'uvicore.container.commands.ioc.type',
+                'get': 'uvicore.container.commands.ioc.get',
+            },
+        },
+
+        # Register Package commands
+        'package': {
+            'help': 'Uvicore Package Information',
+            'commands': {
+                'providers': 'uvicore.package.commands.package.providers',
+                'list': 'uvicore.package.commands.package.list',
+                'get': 'uvicore.package.commands.package.get',
+            },
+        },
+
+        # Register Event commands
+        'event': {
+            'help': 'Uvicore Event Information',
+            'commands': {
+                'list': 'uvicore.events.commands.event.list',
+                'get': 'uvicore.events.commands.event.get',
+            },
+        },
+    },
+
+
     # --------------------------------------------------------------------------
     # Package Dependencies (Service Providers)
     #

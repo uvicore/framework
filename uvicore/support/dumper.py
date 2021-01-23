@@ -37,8 +37,10 @@ def dump(*args):
                 #prettyprinter.cpprint(arg, width=10000, ribbon_width=10000)
                 print(arg)
             else:
-                #prettyprinter.cpprint(arg)
-                width = 150  # FIXME, could make this a config at some point
+                width = 110
+                if uvicore.config:
+                    if uvicore.config.app.dump.width:
+                        width = uvicore.config.app.dump.width
                 prettyprinter.cpprint(arg, width=width, ribbon_width=width)
 
 

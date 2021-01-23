@@ -29,29 +29,32 @@ class Database(ServiceProvider, Cli):
         self.events.listen('uvicore.foundation.events.app.Booted', self.booted)
 
     def boot(self) -> None:
-        # Define commands
-        self.commands({
-            # Register db commands
-            'db': {
-                'help': 'Database Commands',
-                'commands': {
-                    'create': 'uvicore.database.commands.db.create',
-                    'drop': 'uvicore.database.commands.db.drop',
-                    'recreate': 'uvicore.database.commands.db.recreate',
-                    'seed': 'uvicore.database.commands.db.seed',
-                    'reseed': 'uvicore.database.commands.db.reseed',
-                    'connections': 'uvicore.database.commands.db.connections',
-                }
-            },
 
-            # Extend schematic generator commands
-            'gen': {
-                'commands': {
-                    'table': 'uvicore.database.commands.generators.table',
-                    'seeder': 'uvicore.database.commands.generators.seeder',
-                }
+        # Define service provider registration control
+        self.registers(self.package.config.registers)
+
+        # Define db commands
+        self.commands(
+            group='db',
+            help='Database Commands',
+            commands={
+                'create': 'uvicore.database.commands.db.create',
+                'drop': 'uvicore.database.commands.db.drop',
+                'recreate': 'uvicore.database.commands.db.recreate',
+                'seed': 'uvicore.database.commands.db.seed',
+                'reseed': 'uvicore.database.commands.db.reseed',
+                'connections': 'uvicore.database.commands.db.connections',
             }
-        })
+        )
+
+        # Extend schematic generator commands
+        self.commands(
+            group='gen',
+            commands={
+                'table': 'uvicore.database.commands.generators.table',
+                'seeder': 'uvicore.database.commands.generators.seeder',
+            }
+        )
 
     def registered_OBSOLETE(self, event: str, payload: Any):
         """Custom event handler for uvicore.foundation.events.app.Registered"""

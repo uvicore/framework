@@ -12,8 +12,8 @@ events: contracts.Dispatcher = None
 app: contracts.Application = None
 
 # Core (service provider based) singletons as globals
-#config: contracts.Config = None
-config: Dict()
+config: contracts.Config = None
+#config: Dict()
 log: contracts.Logger = None
 db: contracts.Database = None
 

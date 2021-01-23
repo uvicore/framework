@@ -1,8 +1,23 @@
+from uvicore.typing import Dict
+
+
+class Config(Dict):
+    pass
+
+
+
+
+
+
+
+
+
+# OBSOLETE, now SuperDict!
+
+
 from abc import ABC, abstractmethod
 from typing import Dict, Any
-
-
-class Config(ABC):
+class ConfigOBSOLETE(ABC):
 
     @property
     @abstractmethod
