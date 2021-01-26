@@ -4,6 +4,15 @@ from collections import OrderedDict as _OrderedDict
 from prettyprinter import pretty_call, register_pretty
 
 
+# Builtin Dict Methods
+# clear
+# copy
+# popitem
+# setdefault
+# update
+# fromkeys
+
+
 class _SuperDict:
     """Advanced python dictionary and ordered dictionary replacement"""
     # A refactor of https://github.com/mewwts/addict (MIT)
@@ -135,7 +144,9 @@ class _SuperDict:
         return item
 
     def copy(self):
-        """Make a byvalue copy of entire dict"""
+        """Make a byvalue copy of entire dict
+
+        This overrides the builtin dict method."""
         return copy.copy(self)
 
     def deepcopy(self):
@@ -147,7 +158,9 @@ class _SuperDict:
         return self.deepcopy()
 
     def update(self, *args, **kwargs):
-        """Deep merge one or more dictionaries with self.  Overwrites values that exist."""
+        """Deep merge one or more dictionaries with self.  Overwrites values that exist.
+
+        This overrides the builtin dict method."""
         other = {}
         if args:
             if len(args) > 1: raise TypeError()
@@ -173,8 +186,10 @@ class _SuperDict:
         defaults.merge(self)
         self.merge(defaults)
 
-    def default(self, key: str, default=None):
-        """Set a single key value only if not exists"""
+    def setdefault(self, key: str, default=None):
+        """Set a single key value only if not exists.
+
+        This overrides the builtin dict method."""
         if key in self:
             return self[key]
         else:

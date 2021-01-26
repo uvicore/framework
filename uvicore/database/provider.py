@@ -61,7 +61,6 @@ class Db:
                 'url': url
             })
             #connections.append(connection)
-
         self.package.database.connections = config
         self.package.database.connection_default = default
 

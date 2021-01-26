@@ -43,7 +43,7 @@ async def cli():
 
     from app1 import models
     users = await models.User.query().get()
-    dd(users)
+    dump(users)
 
 
 
@@ -56,15 +56,15 @@ async def cli():
 
 
 
-    dd('DONE')
+    #dd('DONE')
 
 
 
-    import sys
+    #import sys
 
     #from uvicore.auth.database.tables.users import Users
-    from uvicore.auth.models.user import User
-    from app1.models import User, Post
+    #from uvicore.auth.models.user import User
+    #from app1.models import User, Post
 
     #dump(User)
 
@@ -91,9 +91,9 @@ async def cli():
     # #dump(sys.modules)
 
 
-    posts = await Post.query().include('creator.contact', 'attributes').get()
+    #posts = await Post.query().include('creator.contact', 'attributes').get()
     #posts = await User.query().include('info').get()
-    dump(posts)
+    #dump(posts)
 
     #dump("Hi there, my name is matthew reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?  Again, my name is Matthew Reschke, what is your name? Hi there, my name is matthew reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?  Again, my name is Matthew Reschke, what is your name?")
     #dump(123.32)

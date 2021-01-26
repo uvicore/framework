@@ -49,6 +49,7 @@ async def test_builder(app1):
 
     # Multiple where AND
     posts = await uvicore.db.query().table('posts').where('creator_id', '=', 2).where('owner_id', 1).get()
+    #print(query.sql());dump(posts); dump(posts[0].keys())
     assert [3, 4] == [x.id for x in posts]
 
     # Multiple where AND using a LIST

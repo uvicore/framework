@@ -102,7 +102,8 @@ class _Db(DatabaseInterface):
     def metakey(self, connection: str = None, metakey: str = None) -> str:
         try:
             if not metakey:
-                if not connection: connection = self.default
+                if not connection:
+                    connection = self.default
                 metakey = self.connection(connection).metakey
             return metakey
         except Exception:
