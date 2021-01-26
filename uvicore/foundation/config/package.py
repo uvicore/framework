@@ -79,8 +79,6 @@ config = {
         # Configuration is used right away in provider register()
         'uvicore.configuration': {
             'provider': 'uvicore.configuration.services.Configuration',
-            'test': 'one',
-            'test2': 'two',
         },
 
         # I want logging quick as it may be used in providers register() and boot()

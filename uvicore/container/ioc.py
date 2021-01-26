@@ -5,7 +5,7 @@ from uvicore.support import module
 from uvicore.container import Binding
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Ioc as IocInterface
-from uvicore.typing import Any, Callable, List, Optional, Type, TypeVar, Dict
+from uvicore.typing import Any, Callable, List, Optional, Type, TypeVar, Dict, Union
 
 T = TypeVar('T')
 
@@ -66,11 +66,17 @@ class _Ioc(IocInterface):
     #def config(self, config: Dict) -> None:
     #    self._app_config = config
 
-    def binding(self, name: str) -> Binding:
-        if name in self.bindings:
-            return self.bindings[name]
-        elif name in self.aliases:
-            return self.bindings[self.aliases[name]]
+    def binding(self, name: str = None, *, type: str = None) -> Union[Binding, Dict]:
+        if name:
+            # Get one binding by name
+            if name in self.bindings:
+                return self.bindings[name]
+            elif name in self.aliases:
+                return self.bindings[self.aliases[name]]
+        elif type:
+            # Get all binding of the specified type
+            #return [binding for binding in self.bindings.values() if binding.type.lower() == type.lower()]
+            return Dict({key:binding for key, binding in self.bindings.items() if binding.type.lower() == type.lower()})
 
     def make(self, name: str, default: Callable[[], T] = None, **kwargs) -> T:
         if default is not None and self.binding(name) is None:

@@ -134,17 +134,12 @@ class _SuperDict:
             return type(item)(cls._hook(elem) for elem in item)
         return item
 
-    def setdefault(self, key, default=None):
-        if key in self:
-            return self[key]
-        else:
-            self[key] = default
-            return default
-
     def copy(self):
+        """Make a byvalue copy of entire dict"""
         return copy.copy(self)
 
     def deepcopy(self):
+        """Make a byvalue copy of entire dict"""
         return copy.deepcopy(self)
 
     def clone(self):
@@ -152,6 +147,7 @@ class _SuperDict:
         return self.deepcopy()
 
     def update(self, *args, **kwargs):
+        """Deep merge one or more dictionaries with self.  Overwrites values that exist."""
         other = {}
         if args:
             if len(args) > 1: raise TypeError()
@@ -167,23 +163,26 @@ class _SuperDict:
                 self[k].update(self.__class__(v))
 
     def merge(self, *args, **kwargs):
-        """Merge this Dict and overwrite existing values"""
-        #dicts = []
-        #for arg in args:
-            #dicts.append(self.__class__(arg))
-        #self.update(*dicts, **kwargs)
-        #new = self.__class__(*args, **kwargs)
+        """Deep merge one or more dictionaries with self.  Overwrites values that exist."""
         self.update(*args, **kwargs)
-        #self.update(new)
-        #self.update(_deep_merge(self.__class__(args[0]), self))
 
     def defaults(self, *args, **kwargs):
-        """Provide defaults, essentially a reverse merge"""
+        """Provide defaults Dict to existing self and add only if not exists.
+        Essentially a reverse merge that does NOT overwrite values if exist"""
         defaults = self.__class__(*args, **kwargs)
         defaults.merge(self)
         self.merge(defaults)
 
+    def default(self, key: str, default=None):
+        """Set a single key value only if not exists"""
+        if key in self:
+            return self[key]
+        else:
+            self[key] = default
+            return default
+
     def to_dict(self):
+        """Convert SuperDict into regular builtin dict"""
         base = {}
         for key, value in self.items():
             if isinstance(value, type(self)):
@@ -196,16 +195,19 @@ class _SuperDict:
                 base[key] = value
         return base
 
-    def freeze(self, shouldFreeze=True):
-        object.__setattr__(self, '__frozen', shouldFreeze)
+    def freeze(self, freeze=True):
+        """Set entire SuperDict to read only"""
+        object.__setattr__(self, '__frozen', freeze)
         for key, val in self.items():
             if isinstance(val, _SuperDict):
-                val.freeze(shouldFreeze)
+                val.freeze(freeze)
 
     def unfreeze(self):
-        self.freeze(False)
+        """Set entire SuperDict to writeable"""
+        self.freeze(freeze=False)
 
     def dotget(self, dotkey: str = None, _recursive_config = None):
+        """Get values using string dot notation"""
         # Recursive for dot notation
         try:
             if not dotkey:
@@ -225,6 +227,7 @@ class _SuperDict:
             return self.__missing__(dotkey)
 
     def dotset(self, dotkey: str, value, _recursive_config= None):
+        """Set values using string dot notation"""
         # Recursive for dot notation
         # Remember objects are byRef, so changing config also changes self.items
         if _recursive_config is None: _recursive_config = self

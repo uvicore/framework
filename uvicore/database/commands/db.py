@@ -66,7 +66,7 @@ async def seed_tables(connections: str):
     for metakey in metakeys:
         packages = db.packages(metakey=metakey)
         for package in packages:
-            for seeder in package.seeders:
+            for seeder in package.database.seeders:
                 if seeder not in ran:
                     log.header('Seeding tables from {} in defined order'.format(seeder))
                     await module.load(seeder).object()

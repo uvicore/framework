@@ -1,6 +1,6 @@
 import uvicore
 from fastapi import APIRouter as _FastAPIRouter
-from typing import Any, Type, List, Callable
+from uvicore.typing import Any, Type, List, Callable, Optional
 from starlette.routing import BaseRoute
 from uvicore.contracts import ApiRouter as RouterInterface
 
@@ -49,7 +49,58 @@ class ApiRouter(RouterInterface):
         #     prefix=prefix,
         #     tags=tags
         # )
-        return self._router.include_router(router)
+        return self.router.include_router(router)
+
+    def add_route(self, path: str, endpoint: Callable, *,
+        response_model: Optional[Type[Any]] = None,
+        name: Optional[str] = None,
+        # self,
+        # path: str,
+        # endpoint: Callable,
+        # *,
+        # response_model: Optional[Type[Any]] = None,
+        # status_code: int = 200,
+        # tags: Optional[List[str]] = None,
+        # dependencies: Optional[Sequence[params.Depends]] = None,
+        # summary: Optional[str] = None,
+        # description: Optional[str] = None,
+        # response_description: str = "Successful Response",
+        # responses: Optional[Dict[Union[int, str], Dict[str, Any]]] = None,
+        # deprecated: Optional[bool] = None,
+        # methods: Optional[Union[Set[str], List[str]]] = None,
+        # operation_id: Optional[str] = None,
+        # response_model_include: Optional[Union[SetIntStr, DictIntStrAny]] = None,
+        # response_model_exclude: Optional[Union[SetIntStr, DictIntStrAny]] = None,
+        # response_model_by_alias: bool = True,
+        # response_model_exclude_unset: bool = False,
+        # response_model_exclude_defaults: bool = False,
+        # response_model_exclude_none: bool = False,
+        # include_in_schema: bool = True,
+        # response_class: Optional[Type[Response]] = None,
+        # name: Optional[str] = None,
+        # route_class_override: Optional[Type[APIRoute]] = None,
+        # callbacks: Optional[List[APIRoute]] = None,
+    ) -> None:
+        return self.router.add_api_route(
+            path=path,
+            endpoint=endpoint,
+            response_model=response_model,
+            name=name,
+            # status_code=status_code,
+            # tags=tags,
+            # dependencies=dependencies,
+            # summary=summary,
+            # description=description,
+            # response_description=response_description,
+            # responses=responses,
+            # deprecated=deprecated,
+            # methods=methods,
+            # operation_id=operation_id,
+            # response_model_include=response_model_include,
+            # response_model_exclude=response_model_exclude,
+            # response_model_by_alias=response_model_by_alias,
+            # response
+        )
 
     # @property
     # def router(self):

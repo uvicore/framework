@@ -1,7 +1,6 @@
-#from uvicore.http.routing import ApiRouter, Routes
-from uvicore.http import ApiRouter, Routes, WebRouter
+import uvicore
+from uvicore.http import ApiRouter, Routes, ModelRouter
 from uvicore.support.dumper import dump, dd
-from uvicore import app, config
 
 
 class Api(Routes[ApiRouter]):
@@ -9,5 +8,15 @@ class Api(Routes[ApiRouter]):
     endpoints: str = 'app1.http.api'
 
     def register(self):
-        self.include('post', tags=['Posts'])
-        self.include('user', tags=['Users'])
+
+        # Auto API Experiment
+        self.include(ModelRouter().routes(), tags=['Model API'])
+
+
+        # Test
+        #self.include('test', tags=['Test'])
+
+        #self.include('post', tags=['Posts'])
+        #self.include('user', tags=['Users'])
+
+

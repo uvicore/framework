@@ -1,5 +1,5 @@
 from .request import Request
-from .routing import ApiRouter, Routes, WebRouter
+from .routing import ApiRouter, Routes, WebRouter, ModelRouter
 
 # NO - not used by user
 #from .server import Server

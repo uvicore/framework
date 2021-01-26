@@ -41,6 +41,25 @@ async def cliX():
 async def cli():
     """Play"""
 
+    from app1 import models
+    users = await models.User.query().get()
+    dd(users)
+
+
+
+
+
+
+
+
+
+
+
+
+    dd('DONE')
+
+
+
     import sys
 
     #from uvicore.auth.database.tables.users import Users
