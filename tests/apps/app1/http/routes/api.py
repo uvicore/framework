@@ -10,7 +10,7 @@ class Api(Routes[ApiRouter]):
     def register(self):
 
         # Auto API Experiment
-        self.include(ModelRouter().routes(), tags=['Model API'])
+        self.include(ModelRouter().routes())
 
 
         # Test

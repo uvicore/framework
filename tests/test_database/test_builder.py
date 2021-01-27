@@ -1,8 +1,7 @@
 import pytest
 import uvicore
-
 from uvicore.support.dumper import dump
-from starlette.testclient import TestClient
+
 
 # Builder is a pure STRING based builder.  Don't mix in any SQLAlchemy columns
 # of functions.  I test all those in test_hybrid.py

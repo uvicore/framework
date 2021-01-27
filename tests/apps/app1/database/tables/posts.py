@@ -26,6 +26,7 @@ class Posts(Table):
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('unique_slug', sa.String(length=100), unique=True),
         sa.Column('title', sa.String(length=100)),
+        sa.Column('body', sa.Text()),
         sa.Column('other', sa.String(length=100), nullable=True),
         sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
         sa.Column('owner_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),

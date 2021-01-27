@@ -1,8 +1,6 @@
 import pytest
-import sqlalchemy as sa
-from starlette.testclient import TestClient
-
 import uvicore
+import sqlalchemy as sa
 from uvicore.support.dumper import dump
 
 

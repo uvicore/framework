@@ -28,6 +28,7 @@ async def seed():
         {
             'slug': 'test-post1',
             'title': 'Test Post1',
+            'body': 'This is the body for test post1.  I like the color red and green.',
             'other': 'other stuff1',
             'creator_id': 1,
             'owner_id': 2,
@@ -237,7 +238,10 @@ async def seed():
 
 
     # You can insert one so you can insert relations right after
-    post = await Post(slug='test-post2', title='Test Post2', other=None, creator_id=1, owner_id=2).save()
+    post = await Post(slug='test-post2', title='Test Post2',
+        body='This is the body for test post2.  My favorite frameworks are Laravel and Uvicore!',
+        other=None, creator_id=1, owner_id=2
+    ).save()
     # Create AND Link if nto exist Many-To-Many tags
     await post.link('tags', [
         tags['linux'],
@@ -270,6 +274,7 @@ async def seed():
     post = await Post(
         slug='test-post3',
         title='Test Post3',
+        body='This is the body for test post1.  I like the programming in PHP, Python and anything Typescript.',
         other='other stuff2-bad',  # We'll update this away below
         creator_id=2,
         owner_id=1,
@@ -301,8 +306,13 @@ async def seed():
 
         # 3 posts for manager1
         #Post(slug='test-post3', title='Test Post3', other='other stuff2', creator_id=2, owner_id=1),
-        Post(slug='test-post4', title='Test Post4', other=None, creator_id=2, owner_id=1),
-        Post(slug='test-post5', title='Test Post5', other=None, creator_id=2, owner_id=2),
+        Post(slug='test-post4', title='Test Post4',
+            body='This is the body for test post1.  My favorite morotcycles are super fast crotch rockets!',
+            other=None, creator_id=2, owner_id=1),
+
+        Post(slug='test-post5', title='Test Post5',
+            body='This is the body for test post1.  Everyone loves and cynic.',
+            other=None, creator_id=2, owner_id=2),
 
         # 2 posts for user2
         #Post(slug='test-post6', title='Test Post6', other='other stuff3', creator_id=5),
@@ -317,6 +327,7 @@ async def seed():
         {
             'slug': 'test-post6',
             'title': 'Test Post6',
+            'body': 'This is the body for test post1.  Everyone wants to fly.',
             'other': 'other stuff6',
             #NO - 'creator_id': 5,
             'creator': {
@@ -370,7 +381,9 @@ async def seed():
     # })
 
     # You can insert a single model with .save()
-    post = Post(slug='test-post7', title='Test Post7', other=None, creator_id=5, owner_id=4)
+    post = Post(slug='test-post7', title='Test Post7',
+        body='This is the body for test post1.  I like the to code alone.',
+        other=None, creator_id=5, owner_id=4)
     await post.save()
     await post.create('tags', [
         tags.get('linux'),

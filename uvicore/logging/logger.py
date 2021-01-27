@@ -11,7 +11,7 @@ from colored import attr, bg, fg
 
 import uvicore
 from uvicore.contracts import Logger as LoggerInterface
-from uvicore.support.dumper import dump
+from uvicore.support.dumper import log_dump
 
 # # Sunfinity standardized log configuration
 # config = {
@@ -329,7 +329,7 @@ class _Logger(LoggerInterface):
         if show:
             if handler == 'console':
                 # Pretty Printer to Console
-                dump(*args)
+                log_dump(*args)
             else:
                 # Print as text to file handler
                 for arg in args:

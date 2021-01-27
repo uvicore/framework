@@ -83,7 +83,8 @@ class Http(ServiceProvider, Cli, Http):
         from uvicore.http.templating import context_functions
         self.template({
             'context_functions': {
-                'url': context_functions.url
+                'url': context_functions.url,
+                'asset': context_functions.asset,
             },
         })
 
@@ -157,7 +158,7 @@ class Http(ServiceProvider, Cli, Http):
 
         # Mount all directories to /assets in one go
         # Last directory defined WINS, which fits our last provider wins
-        self.app.http.mount('/static', StaticFiles(directories=asset_paths), name='static')
+        self.app.http.mount('/assets', StaticFiles(directories=asset_paths), name='assets')
 
     def initialize_templates(self, paths, options) -> None:
         """Initialize template system"""

@@ -1,7 +1,6 @@
 import pytest
-import sqlalchemy as sa
-
 import uvicore
+import sqlalchemy as sa
 from uvicore.support.dumper import dump
 
 
@@ -94,3 +93,9 @@ async def test_hybrid(app1):
         (post.unique_slug == 'test-post6'),
     ]).get()
     assert [1] == [x.id for x in posts]
+
+
+@pytest.mark.asyncio
+async def Xtest_sqlalchemy(app1):
+    # FIXME, make it look exactly like the ORM version above
+    pass

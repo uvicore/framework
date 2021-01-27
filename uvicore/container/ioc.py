@@ -66,7 +66,7 @@ class _Ioc(IocInterface):
     #def config(self, config: Dict) -> None:
     #    self._app_config = config
 
-    def binding(self, name: str = None, *, type: str = None) -> Union[Binding, Dict]:
+    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Union[Binding, Dict]:
         if name:
             # Get one binding by name
             if name in self.bindings:
@@ -76,7 +76,19 @@ class _Ioc(IocInterface):
         elif type:
             # Get all binding of the specified type
             #return [binding for binding in self.bindings.values() if binding.type.lower() == type.lower()]
-            return Dict({key:binding for key, binding in self.bindings.items() if binding.type.lower() == type.lower()})
+            bindings = Dict({key:binding for key, binding in self.bindings.items() if binding.type.lower() == type.lower()})
+            if include_overrides:
+                return bindings
+
+            # Strip out overridden bindings
+            new_bindings = Dict()
+            for key, binding in bindings.items():
+                # Ignore BASE override models
+                if binding.path != key: continue
+
+                new_bindings[key] = binding
+            return new_bindings
+
 
     def make(self, name: str, default: Callable[[], T] = None, **kwargs) -> T:
         if default is not None and self.binding(name) is None:

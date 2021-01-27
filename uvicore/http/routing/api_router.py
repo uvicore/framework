@@ -3,18 +3,38 @@ from fastapi import APIRouter as _FastAPIRouter
 from uvicore.typing import Any, Type, List, Callable, Optional
 from starlette.routing import BaseRoute
 from uvicore.contracts import ApiRouter as RouterInterface
+from starlette.responses import Response
 
 
+# Example of just using the entier FastAPI Router without abstraction
 @uvicore.service()
-class ApiRouter(RouterInterface):
+class ApiRouter(_FastAPIRouter):
+    pass
+
+
+
+
+# Example of making my own router abstraction
+class ApiRouterX(RouterInterface):
 
     @property
     def router(self) -> _FastAPIRouter:
         return self._router
 
+    # These properties have to exist because the FastAPI code looks for route.routes
+    # or routes.response_class for example so this router abstraction must pass them through
+    # Perhaps my own abstraction isn't a good idea?  Maybe just pass through fastAPI's router?
     @property
     def routes(self) -> List[BaseRoute]:
         return self._router.routes
+
+    @property
+    def response_class(self) -> Type[Response]:
+        return self._router.response_class
+
+    @property
+    def default_response_class(self) -> Type[Response]:
+        return self._router.default_response_class
 
     @property
     def on_startup(self) -> None:
@@ -43,15 +63,15 @@ class ApiRouter(RouterInterface):
         )
 
     #def include_router(self, router: "APIRouter", *, prefix: str = '', tags: List[str] = None) -> None:
-    def include_router(self, router: "APIRouter") -> None:
-        # Only used for the class based controller
-        # return self._router.include_router(router,
-        #     prefix=prefix,
-        #     tags=tags
-        # )
-        return self.router.include_router(router)
+    # def include_router(self, router: "APIRouter") -> None:
+    #     # Only used for the class based controller
+    #     # return self._router.include_router(router,
+    #     #     prefix=prefix,
+    #     #     tags=tags
+    #     # )
+    #     return self.router.include_router(router)
 
-    def add_route(self, path: str, endpoint: Callable, *,
+    def add_api_route(self, path: str, endpoint: Callable, *,
         response_model: Optional[Type[Any]] = None,
         name: Optional[str] = None,
         # self,

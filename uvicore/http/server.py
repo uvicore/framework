@@ -53,6 +53,9 @@ class _Server(ServerInterface):
         )
 
     def include_router(self, router, *, prefix: str = '', tags: List[str] = None) -> None:
+        # _server is a FastAPI application.  If you look at FastAPIs include_router
+        # it automatically detects if the the actual Router is FastAPI or Starlette
+        # and handles the including of the routers routes differently!
         self._server.include_router(
             router=router,
             prefix=prefix,

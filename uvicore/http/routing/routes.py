@@ -42,6 +42,7 @@ class Routes(RoutesInterface, Generic[R]):
 
     def include(self, module, *, prefix: str = '', tags: List[str] = None) -> None:
         #self.http.controller(controller.route, prefix=self.prefix)
+
         if type(module) == str:
             # Using a string to point to an endpoint class controller
             controller = load(self.endpoints + '.' + module + '.route')

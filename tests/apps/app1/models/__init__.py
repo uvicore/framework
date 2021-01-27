@@ -1,6 +1,7 @@
 from .attribute import Attribute
 from .comment import Comment
 from .contact import Contact
+from .hashtag import Hashtag
 from .image import Image
 from .post import Post
 from .tag import Tag

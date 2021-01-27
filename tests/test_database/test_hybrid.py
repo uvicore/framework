@@ -1,6 +1,4 @@
 import pytest
-from starlette.testclient import TestClient
-
 import uvicore
 from uvicore.support.dumper import dump
 

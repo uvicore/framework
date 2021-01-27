@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
-# Add uvicore/tests/apps path to sys.path
 import os, sys  # isort:skip
+
+# Add uvicore path to sys.path
+uvicore_path = os.path.dirname(os.path.realpath(__file__ + '/../../../'))
+if uvicore_path not in sys.path: sys.path.append(uvicore_path)
+
+# Add uvicore/tests/apps path to sys.path
 apps_path = os.path.dirname(os.path.realpath(__file__ + '/../'))
 if apps_path not in sys.path: sys.path.append(apps_path)
 

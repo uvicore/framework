@@ -192,6 +192,7 @@ class _Morph(_Relation):
     local_key: Optional[str] = None
     dict_key: Optional[str] = None
     dict_value: Optional[str] = None
+    list_value: Optional[str] = None
     name: Optional[str] = None
     entity: Optional[Any] = None
 
@@ -204,6 +205,7 @@ class _Morph(_Relation):
         local_key: str = None,
         dict_key: str = None,
         dict_value: str = None,
+        list_value: str = None,
     ) -> None:
         self.model = model
         self.polyfix = polyfix
@@ -212,6 +214,7 @@ class _Morph(_Relation):
         self.local_key = local_key or 'id'
         self.dict_key = dict_key
         self.dict_value = dict_value
+        self.list_value = list_value
 
         # Set by self.fill later
         self.name = None
@@ -240,6 +243,9 @@ class MorphToMany(_Morph):
     right_key: str
     left_type: Optional[str] = None
     left_key: Optional[str] = None
+    dict_key: Optional[str] = None
+    dict_value: Optional[str] = None
+    list_value: Optional[str] = None
     name: Optional[str] = None
     entity: Optional[Any] = None
     join_table: Optional[sa.Table] = None
@@ -252,6 +258,9 @@ class MorphToMany(_Morph):
         right_key: str,
         left_type: str = None,
         left_key: str = None,
+        dict_key: str = None,
+        dict_value: str = None,
+        list_value: str = None,
     ) -> None:
         self.model = model
         self.join_tablename = join_tablename
@@ -259,6 +268,11 @@ class MorphToMany(_Morph):
         self.right_key = right_key
         self.left_type = left_type or polyfix + '_type'
         self.left_key = left_key or polyfix + '_id'
+
+        # Dict key/value for MorphToMany has NOT yet been implimented
+        self.dict_key = dict_key
+        self.dict_value = dict_value
+        self.list_value = list_value
 
         # Set by self.fill later
         self.name = None

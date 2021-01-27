@@ -50,6 +50,10 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         required=True,
     )
 
+    body: str = Field('body',
+        description='Post Body',
+    )
+
     other: str = Field('other',
         description='Post Other',
     )
@@ -113,9 +117,24 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic Many-To-Many Hashtags
-    hashtags: Optional[List[Tag]] = Field(None,
+    hashtags: Optional[List[Hashtag]] = Field(None,
         description="Post Hashtags",
-        relation=MorphToMany('app1.models.hashtag.Hashtag', join_tablename='hashtaggables', polyfix='hashtaggable', right_key='hashtag_id')
+        # relation=MorphToMany(
+        #     model='app1.models.hashtag.Hashtag',
+        #     join_tablename='hashtaggables',
+        #     polyfix='hashtaggable',
+        #     right_key='hashtag_id'
+        # ),
+        relation=MorphToMany(
+            model='app1.models.hashtag.Hashtag',
+            join_tablename='hashtaggables',
+            polyfix='hashtaggable',
+            right_key='hashtag_id',
+            #dict_key='id',
+            #dict_value='name',
+            list_value='name',
+        ),
+
     )
 
 
@@ -174,6 +193,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 #from app1.models.user import User  # isort:skip
 from app1.models.comment import Comment  # isort:skip
 from app1.models.tag import Tag  # isort:skip
+from app1.models.hashtag import Hashtag  # isort:skip
 
 #from uvicore.auth.models.user import User  # isort:skip
 from app1.models.user import User  # isort:skip

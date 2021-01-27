@@ -1,7 +1,6 @@
 import pytest
-import sqlalchemy as sa
-
 import uvicore
+import sqlalchemy as sa
 from uvicore.support.dumper import dump
 
 

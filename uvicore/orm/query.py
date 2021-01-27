@@ -14,7 +14,7 @@ import uvicore
 from uvicore.contracts import OrmQueryBuilder as BuilderInterface
 from uvicore.database.builder import _QueryBuilder, Join, Query
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, MorphMany, MorphOne)
+                                HasOne, MorphMany, MorphOne, MorphToMany)
 from uvicore.orm.fields import _Relation
 from uvicore.support.collection import getvalue
 from uvicore.support.dumper import dd, dump
@@ -170,9 +170,10 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
     def sql(self, method: str = 'select', queries: List = None) -> str:
         """Get all SQL queries involved in this ORM statement"""
         if queries is None: queries = self._build_orm_queries(method)
-        sqls = ''
+        sqls = {}
         for query in queries:
-            sqls += '-- ' + query.get('name').upper() + ':' + os.linesep + query.get('sql') + os.linesep + os.linesep
+            #sqls += '-- ' + query.get('name').upper() + ':' + os.linesep + query.get('sql') + os.linesep + os.linesep
+            sqls[query.get('name')] = query.get('sql').replace('\n', '')
         return sqls
 
     def queries(self, method: str = 'select') -> List:
@@ -259,7 +260,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                 self._build_orm_relations(query2)
 
                 # Only if Many-To-Many add in the main tables pivot ID
-                if type(relation) == BelongsToMany:
+                if type(relation) == BelongsToMany or type(relation) == MorphToMany:
                     join_table = self._get_join_table(query2, relation.join_tablename)
                     query2.selects.append(
                         getattr(join_table.c, relation.left_key).label(
@@ -342,203 +343,6 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         # Return all queries
         return queries
 
-    async def _getXXX(self) -> List[E]:
-
-        # Multi query notes
-        # Build a self.queries DICT and add each
-        # Then execute all and combine.  Why? So .sql() can dump it
-        # queries = {
-        #   'main': 'actual main sql',
-        #   'posts': 'secondary posts query'
-        # }
-
-        # Query Optimization
-        # On the PRIMARY query, if there are no WHERE or ORDER BY on a HasMany relation
-        # then you can remove those HasMany from the JOIN, they are not used
-
-        # On the SECONDARY queries, if there are no WHERE or ORDER BY on HasOne relations
-        # then you can remove those HasOne from the JOIN, they are not used
-
-        # Here is a perfect example of a 3 query that could be optimized
-        # In [17]: dump((await User.query()
-        #     ...:     .include('info', 'contact', 'posts.comments')
-        #     ...:     .get()
-        #     ...: )[1])
-
-        # Here, the HasMany joins can be removed since there is no where or order_by
-        # So remove POSTS and COMMENTS
-        # MAIN QUERY
-        # SELECT DISTINCT auth_users.id, auth_users.email, auth_users.app1_extra, auth_user_info.id AS "info__id", auth_user_info.extra1 AS "info__extra1", auth_user_info.user_id AS "info__user_id", contacts.id AS "contact__id", contacts.name AS "contact__name", contacts.title AS "contact__title", contacts.address AS "contact__address", contacts.phone AS "contact__phone", contacts.user_id AS "contact__user_id"
-        # FROM auth_users LEFT OUTER JOIN auth_user_info ON auth_users.id = auth_user_info.user_id LEFT OUTER JOIN contacts ON auth_users.id = contacts.user_id LEFT OUTER JOIN posts ON auth_users.id = posts.creator_id LEFT OUTER JOIN comments ON posts.id = comments.post_id
-
-        # Here the HasOne of UserInfo and UserContact can be removed
-        # Technically the HasMany comments can also be removed, but not sure how to determine that
-        # SECONDARY QUERY
-        # SELECT DISTINCT posts.id AS "posts__id", posts.unique_slug AS "posts__unique_slug", posts.title AS "posts__title", posts.other AS "posts__other", posts.creator_id AS "posts__creator_id"
-        # FROM auth_users LEFT OUTER JOIN auth_user_info ON auth_users.id = auth_user_info.user_id LEFT OUTER JOIN contacts ON auth_users.id = contacts.user_id LEFT OUTER JOIN posts ON auth_users.id = posts.creator_id LEFT OUTER JOIN comments ON posts.id = comments.post_id
-        # WHERE posts.id IS NOT NULL
-
-        # Here the HasOne of UserInfo and UserContact can be removed
-        # Here the HasMany Posts obviously can NOT be removed since comments relys on posts
-        # SECONDARY QUERY
-        # SELECT DISTINCT comments.id AS "posts__comments__id", comments.title AS "posts__comments__title", comments.body AS "posts__comments__body", comments.post_id AS "posts__comments__post_id"
-        # FROM auth_users LEFT OUTER JOIN auth_user_info ON auth_users.id = auth_user_info.user_id LEFT OUTER JOIN contacts ON auth_users.id = contacts.user_id LEFT OUTER JOIN posts ON auth_users.id = posts.creator_id LEFT OUTER JOIN comments ON posts.id = comments.post_id
-        # WHERE comments.id IS NOT NULL
-
-
-
-        # Build query
-        # Query builder does not look at self variables, it is stand alone
-        # because I use it multiple times for relations each with slightly
-        # different query parts.  Thus the .copy()
-
-        # First query
-        query = self.query.copy()
-        self._build_orm_relations(query)
-
-        # Add all selects where NOT HasMany
-        relation: _Relation
-        query.selects = self.entity.selectable_columns()
-        for relation in query.relations.values():
-            if type(relation) == HasOne or type(relation) == BelongsTo:
-                columns = relation.entity.selectable_columns()
-                for column in columns:
-                    query.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
-
-        # Build first query
-        query, saquery = self._build_query('select', query)
-        #dump(query)
-        #print("MAIN QUERY")
-        #print(saquery)
-
-        # Execute first query
-        results = await self.entity.fetchall(saquery)
-        #print(saquery)
-
-        def results2dict(results):
-            l = []
-            for result in results:
-                d = {}
-                for column in result.keys():
-                    d[str(column)] = getattr(result, column)
-                l.append(d)
-            return l
-
-        #dump('RESULTS', results)
-        #dump('RESULTS-2-DICT', results2dict(results))
-
-        # So we have our first query perfect
-        # Now we need to build a second or third query for all has_many
-        has_many = {}
-        relation: _Relation
-        for relation in query.relations.values():
-            if type(relation) == HasMany:
-                # New secondary relation query
-                query2 = self.query.copy()
-
-                # Build ORM Relations but force HasMany joins to INNER JOIN
-                self._build_orm_relations(query2)
-
-                # Set selects to primary table ID + relation column
-                #if '__' in relation.name:
-                #    dump(relation.name)
-                #    query2.selects = ['posts__id']
-                #else:
-                #    query2.selects = [relation.entity.pk]
-                for column in relation.entity.selectable_columns():
-                    query2.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
-                #query2.selects.extend(relation.entity.selectable_columns())
-
-                # Add .filter() as .where()
-                query2.wheres.extend(query2.filters)
-
-                # Add where to show only joined record that were found
-                # Don't use innerjoin xxxxxxxxxxxxxxxxxxxxxxx
-                query2.wheres.append((relation.name + '.' + relation.entity.pk, '!=', None))
-
-                # Swap .sort() to .order_by
-                query2.order_by = query2.sort
-
-                # Build secondary relation query
-                query2, saquery2 = self._build_query('select', query2)
-                print(); print("SECONDARY QUERY");
-                print(saquery2)
-
-                # Execute secondary relation query
-                results2 = await self.entity.fetchall(saquery2)
-                #print(saquery2)
-                #dump("SECOND RESULTS", results2)
-                #dump(results2[0].keys())
-
-                # Add secondary results to has_many Dictionary for _build_orm_results
-                has_many[relation.name] = results2
-
-        # Convert results to List of entities
-        entities = self._build_orm_results(query, results, has_many)
-
-        # Return List of Entities
-        #dump('ENTITIES', entities)
-        return entities
-
-    def _build_queryXX(self, method: str, query: Query) -> Tuple:
-
-        # Before we call the parent Builder we need to build our ORM relations,
-        # translate those into regular .join() and derive our .select() columns.
-
-        # Build ORM relations from .include() and add append to query.joins
-        #self._build_orm_relations(query)
-
-        #dump(query)
-
-
-        # NO!! Because if select is blank the base Builder adds ALL fields with proper alias based on JOIN!!!
-        # But I do need to pass in custom selects on multi-select many-to-many
-
-        # # Build selects for main table
-        # # Only add selects if selects is EMPTY.  Why?  If its not empty, I have overwridden
-        # # the selects for many-to-many multi-query porposes
-        # if not query.selects:
-        #     # Remember the base Builder accepts string OR actual SQLAlchemy columns as selects!
-        #     query.selects.extend(self.entity.selectable_columns())
-
-        #     # Build relation selects
-        #     for relation in query.relations.values():
-
-        #         if type(relation) == HasOne or type(relation) == BelongsTo:
-        #             #columns = relation.entity.selectable_columns()
-        #             query.selects.extend(relation.entity.selectable_columns())
-        #             #for column in columns:
-        #             #    selects.append(column.label(quoted_name(relation.name + '.' + column.name, True)))
-
-        #dump(query)
-
-        # Call Parent _build_query()
-        return super()._build_query(method, query)
-
-    def _build_selectXX(self, query: Query):
-        # Get models selectable columns
-        # Infer from model, not all columns in table as model may have less columns
-        selects = self.entity.selectable_columns()
-
-        # Add in relations selectable columns
-        if query.relations:
-            relation: _Relation
-            for relation in query.relations.values():
-                if type(relation) == HasOne or type(relation) == BelongsTo or 1 == 1:
-                    columns = relation.entity.selectable_columns()
-                    for column in columns:
-                        selects.append(column.label(quoted_name(relation.name + '.' + column.name, True)))
-
-        # Start basic select with all selectable columns
-        # We use .distinct() because of joins for wheres but not for selects
-        saquery = sa.select(selects).distinct()
-        if query.joins is not None:
-            saquery = saquery.select_from(query.joins)
-
-            #<sqlalchemy.sql.selectable.Join at 0x7f3bba4d6b80; Join object on Join object on posts(139894517854416) and auth_users(139894518106720)(139894505433792) and comments(139894517857968)>
-
-        return saquery
-
     def _build_orm_relations(self, query: Query) -> None:
         if not query.includes: return
 
@@ -587,7 +391,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                         relations[relation_name] = deepcopy(relation)
 
                         # Many-To-Many
-                        if type(relation) == BelongsToMany:
+                        if type(relation) == BelongsToMany or type(relation) == MorphToMany:
                             # We have to join 2 tables in a many-to-many
                             # First the relation table (sometimes called intermediate or pivot table)
                             # Second the actual related table
@@ -930,45 +734,80 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
 
             self.log.item('Combining child: ' + children_name + ' into parent: ' + parents_name)
 
+            # Determine if child *Many results should be displayed as a Dict or List
+            dict_key = getvalue(relation, 'dict_key')
+            dict_value = getvalue(relation, 'dict_value')
+            list_value = getvalue(relation, 'list_value')
+
+            # Loop parents so we can at least set each child to empty [] instead of None.  We always want [] instead of None for empty children
+            for parent in parents.values():
+                # Set empty [] or {}
+                if dict_key:
+                    setattr(parent, field, {})
+                else:
+                    setattr(parent, field, [])
+
             # Merge in Many-To-Many by using the original RowProxy result which contains
             # The pivot tables joining column (left_key)
-            if type(relation) == BelongsToMany:
+            if type(relation) == BelongsToMany or type(relation) == MorphToMany:
                 left_key = relation.name + '__' + relation.left_key
                 right_key = relation.name + '__' + relation.entity.mapper(relation.entity.pk).column()
+
+                # QUESTION, what is the differente from children.values() vs
+                # secondary?  Look at the ELSE below that for child in children.values()
+                # but this many* uses secondary?
+                # Can I combine all relations into one large loop?
+                # Because I am doing identical work in the dict_key stuff
+
+                # ALSO all of this dict_key code may not work anyway
+                # I bet the API will not know how to handle input and complain?
+                # I may have to handle specially in the ModelRouter
 
                 # Loop raw RowProxy to find proper pivot keys
                 for row in secondary[relation.name]:
                     left_id = getattr(row, left_key)
                     right_id = getattr(row, right_key)
 
-                    # Set None field to empty List
-                    if getattr(parents[left_id], field) is None:
-                        setattr(parents[left_id], field, [])
+                    # Get parent value, the value of the main table
+                    parent = parents[left_id]
 
-                    # Append to list using deepcopy
-                    getattr(parents[left_id], field).append(
-                        # We must deep copy the record becuase we dedup the *Many
-                        # but they could be used multiple times
-                        # ?? Hum maybe not, good if you change one it changes them all
-                        # But all the *One will NOT be like this I don't believe, have to test
-                        #deepcopy(child[right_id])
-                        children[right_id]
-                    )
+                    # Get child value. The value of the many record
+                    child = children[right_id]
+
+                    # Set None field to empty List
+                    if getattr(parent, field) is None:
+                        setattr(parent, field, [])
+
+                    # Add each *Many model as a Dict
+                    if dict_key:
+                        if dict_value:
+                            if type(dict_value) == list:
+                                value = {key:getattr(child, key) for key in dict_value}
+                            else:
+                                value = getattr(child, dict_value)
+                        else:
+                            value = child.dict()
+                        getattr(parent, field)[getattr(child, dict_key)] = value
+
+
+                    # Add each *Many model as a List of a single value
+                    elif list_value:
+                        getattr(parent, field).append(getattr(child, list_value))
+
+                    # Add each *Many as a List of the actual Models
+                    else:
+                        # Append to list using deepcopy
+                        dump(child)
+                        getattr(parent, field).append(
+                            # We must deep copy the record becuase we dedup the *Many
+                            # but they could be used multiple times
+                            # ?? Hum maybe not, good if you change one it changes them all
+                            # But all the *One will NOT be like this I don't believe, have to test
+                            #deepcopy(child[right_id])
+                            child
+                        )
 
             else:
-                # These are One-To-Many on the *Many side or Many-To-Many which means the id back to parent is in the model itself
-
-                # Determine if child *Many results should be displayed as a Dict or List
-                dict_key = getvalue(relation, 'dict_key')
-                dict_value = getvalue(relation, 'dict_value')
-
-                # Loop parents so we can at least set each child to empty [] instead of None.  We always want [] instead of None for empty children
-                for parent in parents.values():
-                    # Set empty [] or {}
-                    if dict_key:
-                        setattr(parent, field, {})
-                    else:
-                        setattr(parent, field, [])
 
                 # dump(children)
                 for child in children.values():
@@ -982,6 +821,9 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                     # if getattr(parent, field) is None:
                     #     setattr(parent, field, [])
 
+                    # DUPLCATING work here, see above for nearly exact same thing
+                    # need to optimize this code
+
                     # Add each *Many model as a Dict
                     if dict_key:
                         if dict_value:
@@ -990,14 +832,18 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                                 value = {key:getattr(child, key) for key in dict_value}
                             else:
                                 # Dict value is a string, use just that fields value
-                                value = getattr(child, relation.dict_value)
+                                value = getattr(child, dict_value)
                         else:
                             # No dict value set, but there is a dict_key, so we want a dict.  Use the entire record as a dict
                             value = child.dict()
-                        getattr(parent, field)[getattr(child, relation.dict_key)] = value
+                        getattr(parent, field)[getattr(child, dict_key)] = value
                         #setattr(parent, field, 'x')
 
-                    # Append each *Many model as a List
+                    # Add each *Many model as a List of a single value
+                    elif list_value:
+                        getattr(parent, field).append(getattr(child, list_value))
+
+                    # Add each *Many as a List of the actual Models
                     else:
                         getattr(parent, field).append(child)
 
@@ -1024,68 +870,6 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
 
         # No keyby, convert primary models to a List
         return [x for x in models['primary'].values()]
-
-    def _build_orm_resultsXX(self, query: Query, results, has_many: Dict = {}) -> List[E]:
-        # No results, return empty List
-        if not results: return []
-
-        # Loop each raw SQLAlchemy DB results and convert to Model entities with relations
-        entities = []
-        for row in results:
-            # Convert DB result to model (no relations, just main table)
-            #model = self.entity.mapper(row).model()
-            model = self.entity.mapper(row).row_to_model()
-            #dump(model)
-            #dump(query.relations)
-
-            # Loop each relation and merge in results
-            relation: _Relation
-            for relation in query.relations.values():
-                relation_name = relation.name
-                prefix = relation_name
-                current_model = model
-
-                if type(relation) == BelongsToMany:
-                    pk = prefix + '__' + relation.left_key
-                else:
-                    pk = prefix + '__' + relation.foreign_key
-
-                # Get nested model based on dotnotation
-                if '__' in relation.name:
-                    parts = relation.name.split('__')
-                    #relation_name = parts[-1]
-                    for i in range(0, len(parts) - 1):
-                        current_model = getattr(current_model, parts[i])
-
-                # Some models are single, some are multiple, normalize all to List
-                if type(current_model) != list: current_model = [current_model]
-
-                # Merge in single relations
-                if type(relation) == HasOne or type(relation) == BelongsTo:
-                    for related_model in current_model:
-                        #related_data = relation.entity.mapper(row, prefix).model()
-                        related_data = relation.entity.mapper(row, prefix).row_to_model()
-                        rn = relation_name.split('__')[-1]
-                        #setattr(related_model, relation_name, related_data)
-                        setattr(related_model, rn, related_data)
-
-                # Merge in multiple relations from secondary query results saved to has_many Dictionary
-                elif type(relation) == HasMany or type(relation) == BelongsToMany and relation.name in has_many:
-                    for related_model in current_model:
-                        related_entities = []
-                        for related_row in has_many[relation.name]:
-                            if getattr(related_row, pk) == getattr(related_model, related_model.__class__.pk):
-                                #related_entity = relation.entity.mapper(related_row, prefix).model()
-                                related_entity = relation.entity.mapper(related_row, prefix).row_to_model()
-                                #dump(related_entity)
-                                related_entities.append(related_entity)
-                        setattr(related_model, relation_name, related_entities)
-
-            # Add complete model to list of entities
-            entities.append(model)
-
-        # Return List of Entities
-        return entities
 
     def _connection(self):
         return self.entity.connection
