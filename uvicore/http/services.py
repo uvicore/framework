@@ -1,12 +1,11 @@
 import uvicore
-from uvicore.typing import Dict, Any
+from uvicore.typing import Dict, Any, List
 from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import load, location
 from uvicore.support.dictionary import deep_merge
 from uvicore.console.provider import Cli
 from uvicore.http.provider import Http
-
 
 
 @uvicore.provider()
@@ -85,6 +84,7 @@ class Http(ServiceProvider, Cli, Http):
             'context_functions': {
                 'url': context_functions.url,
                 'asset': context_functions.asset,
+                'public': context_functions.public,
             },
         })
 
@@ -96,6 +96,7 @@ class Http(ServiceProvider, Cli, Http):
         if self.app.is_console: return
 
         # Loop each package with an HTTP definition and add to our HTTP server
+        public_paths = []
         asset_paths = []
         view_paths = []
         template_options = {}
@@ -106,8 +107,13 @@ class Http(ServiceProvider, Cli, Http):
             self.add_web_routes(package)
             self.add_api_routes(package)
 
+            # Append public paths for later
+            for path in package.http.public_paths:
+                path_location = location(path)
+                if path_location not in public_paths: public_paths.append(path_location)
+
             # Append asset paths for later
-            for path in package.http.asset_paths or []:
+            for path in package.http.asset_paths:
                 path_location = location(path)
                 if path_location not in asset_paths: asset_paths.append(path_location)
 
@@ -118,8 +124,8 @@ class Http(ServiceProvider, Cli, Http):
             # Deep merge template options
             template_options = deep_merge(package.http.template_options or {}, template_options)
 
-        # Mount all static asset paths
-        self.mount_static_assets(package, asset_paths)
+        # Mount all static paths
+        self.mount_static(package, public_paths, asset_paths)
 
         # Initialize new template environment from the options above
         self.initialize_templates(view_paths, template_options)
@@ -152,13 +158,19 @@ class Http(ServiceProvider, Cli, Http):
         routes = ApiRoutes(uvicore.app, package, ApiRouter, package.http.api_route_prefix)
         routes.register()
 
-    def mount_static_assets(self, package, asset_paths) -> None:
+    def mount_static(self, package, public_paths: List, asset_paths: List) -> None:
         """Mount /static route using all packages static paths"""
         StaticFiles = uvicore.ioc.make('uvicore.http.static._StaticFiles')
 
-        # Mount all directories to /assets in one go
         # Last directory defined WINS, which fits our last provider wins
-        self.app.http.mount('/assets', StaticFiles(directories=asset_paths), name='assets')
+
+        # Mount all asset paths
+        asset_url = uvicore.config.app.asset.path or '/assets'
+        self.app.http.mount(asset_url, StaticFiles(directories=asset_paths), name='assets')
+
+        # Mount all public paths (always at /)
+        # Since it is root / MUST be defined last or it wins above any path after it
+        self.app.http.mount('/', StaticFiles(directories=public_paths), name='public')
 
     def initialize_templates(self, paths, options) -> None:
         """Initialize template system"""

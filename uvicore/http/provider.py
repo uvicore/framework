@@ -52,6 +52,12 @@ class Http:
         if self.package.registers.assets:
             self._add_http_definition('asset_paths', items)
 
+    def public(self, items: List):
+        self.package.http.public_paths = items
+
+
+
+
     def template(self, items: Dict):
         # Default registration - template obeys view registration
         self.package.registers.defaults({'views': True})

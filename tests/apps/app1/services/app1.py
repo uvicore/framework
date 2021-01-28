@@ -75,14 +75,14 @@ class App1(ServiceProvider, Cli, Db, Http):
     def define_views(self) -> None:
         """Define view and asset paths and configure the templating system
         """
-        # Add view paths
-        self.views(['mreschke.wiki.http.views'])
+        # Define view paths
+        self.views(['app1.http.views'])
 
-        # Add asset paths
-        self.assets([
-            'mreschke.wiki.http.static2', #foundation example - BLUE
-            'mreschke.wiki.http.static',  # wiki override example - RED
-        ])
+        # Define public paths
+        self.public(['app1.http.public'])
+
+        # Define asset paths
+        self.assets(['app1.http.public.assets'])
 
     def define_routes(self) -> None:
         """Define Web and API router"""

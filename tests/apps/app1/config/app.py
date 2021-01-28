@@ -29,6 +29,22 @@ config = {
 
 
     # --------------------------------------------------------------------------
+    # Static Assets
+    #
+    # Leaving all blank uses the served apps host and defailt /assets path.
+    # Setting only a path uses the served apps host with a custom path.
+    # Setting both overrides the entire url completely.  Usefull when your
+    # assets are on a separate server or being hosted from a webpack hot reload.
+    # The actual folder in your package that holds these assets is defined in your
+    # packages service provider in the Http mixin using self.assets() method.
+    # --------------------------------------------------------------------------
+    # 'asset': {
+    #     'host': 'http://some.assetserver.com',
+    #     'path': '/static',
+    # },
+
+
+    # --------------------------------------------------------------------------
     # OpenAPI Auto API Doc Configuration
     #
     # Configure the OpenAPI endpoints and displayed title

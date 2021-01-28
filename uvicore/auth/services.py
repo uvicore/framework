@@ -65,3 +65,10 @@ class Auth(ServiceProvider, Db, Http):
         ])
 
         #dd(self.package.database.connections[0].driver)
+
+        # Define public paths
+        self.public(['uvicore.auth.http.public'])
+
+        # Define asset paths
+        self.assets(['uvicore.auth.http.public.assets'])
+

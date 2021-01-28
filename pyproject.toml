@@ -1,7 +1,8 @@
 [tool.poetry]
 name = "uvicore"
-version = "0.1.4"
-description = ""
+version = "0.1.5"
+description = "The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework"
+license = "MIT"
 authors = ["Matthew Reschke <mail@mreschke.com>"]
 
 [tool.poetry.dependencies]
