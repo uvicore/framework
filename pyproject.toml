@@ -22,8 +22,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
 ]
-
-[tool.poetry]
 include = ["LICENSE"]
 
 [tool.poetry.dependencies]
