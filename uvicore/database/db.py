@@ -76,16 +76,18 @@ class _Db(DatabaseInterface):
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
 
-        if uvicore.app.is_http:
-            @uvicore.app.http.on_event("startup")
-            async def startup():
-                for database in self.databases.values():
-                    await database.connect()
+        # FIXME, I don't have the server started yet
+        # Use uvicore events instead
+        # if uvicore.app.is_http:
+        #     @uvicore.app.http.on_event("startup")
+        #     async def startup():
+        #         for database in self.databases.values():
+        #             await database.connect()
 
-            @uvicore.app.http.on_event("shutdown")
-            async def shutdown():
-                for database in self.databases.values():
-                    await database.disconnect()
+        #     @uvicore.app.http.on_event("shutdown")
+        #     async def shutdown():
+        #         for database in self.databases.values():
+        #             await database.disconnect()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         if not metakey:
@@ -107,6 +109,7 @@ class _Db(DatabaseInterface):
                 metakey = self.connection(connection).metakey
             return metakey
         except Exception:
+            dump(self.connections)
             raise Exception('Metakey not found, connection={} metakey={}'.format(connection, metakey))
 
     def connection(self, connection: str = None) -> Connection:

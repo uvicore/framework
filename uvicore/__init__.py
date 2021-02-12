@@ -4,7 +4,7 @@ from uvicore.foundation.decorators import model, seeder, service, table, provide
 
 
 # Uvicore version.  Also available in app.version
-__version__ = '0.1.0'
+__version__ = '0.1.6'
 
 # Core (non service provider based) singletons as globals
 ioc: contracts.Ioc = None

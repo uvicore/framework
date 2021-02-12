@@ -11,7 +11,7 @@ config = {
     # --------------------------------------------------------------------------
     'name': 'App1',
     'main': 'app1',
-    'debug': False,
+    'debug': True,
 
 
     # --------------------------------------------------------------------------
@@ -27,6 +27,67 @@ config = {
         'access_log': env.bool('SERVER_ACCESS_LOG', True),
     },
 
+    'web': {
+        'prefix': '/',
+        'asset': {
+            'host': 'http://some.assetserver.com',
+            'path': '/static',
+        },
+        'middleware': OrderedDict({
+            'TrustedHost': {
+                'module': 'uvicore.http.middleware.TrustedHost',
+                'options': {
+                    'allowed_hosts': ['127.0.0.1', 'localhost'],
+                    'www_redirect': True,
+                }
+            },
+            # If you have a loadbalancer with SSL termination in front of your web
+            # app, don't use this redirection to enforce HTTPS as it is always HTTP internally.
+            # 'HTTPSRedirect': {
+            #     'module': 'uvicore.http.middleware.HTTPSRedirect',
+            # },
+            # Not needed if your loadbalancer or web server handles gzip itself.
+            # 'GZip': {
+            #     'module': 'uvicore.http.middleware.Gzip',
+            #     'options': {
+            #         # Do not GZip responses that are smaller than this minimum size in bytes. Defaults to 500
+            #         'minimum_size': 500
+            #     }
+            # },
+        }),
+    },
+
+    'api': {
+        'prefix': '/api',
+        'openapi': {
+            'title': 'App1 API Docs',
+            'url': '/openapi.json',
+            'docs_url': '/docs',
+            'redoc_url': '/redoc',
+        },
+        'middleware': OrderedDict({
+            'TrustedHost': {
+                'module': 'uvicore.http.middleware.TrustedHost',
+                'options': {
+                    'allowed_hosts': ['127.0.0.1', 'localhost'],
+                    'www_redirect': True,
+                }
+            },
+            'CORS': {
+                'module': 'uvicore.http.middleware.CORS',
+                'options': {
+                    'allow_origins': ['127.0.0.1', 'localhost'],
+                    'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                    'allow_headers': [],
+                    'allow_credentials': False,
+                    'allow_origin_regex': None,
+                    'expose_headers': [],
+                    'max_age': 600,
+                }
+            },
+
+        }),
+    },
 
     # --------------------------------------------------------------------------
     # Static Assets
@@ -44,17 +105,107 @@ config = {
     # },
 
 
+
+    'auth': {
+        'default': 'web', # should be per WebRouter or ApiRouter probably
+        'gaurds': {
+            'web': {
+                'driver': 'session',
+                'provider': 'users',
+            },
+            'api': {
+                'driver': 'token',
+                'provider': 'users',
+            }
+        },
+        'providers': {
+            'users': {
+                'driver': 'orm',
+                'model': 'app1.models.user.User'
+            },
+        },
+    },
+
+
+
+
+    # --------------------------------------------------------------------------
+    # HTTP Middleware
+    #
+    # Middleware is fully defined from the running application only.  Packages
+    # Do not define their own middleware as the running app should dictate all.
+    # --------------------------------------------------------------------------
+    # 'middleware': {
+    #     'starlette.middleware.trustedhost.TrustedHostMiddleware': {},
+    #     'starlette.middleware.httpsredirect.HTTPSRedirectMiddleware': {
+    #         'allowed_hosts': ['example.com', '*.example.com'],
+    #     },
+    #     'starlette.middleware.cors.CORSMiddleware': {
+    #         'allow_origins': ['*'],
+    #         'allow_methods': ['GET', 'POST'],
+    #     },
+    # }
+
+    # 'middleware': {
+    #     'web': OrderedDict({
+    #         'TrustedHost': {
+    #             'module': 'uvicore.http.middleware.TrustedHost',
+    #             'options': {
+    #                 'allowed_hosts': ['127.0.0.1', 'localhost'],
+    #                 'www_redirect': True,
+    #             }
+    #         },
+    #         # If you have a loadbalancer with SSL termination in front of your web
+    #         # app, don't use this redirection to enforce HTTPS as it is always HTTP internally.
+    #         # 'HTTPSRedirect': {
+    #         #     'module': 'uvicore.http.middleware.HTTPSRedirect',
+    #         # },
+    #         # Not needed if your loadbalancer or web server handles gzip itself.
+    #         # 'GZip': {
+    #         #     'module': 'uvicore.http.middleware.Gzip',
+    #         #     'options': {
+    #         #         # Do not GZip responses that are smaller than this minimum size in bytes. Defaults to 500
+    #         #         'minimum_size': 500
+    #         #     }
+    #         # },
+    #     }),
+
+    #     'api': OrderedDict({
+    #         'TrustedHost': {
+    #             'module': 'uvicore.http.middleware.TrustedHost',
+    #             'options': {
+    #                 'allowed_hosts': ['127.0.0.1', 'localhost'],
+    #                 'www_redirect': True,
+    #             }
+    #         },
+    #         'CORS': {
+    #             'module': 'uvicore.http.middleware.CORS',
+    #             'options': {
+    #                 'allow_origins': ['127.0.0.1', 'localhost'],
+    #                 'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    #                 'allow_headers': [],
+    #                 'allow_credentials': False,
+    #                 'allow_origin_regex': None,
+    #                 'expose_headers': [],
+    #                 'max_age': 600,
+    #             }
+    #         },
+
+    #     }),
+    # },
+
+
     # --------------------------------------------------------------------------
     # OpenAPI Auto API Doc Configuration
     #
     # Configure the OpenAPI endpoints and displayed title
     # --------------------------------------------------------------------------
-    'openapi': {
-        'title': 'App1 API Docs',
-        'url': '/openapi.json',
-        'docs_url': '/docs',
-        'redoc_url': '/redoc',
-    },
+    # 'openapi': {
+    #     'title': 'App1 API Docs',
+    #     'url': '/openapi.json',
+    #     'docs_url': '/docs',
+    #     'redoc_url': '/redoc',
+    # },
 
 
     # --------------------------------------------------------------------------
@@ -128,6 +279,9 @@ config = {
         #'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
         #'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
         #'uvicore.package.package.Package': 'app1.overrides.package.Package',
+
+        # This is the only class that must be complete re-implimented, extension is NOT allowed.
+        #'uvicore.http.routing.model_router._ModelRoute': 'app1.overrides.http.model_router._ModelRoute',
 
         # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',

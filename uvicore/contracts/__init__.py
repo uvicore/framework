@@ -12,8 +12,10 @@ from .model import Model
 from .package import Package
 from .provider import Provider
 from .relation import Relation
-from .router import ApiRouter, WebRouter
-from .routes import Routes
+#from .router import ApiRouter, WebRouter
+#from .routes import Routes
+from .router import (ApiRoute, ApiRouter, ModelRouter, Router, Routes,
+                     WebRoute, WebRouter)
 from .server import Server
 from .template import Template
 

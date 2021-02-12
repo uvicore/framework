@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 from fastapi import FastAPI as _FastAPI
+from starlette.applications import Starlette as _Starlette
 from starlette.types import ASGIApp
 
 import uvicore
@@ -18,19 +19,54 @@ from uvicore.support.dumper import dd, dump
 # Bound from service provider instead of decorator
 
 
-@uvicore.service('uvicore.http.server._Server',
-    aliases=['http', 'HTTP'],
-    singleton=True,
-    kwargs={
-        'debug': uvicore.config('app.debug'),
-        'title': uvicore.config('app.openapi.title'),
-        'version': uvicore.app.version,
-        'openapi_url': uvicore.config('app.openapi.url'),
-        'docs_url': uvicore.config('app.openapi.docs_url'),
-        'redoc_url': uvicore.config('app.openapi.redoc_url'),
-    },
-)
-class _Server(ServerInterface):
+# @uvicore.service('uvicore.http.server._Server',
+#     aliases=['http', 'HTTP'],
+#     singleton=True,
+#     kwargs={
+#         'debug': uvicore.config('app.debug'),
+#         'title': uvicore.config('app.openapi.title'),
+#         'version': uvicore.app.version,
+#         'openapi_url': uvicore.config('app.openapi.url'),
+#         'docs_url': uvicore.config('app.openapi.docs_url'),
+#         'redoc_url': uvicore.config('app.openapi.redoc_url'),
+#     },
+# )
+# class _Server(_FastAPI):
+#     @property
+#     def server(self) -> _FastAPI:
+#         return self
+
+
+    # def include_router(self, router, *, prefix: str = '', tags: List[str] = None) -> None:
+    #     # _server is a FastAPI application.  If you look at FastAPIs include_router
+    #     # it automatically detects if the the actual Router is FastAPI or Starlette
+    #     # and handles the including of the routers routes differently!
+
+    #     for route in router.routes:
+    #         self.add_route(
+    #             path=route.pathroute)
+
+        # self._server.include_router(
+        #     router=router,
+        #     prefix=prefix,
+        #     tags=tags,
+        # )
+
+
+        # self,
+        # path: str,
+        # route: typing.Callable,
+        # methods: typing.List[str] = None,
+        # name: str = None,
+        # include_in_schema: bool = True,
+
+
+
+
+
+
+# Example of abstratsion
+class _ServerXXXX(ServerInterface):
     """HTTP Server private class.
 
     Do not import from this location.

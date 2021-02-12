@@ -64,7 +64,7 @@ class App1(ServiceProvider, Cli, Db, Http):
         ])
 
         # Define view and asset paths and configure the templating system
-        # self.define_views()
+        self.define_views()
 
         # Define Web and API routers
         self.define_routes()
@@ -86,9 +86,16 @@ class App1(ServiceProvider, Cli, Db, Http):
 
     def define_routes(self) -> None:
         """Define Web and API router"""
+        self.web_routes(
+            module='app1.http.routes.web.Web',
+            prefix=self.package.config.web.prefix,
+            #name_prefix=None,
+        )
+
         self.api_routes(
             module='app1.http.routes.api.Api',
-            prefix=self.package.config.route.api_prefix
+            prefix=self.package.config.api.prefix,
+            #name_prefix='api',
         )
 
     def define_commands(self) -> None:

@@ -117,7 +117,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic Many-To-Many Hashtags
-    hashtags: Optional[List[Hashtag]] = Field(None,
+    hashtags: Optional[List[str]] = Field(None,
         description="Post Hashtags",
         # relation=MorphToMany(
         #     model='app1.models.hashtag.Hashtag',

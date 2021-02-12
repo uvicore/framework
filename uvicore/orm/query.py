@@ -797,7 +797,6 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                     # Add each *Many as a List of the actual Models
                     else:
                         # Append to list using deepcopy
-                        dump(child)
                         getattr(parent, field).append(
                             # We must deep copy the record becuase we dedup the *Many
                             # but they could be used multiple times

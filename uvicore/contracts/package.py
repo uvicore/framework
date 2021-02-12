@@ -16,7 +16,9 @@ class Package(Dict):
     path: str
     registers: Dict
     database: _Database
-    http: _Http
+    #http: _Http
+    web: _Web
+    api: _Api
     console: _Console
 
     @abstractmethod
@@ -30,7 +32,7 @@ class Package(Dict):
         pass
 
 
-class _Database:
+class _Database(Dict):
     """Simple Package Database Type Annotations for the SuperDict"""
     connections: List[Connection]
     connection_default: str
@@ -39,7 +41,21 @@ class _Database:
     seeders: List[str]
 
 
-class _Http:
+class _Web(Dict):
+    prefix: str
+    routes_module: str
+    routes: Dict[str, WebRoute]
+    view_paths: List[str]
+    asset_paths: List[str]
+    template_options: Dict
+
+class _Api(Dict):
+    prefix: str
+    routes_files: str
+    routes: Dict[str, ApiRoute]
+
+
+class _Http(Dict):
     """Simple Package HTTP Type Annotations for the SuperDict"""
     web_routes: List[str]
     api_routes: List[str]
@@ -51,12 +67,14 @@ class _Http:
     template_options: Dict
 
 
+
 class _Console:
     """Simple Package Console Type Annotations for the SuperDict"""
     groups: Dict
 
 
-
+# Bottom to avoid circular dependencies
+from .router import WebRoute, ApiRoute  # isort:skip
 
 
 

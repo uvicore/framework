@@ -44,8 +44,6 @@ def application(is_console: bool = False) -> None:
 
 
 
-
-
 # This was my custom importer test
 
 # def application(is_console: bool = False) -> None:

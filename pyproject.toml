@@ -5,8 +5,8 @@ license = "MIT"
 authors = ["Matthew Reschke <mail@mreschke.com>"]
 description = "The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework"
 readme = "README.md"
-homepage = "https://uvicore.io"
-documentation = "https://docs.uvicore.io"
+homepage = "https://github.com/uvicore/framework"
+documentation = "https://github.com/uvicore/framework"
 repository = "https://github.com/uvicore/framework"
 classifiers = [
     "Intended Audience :: Information Technology",
@@ -15,7 +15,6 @@ classifiers = [
     "Topic :: Internet",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
-    "Development Status :: 0.1 - Beta",
     "Environment :: Web Environment",
     "Framework :: AsyncIO",
     "Intended Audience :: Developers",
@@ -39,6 +38,10 @@ environs = "^9.3.0"
 Jinja2 = "^2.11.2"
 ipython = "^7.19.0"
 requests = "^2.25.1"
+itsdangerous = "^1.1.0"
+uvloop = "^0.14.0"
+httptools = "^0.1.1"
+python-multipart = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

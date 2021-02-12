@@ -30,6 +30,7 @@ nav:
     - service-providers.md
     - ioc-container.md
     - request-lifecycle.md
+    - bootstrap.md
   - Digging Deeper:
     - events.md
 
@@ -68,6 +69,20 @@ theme:
     scheme: slate  # default or slate
     primary: blue
     accent: purple
+
+  # Palette toggle is for Insiders only (paid)
+  # - scheme: default  # default or slate
+  #   primary: blue
+  #   accent: purple
+  #   toggle:
+  #     icon: material/lightbulb-outline
+  #     name: Light Theme
+  # - scheme: slate
+  #   primary: blue
+  #   accent: purple
+  #   toggle:
+  #     icon: material/lightbulb-outline
+  #     name: Dark Mode
   font:
     text: Roboto
     code: Roboto Mono
@@ -78,6 +93,10 @@ theme:
   icon:
     logo: fontawesome/solid/bong
     repo: fontawesome/brands/github
+extra_css:
+  #- style-dark.css # Set pygments_style: monokai
+  #- style-light.css # Comment out pygments_style
+  - style.css
 
 
 # Extra CSS and Javascript

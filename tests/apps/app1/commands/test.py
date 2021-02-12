@@ -41,10 +41,8 @@ async def cliX():
 async def cli():
     """Play"""
 
-    from app1 import models
-    users = await models.User.query().get()
-    dump(users)
-
+    from uvicore.http.middleware import Middleware as x
+    dd(x)
 
 
 

@@ -14,6 +14,7 @@ from uvicore.support.collection import dotget
 from uvicore.support.dumper import dd, dump
 from uvicore.support.hash import md5
 from uvicore.support.module import load, location
+from uvicore.console import command_is
 
 
 @uvicore.service('uvicore.foundation.application._Application',
@@ -118,7 +119,7 @@ class _Application(ApplicationInterface):
         # Detect if running in console (to register commands)
         # Ensure console is False even when running ./uvicore http serve
         self._is_console = is_console
-        if "'http', 'serve'" in str(sys.argv): self._is_console = False
+        if command_is('http serve'): self._is_console = False
         self._is_http = not self.is_console
 
         # Detect debug flag from main app config
@@ -129,6 +130,7 @@ class _Application(ApplicationInterface):
 
         # Failsafe if no http package, force console
         # This solves a ./uvicore http serve error if you don't have the http package
+        #if 'uvicore.web' not in self.providers or 'uvicore.api' not in self.providers:
         if 'uvicore.http' not in self.providers:
             self._is_console = True
             self._is_http = False
@@ -270,12 +272,14 @@ class _Application(ApplicationInterface):
             pass
         return config
 
-    def package(self, package: str = None, *, main: bool = False) -> PackageInterface:
+    def package(self, package: str = None, *, main: bool = False, hint: str = None) -> PackageInterface:
         if package:
             return self.packages.get(package)
             #return self.packages.dotget(package)
         elif main:
             return next(package for package in self.packages.values() if package.main == True)
+        elif hint:
+            return self.package('app1')
             #return self.packages.dotget(self.main)
 
     def perf(self, item) -> None:

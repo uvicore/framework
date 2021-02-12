@@ -1,7 +1,7 @@
 import inspect
-from typing import Any, Callable, List, Type, TypeVar, Union, get_type_hints
+from uvicore.typing import Any, Callable, List, Type, TypeVar, Union, get_type_hints
 from fastapi import Depends
-from uvicore.http.routing import WebRouter
+from uvicore.http.routing.web_router import WebRouter
 from pydantic.typing import is_classvar
 from starlette.routing import Route, WebSocketRoute
 import uvicore
@@ -10,6 +10,36 @@ from uvicore.support.dumper import dump, dd
 T = TypeVar("T")
 
 CBV_CLASS_KEY = "__cbv_class__"
+
+
+
+def controller(router: WebRouter):
+    def decorator(cls):
+
+        # cls = the decorated class = app1.http.controllers.home2.Home2
+
+        #dd(inspect.signature(cls.__init__))
+
+        dd(get_type_hints(cls))
+
+
+
+
+
+        return cls
+    return decorator
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def WebController(router: WebRouter) -> Callable[[Type[T]], Type[T]]:
@@ -45,7 +75,7 @@ def _cbv(router: WebRouter, cls: Type[T]) -> Type[T]:
     _init_cbv(cls)
 
     # New web router to replace "router" as defined in the controller
-    cbv_router = WebRouter()
+    cbv_router = WebRouter(router.app, router.package, router.prefix, router.name)
 
     # An array of tuples of each class method including the new __init__ from _init_cbv(cls) above
     function_members = inspect.getmembers(cls, inspect.isfunction)
@@ -57,24 +87,24 @@ def _cbv(router: WebRouter, cls: Type[T]) -> Type[T]:
 
     # List of Route objects in class defined router
     # Basically pulling out each route from my original class
-    cbv_routes = [
-        route
-        for route in router.routes
-        if isinstance(route, (Route, WebSocketRoute)) and route.endpoint in functions_set
-    ]
+    # cbv_routes = [
+    #     route
+    #     for route in router.routes
+    #     if isinstance(route, (Route, WebSocketRoute)) and route.endpoint in functions_set
+    # ]
+    cbv_routes = router.routes
     #dd(cbv_routes)
 
     # Now remove each route from the controller defined router
     # And ADD them into this new router
-    for route in cbv_routes:
-        #dd(route)
+    for route in cbv_routes.values():
         router.routes.remove(route)
         _update_cbv_route_endpoint_signature(cls, route)
         cbv_router.routes.append(route)
 
     # Now add the routes BACK to the controller routes but this
     # time they have the customized route signature
-    router.include_router(cbv_router)
+    #router.include_router(cbv_router)
     return cls
 
 
@@ -107,7 +137,8 @@ def _init_cbv(cls: Type[Any]) -> None:
         for dep_name in dependency_names:
             dep_value = kwargs.pop(dep_name)
             setattr(self, dep_name, dep_value)
-        old_init(self, *args, **kwargs)
+        #old_init(self, *args, **kwargs)
+        old_init(self)
 
     setattr(cls, "__signature__", new_signature)
     setattr(cls, "__init__", new_init)

@@ -12,11 +12,13 @@ def test_get(app1):
     res = client.get("/app1/api/posts")
     assert res.status_code == 200, res.text
     data = res.json()
+    dump(data)
     assert len(data) == 7
     assert data[0] == {
         'id': 1,
         'slug': 'test-post1',
         'title': 'Test Post1',
+        'body': 'This is the body for test post1.  I like the color red and green.',
         'other': 'other stuff1',
         'cb': 'test-post1 callback',
         'creator_id': 1,
@@ -38,9 +40,6 @@ def test_get_include(app1):
     assert res.status_code == 200, res.text
     data = res.json()
     assert len(data) == 7
-
-
-
 
     dump(res)
 

@@ -26,4 +26,5 @@ def View(
     background: _BackgroundTask = None,
 ) -> _TemplateResponse:
     #return uvicore.app.template.TemplateResponse(name, context, status_code, headers, media_type, background)
+    print(templates)
     return templates.TemplateResponse(name, context, status_code, headers, media_type, background)

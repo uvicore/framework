@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
-from uvicore.typing import OrderedDict
+from abc import ABC, abstractmethod, abstractproperty
+from uvicore.typing import Any, Dict, List, Tuple, OrderedDict
 
 from .config import Config
 from .server import Server
@@ -23,26 +22,22 @@ class Application(ABC):
     """Main uvicore application"""
 
     # Instance Variables
-    @property
-    @abstractmethod
+    @abstractproperty
     def version(self) -> str:
         """Uvicore framework version number"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def debug(self) -> bool:
         """Debug mode for entire application"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def perfs(self) -> List:
         """List of all perf dumps for performance tuning"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def http(self) -> Server:
         """HTTP Server Instance"""
         pass
@@ -53,56 +48,47 @@ class Application(ABC):
     #     """Configuration system"""
     #     pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def providers(self) -> OrderedDict[str, Dict]:
         """OrderedDict of providers from all packages in proper dependency order"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def registered(self) -> bool:
         """All providers have been registered"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def booted(self) -> bool:
         """All providers have been booted"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def is_console(self) -> bool:
         """App running from CLI (not serving web or API)"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def is_http(self) -> bool:
         """App running as HTTP server (not as CLI)"""
         pass
 
-    @property
-    @abstractmethod
-    def packages(self) -> OrderedDict[str, Package]:
+    @abstractproperty
+    def packages(self) -> Dict[str, Package]:
         """OrderedDict of all packages defined from providers"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def path(self) -> str:
         """Base path of running application"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def name(self) -> str:
         """Short name of running application"""
         pass
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def main(self) -> str:
         """The main packages running this application"""
         pass
