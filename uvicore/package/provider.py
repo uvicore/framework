@@ -64,7 +64,7 @@ class ServiceProvider(ProviderInterface):
         singleton: bool = False,
         aliases: List = []
     ) -> None:
-        """bind here"""
+        """Bind objects to the Ioc"""
         # Get override object from config if exists
         override = self.binding(name)
         object = override or object

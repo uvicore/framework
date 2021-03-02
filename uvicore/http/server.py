@@ -66,7 +66,7 @@ from uvicore.support.dumper import dd, dump
 
 
 # Example of abstratsion
-class _ServerXXXX(ServerInterface):
+class ServerXXXX(ServerInterface):
     """HTTP Server private class.
 
     Do not import from this location.

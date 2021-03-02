@@ -16,7 +16,7 @@ from uvicore.support.dumper import dd, dump
         #'root_path': uvicore.config('app.api.root_path'), # experiment with using Kong for API but Nginx for Web, may need 2 root_paths
     },
 )
-class _Server(_FastAPI):
+class Server(_FastAPI):
     @property
     def server(self) -> _FastAPI:
         return self

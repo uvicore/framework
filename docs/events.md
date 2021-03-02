@@ -1,6 +1,14 @@
 # Events
 
 
+## FIXME
+
+I added a new dispatch_async.  Basically events should either be sync or async.  For example, all bootstrapping events are sync since bootstrap is sync.  But all events coming from any async source like a route or a database query must be async as well.  So the ORM for example will dispatch all events as dispatch_async therefore those events are async and all handlers should also be async.
+
+
+
+
+
 ## Introduction
 
 Uvicore provides an observer (pub/sub) implementation allowing you to listen

@@ -3,6 +3,7 @@ from __future__ import annotations
 import operator as operators
 from copy import deepcopy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
+from uvicore.support import hash
 
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import BinaryExpression
@@ -20,12 +21,13 @@ E = TypeVar("E")  # Entity Model
 
 
 @uvicore.service()
-class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
+class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
     def __init__(self):
         self.query = Query()
 
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+        """Add where statement to query"""
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
             # .where('column', 'value')
@@ -53,6 +55,7 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         return self
 
     def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+        """Add or where statement to query"""
         # Or where must be a list of tuple or BinaryExpression as it requires at least 2 statements
         # .or_where([('column', 'value'), ('column', '=', 'value')])
         # .or_where([table.column == value, table.column == value])
@@ -70,6 +73,7 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         return self
 
     def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+        """Order results by these columns ASC or DESC order"""
         if type(column) == str:
             self.query.order_by.append((column, order.upper()))
         elif type(column) == tuple:
@@ -91,14 +95,26 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         return self
 
     def limit(self, limit: int) -> B[B, E]:
+        """Limit results"""
         self.query.limit = limit
         return self
 
     def offset(self, offset: int) -> B[B, E]:
+        """Limit offset"""
         self.query.offset = offset
         return self
 
+    def cache(self, key: str = None, *, seconds: int = None) -> B[B, E]:
+        """Cache results, None seconds uses cache backend default, 0=forever"""
+        # Seconds as None will default to cache configured default seconds
+        self.query.cache = {
+            'key': key,
+            'seconds': seconds,
+        }
+        return self
+
     def sql(self, method: str = 'select') -> str:
+        """Get all SQL queries involved in this query builder"""
         query, saquery = self._build_query('select', self.query.copy())
         return str(saquery)
 
@@ -200,7 +216,6 @@ class _QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         return sa.select(selects)
 
     def _build_where(self, query: Query, wheres: List[Tuple]):
-        """Build all wheres"""
         statements = []
         for where in wheres:
             if type(where) == tuple:
@@ -410,9 +425,12 @@ class Query:
     limit: Optional[int]
     offset: Optional[int]
     keyed_by: Optional[str]
+    show_writeonly: Union[bool, List]
+    cache: Dict
     relations: OrderedDict[str, Relation]
     joins: List[Join]
     table: sa.Table
+
 
     def __init__(self):
         self.includes: List = []
@@ -427,6 +445,8 @@ class Query:
         self.limit: Optional[int] = None
         self.offset: Optional[int] = None
         self.keyed_by: Optional[str] = None
+        self.show_writeonly: Union[bool, List] = False
+        self.cache: Dict = None
         self.relations: OrderedDict[str, Relation] = ODict()
         self.joins: List[Join] = []
         self.table: sa.Table = None
@@ -446,3 +466,25 @@ class Query:
         # the exact instance of each table.
         newquery.table = table
         return newquery
+
+    def hash(self, *, hash_type: str = 'sha1', **kwargs) -> str:
+        """Generate a unique hash for this query.  Used for automatic unique cache strings"""
+        unique_params = {
+            'tablename': self.table.name,
+            'includes': self.includes,
+            'selects': [str(col) for col in self.selects],
+            'wheres': self.wheres,
+            'or_wheres': self.or_wheres,
+            'filters': self.filters,
+            'or_filters': self.or_filters,
+            'group_by': self.group_by,
+            'order_by': self.order_by,
+            'sort': self.sort,
+            'limit': self.limit,
+            'offset': self.offset,
+            'keyed_by': self.keyed_by,
+            'kwargs': kwargs,
+        }
+        hash_method = getattr(hash, hash_type)
+        return hash_method(str(unique_params))
+

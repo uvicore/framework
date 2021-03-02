@@ -174,10 +174,12 @@ class _SuperDict:
             else:
                 # Add in dictionary items, convert to SuperDict
                 self[k].update(self.__class__(v))
+        return self
 
     def merge(self, *args, **kwargs):
         """Deep merge one or more dictionaries with self.  Overwrites values that exist."""
         self.update(*args, **kwargs)
+        return self
 
     def defaults(self, *args, **kwargs):
         """Provide defaults Dict to existing self and add only if not exists.
@@ -185,16 +187,21 @@ class _SuperDict:
         defaults = self.__class__(*args, **kwargs)
         defaults.merge(self)
         self.merge(defaults)
+        return self
 
     def setdefault(self, key: str, default=None):
         """Set a single key value only if not exists.
 
         This overrides the builtin dict method."""
-        if key in self:
-            return self[key]
-        else:
+        # if key in self:
+        #     return self[key]
+        # else:
+        #     self[key] = default
+        #     return default
+
+        if key not in self:
             self[key] = default
-            return default
+        return self
 
     def to_dict(self):
         """Convert SuperDict into regular builtin dict"""
@@ -241,7 +248,7 @@ class _SuperDict:
         except:
             return self.__missing__(dotkey)
 
-    def dotset(self, dotkey: str, value, _recursive_config= None):
+    def dotset(self, dotkey: str, value, _recursive_config=None):
         """Set values using string dot notation"""
         # Recursive for dot notation
         # Remember objects are byRef, so changing config also changes self.items

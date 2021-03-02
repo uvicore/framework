@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from uvicore.typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 T = TypeVar('T')
 
@@ -34,7 +34,7 @@ class Ioc(ABC):
     #     pass
 
     @abstractmethod
-    def binding(self, name: str) -> Binding:
+    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Union[Binding, Dict]:
         """Get an IoC binding object by name or alias"""
         pass
 
@@ -44,7 +44,17 @@ class Ioc(ABC):
         pass
 
     @abstractmethod
-    def bind(self, name: str, object: Any, *, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
+    def bind_from_decorator(self, cls, name: str = None, *, object_type: str = None, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
+        """Bind from a decorator"""
+        pass
+
+    @abstractmethod
+    def bind_override(self, name: str, object: str):
+        """Add a binding override to an array to check later"""
+        pass
+
+    @abstractmethod
+    def bind(self, name: str = None, object: Any = None, *, object_type: str = 'service', override: bool = True, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> None:
         """Add an IoC binding"""
         pass
 

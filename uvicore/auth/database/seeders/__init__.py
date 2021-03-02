@@ -4,8 +4,9 @@ import uvicore
 @uvicore.seeder()
 async def seed():
     # Import seeders
-    from . import users
+    from . import users, groups, roles
 
     # Run seeders. Order is critical for ForeignKey dependencies
-    #await groups.seed()
+    await roles.seed()
+    await groups.seed()
     await users.seed()

@@ -6,6 +6,21 @@ from uvicore.typing import OrderedDict
 config = {
 
     # --------------------------------------------------------------------------
+    # Argon2 Password Hasher Configuration
+    # See https://argon2-cffi.readthedocs.io/en/stable/api.html
+    # --------------------------------------------------------------------------
+    'hasher': {
+        'type': 'ID',
+        'hash_len': 16,
+        'salt_len': 16,
+        'encoding': 'utf-8',
+        'time_cost': 2,
+        'memory_cost': 102400,
+        'parallelism': 8,
+    },
+
+
+    # --------------------------------------------------------------------------
     # Route Configuration
     # --------------------------------------------------------------------------
     # Or like so, no underscores, so in dot notation config('blog.route.prefix')

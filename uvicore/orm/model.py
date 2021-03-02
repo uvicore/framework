@@ -1,24 +1,43 @@
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
-
-from pydantic import BaseModel as PydanticBaseModel
-
 import uvicore
 import sqlalchemy as sa
-from uvicore.contracts import Model as ModelInterface
-from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
-                                HasOne, MorphMany, MorphOne, MorphToMany)
-from uvicore.orm.mapper import _Mapper
-from uvicore.orm.query import _OrmQueryBuilder
-from uvicore.support.classes import hybridmethod
-from uvicore.support.collection import getvalue, setvalue
+from uvicore.orm.mapper import Mapper
+from pydantic import main as PydanticMain
 from uvicore.support.dumper import dd, dump
+from uvicore.orm.query import OrmQueryBuilder
+from uvicore.support.classes import hybridmethod
+from uvicore.contracts import Model as ModelInterface
+from uvicore.support.collection import getvalue, setvalue
+from uvicore.typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne, MorphMany, MorphOne, MorphToMany
 
 E = TypeVar("E")
 
+# Monkey Patch Pydantics Main validate_field_name.  Why?
+# Because if you EXTEND a model from another model, and your extension has
+# fieldnames that match fieldnames in metaclass.py, you will receive the
+# Field name xxx shadows a BaseModel attribute.  Only happens when you extend.  Normally
+# a field and a metaclass.py property will not collide.  Extension will happen often, especially
+# extending the main uvicore.auth User model to add custom fields to user table.
+def validate_field_name(bases, field_name) -> None:
+    # mReschke modify from original method in pydantic utils.py.
+    # Only check for field clashes if we are not extending another model
+    for base in bases:
+        # Can't check isinstance because even if extended it will always be true
+        if base.__class__.__module__ == 'pydantic.main':
+            # We are not extending another Uvicore model.  If we were it class module would be uvicore.orm.model
+            if getattr(base, field_name, None):
+                raise NameError(
+                    f'Field name "{field_name}" shadows a BaseModel attribute; '
+                    f'use a different field name with "alias=\'{field_name}\'".'
+                )
+PydanticMain.validate_field_name = validate_field_name
+PydanticBaseModel = PydanticMain.BaseModel
 
-# Any method here in the model WILL CLASH with your models field names
-# But any method you add to the meteclass will NOT clash with fieldnames but cannot
-# show up in an interface or code intellisense.
+
+# Any method here in the model WILL CLASH with your models field names but do show up in code intellisense.
+# However any methods you add to the meteclass will NOT clash with fieldnames (even if you
+# extend because of the validate_field_names monkey patch above), but metaclass methods will
+# NOT show up in an interface or code intellisense.
 # So reserved field names are:
 #   query
 #   insert
@@ -29,7 +48,10 @@ E = TypeVar("E")
 #   delete
 #   link
 #   unlink
-# and other items inside pydantic itself (list here???)
+# and other items inside pydantic BaseModel (main.py) that will error itself like:
+#   dict
+#   json
+#   parse_obj
 
 
 @uvicore.service()
@@ -44,8 +66,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             setattr(self, key, callback(self))
 
     @classmethod
-    def query(entity) -> _OrmQueryBuilder[_OrmQueryBuilder, E]:
-        return _OrmQueryBuilder(entity)
+    def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
+        return OrmQueryBuilder(entity)
 
     # These are nice, but they polute the namespace of FIELDS, so use just query()
     # @classmethod
@@ -74,13 +96,20 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # Convert any type of dict or list to an actual Model or List[Model]
         models = entity.mapper(models).model()
 
+        # There is no way to check if record already exists because these new models
+        # have no primary key yet.  If you run it twice with the same data, it will just
+        # insert twice.  So we are assuming these are all new records therefore we CAN
+        # fire the _before_insert hooks
+
         # Loop each model and call the before_save hook
         if type(models) == list:
             for model in models:
-                # Fire Models Pre-Save Hook
+                # Fire model hooks
+                await model._before_insert()
                 await model._before_save()
         else:
-            await models._after_save()
+            await models._before_insert()
+            await models._before_save()
 
         # Convert List[Model] or List[Dict] into dict of mapped table columns ready for insert
         bulk = entity.mapper(models).table()
@@ -100,8 +129,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # Loop each model and call the after_save hook
         if type(models) == list:
             for model in models:
+                await model._after_insert()
                 await model._after_save()
         else:
+            await models._after_insert()
             await models._after_save()
 
         # Return insert results (if single will be PK)
@@ -220,33 +251,16 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         return parent_pk
 
     @hybridmethod
-    def mapper(self_or_entity, *args) -> _Mapper:
-        return _Mapper(self_or_entity, *args)
+    def mapper(self_or_entity, *args) -> Mapper:
+        """Entity mapper for model->table or table->model conversions
 
-    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
-        # Same as create, except it deletes all first, so it sets the entire children
-
-        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
-        entity = self.__class__
-
-        # Get field and relation info
-        field = entity.modelfield(relation_name)
-        relation = field.relation.fill(field)
-
-        if type(relation) == BelongsToMany or type(relation) == MorphToMany:
-            # Delete does not work for these relations, only unlink
-            await self.unlink(relation_name)
-        else:
-            # Delete works for these relations
-            await self.delete(relation_name)
-        await self.create(relation_name, models)
-
-    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
-        # Alias to create
-        await self.create(relation_name, models)
+        Can be accessed both from the [static] class or from an instance
+        """
+        return Mapper(self_or_entity, *args)
 
     async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Create related child records and link them to this parent (self) model"""
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -297,7 +311,32 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         else:
             raise Exception('Creating children does not work for this type of relation.')
 
+    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Alias to create"""
+        await self.create(relation_name, models)
+
+    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Same as create(), except it deletes all first, so it sets the entire children"""
+
+        # Get the entity of this model instance (which is the metaclass, aka self.__class__)
+        entity = self.__class__
+
+        # Get field and relation info
+        field = entity.modelfield(relation_name)
+        relation = field.relation.fill(field)
+
+        if type(relation) == BelongsToMany or type(relation) == MorphToMany:
+            # Delete does not work for these relations, only unlink
+            await self.unlink(relation_name)
+        else:
+            # Delete works for these relations
+            await self.delete(relation_name)
+        await self.create(relation_name, models)
+
+
     async def save(self) -> None:
+        """Save this model to the database (insert or update)"""
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -319,12 +358,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         #         #     'data': data
         #         # }
 
-        # Fire Models Pre-Save Hook
-        await self._before_save()
-
-        # Convert self model instance into Dict of mapped table columns
-        values = self.mapper().table()
-
         # Check if exists
         exists = None
         table = entity.table
@@ -335,13 +368,29 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
         if exists:
             # Record exists, perform update
+            await self._before_save()
+
+            # Convert self model instance into Dict of mapped table columns, only after hooks are fired
+            # only after hooks are fired as they may alter the data
+            values = self.mapper().table()
+
             query = table.update().where(getattr(table.c, entity.pk) == getattr(self, entity.pk)).values(**values)
             await entity.execute(query)
+            await self._after_save()
         else:
             # New record, perform insert
+            await self._before_insert()
+            await self._before_save()
+
+            # Convert self model instance into Dict of mapped table columns
+            # only after hooks are fired as they may alter the data
+            values = self.mapper().table()
+
             query = table.insert().values(**values)
             new_pk = await entity.execute(query)
             setattr(self, entity.pk, new_pk)
+            await self._after_insert()
+            await self._after_save()
 
         # This is a TRY version if if exists, not sure which is more efficient, a select first, or an insert attempt/failure
         # try:
@@ -362,6 +411,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         return self
 
     async def delete(self, relation_name: str = None) -> None:
+        """Delete this model from the database"""
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -388,7 +439,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     .delete()
                     .where(getattr(rel_table.c, relation.foreign_key) == getattr(self, entity.pk))
                 )
+                await self._before_delete()
                 await entity.execute(query)
+                await self._after_delete()
 
             elif type(relation) == MorphOne or type(relation) == MorphMany:
                 query = (rel_table
@@ -396,7 +449,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     .where(getattr(rel_table.c, relation.foreign_type) == entity.tablename)
                     .where(getattr(rel_table.c, relation.foreign_key) == getattr(self, entity.pk))
                 )
+                await self._before_delete()
                 await entity.execute(query)
+                await self._after_delete()
             else:
                 raise Exception('Deleteing children does not work for this type of relation.')
 
@@ -408,9 +463,20 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             # Delete this main parent (self) model record from the db
             table = entity.table
             query = table.delete().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+            await self._before_delete()
             await entity.execute(query)
+            await self._after_delete()
 
     async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Link records to relation using the Many-To-Many pivot table"""
+
+        # NOTICE hooks:  We do NOT actuall need to fire hooks on relation tables!
+        # Because there are no relation table models to listen for those hooks!
+
+        # NOTICE models:  Models can be single model, single dict, List[Model], List[Dict]
+        # and I do NOT have to convert them to actual models.  Because I am using my custom getvalue
+        # the pk is pulled regardless of model or dict!
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -446,7 +512,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
                 if not exists:
                     query = relation.join_table.insert().values(**pivot)
-                    await entity.execute(query)
+                    await entity.execute(query)  # No hooks needed, relation table are NOT models, no listeners
 
                 # # Try insert, fail silently if exists
                 # try:
@@ -483,7 +549,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
                 if not exists:
                     query = relation.join_table.insert().values(**pivot)
-                    await entity.execute(query)
+                    await entity.execute(query)  # No hooks needed, relation table are NOT models, no listeners
 
 
                 # Try insert, fail silently if exists
@@ -499,6 +565,11 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             raise Exception('Linking is for Many-To-Many relations only.')
 
     async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+        """Unlink records to relation using the Many-To-Many pivot table"""
+
+        # NOTICE hooks:  We do NOT actuall need to fire hooks on relation tables!
+        # Because there are no relation table models to listen for those hooks!
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -507,6 +578,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         relation = field.relation.fill(field)
 
         # Ensure model is a list
+        ids = []
         if models is not None:
             if type(models) != list: models = [models]
             ids = [getvalue(x, relation.entity.pk) for x in models]
@@ -518,7 +590,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             if models is not None:
                 # Add in proper relation Ids
                 query = query.where(getattr(table.c, relation.right_key).in_(ids))
-            await entity.execute(query)
+            await entity.execute(query)  # No hooks needed, relation table are NOT models, no listeners
 
         elif type(relation) == MorphToMany:
             # Get table and start where on self ID
@@ -531,23 +603,39 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             if models is not None:
                 # Add in proper relation Ids
                 query = query.where(getattr(table.c, relation.right_key).in_(ids))
-            await entity.execute(query)
+            await entity.execute(query)  # No hooks needed, relation table are NOT models, no listeners
         else:
             raise Exception('Uninking is for Many-To-Many relations only.')
 
-    async def _before_save(self):
-        #dump('MODEL-HOOK-BEFORE-SAVE')
+    async def _before_insert(self) -> None:
+        """Hook fired before record is inserted (new records only)"""
+        event_name = 'uvicore.orm-{' +  self.__class__.modelfqn + '}-BeforeInsert'
+        await uvicore.events.codispatch(event_name, {'model': self})
 
-        # Dispatch Before Save Event
-        event_name = self.__class__.modelfqn + '-BeforeSave'
-        uvicore.events.dispatch(event_name, {'model': self})
+    async def _after_insert(self) -> None:
+        """Hook fired after record is inserted (new records only)"""
+        event_name = 'uvicore.orm-{' + self.__class__.modelfqn + '}-AfterInsert'
+        await uvicore.events.dispatch_async(event_name, {'model': self})
 
-    async def _after_save(self):
-        #dump('MODEL-HOOK-AFTER-SAVE')
+    async def _before_save(self) -> None:
+        """Hook fired before record is saved (inserted or updated)"""
+        event_name = 'uvicore.orm-{' +  self.__class__.modelfqn + '}-BeforeSave'
+        await uvicore.events.codispatch(event_name, {'model': self})
 
-        # Dispatch Before Save Event
-        event_name = self.__class__.modelfqn + '-AfterSave'
-        uvicore.events.dispatch(event_name, {'model': self})
+    async def _after_save(self) -> None:
+        """Hook fired after record is saved (inserted or updated)"""
+        event_name = 'uvicore.orm-{' + self.__class__.modelfqn + '}-AfterSave'
+        await uvicore.events.dispatch_async(event_name, {'model': self})
+
+    async def _before_delete(self) -> None:
+        """Hook fired before record is deleted"""
+        event_name = 'uvicore.orm-{' +  self.__class__.modelfqn + '}-BeforeDelete'
+        await uvicore.events.codispatch(event_name, {'model': self})
+
+    async def _after_delete(self) -> None:
+        """Hook fired after record is deleted"""
+        event_name = 'uvicore.orm-{' + self.__class__.modelfqn + '}-AfterDelete'
+        await uvicore.events.dispatch_async(event_name, {'model': self})
 
 
 

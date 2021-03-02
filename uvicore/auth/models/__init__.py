@@ -1,3 +1,4 @@
 from .group import Group
-from .user_info import UserInfo
+from .permission import Permission
+from .role import Role
 from .user import User

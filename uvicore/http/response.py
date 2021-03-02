@@ -12,19 +12,23 @@ from starlette.responses import RedirectResponse as Redirect
 from starlette.responses import StreamingResponse as Stream
 from starlette.responses import FileResponse as File
 
-
 # Get our current template system from the IoC
-templates = uvicore.ioc.make('uvicore.http.templating.jinja._Jinja')
+templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
 
 @uvicore.service()
 def View(
     name: str,
-    context: dict,
+    context: dict = {},
     status_code: int = 200,
     headers: dict = None,
     media_type: str = None,
     background: _BackgroundTask = None,
 ) -> _TemplateResponse:
-    #return uvicore.app.template.TemplateResponse(name, context, status_code, headers, media_type, background)
-    print(templates)
-    return templates.TemplateResponse(name, context, status_code, headers, media_type, background)
+    return templates.TemplateResponse(
+        name=name,
+        context=context,
+        status_code=status_code,
+        headers=headers,
+        media_type=media_type,
+        background=background
+    )

@@ -1,18 +1,5 @@
-Home jinja2 here
+<h1>Home Page</h1>
 
-
-<form method="post" action="/app1/form">
-
-    <input type="text" name="name" id="name">
-
-    <input type="submit" name="submit" value="submit">
-
-</form>
-
-
-{% if name: %}
-    You entered: {{ name }}
-{% endif %}
-
-
-{{ user }}
+<a href="{{url('app1.about')}}">About</a> |
+<a href="{{url('app1.admin')}}">Admin</a> |
+<a href="{{url('app1.login')}}">Login</a>

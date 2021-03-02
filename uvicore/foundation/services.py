@@ -15,16 +15,18 @@ class Foundation(ServiceProvider, Cli):
         ])
 
         # Register events used in this package
-        self.events.register({
-            'uvicore.foundation.events.app.Registered': {
-                'description': 'Application bootstrap has registered all package service providers',
-                'type': 'class',
-            },
-            'uvicore.foundation.events.app.Booted': {
-                'description': 'Application bootstrap has booted all package service providers',
-                'type': 'class',
-            },
-        })
+        # self.events.register(
+        #     name='uvicore.foundation.events.app.Registered',
+        #     description='Application bootstrap has registered all package service providers.',
+        #     dynamic=False,
+        #     is_async=False,
+        # )
+        # self.events.register(
+        #     name='uvicore.foundation.events.app.Booted',
+        #     description='Application bootstrap has booted all package service providers.',
+        #     dynamic=False,
+        #     is_async=False,
+        # )
 
         # # Register root level commands
         # self.commands(

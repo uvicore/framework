@@ -1,10 +1,7 @@
 from uvicore.typing import OrderedDict
 
-# Package configuration is not meant to be overridden when used inside other
-# apps.  This information is always unchanged and consistent.  The main
-# wiki.py configuration however is meant to be overridden per use case.
-# This is merged inside the main wiki.py and accessible at
-# config('mreschke.wiki.package')
+# This is the main foundation config.  All items here can be overridden
+# when used inside other applications.  Accessible at config('uvicore.foundation')
 
 config = {
 
@@ -86,9 +83,14 @@ config = {
             'provider': 'uvicore.logging.services.Logging',
         },
 
-        # Console is always required for every uvicore app
+        # Console is required for every uvicore app
         'uvicore.console': {
             'provider': 'uvicore.console.services.Console',
+        },
+
+        # Cache is required for every uvicore app
+        'uvicore.cache': {
+            'provider': 'uvicore.cache.services.Cache',
         },
     }),
 

@@ -53,6 +53,29 @@ config = {
 
 
     # --------------------------------------------------------------------------
+    # Redis Connections
+    # --------------------------------------------------------------------------
+    'redis': {
+        'default': 'app1',
+        'connections': {
+            'app1': {
+                'host': '127.0.0.1',
+                'port': 6379,
+                'database': 0,
+                'password': None
+            },
+            'cache': {
+                'host': '127.0.0.1',
+                'port': 6379,
+                'database': 9,
+                'password': None
+            },
+        },
+    },
+
+
+
+    # --------------------------------------------------------------------------
     # Registration Control
     # --------------------------------------------------------------------------
     # This lets you control the service provider registrations.  If this app
@@ -85,6 +108,9 @@ config = {
     'dependencies': OrderedDict({
         'uvicore.foundation': {
             'provider': 'uvicore.foundation.services.Foundation',
+        },
+        'uvicore.redis': {
+            'provider': 'uvicore.redis.services.Redis',
         },
         'uvicore.database': {
             'provider': 'uvicore.database.services.Database',

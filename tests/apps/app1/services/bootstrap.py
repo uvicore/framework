@@ -9,7 +9,6 @@ def application(is_console: bool = False) -> None:
     Bootstrap only runs when this package is running as the main app via
     ./uvicore or uvicorn/gunicorn server
     """
-
     # Base path
     base_path = path.find_base(__file__) + '/testapp/app'
 

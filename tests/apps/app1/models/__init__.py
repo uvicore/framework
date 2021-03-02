@@ -5,4 +5,5 @@ from .hashtag import Hashtag
 from .image import Image
 from .post import Post
 from .tag import Tag
+from .user_info import UserInfo
 from .user import User

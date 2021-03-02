@@ -18,6 +18,7 @@ config = {
     # Uvicorn Development Server
     #
     # Configure the dev server when you run `./uvicore http serve`
+    # Dev server only, in production use gunicorn or uvicorn manually
     # --------------------------------------------------------------------------
     'server': {
         'app': 'app1.http.server:http',
@@ -27,8 +28,16 @@ config = {
         'access_log': env.bool('SERVER_ACCESS_LOG', True),
     },
 
+
+    # --------------------------------------------------------------------------
+    # Web HTTP Server
+    #
+    # Web endpoint specific configuration and middleware
+    # Middleware is fully defined from the running application only.  Packages
+    # Do not define their own middleware as the running app should dictate all.
+    # --------------------------------------------------------------------------
     'web': {
-        'prefix': '/',
+        'prefix': '',
         'asset': {
             'host': 'http://some.assetserver.com',
             'path': '/static',
@@ -57,6 +66,12 @@ config = {
         }),
     },
 
+
+    # --------------------------------------------------------------------------
+    # API HTTP Server
+    #
+    # API endpoint specific configuration and middleware
+    # --------------------------------------------------------------------------
     'api': {
         'prefix': '/api',
         'openapi': {
@@ -89,6 +104,7 @@ config = {
         }),
     },
 
+
     # --------------------------------------------------------------------------
     # Static Assets
     #
@@ -105,107 +121,34 @@ config = {
     # },
 
 
-
+    # --------------------------------------------------------------------------
+    # HTTP Auth Guards used in Web and API Endpoints
+    # --------------------------------------------------------------------------
     'auth': {
-        'default': 'web', # should be per WebRouter or ApiRouter probably
-        'gaurds': {
+        'default': 'api', # should be per WebRouter or ApiRouter probably
+        'guards': {
             'web': {
-                'driver': 'session',
-                'provider': 'users',
+                'driver': 'uvicore.auth.middleware.auth.Basic',
+                #'provider': 'users',
             },
             'api': {
-                'driver': 'token',
-                'provider': 'users',
+                'driver': 'uvicore.auth.middleware.auth.Basic',
+                #'provider': 'users',
             }
         },
-        'providers': {
-            'users': {
-                'driver': 'orm',
-                'model': 'app1.models.user.User'
-            },
-        },
+        'user_model': 'uvicore.auth.models.user.User',
+        'user_method': 'authinfo',
+        'user_username_field': 'email',
+        'user_password_field': 'password',
+        'user_includes': ['groups', 'groups.roles', 'groups.roles.permissions'],
+        # 'providers': {
+        #     'users': {
+        #         'driver': 'orm',
+        #         'model': 'uvicore.auth.models.user.User',
+        #         'include': ['contact', 'info'],
+        #     },
+        # },
     },
-
-
-
-
-    # --------------------------------------------------------------------------
-    # HTTP Middleware
-    #
-    # Middleware is fully defined from the running application only.  Packages
-    # Do not define their own middleware as the running app should dictate all.
-    # --------------------------------------------------------------------------
-    # 'middleware': {
-    #     'starlette.middleware.trustedhost.TrustedHostMiddleware': {},
-    #     'starlette.middleware.httpsredirect.HTTPSRedirectMiddleware': {
-    #         'allowed_hosts': ['example.com', '*.example.com'],
-    #     },
-    #     'starlette.middleware.cors.CORSMiddleware': {
-    #         'allow_origins': ['*'],
-    #         'allow_methods': ['GET', 'POST'],
-    #     },
-    # }
-
-    # 'middleware': {
-    #     'web': OrderedDict({
-    #         'TrustedHost': {
-    #             'module': 'uvicore.http.middleware.TrustedHost',
-    #             'options': {
-    #                 'allowed_hosts': ['127.0.0.1', 'localhost'],
-    #                 'www_redirect': True,
-    #             }
-    #         },
-    #         # If you have a loadbalancer with SSL termination in front of your web
-    #         # app, don't use this redirection to enforce HTTPS as it is always HTTP internally.
-    #         # 'HTTPSRedirect': {
-    #         #     'module': 'uvicore.http.middleware.HTTPSRedirect',
-    #         # },
-    #         # Not needed if your loadbalancer or web server handles gzip itself.
-    #         # 'GZip': {
-    #         #     'module': 'uvicore.http.middleware.Gzip',
-    #         #     'options': {
-    #         #         # Do not GZip responses that are smaller than this minimum size in bytes. Defaults to 500
-    #         #         'minimum_size': 500
-    #         #     }
-    #         # },
-    #     }),
-
-    #     'api': OrderedDict({
-    #         'TrustedHost': {
-    #             'module': 'uvicore.http.middleware.TrustedHost',
-    #             'options': {
-    #                 'allowed_hosts': ['127.0.0.1', 'localhost'],
-    #                 'www_redirect': True,
-    #             }
-    #         },
-    #         'CORS': {
-    #             'module': 'uvicore.http.middleware.CORS',
-    #             'options': {
-    #                 'allow_origins': ['127.0.0.1', 'localhost'],
-    #                 'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    #                 'allow_headers': [],
-    #                 'allow_credentials': False,
-    #                 'allow_origin_regex': None,
-    #                 'expose_headers': [],
-    #                 'max_age': 600,
-    #             }
-    #         },
-
-    #     }),
-    # },
-
-
-    # --------------------------------------------------------------------------
-    # OpenAPI Auto API Doc Configuration
-    #
-    # Configure the OpenAPI endpoints and displayed title
-    # --------------------------------------------------------------------------
-    # 'openapi': {
-    #     'title': 'App1 API Docs',
-    #     'url': '/openapi.json',
-    #     'docs_url': '/docs',
-    #     'redoc_url': '/redoc',
-    # },
 
 
     # --------------------------------------------------------------------------
@@ -276,12 +219,12 @@ config = {
         # Low level core uvicore libraries (too early to override in a service provider, must be done here)
 
         # FIXME, broken with new SuperDict
-        #'uvicore.foundation.application._Application': 'app1.overrides.application.Application',
+        #'uvicore.foundation.application.Application': 'app1.overrides.application.Application',
         #'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
         #'uvicore.package.package.Package': 'app1.overrides.package.Package',
 
         # This is the only class that must be complete re-implimented, extension is NOT allowed.
-        #'uvicore.http.routing.model_router._ModelRoute': 'app1.overrides.http.model_router._ModelRoute',
+        #'uvicore.http.routing.model_router.ModelRoute': 'app1.overrides.http.model_router.ModelRoute',
 
         # Higher level uvicore libraries
         # 'Logger': 'mreschke.wiki.overrides.logger.Logger',
@@ -296,7 +239,6 @@ config = {
     },
 
 
-
     # --------------------------------------------------------------------------
     # Path Overrides
     #
@@ -307,6 +249,22 @@ config = {
     # --------------------------------------------------------------------------
     'paths': {
         #
+    },
+
+
+    # --------------------------------------------------------------------------
+    # Cache Configuration
+    # --------------------------------------------------------------------------
+    'cache': {
+        'default': 'redis',
+        'stores': {
+            'redis': {
+                'driver': 'uvicore.cache.backends.Redis',
+                'connection': 'cache',
+                'prefix': 'app1::cache/',
+                'seconds': 30,  # 0=forever
+            },
+        },
     },
 
 

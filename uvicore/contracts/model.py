@@ -14,7 +14,6 @@ class Model(Generic[E], ABC):
     @abstractmethod
     def query(entity) -> OrmQueryBuilder[OrmQueryBuilder, E]:
         """ORM query builder passthrough"""
-        pass
 
     # @abstractmethod
     # async def get(entity) -> Union[List[E], Dict[str, E]]:
@@ -38,7 +37,6 @@ class Model(Generic[E], ABC):
         and relations at the same time use the slower non-bulk
         insert_with_relations() instead.
         """
-        pass
 
     @abstractmethod
     async def insert_with_relations(entity, models: List[Dict]) -> None:
@@ -49,7 +47,6 @@ class Model(Generic[E], ABC):
         children (or children first then parent depending on BelongsTo vs
         HasOne or HasMany)
         """
-        pass
 
     @abstractmethod
     def mapper(self_or_entity, *args) -> Mapper:
@@ -57,27 +54,55 @@ class Model(Generic[E], ABC):
 
         Can be accessed both from the [static] class or from an instance
         """
-        pass
 
     @abstractmethod
-    async def create(self, relation_name: str, values: Union[List[Dict], Dict]) -> None:
+    async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Create related records and link them to this parent (self) model"""
-        pass
+
+    @abstractmethod
+    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Alias to create"""
+
+    @abstractmethod
+    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+        """Same as create(), except it deletes all first, so it sets the entire children"""
 
     @abstractmethod
     async def save(self) -> None:
-        """Save this model to the database"""
-        pass
+        """Save this model to the database (insert or update)"""
 
     @abstractmethod
     async def delete(self) -> None:
         """Delete this model from the database"""
-        pass
 
     @abstractmethod
     async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Link records to relation using the Many-To-Many pivot table"""
 
     @abstractmethod
-    async def link(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+    async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
         """Unlink records to relation using the Many-To-Many pivot table"""
+
+    @abstractmethod
+    async def _before_insert(self) -> None:
+        """Hook fired before record is inserted (new records only)"""
+
+    @abstractmethod
+    async def _after_insert(self) -> None:
+        """Hook fired after record is inserted (new records only)"""
+
+    @abstractmethod
+    async def _before_save(self) -> None:
+        """Hook fired before record is saved (inserted or updated)"""
+
+    @abstractmethod
+    async def _after_save(self) -> None:
+        """Hook fired after record is saved (inserted or updated)"""
+
+    @abstractmethod
+    async def _before_delete(self) -> None:
+        """Hook fired before record is deleted"""
+
+    @abstractmethod
+    async def _after_delete(self) -> None:
+        """Hook fired after record is deleted"""

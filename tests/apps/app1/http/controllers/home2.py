@@ -1,8 +1,10 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
-from uvicore.http import Request, response, WebRouter, Controller
+from uvicore.http import Request, response
+from uvicore.http.routing import WebRouter, Controller
 
-# This Controller does Nothing now, no package init
+
+@uvicore.controller()
 class Home2(Controller):
 
     # middleware: List = ['auth', 'limitter']

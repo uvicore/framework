@@ -3,11 +3,11 @@ from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Config as ConfigInterface
 
 
-@uvicore.service('uvicore.configuration.configuration._Configuration',
+@uvicore.service('uvicore.configuration.configuration.Configuration',
     aliases=['Configuration', 'Config', 'configuration', 'config'],
     singleton=True,
 )
-class _Configuration(ConfigInterface):
+class Configuration(ConfigInterface):
     pass
 
 

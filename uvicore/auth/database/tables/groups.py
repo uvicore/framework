@@ -19,13 +19,10 @@ class Groups(Table):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column('id', sa.Integer, primary_key=True),
+        #sa.Column('key', sa.String(length=20), primary_key=True),
         sa.Column("name", sa.String(length=100))
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
     schema_kwargs = {}
-
-
-# IoC Class Instance
-#Groups: _Groups = uvicore.ioc.make('uvicore.auth.database.tables.Groups.Groups', _Groups, singleton=True)

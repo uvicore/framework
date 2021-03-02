@@ -1,72 +1,34 @@
-from typing import List
-
-from app1.models.post import Post
-from app1.models.user import User
-from uvicore.http import ApiRouter
+import uvicore
 from uvicore.support.dumper import dump, dd
+from uvicore.http import Request, response
+from uvicore.http.routing import Controller, ApiRouter
+
+from app1 import models
+
+from uvicore.auth.middleware import Guard
+
+from uvicore.auth.models import User
+
+@uvicore.controller()
+class Post(Controller):
+
+    #user: User = Auth(['post.controller'], guard='api')
+    #user: User = Auth()
+    user: User = Guard()
+
+    def register(self, route: ApiRouter):
+
+        #@route.get('/post4', middleware=[Auth('model-perms')])
+        #@route.get('/post4', auth=Guard('model-perms'))
+        @route.get('/post4')
+        async def post4() -> models.Post:
+            #return '/group1/post4'
+            return await models.Post.query().find(1)
 
 
 
-
-routes = route = ApiRouter()
-#router = route
-
-
-from fastapi.params import Depends, Security
-from uvicore.typing import Optional, Any, Callable, Sequence
-from uvicore.http import Request
-from fastapi.exceptions import HTTPException
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
-from fastapi.security import SecurityScopes
-
-# Actual Auth route middleware
-class AuthMiddleware:
-    async def __call__(self, scopes: SecurityScopes, request: Request):
-        # Load the default auth guard defined for WebRoutes or APIRoutes
-        # Run that guard and get authorized=true/false with some user info perhaps
-        authorized = True  # from session or token...
-
-        dump(scopes, scopes.__dict__)
-
-        if authorized:
-            # Authorized, return user object
-            return {'auth': 'here'}
-        else:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated",
-                headers={"WWW-Authenticate": "Bearer"},  # Change depending on session, basic etc...
-            )
-
-# Define from some HTTP kernel
-route_middleware = {
-    'auth': AuthMiddleware()
-}
-
-
-
-class Middleware(Security):
-    def __init__(
-        self,
-        dependency: Optional[Callable[..., Any]] = None,
-        scopes: Optional[Sequence[str]] = None,
-    ):
-        #self.dependency = route_middleware.get(middleware)
-        #self.use_cache = True
-        super().__init__(dependency=route_middleware.get(dependency), scopes=scopes, use_cache=True)
-
-
-# #@route.get('/posts', response_model=List[Post])
-# @route.get('/posts', middleware=['throttle', ])
-# async def posts(
-#     include: str = '',
-#     user: User = Middleware('auth', ['scope1', 'scope2'])
-# ):
-
-#     #return await Post.query().include(*include.split(',')).get()
-#     #dump(user)
-#     #return {'status': 'done'}
-#     return user
+        # Return router
+        return route
 
 
 
@@ -74,9 +36,86 @@ class Middleware(Security):
 
 
 
-@route.get('/posts/{id}', response_model=Post)
-async def post(id: int, include: str = ''):
-    return await Post.query().include(*include.split(',')).find(id)
+
+# from typing import List
+
+# from app1.models.post import Post
+# from app1.models.user import User
+# from uvicore.http import ApiRouter
+# from uvicore.support.dumper import dump, dd
+
+
+
+
+# routes = route = ApiRouter()
+# #router = route
+
+
+# from fastapi.params import Depends, Security
+# from uvicore.typing import Optional, Any, Callable, Sequence
+# from uvicore.http import Request
+# from fastapi.exceptions import HTTPException
+# from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
+# from fastapi.security import SecurityScopes
+
+# # Actual Auth route middleware
+# class AuthMiddleware:
+#     async def __call__(self, scopes: SecurityScopes, request: Request):
+#         # Load the default auth guard defined for WebRoutes or APIRoutes
+#         # Run that guard and get authorized=true/false with some user info perhaps
+#         authorized = True  # from session or token...
+
+#         dump(scopes, scopes.__dict__)
+
+#         if authorized:
+#             # Authorized, return user object
+#             return {'auth': 'here'}
+#         else:
+#             raise HTTPException(
+#                 status_code=HTTP_401_UNAUTHORIZED,
+#                 detail="Not authenticated",
+#                 headers={"WWW-Authenticate": "Bearer"},  # Change depending on session, basic etc...
+#             )
+
+# # Define from some HTTP kernel
+# route_middleware = {
+#     'auth': AuthMiddleware()
+# }
+
+
+
+# class Middleware(Security):
+#     def __init__(
+#         self,
+#         dependency: Optional[Callable[..., Any]] = None,
+#         scopes: Optional[Sequence[str]] = None,
+#     ):
+#         #self.dependency = route_middleware.get(middleware)
+#         #self.use_cache = True
+#         super().__init__(dependency=route_middleware.get(dependency), scopes=scopes, use_cache=True)
+
+
+# # #@route.get('/posts', response_model=List[Post])
+# # @route.get('/posts', middleware=['throttle', ])
+# # async def posts(
+# #     include: str = '',
+# #     user: User = Middleware('auth', ['scope1', 'scope2'])
+# # ):
+
+# #     #return await Post.query().include(*include.split(',')).get()
+# #     #dump(user)
+# #     #return {'status': 'done'}
+# #     return user
+
+
+
+
+
+
+
+# @route.get('/posts/{id}', response_model=Post)
+# async def post(id: int, include: str = ''):
+#     return await Post.query().include(*include.split(',')).find(id)
 
 
 

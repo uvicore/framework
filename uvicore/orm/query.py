@@ -5,6 +5,7 @@ import os
 from collections import OrderedDict as ODict
 from copy import deepcopy
 from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Union
+from uvicore.support.hash import sha1
 
 import sqlalchemy as sa
 from sqlalchemy.sql import quoted_name
@@ -12,10 +13,10 @@ from sqlalchemy.sql.expression import BinaryExpression
 
 import uvicore
 from uvicore.contracts import OrmQueryBuilder as BuilderInterface
-from uvicore.database.builder import _QueryBuilder, Join, Query
+from uvicore.database.builder import QueryBuilder, Join, Query
 from uvicore.orm.fields import (BelongsTo, BelongsToMany, Field, HasMany,
                                 HasOne, MorphMany, MorphOne, MorphToMany)
-from uvicore.orm.fields import _Relation
+from uvicore.orm.fields import Relation
 from uvicore.support.collection import getvalue
 from uvicore.support.dumper import dd, dump
 
@@ -24,7 +25,7 @@ E = TypeVar("E")  # Entity Model
 
 
 @uvicore.service()
-class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E]):
+class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
     """ORM Query Builder"""
 
     def __init__(self, entity: E):
@@ -82,6 +83,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return self._where_dict(super().where, column, operator, value)
 
     def include(self, *args) -> B[B, E]:
+        """Include child relation models"""
         # import inspect
         # x = inspect.currentframe()
         # y = inspect.getouterframes(x, 1)
@@ -98,6 +100,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return self
 
     def filter(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+        """Filter child relationship by this AND clause"""
         # Filters are for Many relations only
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
@@ -125,6 +128,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return self
 
     def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+        """Filter child relationship by this OR clause"""
         # Or filter must be a list of tuple or BinaryExpression as it requires at least 2 statements
         # .or_filter([('column', 'value'), ('column', '=', 'value')])
         # .or_filter([table.column == value, table.column == value])
@@ -142,7 +146,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return self
 
     def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
-        # Sorts are for Many relations only
+        """Sort Many relations only"""
         if type(column) == str:
             self.query.sort.append((column, order.upper()))
         elif type(column) == tuple:
@@ -164,7 +168,15 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return self
 
     def key_by(self, field: str) -> B[B, E]:
+        """Key results as a Dictionary by this column"""
         self.query.keyed_by = field
+        return self
+
+    def show_writeonly(self, fields: List = None):
+        if fields is None:
+            self.query.show_writeonly = True
+        else:
+            self.query.show_writeonly = fields
         return self
 
     def sql(self, method: str = 'select', queries: List = None) -> str:
@@ -180,9 +192,17 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         """Get all queries involved in this ORM statement"""
         return self._build_orm_queries('select')
 
-    async def find(self, pk_value: Any) -> Union[E, None]:
+    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> Union[E, None]:
+        """Execute query by primary key or custom column and return first row found"""
+        if pk_value:
+            column = self._pk()
+            value = pk_value
+        elif kwargs:
+            column = [x for x in kwargs.keys()][0]
+            value = [x for x in kwargs.values()][0]
+
         # Add in where on PK
-        self.where(self._pk(), pk_value)
+        self.where(column, value)
 
         # Get List of Entities based on query results
         entities = await self.get()
@@ -192,23 +212,54 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         return None
 
     async def get(self) -> Union[List[E], Dict[str, E]]:
+        """Execute query and return all rows found"""
         queries = self._build_orm_queries('select')
         self.log.header('Raw SQL Queries')
         self.log.info(self.sql('select', queries))
 
-        # Execute each query
-        results = None
-        main_query = None
-        has_many = {}
-        for query in queries:
-            if query.get('name') == 'main':
-                main_query = query.get('query')
-                results = await self.entity.fetchall(query.get('saquery'))
+        # Detect caching
+        cache = self.query.cache
+        if cache:
+            prefix = 'uvicore.orm/'
+            if cache.get('key') is None:
+                # No cache name specified, automatically build unique based on queries
+                query_hash = ''
+                for query in queries:
+                    if query['name'] == 'main':
+                        query_hash = query.get('query').hash(
+                            hash_type='sha1',
+                            package='uvicore.orm',
+                            entity=self.entity,
+                            connection=self.entity.connection
+                        )
+                        break
+                cache['key'] = prefix + query_hash
+                dump(query_hash)
             else:
-                has_many[query.get('name')] = await self.entity.fetchall(query.get('saquery'))
+                cache['key'] = prefix + cache.get('key')
 
-        # Convert results to List of entities
-        entities = self._build_orm_results(main_query, results, has_many)
+        if cache and await uvicore.cache.has(cache.get('key')):
+            # Cache found, use cached results
+            dump('ORM FROM CACHE')
+            entities = await uvicore.cache.get(cache.get('key'))
+        else:
+            dump('ORM FROM DB')
+            # Execute each query
+            results = None
+            main_query = None
+            has_many = {}
+            for query in queries:
+                if query.get('name') == 'main':
+                    main_query = query.get('query')
+                    results = await self.entity.fetchall(query.get('saquery'))
+                else:
+                    has_many[query.get('name')] = await self.entity.fetchall(query.get('saquery'))
+
+            # Convert results to List of entities
+            entities = self._build_orm_results(main_query, results, has_many)
+
+            # Add to cache if desired
+            if cache: await uvicore.cache.remember(cache.get('key'), entities, seconds=cache.get('seconds'))
 
         # Return List of Entities
         return entities
@@ -225,7 +276,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         #dump(query.relations)
 
         # Add all columns from main model
-        query.selects = self.entity.selectable_columns()
+        query.selects = self.entity.selectable_columns(show_writeonly=self.query.show_writeonly)
 
         # Add all selects where any nested relation is NOT a *Many
         relation: _Relation
@@ -233,7 +284,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
             if not relation.contains_many(query.relations):
                 # Don't use the relation.entity table to get columns, use the join aliased table
                 table = self._get_join_table(query, relation.name)
-                columns = relation.entity.selectable_columns(table)
+                columns = relation.entity.selectable_columns(table, show_writeonly=self.query.show_writeonly)
                 for column in columns:
                     #x = sa.alias(column, 'x')
                     query.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
@@ -249,7 +300,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
 
         # So we have our first query perfect
         # Now we need to build a second or third query for all *Many relations
-        relation: _Relation
+        relation: Relation
         for relation in query.relations.values():
             #if type(relation) == HasMany or type(relation) == BelongsToMany:
             if relation.is_many():
@@ -270,7 +321,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
 
                 # Set selects to only those in the related table
                 table = self._get_join_table(query2, relation.name)
-                columns = relation.entity.selectable_columns(table)
+                columns = relation.entity.selectable_columns(table, show_writeonly=self.query.show_writeonly)
                 for column in columns:
                     query2.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
 
@@ -279,7 +330,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                     if relation.name + '__' not in sub_relation.name: continue
                     if sub_relation.contains_many(query2.relations, skip=relation.name.split('__')): continue
                     table = self._get_join_table(query2, sub_relation.name)
-                    columns = sub_relation.entity.selectable_columns(table)
+                    columns = sub_relation.entity.selectable_columns(table, show_writeonly=self.query.show_writeonly)
                     for column in columns:
                         query2.selects.append(column.label(quoted_name(sub_relation.name + '__' + column.name, True)))
 
@@ -360,7 +411,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                 entity = value
             return entity, foreign, local
 
-        relations: OrderedDict[str, _Relation] = ODict()
+        relations: OrderedDict[str, Relation] = ODict()
         for include in query.includes:
             parts = [include]
             if '.' in include: parts = include.split('.')
@@ -620,7 +671,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
                 pk_value = getattr(root_model, pk)
 
                 # Loop only *One relations that apply to this one "data" model
-                relation: _Relation
+                relation: Relation
                 for relation in relations.values():
 
                     # Only look at relations that begin with this relation__ and are *One
@@ -710,7 +761,7 @@ class _OrmQueryBuilder(Generic[B, E], _QueryBuilder[B, E], BuilderInterface[B, E
         # Looping the *Many relations in REVERSE gives us the deepest relations first which is critical
         self.log.nl().header('Combining Recursive *Many Models')
 
-        relation: _Relation
+        relation: Relation
         for relation in reversed(relations.values()):
 
             # Relation name parts

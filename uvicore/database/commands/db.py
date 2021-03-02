@@ -45,6 +45,23 @@ async def create_tables(connections: str):
         metadata.create_all(engine)
         print()
 
+    # # Get all tables in these connections
+    # tables = []
+    # for metakey in metakeys:
+    #     tables.append(db.tables(metakey=metakey))
+
+    # # Default permissions per entity
+    # permissions = [
+    #     'create',   # Django add
+    #     'read',     # Django view
+    #     'update',   # Django change
+    #     'delete',   # Django delete
+    # ]
+
+    # for table in tables:
+    #     for permission in permissions:
+
+
 
 async def drop_tables(connections: str):
     """Drop tables for connection(s)"""
@@ -60,8 +77,36 @@ async def drop_tables(connections: str):
         print()
 
 
+async def seed_auth_permissions():
+    if 'auth' not in db.connections().keys(): return
+
+    from uvicore.auth.models.permission import Permission
+    metadata = db.metadata('auth')
+
+    # Default permissions per entity
+    permissions = [
+        'create',   # Django add
+        'read',     # Django view
+        'update',   # Django change
+        'delete',   # Django delete
+    ]
+
+    # Bulk insert each permission for each table
+    bulk = []
+    tables = sorted(metadata.tables.keys())  # For sorted order
+    for table in tables:
+        for permission in permissions:
+            bulk.append(Permission(entity=table, name=table + '.' + permission))
+    await Permission.insert(bulk)
+
+
 async def seed_tables(connections: str):
     metakeys = get_metakeys(connections)
+
+    # Seed auth permissions
+    await seed_auth_permissions()
+
+    # Seed tables
     ran = []
     for metakey in metakeys:
         packages = db.packages(metakey=metakey)

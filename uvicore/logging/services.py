@@ -30,7 +30,7 @@ class Logging(ServiceProvider):
         # )
 
         # Set uvicore.log global
-        uvicore.log = uvicore.ioc.make('uvicore.logging.logger._Logger')
+        uvicore.log = uvicore.ioc.make('uvicore.logging.logger.Logger')
 
     def boot(self) -> None:
         """Bootstrap package into uvicore framework.

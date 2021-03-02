@@ -7,15 +7,16 @@ from sqlalchemy.sql import ClauseElement
 import uvicore
 from uvicore.contracts import Connection
 from uvicore.contracts import Database as DatabaseInterface
-from uvicore.database.query import _DbQueryBuilder
+from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
 from sqlalchemy.engine.result import RowProxy
+from uvicore.http.events.server import Startup as OnHttpStarted
 
-@uvicore.service('uvicore.database.db._Db',
+@uvicore.service('uvicore.database.db.Db',
     aliases=['Database', 'database', 'db'],
     singleton=True,
 )
-class _Db(DatabaseInterface):
+class Db(DatabaseInterface):
     """Database private class.
 
     Do not import from this location.
@@ -76,18 +77,20 @@ class _Db(DatabaseInterface):
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
 
-        # FIXME, I don't have the server started yet
-        # Use uvicore events instead
-        # if uvicore.app.is_http:
-        #     @uvicore.app.http.on_event("startup")
-        #     async def startup():
-        #         for database in self.databases.values():
-        #             await database.connect()
+    def http_startup(self, event: OnHttpStarted):
+        # Instead of handling uvicore event here, we instead
+        # add an async listener to starlette's events since we must
+        # use await in database.connect or disconnect
+        if uvicore.app.is_http:
+            @uvicore.app.http.on_event("startup")
+            async def startup():
+                for database in self.databases.values():
+                    await database.connect()
 
-        #     @uvicore.app.http.on_event("shutdown")
-        #     async def shutdown():
-        #         for database in self.databases.values():
-        #             await database.disconnect()
+            @uvicore.app.http.on_event("shutdown")
+            async def shutdown():
+                for database in self.databases.values():
+                    await database.disconnect()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         if not metakey:
@@ -119,6 +122,13 @@ class _Db(DatabaseInterface):
     def metadata(self, connection: str = None, metakey: str = None) -> sa.MetaData:
         metakey = self.metakey(connection, metakey)
         return self.metadatas.get(metakey)
+
+    def tables(self, connection: str = None, metakey: str = None) -> List[sa.Table]:
+        """Get all tables for a given connection or metakey"""
+        metadata = self.metadata(connection, metakey)
+        if metadata:
+            return metadata.tables
+        return []
 
     def table(self, table: str, connection: str = None) -> sa.Table:
         tablename = self.tablename(table, connection)
@@ -186,9 +196,9 @@ class _Db(DatabaseInterface):
     #         await database.connect()
 
 
-    def query(self, connection: str = None) -> _DbQueryBuilder[_DbQueryBuilder, Any]:
+    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
         if not connection: connection = self.default
-        return _DbQueryBuilder(connection)
+        return DbQueryBuilder(connection)
 
 
     # def table(self, table: str):

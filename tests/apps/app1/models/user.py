@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 import uvicore
-from uvicore.auth.database.tables import users as table
+from app1.database.tables import users as table
 #from uvicore.orm.fields import Field, HasMany, HasOne, MorphOne
 #from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.contracts import Model as ModelInterface
@@ -56,7 +56,8 @@ AuthOverride = uvicore.ioc.make('uvicore.auth.models.user.User_BASE')
 
 
 @uvicore.model()
-class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
+#class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
+class User(AuthOverride):
 
 
 #class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
@@ -92,6 +93,12 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
     app1_extra: Optional[str] = Field('app1_extra',
         description='Extra column on auth.users by app1',
         required=False,
+    )
+
+    # One-To-One - User has ONE Contact
+    info: Optional[UserInfo] = Field(None,
+        description='User Info Model',
+        relation=HasOne('app1.models.user_info.UserInfo', foreign_key='user_id'),
     )
 
     # One-To-One - User has ONE Contact
@@ -141,17 +148,13 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 #Contact.update_forward_refs()
 
 
-
+from app1.models.user_info import UserInfo  # isort:skip
 from app1.models.contact import Contact  # isort:skip
-#Contact = uvicore.ioc.make('app1.models.contact.Contact')
-
-from uvicore.auth.models.user_info import UserInfo  # isort:skip
-#from uvicore.auth.models.user_info import UserInfoModel as UserInfo
-#UserInfo = uvicore.ioc.make('uvicore.auth.models.user_info.UserInfo')
-
+from app1.models.user_info import UserInfo  # isort:skip
 from app1.models.post import Post  # isort:skip
-#Post = uvicore.ioc.make('app1.models.post.Post')
+from uvicore.auth.models.group import Group  # isort:skip
 
+User.update_forward_refs()
 
 #User.update_forward_refs()
 #UserModel.update_forward_refs()

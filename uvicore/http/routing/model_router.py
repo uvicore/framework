@@ -2,29 +2,62 @@ import uvicore
 import inspect
 from uvicore import typing
 from uvicore.http.routing.api_router import ApiRouter
-from uvicore.typing import TypeVar, Generic, OrderedDict, Dict
+from uvicore.http.routing.router import Routes as Controller
+from uvicore.http.request import Request
 from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
-from uvicore.http import Request
 from uvicore.support import module
+from uvicore.orm.fields import Relation
+from uvicore.http.exceptions import HTTPException
 
 
 @uvicore.service()
-class _ModelRoute:
+class ModelRoute:
+    """Dynamic Model CRUD Routes"""
 
     def routes(self, Model, route, path, tags):
+        """Build dynamic model CRUD routes"""
 
         @route.get('/' + path, response_model=typing.List[Model], tags=tags)
-        async def list(include: typing.Optional[str] = ''):
-            return await Model.query().include(*include.split(',')).get()
+        async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
+            includes = include.split(',')
+            return await Model.query().include(*includes).get()
 
-        @route.get('/' + path + '/{id}', response_model=Model, tags=tags)
-        async def get(id: typing.Any, include: typing.Optional[str] = ''):
-            return await Model.query().include(*include.split(',')).find(id)
+        #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
+        @route.get('/' + path + '/{id}', tags=tags)
+        async def get(id: typing.Any, request: Request, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
+            includes = include.split(',') if include else []
 
-        @route.post('/' + path, response_model=Model, tags=tags)
-        async def post(entity: Model):
-            return entity
+            # Fix me, i already inject the User. if permissions were there, I don't need request at all!
+            self.guard_include_permissions(includes, request)
+            return await Model.query().include(*includes).find(id)
+
+    def guard_include_permissions(self, includes: typing.List, request: Request):
+        if not includes: return
+        for include in includes:
+            field = Model.modelfields.get(include)
+            if not field: continue
+            if not field.relation: continue
+            relation: Relation = field.relation.fill(field)
+            tablename = relation.entity.tablename
+            permission = tablename + '.read'
+
+            #FIXME, lets assume user_permissions are in the user model
+            user_permissions = request.scope.get('user_permissions')
+            if permission not in user_permissions:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Access denied to {}".format(tablename)
+                )
+
+
+
+
+        # @route.post('/' + path, response_model=Model, tags=tags)
+        # async def post(entity: Model):
+        #     return entity
 
 
         # # GET List
@@ -77,20 +110,20 @@ class _ModelRoute:
 
 
 
-@uvicore.service()
-class ModelRouter:  # Need Interface
+@uvicore.controller()
+class ModelRouter(Controller):
 
-    def routes(self):
+    def register(self, route: ApiRouter):
 
-        # New Api Router
-        router = ApiRouter()
-
-        # Get all models in tablename sorted order
-        models = self._get_models()
+        # Get all models in tablename sorted order from Ioc bindings
+        models = self.models()
 
         # Get source code for ModelRouter
-        modelroute = inspect.getsource(_ModelRoute)
-        modelroute += "_ModelRoute().routes(Model, router, path, tags)"
+        modelroute = inspect.getsource(ModelRoute)
+        modelroute += "ModelRoute().routes(Model, route, path, tags)"
+
+        from uvicore.auth.middleware import Guard
+        from uvicore.auth.models import User
 
         # Loop each sorted model and dynamically add a ModelRouter
         for key, binding in models.items():
@@ -103,6 +136,7 @@ class ModelRouter:  # Need Interface
             tablename = Model.tablename
             path = tablename
             tags = [string.ucbreakup(path)]
+            permissions = Model.tablename
 
             # Dynamically instantiate ModelRouter from source code and exec
             # passing in the proper globals.  Why?  Why not just instantiate
@@ -116,19 +150,23 @@ class ModelRouter:  # Need Interface
             # and not just extend it.
             exec(modelroute, {
                 'Model': Model,
-                'router': router,
+                'route': route,
                 'path': path,
                 'tags': tags,
                 'uvicore': uvicore,
                 'typing': typing,
+                'User': User,
+                'Guard': Guard,
+                'Request': Request,
+                'HTTPException': HTTPException,
             })
 
         # Return router
-        return router
+        return route
 
-    def _get_models(self) -> OrderedDict:
-        """Get all models in tablename sorted order"""
-        models = OrderedDict()
+    def models(self) -> typing.OrderedDict:
+        """Get all models in tablename sorted order from Ioc bindings"""
+        models = typing.OrderedDict()
         unsorted_models = {}
         model_bindings = uvicore.ioc.binding(type='model', include_overrides=False)
         for key, binding in model_bindings.items():

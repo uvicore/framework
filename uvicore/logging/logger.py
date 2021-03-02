@@ -51,7 +51,7 @@ from uvicore.support.dumper import log_dump
 # }
 
 
-class _OutputFilter(logging.Filter):
+class OutputFilter(logging.Filter):
     """Python logging custom filter class"""
 
     def __init__(self, filters, excludes):
@@ -82,7 +82,7 @@ class _OutputFilter(logging.Filter):
 
 
 
-class _ExcludeFilter(logging.Filter):
+class ExcludeFilter(logging.Filter):
     """Python logging custom exclude filter class"""
 
     def __init__(self, excludes):
@@ -99,7 +99,7 @@ class _ExcludeFilter(logging.Filter):
         return True
 
 
-class _ColoredFormatter(Formatter):
+class ColoredFormatter(Formatter):
 
     def __init__(self, patern):
         Formatter.__init__(self, patern)
@@ -194,12 +194,12 @@ class _ColoredFormatter(Formatter):
         return message
 
 
-@uvicore.service('uvicore.logging.logger._Logger',
+@uvicore.service('uvicore.logging.logger.Logger',
     aliases=['Logger', 'logger', 'Log', 'log'],
     singleton=True,
     kwargs={'config': uvicore.config('app.logger')},
 )
-class _Logger(LoggerInterface):
+class Logger(LoggerInterface):
     """Logger private class.
 
     Do not import from this location.
@@ -248,13 +248,13 @@ class _Logger(LoggerInterface):
             handler = logging.StreamHandler(stream=sys.stdout)
             handler.setLevel(config['console']['level'])
             if config['console']['colors']:
-                handler.setFormatter(_ColoredFormatter(config['console']['format']))
+                handler.setFormatter(ColoredFormatter(config['console']['format']))
             else:
                 handler.setFormatter(logging.Formatter(
                     fmt=config['console']['format'],
                     datefmt='%Y-%m-%d %H:%M:%S'
                 ))
-            handler.addFilter(_OutputFilter(config['console']['filters'], config['console']['exclude']))
+            handler.addFilter(OutputFilter(config['console']['filters'], config['console']['exclude']))
             self._logger.addHandler(handler)
 
         # New File Handler
@@ -268,7 +268,7 @@ class _Logger(LoggerInterface):
                 datefmt='%Y-%m-%d %H:%M:%S'
             ))
             #if config['file'].get('filter'): handler.addFilter(logging.Filter(name=config['file']['filter']))
-            handler.addFilter(_OutputFilter(config['file']['filters'], config['file']['exclude']))
+            handler.addFilter(OutputFilter(config['file']['filters'], config['file']['exclude']))
             self._logger.addHandler(handler)
 
         self.config = config

@@ -7,11 +7,11 @@ from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Template as TemplateInterface
 
 
-@uvicore.service('uvicore.http.templating.jinja._Jinja',
+@uvicore.service('uvicore.http.templating.jinja.Jinja',
     aliases=['Templates', 'templates'],
     singleton=True,
 )
-class _Jinja(TemplateInterface, _Jinja2Templates):
+class Jinja(TemplateInterface, _Jinja2Templates):
     """Jinja Template private class.
 
     Dont access templates directly.

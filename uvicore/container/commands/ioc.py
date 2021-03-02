@@ -19,7 +19,7 @@ def bindings(raw: bool = False):
 
 @command()
 def singletons():
-    """List all Ioc Bindings Singletons"""
+    """List Singleton Ioc Bindings"""
     uvicore.log.header("List of all Ioc singleton bindings")
     uvicore.log.line()
     bindings = {key:binding for (key, binding) in uvicore.ioc.bindings.items() if binding.singleton == True}
@@ -29,17 +29,29 @@ def singletons():
 @command()
 @argument('type')
 def type(type: str):
-    """List all Ioc Bindings of a Specific Type"""
-    type = type.upper()
+    """List Ioc Bindings of a Specific Type (comma separated)"""
     uvicore.log.header("List of all {} Ioc bindings".format(type))
     uvicore.log.line()
-    bindings = {key:binding for (key, binding) in uvicore.ioc.bindings.items() if binding.type.upper() == type}
+
+    types = []
+    if ',' in type:
+        parts = type.split(',')
+        for part in parts:
+            types.append(part.upper())
+    else:
+        types = [type.upper()]
+
+    bindings = {}
+    for key, binding in uvicore.ioc.bindings.items():
+        if binding.type.upper() in types:
+            bindings[key] = binding
+    #bindings = {key:binding for (key, binding) in uvicore.ioc.bindings.items() if binding.type.upper() == type}
     dump(bindings)
 
 
 @command()
 def overrides():
-    """List all Ioc Bindings That Have Been Overridden"""
+    """List Overridden Ioc Bindings"""
     uvicore.log.header("List of all Ioc bindings that have been overridden")
     uvicore.log.line()
     bindings = {key:binding for (key, binding) in uvicore.ioc.bindings.items() if binding.path != key}

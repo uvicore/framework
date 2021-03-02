@@ -4,50 +4,260 @@ from uvicore.console import command
 from uvicore.support.dumper import dump, dd
 
 @command()
-async def cliX():
-
-    from uvicore.support import str
-
-
-    print(str.camel('AcmeApp'))
-    print(str.camel('acmeApp'))
-    print(str.camel('Acme_App'))
-    print(str.camel('Acme_app'))
-    print(str.camel('acme_App'))
-    print(str.camel('Acme-app'))
-    print(str.camel('Acme-App'))
-    print(str.camel('Acme App'))
-    print(str.camel('acme app'))
-    print(str.camel('Acme app'))
-    print(str.camel('acme App'))
-
-    print(str.camel('AcmeAppTwo'))
-    print(str.camel('acmeAppTwo'))
-    print(str.camel('Acme_App_Two'))
-    print(str.camel('Acme_app_two'))
-    print(str.camel('acme_App_Two'))
-    print(str.camel('Acme-app-two'))
-    print(str.camel('Acme-App-Two'))
-    print(str.camel('Acme App Two'))
-    print(str.camel('acme app two'))
-    print(str.camel('Acme app two'))
-    print(str.camel('acme App Two'))
-
-
-    print(str.camel("Hi don't 12 there! my$ name 'is' matthew reschke, what is your name please???"))
-
-
-@command()
 async def cli():
     """Play"""
 
-    from uvicore.http.middleware import Middleware as x
-    dd(x)
+    from app1 import models
+
+
+    # Redis
+    # from uvicore.redis import Redis
+
+    # redis = await Redis.connect()
+    # cache = await Redis.connect('cache')
+
+    # dump(await redis.get('name'))
+    # dump(await cache.get('name'))
+
+    # dump(await redis.keys('*'))
+
+
+
+    # Cache
+    #from uvicore.cache import Cache
+
+    cache = uvicore.cache
+    #cache = uvicore.cache.connect('app1')
+    #cache = Cache.connect('app1')
+
+    #dump( await Cache.connect('app1').get('name') )
+
+
+    await cache.put('k0', 'k0 value')
+    await cache.put({
+        'k1': 'k1 value',
+        'k2': 'k2 value',
+    })
+
+    dump( await cache.get('k0') )
+    x = await cache.get(['k1', 'k2'])
+    dump(x)
+    #dump(x.k1)
+
+    #dump( await cache.pull('k0'))
+    #x = await cache.pull(['k1', 'k2'])
+    #dump(x)
+
+
+    #dump( await cache.get('name') )
+    #dump( await cache.store('redis').get('name') )
+    #dump( await cache.store('app1').get('name') )
+    #dump( await cache.get('name2') )
+    #dump( await cache.store('redis').get('name') )
+    #dump( await cache.get('name') )
+    #dump( await cache.store('redis2').get('name') )
+    #dump( await cache.store('redis').get('name') )
+
+
+    #await cache.increment('inc1')
+    #dump( await cache.get('inc1') )
+
+    #await cache.put('one', 'one here')
+    #dump( await cache.get('one') )
+
+
+    #await cache.put('two', 'two here', 5)
+    #dump( await cache.has('two') )
+
+    async def method0():
+        #return 'method0 here'
+        dump('query here')
+        return await models.Post.query().find(1)
+
+    async def method1():
+        return 'method1 here'
+
+    async def method2():
+        return {
+            'asdf': 'asdfasdf',
+            'xafd': 'casdfasdf',
+        }
+
+    # await cache.remember('method0', method0, seconds=5)
+    # await cache.remember({
+    #     'method1': method1,
+    #     'method2': method2,
+    # }, seconds=5)
+    # #dump( await cache.get('method1') )
+
+    # dump( await cache.get(['method0', 'method1', 'method2']) )
+
+    #post = await uvicore.db.query().table('posts').cache(seconds=5).find(unique_slug='test-post3')
+    #dump(post)
+
+
+    #post = await models.Post.query().include().cache(seconds=10).find(1)
+    #dump(post)
+
+    user = await models.User.query().include('contact', 'info', 'groups', 'groups.roles', 'groups.roles.permissions').cache(seconds=10).find(2)
+    dd(user)
+
+    #await cache.forget(['k0', 'k1', 'k2'])
+    #await cache.flush()
+
+
+    #( await cache.add('add1', 'add1 here') )
+    #dump( await cache.has('add1') )
+    #x = await cache.pull('add1')
+    #dump(x)
+    #dump( await cache.has('add1') )
+
+
+    #await cache.put({
+        #'k1': 'value of k1',
+        #'k2': 'value of k2',
+    #})
+    #dump( await cache.get('k1') )
+    #dump( await cache.get('k2') )
+
+    #x = await cache.get(['k1', 'k2'])
+    #dump(x)
+    #dump(x.k1)
 
 
 
 
 
+    #from uvicore.cache.cache import Cache
+    #cache = uvicore.ioc.make('cache')
+
+    #dump(uvicore.ioc.binding('uvicore.cache.cache.Cache'))
+
+    #redis = await uvicore.ioc.make('redis').connect()
+    #cache = await uvicore.ioc.make('redis').connect('cache')
+    #dump(redis, cache)
+
+
+    #x = await redis.connection('app1').get('key')
+    #dump(x)
+
+    # Swap connections
+    #await redis.connection('cache').set('name', 'matthew2')
+    #dump(await redis.connection('cache').get('name'))
+
+    #await redis.set('name', 'matthew')
+    #dump(await redis.get('name'))
+
+
+
+    #dump(redis.connections)
+    #dump(redis.engines)
+
+
+
+
+
+    #dump(uvicore.cache.get('key'))
+
+    #dump(uvicore.ioc.bindings)
+
+
+    # # cache as a singleton in Ioc
+    # cache = uvicore.ioc.make('cache')
+
+    # # Or on global
+    # cache = uvicore.cache
+
+    # cache.get('key')
+    # cache.get('key', 'default')  # does NOT set default back to redis
+    # cache.put('key', 'value')
+
+
+    # def users_db_query():
+    #     pass
+
+    # users = cache.get('mreschke', users_db_query)  # does NOT set results back to redis
+    # users = cache.remember('mreschke', users_db_query)  # DOES set back to redis, true caching
+
+    # cache.has('key')
+    # cache.increment('key')
+    # cache.increment('key', 4)
+    # cache.decrement('key')
+    # cache.decrement('key', 5)
+
+    # cache.pull('key')  # DELETES from redis once pulled
+
+
+    # # Integrate with ORM
+    # users = User.query().cache().get()  # cache key will be complex parameters, or hash of entire SQL itself?
+
+
+    # # In package.py config
+    # config = {
+    #     'default': 'array',
+    #     'stores': {
+    #         'array': {
+    #             'driver': 'array'
+    #         },
+    #         'file': {
+    #             'driver': 'file',
+    #             'path': '/tmp/cache'
+    #         }
+    #         'redis': {
+    #             'driver': 'redis',
+    #             'connection': 'cache', # From redis db connections config
+    #         }
+    #     }
+    # }
+
+    # # In package.py config
+    # redis = {
+    #     'default': 'app1',
+    #     'connections': {
+    #         'app1': {
+    #             'host': '127.0.0.1',
+    #             'post': 6379,
+    #             'database': 0,
+    #             'password': None
+    #         },
+    #         'cache': {
+    #             'host': '127.0.0.1',
+    #             'post': 6379,
+    #             'database': 99,
+    #             'password': None
+    #         }
+    #     }
+    # }
+
+
+
+
+
+    # Keystone
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    dd('DONE PLAY!')
+
+
+ #class argon2.PasswordHasher(time_cost=2, memory_cost=102400, parallelism=8, hash_len=16, salt_len=16, encoding='utf-8', type=<Type.ID: 2>)
 
 
 

@@ -332,6 +332,10 @@ async def seed():
             #NO - 'creator_id': 5,
             'creator': {
                 'email': 'user2@example.com',
+                'first_name': 'User',
+                'last_name': 'Two',
+                'creator_id': 2,
+                'password': 'techie',
                 'contact': {
                     'name': 'User Two',
                     'title': 'User2',

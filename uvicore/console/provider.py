@@ -7,7 +7,7 @@ from uvicore.database import Connection
 class Cli:
     """CLI Service Provider Mixin"""
 
-    def commands(self, items: Dict = None, *, group: str = None, help: str = None, commands: Dict = None):
+    def commands(self, items: Dict[str, Dict] = None, *, group: str = None, help: str = None, commands: Dict = None):
         """Add commands as a dictionary or kwargs"""
 
         # Default registration

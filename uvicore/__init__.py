@@ -1,6 +1,6 @@
 from . import contracts
 from uvicore.typing import Dict
-from uvicore.foundation.decorators import model, seeder, service, table, provider
+from uvicore.foundation.decorators import event, model, seeder, service, table, provider, routes, controller
 
 
 # Uvicore version.  Also available in app.version
@@ -16,6 +16,7 @@ config: contracts.Config = None
 #config: Dict()
 log: contracts.Logger = None
 db: contracts.Database = None
+cache: contracts.Cache = None
 
 
 def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
@@ -25,41 +26,19 @@ def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
     import uvicore
     from uvicore.support.dumper import dump, dd
 
-    # from uvicore.typing import OrderedDict
-    # value = {
-    #     'name': 'asdf',
-    #     'registers': {
-    #         'adsf': True
-    #     },
-    #     'deps': OrderedDict({
-    #         'uvicore.foundation': {
-    #             'provider': 'uvicore.foundation.services.Foundation',
-    #         },
-    #         'uvicore.database': {
-    #             'provider': 'uvicore.database.services.Database',
-    #         },
-    #     })
-    # }
-
-    # dd(value)
-
-
-
-
-
     # Ensure app_config is a Uvicore Types Dict
     app_config = Dict(app_config)
 
     # Initialize the singleton IoC container
     # Before importing Application and Dispatcher which lets the IoC from app_config
     # swap even the earliest of core services
-    from .container.ioc import _Ioc
-    uvicore.ioc = _Ioc(app_config)
+    from .container.ioc import Ioc
+    uvicore.ioc = Ioc(app_config)
 
     # Import Application (which is an IoC singleton) and set uvicore.app global
-    from uvicore.foundation.application import _Application
+    from uvicore.foundation.application import Application
     #uvicore.app = uvicore.ioc.make('uvicore.foundation.application.Application') # Also works
-    uvicore.app = _Application
+    uvicore.app = Application
 
     # Import Event Dispatcher (which is an IoC singleton) and set uvicore.events global
     # This cannot be a service provider because events are fired BEFORE any service providers

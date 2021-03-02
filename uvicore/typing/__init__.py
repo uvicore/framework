@@ -1,6 +1,12 @@
 from typing import *
 from .dictionary import Dict, OrderedDict
 
+# Decorator Type Helper
+# def handle() -> Callable[[Decorator], Decorator]:
+#     def decorator(func: Decorator) -> Decorator
+#         return func
+#     return decorator
+Decorator = TypeVar("Decorator", bound=Callable[..., Any])
 
 # from __future__ import annotations
 # from typing import *

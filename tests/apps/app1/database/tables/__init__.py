@@ -7,4 +7,5 @@ from .images import Images
 from .post_tags import PostTags
 from .posts import Posts
 from .tags import Tags
+from .user_info import UserInfo
 from .users import Users

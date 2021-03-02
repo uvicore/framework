@@ -14,7 +14,9 @@ class WebRouter(Router['WebRoute']):
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
-        autoprefix: bool = True
+        autoprefix: bool = True,
+        middleware: List = [],
+        auth: Optional[Guard] = None,
     ):
         # Build parameters
         methods = ['GET']
@@ -32,9 +34,14 @@ class WebRouter(Router['WebRoute']):
         methods: List[str] = ['GET'],
         *,
         name: Optional[str] = None,
-        autoprefix: bool = True
+        autoprefix: bool = True,
+        middleware: List = [],
+        auth: Optional[Guard] = None,
     ):
         """Generic add method and decorator"""
+
+        # Convert auth helper param to middleware
+        if auth: middleware.append(auth)
 
         # Clean path and name
         (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)
@@ -46,6 +53,7 @@ class WebRouter(Router['WebRoute']):
                 'name': full_name,
                 'endpoint': endpoint,
                 'methods': methods,
+                'middleware': middleware,
                 'original_path': path,
                 'original_name': name,
             })
@@ -55,7 +63,7 @@ class WebRouter(Router['WebRoute']):
         # Method access
         if endpoint: return handle(endpoint)
 
-        # Decorator Access
+        # Decorator access
         def decorator(func):
             handle(func)
             return func

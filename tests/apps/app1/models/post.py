@@ -132,12 +132,10 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
             right_key='hashtag_id',
             #dict_key='id',
             #dict_value='name',
-            list_value='name',
+            #list_value='name',
         ),
 
     )
-
-
 
     def cb_results(self):
         return str(self.slug) + ' callback'
@@ -147,8 +145,6 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         #dump('yyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
         #if self.other is not None:
             #self.other = self.other + ' !!!!!!!!!!!!!!!!!!!'
-
-
 
 # @uvicore.events.listen('app1.models.post.PostModel-BeforeSave')
 # def _event_inserting(event, payload):

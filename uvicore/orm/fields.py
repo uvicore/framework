@@ -15,7 +15,7 @@ from uvicore.support.dumper import dd, dump
 
 @dataclass
 @uvicore.service()
-class _Relation(RelationInterface):
+class Relation(RelationInterface):
     # __slots__ = (
     #     'model',
     #     'foreign_key',
@@ -46,7 +46,7 @@ class _Relation(RelationInterface):
         self.name = None
         self.entity = None
 
-    def fill(self, field: Field) -> _Relation:
+    def fill(self, field: Field) -> Relation:
         if not self.foreign_key:
             self.foreign_key = 'id'
         if not self.local_key:
@@ -55,7 +55,7 @@ class _Relation(RelationInterface):
         self._load_entity()
         return self
 
-    def _fill_reverse(self, field: Field) -> _Relation:
+    def _fill_reverse(self, field: Field) -> Relation:
         if not self.foreign_key:
             self.foreign_key = str(field.name) + '_id'
         if not self.local_key:
@@ -110,28 +110,28 @@ class _Relation(RelationInterface):
 
 
 @uvicore.service()
-class HasOne(_Relation):
+class HasOne(Relation):
     """One-To-One Relationship"""
-    def fill(self, field: Field) -> _Relation:
+    def fill(self, field: Field) -> Relation:
         return self._fill_reverse(field)
 
 
 @uvicore.service()
-class HasMany(_Relation):
+class HasMany(Relation):
     """One-To-Many Relationship"""
-    def fill(self, field: Field) -> _Relation:
+    def fill(self, field: Field) -> Relation:
         return self._fill_reverse(field)
 
 
 @uvicore.service()
-class BelongsTo(_Relation):
+class BelongsTo(Relation):
     """Inverse of One-To-One or One-To-Many Relationship"""
     pass
 
 
 @dataclass
 @uvicore.service()
-class BelongsToMany(_Relation):
+class BelongsToMany(Relation):
     """Many-To-Many Relationship (Both Sides)
 
     :param model: Related model as import string
@@ -184,7 +184,7 @@ class BelongsToMany(_Relation):
 
 @dataclass
 @uvicore.service()
-class _Morph(_Relation):
+class Morph(Relation):
     model: str
     polyfix: str = None
     foreign_type: Optional[str] = None
@@ -227,16 +227,16 @@ class _Morph(_Relation):
 
 
 @uvicore.service()
-class MorphOne(_Morph):
+class MorphOne(Morph):
     pass
 
 
 @uvicore.service()
-class MorphMany(_Morph):
+class MorphMany(Morph):
     pass
 
 
-class MorphToMany(_Morph):
+class MorphToMany(Morph):
     model: str
     join_tablename: str
     polyfix: str
@@ -309,7 +309,7 @@ class Field(FieldInterface):
     read_only: Optional[bool] = None
     write_only: Optional[bool] = None
     callback: Optional[Any] = None
-    relation: Optional[_Relation] = None
+    relation: Optional[Relation] = None
     json: Optional[bool] = False
     properties: Optional[Dict] = None
 
@@ -325,7 +325,7 @@ class Field(FieldInterface):
         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         callback: Optional[Any] = None,
-        relation: Optional[_Relation] = None,
+        relation: Optional[Relation] = None,
         json: Optional[bool] = False,
         properties: Optional[Dict] = None,
     ):
@@ -383,7 +383,7 @@ class Field(FieldInterface):
 #         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
 #         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
 #         callback: Optional[Any] = None,
-#         relation: Optional[_Relation] = None,
+#         relation: Optional[Relation] = None,
 #         json: Optional[bool] = False,
 #         properties: Optional[Dict] = None,
 #     ):

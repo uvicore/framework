@@ -1,16 +1,41 @@
+import uuid
 import uvicore
-from uvicore import log
-from faker import Faker
 from uvicore.auth.models.user import User
+from uvicore.auth.models.group import Group
 from uvicore.support.dumper import dump, dd
+
 
 @uvicore.seeder()
 async def seed():
-    log.item('Seeding table users')
-    users = []
-    fake = Faker()
-    for _ in range(2):
-        user = User(
-            email=fake.email()
-        )
-        await user.save()
+    uvicore.log.item('Seeding table users')
+
+    # Get all groups keyed by name
+    groups = await Group.query().key_by('name').get()
+
+    unique_id = str(uuid.uuid4())
+    # How you "would" do it, but None password means login never allowed
+    #pwd = password.create(unique_id)
+    pwd = None
+
+    user = await User(
+        uuid=unique_id,
+        email='anonymous@example.com',
+        first_name='Anonymous',
+        last_name='User',
+        title='Anonymous',
+        disabled=True,
+        password='techie',
+        creator_id=1,
+    ).save()
+
+    await user.link('groups', [
+        groups['Users']
+    ])
+
+    # users = []
+    # fake = Faker()
+    # for _ in range(2):
+    #     user = User(
+    #         email=fake.email()
+    #     )
+    #     await user.save()

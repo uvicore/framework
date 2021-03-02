@@ -1,5 +1,6 @@
 #from uvicore.http.routing import WebRouter
-from uvicore.http import Request, response, WebRouter
+from uvicore.http import Request, response
+from uvicore.http.routing import WebRouter
 from uvicore.support.dumper import dd, dump
 
 route = WebRouter()

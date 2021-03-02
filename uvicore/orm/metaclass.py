@@ -147,7 +147,7 @@ class ModelMetaclass(PydanticMetaclass):
     #     if field: return field.column
     #     return fieldname
 
-    def selectable_columns(entity, table: sa.Table = None) -> List[sa.Column]:
+    def selectable_columns(entity, table: sa.Table = None, *, show_writeonly: Union[bool, List] = False) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
 
         Why not just use the table to get all columns?  Because a table
@@ -158,34 +158,24 @@ class ModelMetaclass(PydanticMetaclass):
         all_columns = table.columns
         columns: List[sa.Column] = []
         for (field_name, field) in entity.modelfields.items():
-            if field.column and not field.write_only:
-                columns.append(getattr(all_columns, field.column))
+            # Exclude None columns (which are relations) and write_only columns which cannot be viewed
+            if field.column:
+                show = False
+                if not field.write_only: show = True
+                if type(show_writeonly) == bool:
+                    # show_writeonly is a bool, meaning all all writeonly fields
+                    if field.write_only and show_writeonly == True: show = True
+                else:
+                    # show_writeonly is a list of fields to allow
+                    if field.write_only and field.column in show_writeonly: show = True
+                if show:
+                    columns.append(getattr(all_columns, field.column))
         return columns
 
-    def info(entity, detailed: bool = False) -> Dict[str, Any]:
+    def info(entity) -> Dict[str, Any]:
         fields = {}
         for (field_name, field) in entity.modelfields.items():
-            info = field.field_info
-            extra = info.extra
-            fields[field_name] = {
-                #'name': field.name,
-                'column': extra.get('column'),
-                'default': info.default,
-                'required': info.required,
-                'callback': extra.get('callback'),
-                'title': info.title,
-                'description': info.description,
-                'read_only': extra.get('readOnly'),
-                'write_only': extra.get('writeOnly'),
-                'properties': extra.get('properties'),
-                #'field_info': info,
-                #'extra': extra,
-            }
-            if detailed:
-                fields[field_name]['class_dict'] = entity.__dict__
-                fields[field_name]['field_info'] = info,
-                fields[field_name]['extra'] = extra,
-
+            fields[field_name] = field
         return {
             'connection': uvicore.db.connection(entity.__connection__),
             'tablename': entity.tablename,

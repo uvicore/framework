@@ -1,16 +1,74 @@
+import uvicore
 from uvicore.support.dumper import dump, dd
-from uvicore.http import Request, response, Routes, ApiRouter
+from uvicore.http import Request, response
+from uvicore.http.routing import Routes, ApiRouter, ModelRouter
 
+from app1.models.post import Post
 
+from uvicore.auth.middleware import Guard
+
+from uvicore.auth.models import User
+
+from app1.http.api.post import Post as PostController
+
+@uvicore.routes()
 class Api(Routes):
+
+    #user: User = Guard(['asdf'], guard='api')
+    #x: str = 'xx'
+    #guard: str = 'web'
+    #user: User = Guard(['admin'])
 
     def register(self, route: ApiRouter):
 
-        async def get_method(request: Request):
-            return response.Text('Get API Method Here!')
+        # Include dynamic model CRUD API endpoints (the "auto API")!
+        route.include(ModelRouter)
 
-        # Raw add with methods
+        async def get_method() -> Post:
+            #return response.Text('Get API Method Here!')
+            return await Post.query().find(1)
+
+        # # Raw add with methods
+        # #route.add('/get_method1', get_method, ['GET'], response_model=Post)  # Or infer response_model
         route.add('/get_method1', get_method, ['GET'])
+
+
+        # #@route.get('/post2', tags=["Post"], middleware=[Guard(['admin'])])
+        # @route.get('/post2', tags=["Post"])
+        # #async def post2(request: Request) -> Post:  # Request injected!
+        # #async def post2(user: User = BasicAuth(['admin'])):
+        # #async def post2(user: User = self.auth(['admin'], guard='api')):
+        # #async def post2(user: User = Guard()(['admin'])):
+        # #async def post2(user: User = Guard(['admin'])):
+        # #async def post2(user: User = self.user):
+        # async def post2():
+        #     #return await Post.query().find(1)
+        #     return '/post2'
+
+        # # # BUG FOUND, if /post2 exists above, it replaces it with this one below
+        # # route.group('/group1', routes=[
+        # #     route.get('/post2', post3)
+        # # ])
+
+        # @route.group('/group1')
+        # # @route.group('/group1', middleware=[
+        # #     Guard(['asdf'], guard='api')
+        # # ])
+        # def group1():
+
+        #     @route.get('/post3')
+        #     #async def post3(user: User = self.user):
+        #     async def post3(request: Request):
+        #     #async def post3(request: Request, user: User = Guard(['asdf'])):
+        #         #return '/group1/post3'
+        #         user: User = request.scope.get('user')
+        #         return user
+
+
+
+        #     route.controller(PostController)
+
+
 
         # Return router
         return route

@@ -14,66 +14,71 @@ E = TypeVar("E")  # Entity Model
 class QueryBuilder(Generic[B, E], ABC):
     @abstractmethod
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
-        pass
+        """Add where statement to query"""
 
     @abstractmethod
     def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
-        pass
+        """Add or where statement to query"""
 
     @abstractmethod
     def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
-        pass
+        """Order results by these columns ASC or DESC order"""
 
     @abstractmethod
     def limit(self, limit: int) -> B[B, E]:
-        pass
+        """Limit results"""
 
     @abstractmethod
     def offset(self, offset: int) -> B[B, E]:
-        pass
+        """Limit offset"""
+
+    @abstractmethod
+    def cache(self, name: str = None) -> B[B, E]:
+        """Cache results, None seconds uses cache backend default, 0=forever"""
 
     @abstractmethod
     def sql(self, method: str = 'select') -> str:
-        pass
+        """Get all SQL queries involved in this query builder"""
 
 
 class DbQueryBuilder(QueryBuilder[B, E], ABC):
     @abstractmethod
     def table(self, table: Union[str, sa.Table]) -> B[B, E]:
-        pass
+        """Add table (select) statement to query"""
 
     @abstractmethod
     def select(self, *args) -> B[B, E]:
-        pass
+        """Add select (columns) statment to query"""
 
     @abstractmethod
     def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
-        pass
+        """Add join (default to INNER) statement to query"""
 
     @abstractmethod
     def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
-        pass
+        """Add LEFT OUTER join statement to query"""
 
     @abstractmethod
     def group_by(self, *args) -> B[B, E]:
-        pass
+        """Add group by statement to query"""
 
     @abstractmethod
     async def find(self, pk_value: Any) -> RowProxy:
-        pass
+        """Execute query by primary key or custom column and return first row found"""
 
     @abstractmethod
     async def get(self) -> List[RowProxy]:
-        pass
+        """Execute query and return all rows found"""
 
 
 class OrmQueryBuilder(QueryBuilder[B, E], ABC):
     @abstractmethod
     def include(self, *args) -> B[B, E]:
+        """Include child relation models"""
         pass
 
     @abstractmethod
-    def filter(self, column: Union[str, BinaryExpression, List[Tuple]], operator: str = None, value: Any = None) -> B[B, E]:
+    def filter(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
         """Filter child relationship by this AND clause"""
         pass
 
@@ -83,14 +88,22 @@ class OrmQueryBuilder(QueryBuilder[B, E], ABC):
         pass
 
     @abstractmethod
-    def key_by(self, field: str) -> B[B, E]:
+    def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+        """Sort Many relations only"""
         pass
 
     @abstractmethod
-    async def find(self, pk_value: Any) -> E:
+    def key_by(self, field: str) -> B[B, E]:
+        """Key results as a Dictionary by this column"""
+        pass
+
+    @abstractmethod
+    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> Union[E, None]:
+        """Execute query by primary key or custom column and return first row found"""
         pass
 
     @abstractmethod
     async def get(self) -> Union[List[E], Dict[str, E]]:
+        """Execute query and return all rows found"""
         pass
 

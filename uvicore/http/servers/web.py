@@ -10,7 +10,7 @@ from uvicore.support.dumper import dd, dump
         'debug': uvicore.config('app.debug'),
     },
 )
-class _Server(_Starlette):
+class Server(_Starlette):
     @property
     def server(self) -> _Starlette:
         return self

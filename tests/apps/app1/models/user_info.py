@@ -1,12 +1,8 @@
 from __future__ import annotations
-
-from typing import Optional
-
 import uvicore
-from uvicore.auth.database.tables import user_info as table
-#from uvicore.orm.fields import BelongsTo, Field
-#from uvicore.orm.model import Model, ModelMetaclass
+from typing import Optional
 from uvicore.support.dumper import dd, dump
+from app1.database.tables import user_info as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
 
 #@uvicore.ioc.bind('uvicore.auth.models.user_info.UserInfo')
@@ -56,6 +52,7 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
 
 
 #from uvicore.auth.models.user import UserModel as User  # isort:skip
-from uvicore.auth.models.user import User  # isort:skip
+#from uvicore.auth.models.user import User  # isort:skip
+from app1.models.user import User
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
 UserInfo.update_forward_refs()

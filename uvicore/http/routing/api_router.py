@@ -5,6 +5,7 @@ from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
+from uvicore.auth.middleware.auth import Guard
 
 # from fastapi import APIRouter as _FastAPIRouter
 # from uvicore.typing import Any, Type, List, Callable, Optional
@@ -22,13 +23,17 @@ class ApiRouter(Router['ApiRoute']):
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
-        autoprefix: bool = True
+        autoprefix: bool = True,
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        middleware: List = [],
+        auth: Optional[Guard] = None,
     ):
         # Build parameters
         methods = ['GET']
-        #params = {key:value for key, value in locals().items() if key != 'self'}
-        params = locals()
-        params.pop('self')
+        params = {key:value for key, value in locals().items() if key != 'self'}
+        #params = locals()
+        #params.pop('self')
 
         # Pass to generic add method
         return self.add(**params)
@@ -39,9 +44,16 @@ class ApiRouter(Router['ApiRoute']):
         methods: List[str] = ['GET'],
         *,
         name: Optional[str] = None,
-        autoprefix: bool = True
+        autoprefix: bool = True,
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        middleware: List = [],
+        auth: Optional[Guard] = None,
     ):
         """Generic add method and decorator"""
+
+        # Convert auth helper param to middleware
+        if auth: middleware.append(auth)
 
         # Clean path and name
         (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)
@@ -53,6 +65,9 @@ class ApiRouter(Router['ApiRoute']):
                 'name': full_name,
                 'endpoint': endpoint,
                 'methods': methods,
+                'response_model': response_model,
+                'tags': tags,
+                'middleware': middleware,
                 'original_path': path,
                 'original_name': name,
             })
@@ -62,7 +77,7 @@ class ApiRouter(Router['ApiRoute']):
         # Method access
         if endpoint: return handle(endpoint)
 
-        # Decorator Access
+        # Decorator access
         def decorator(func):
             handle(func)
             return func

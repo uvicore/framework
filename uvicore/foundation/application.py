@@ -16,12 +16,14 @@ from uvicore.support.hash import md5
 from uvicore.support.module import load, location
 from uvicore.console import command_is
 
+#import uvicore.foundation.events.app
+from uvicore.foundation.events import app as events
 
-@uvicore.service('uvicore.foundation.application._Application',
+@uvicore.service('uvicore.foundation.application.Application',
     aliases=['Application', 'application', 'App', 'app'],
     singleton=True,
 )
-class _Application(ApplicationInterface):
+class Application(ApplicationInterface):
     """Application private class.
 
     Do not import from this location.
@@ -207,7 +209,11 @@ class _Application(ApplicationInterface):
 
         # Complete registration
         self._registered = True
-        uvicore.events.dispatch('uvicore.foundation.events.app.Registered')
+        #uvicore.events.dispatch('uvicore.foundation.events.app.Registered')
+        #uvicore.events.dispatch(uvicore.foundation.events.app.Registered())
+        #uvicore.events.dispatch('uvicore.foundation.events.app.Registered', {'test': 'test1'})
+        events.Registered().dispatch()
+
 
     def _boot_providers(self, app_config: Dict) -> None:
         for package_name, service in self.providers.items():
@@ -229,7 +235,10 @@ class _Application(ApplicationInterface):
 
         # Complete booting
         self._booted = True
-        uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
+        #uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
+        #uvicore.events.dispatch(uvicore.foundation.events.app.Booted())
+        #uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
+        events.Booted().dispatch()
 
     def _build_paths(self, app_config: Dict):
         base = self.main.replace('.', '/')

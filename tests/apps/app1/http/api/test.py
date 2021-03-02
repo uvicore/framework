@@ -2,7 +2,7 @@ from typing import List
 
 from app1 import models
 from uvicore.auth import models as auth_models
-from uvicore.http import ApiRouter
+from uvicore.http.routing import ApiRouter
 
 route = ApiRouter()
 
