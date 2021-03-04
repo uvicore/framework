@@ -7,6 +7,31 @@ from uvicore.support.dumper import dd, dump
 async def cli():
     """Interactive iPython Shell"""
 
+
+    # Example of how to manually get uvicore going
+    """
+    cd ~/Code/mreschke/python/uvicore/uvicore
+    PYTHONPATH=./tests/apps ipython
+
+    import uvicore
+    from app1.services import bootstrap
+    app = bootstrap.application(is_console=True)
+
+    from uvicore.support.dumper import dump, dd
+    from app1 import models
+
+    dump( await models.Post.query().include('creator', 'comments', 'tags').find(1) )
+
+    provider = uvicore.config.app.auth.providers.users
+    dump( await models.User.userinfo(provider, username='manager1@example.com') )
+
+
+    """
+    #
+    # ipython
+    #
+
+
     # from traitlets.config import Config
     # c = Config()
 

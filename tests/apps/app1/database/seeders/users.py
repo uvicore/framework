@@ -2,6 +2,7 @@ import uvicore
 from app1.models.contact import Contact
 from uvicore.auth.models.user import User
 from uvicore.auth.models.group import Group
+from uvicore.auth.models.role import Role
 
 
 @uvicore.seeder()
@@ -10,6 +11,9 @@ async def seed():
 
     # Get all groups keyed by name
     groups = await Group.query().key_by('name').get()
+
+    # Get all roles keyed by name
+    roles = await Role.query().key_by('name').get()
 
 
     # You can insert parent records with relations as Dict
@@ -54,6 +58,9 @@ async def seed():
     await user.link('groups', [
         groups['Manager']
     ])
+    await user.link('roles', [
+        roles['Post Users']
+    ])
 
     # You can use .insert() as a List of model instances
     await User.insert([
@@ -66,7 +73,10 @@ async def seed():
             password='techie',
         ),
     ])
-
+    user = await User.query().find(email='manager2@example.com')
+    await user.link('groups', [
+        groups['Administrator']
+    ])
 
 
     # You can also user .insert() as a list of Dict

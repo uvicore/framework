@@ -2,7 +2,6 @@ import uvicore
 from uvicore.typing import Dict, Any
 from uvicore.contracts import Connection
 from uvicore.support.dumper import dump, dd
-from prettyprinter import pretty_call, register_pretty
 from uvicore.contracts import Package as PackageInterface
 
 
@@ -33,15 +32,6 @@ class Package(PackageInterface):
             return None
 
 
-@register_pretty(Package)
-def pretty_entity(value, ctx):
-    """Custom pretty printer for my SuperDict"""
-    # This printer removes the class name uvicore.types.Dict and makes it print
-    # with a regular {.  This really cleans up the output!
-
-    # SuperDict are printed as Dict, but this Package SuperDict should
-    # be printed more like a class with key=value notation, so use **values
-    return pretty_call(ctx, 'Package', **value)
 
 
 

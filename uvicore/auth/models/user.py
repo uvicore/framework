@@ -3,9 +3,10 @@ import uvicore
 from uvicore.typing import Optional, Dict, Union
 from uvicore.auth.support import password as pwd
 from uvicore.support.dumper import dd, dump
-from uvicore.auth.models import Group
+from uvicore.auth.models import Group, Role
 from uvicore.auth.database.tables import users as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
+from uvicore.auth import UserInfo
 
 
 @uvicore.model()
@@ -84,69 +85,103 @@ class User(Model['User'], metaclass=ModelMetaclass):
     )
 
     # Many-To-Many via user_groups pivot table
-    # No, decided against user roles.  User must be in a group and roles are only linked to a group
-    # roles: Optional[List[Role]] = Field(None,
-    #     description="User Roles",
-    #     relation=BelongsToMany('uvicore.auth.models.role.Role', join_tablename='user_roles', left_key='user_id', right_key='role_id'),
-    # )
+    roles: Optional[List[Role]] = Field(None,
+        description="User Roles",
+        relation=BelongsToMany('uvicore.auth.models.role.Role', join_tablename='user_roles', left_key='user_id', right_key='role_id'),
+    )
 
     @classmethod
-    async def authinfo(entity, *, id: int = None, email: str = None, password: str = None) -> Dict:
-        """User Info and Validation for Auth Query"""
-        if id:
-            kwargs = {entity.pk: id}
+    async def userinfo(entity, provider: Dict, id: int = None, username: str = None, password: str = None) -> UserInfo:
+        """Build Auth User Info Object and optionally validate password if provided"""
+
+        # Check if user already validated in cache
+        cache_key = 'auth/userinfo/' + username
+        if await uvicore.cache.has(cache_key):
+            dump('FROM CACHE')
+            # Retrieve user from cache, no password check required
+            userinfo = await uvicore.cache.get(cache_key)
+            #dump(userinfo)
+            return userinfo
+
         else:
-            kwargs = {'email': email}
+            dump('FROM DB')
+            # Cache not found.  Query user, validate password and convert to userinfo object
+            # Do NOT utilize ORM cache, we handle here manually
 
-        # Get includes from auth config
-        config = uvicore.config.app.auth
-        includes = config.user_includes
-        password_field = config.user_password_field
+            # Find based on ID or email
+            kwargs = {entity.pk: id} if id else {'email': username}
 
-        # Get user
-        user = await (entity.query()
-            .include(*includes)
-            .show_writeonly([password_field])
-            #.cache('/authinfo/' + email)
-            .cache(seconds=10)
-            .find(**kwargs)
-        )
-        if not user: return None
+            # Get includes from auth config
+            includes = provider.includes
 
-        # If password, validate
-        if password is not None:
-            if not pwd.verify(password, getattr(user, password_field)):
-                # Invalid password
-                return None
+            user = await (entity.query()
+                .include(*includes)
+                #.where('disabled', False) # Throws Warning: Truncated incorrect DOUBLE value: '=', even with 0 or 1, string fixes it
+                .where('disabled', '0')
+                .show_writeonly(['password'])
+                .find(**kwargs)
+            )
+            # User not found or disabled.  Return None means not verified or found.
+            if not user: return None
 
-        # Remove password field from results
-        #user = await entity.query().include(*includes).find(**kwargs)
-        setattr(user, password_field, None)
+            # If password, validate
+            if password is not None:
+                if not pwd.verify(password, user.password):
+                    # Invalid password.  Return None means not verified or found.
+                    return None
 
-        # Build result SuperDict
-        auth = Dict(user.dict())
+            # Build result SuperDict
+            userinfo = UserInfo()
+            userinfo.id = user.id
+            userinfo.uuid = user.uuid
+            userinfo.email = user.email
+            userinfo.first_name = user.first_name
+            userinfo.last_name = user.last_name
+            userinfo.title = user.title
+            userinfo.avatar_url = user.avatar_url
 
-        # Convert user into a nicer dictionary
-        groups = []
-        roles = []
-        permissions = []
-        if 'groups' in includes:
-            user_groups = auth.pop('groups')
-            if user_groups:
-                for group in user_groups:
-                    groups.append(group.name)
-                    if not group.roles: continue
-                    for role in group.roles:
+            # Get users groups->roles->permissions (roles linked to a group)
+            groups = []
+            roles = []
+            permissions = []
+            if 'groups' in includes:
+                user_groups = user.groups
+                if user_groups:
+                    for group in user_groups:
+                        groups.append(group.name)
+                        if not group.roles: continue
+                        for role in group.roles:
+                            roles.append(role.name)
+                            if not role.permissions: continue
+                            for permission in role.permissions:
+                                permissions.append(permission.name)
+
+            # Get users roles->permissions (roles linked directly to the user)
+            if 'roles' in includes:
+                user_roles = user.roles
+                if user_roles:
+                    for role in user_roles:
                         roles.append(role.name)
                         if not role.permissions: continue
                         for permission in role.permissions:
                             permissions.append(permission.name)
 
-        # Add as unique (sets are unique)
-        auth.groups = list(set(groups))
-        auth.roles = list(set(roles))
-        auth.permissions = list(set(permissions))
-        return auth
+            # Unique groups, roles and permissions (sets are unique)
+            userinfo.groups = list(set(groups))
+            userinfo.roles = list(set(roles))
+            userinfo.permissions = list(set(permissions))
+
+            # Set super admin, existence of 'admin' permission
+            userinfo.superadmin = False
+            if 'admin' in userinfo.permissions:
+                # No need for any permissinos besides ['admin']
+                userinfo.permissions = ['admin']
+                userinfo.superadmin = True
+
+            # Save to cache
+            await uvicore.cache.put(cache_key, userinfo, seconds=10)
+            #dump(userinfo)
+            return userinfo
 
     async def _before_save(self) -> None:
         """Hook fired before record is saved (inserted or updated)"""
@@ -155,4 +190,3 @@ class User(Model['User'], metaclass=ModelMetaclass):
         # Convert password to hash if is plain text (works for first insert and updates)
         if self.password is not None and 'argon2' not in self.password:
             self.password = pwd.create(self.password)
-

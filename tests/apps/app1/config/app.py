@@ -128,26 +128,22 @@ config = {
         'default': 'api', # should be per WebRouter or ApiRouter probably
         'guards': {
             'web': {
-                'driver': 'uvicore.auth.middleware.auth.Basic',
-                #'provider': 'users',
+                'driver': 'uvicore.auth.middleware.Basic',
+                'provider': 'users',
             },
             'api': {
-                'driver': 'uvicore.auth.middleware.auth.Basic',
-                #'provider': 'users',
+                'driver': 'uvicore.auth.middleware.Basic',
+                'provider': 'users',
             }
         },
-        'user_model': 'uvicore.auth.models.user.User',
-        'user_method': 'authinfo',
-        'user_username_field': 'email',
-        'user_password_field': 'password',
-        'user_includes': ['groups', 'groups.roles', 'groups.roles.permissions'],
-        # 'providers': {
-        #     'users': {
-        #         'driver': 'orm',
-        #         'model': 'uvicore.auth.models.user.User',
-        #         'include': ['contact', 'info'],
-        #     },
-        # },
+        'providers': {
+            'users': {
+                'module': 'uvicore.auth.models.user.User',
+                'method': 'userinfo',
+                'model': 'uvicore.auth.models.user.User',
+                'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
+            },
+        },
     },
 
 
@@ -280,7 +276,7 @@ config = {
     'logger': {
         'console': {
             'enabled': True,
-            'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+            'level': 'INFO',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
             'colors': True,
             'filters': [],
             #'filters': ['root', 'uvicore'],

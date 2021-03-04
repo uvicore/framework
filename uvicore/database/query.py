@@ -124,7 +124,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             results = await uvicore.db.fetchall(saquery, connection=self._connection())
 
             # Add to cache if desired
-            if cache: await uvicore.cache.remember(cache.get('key'), results, seconds=cache.get('seconds'))
+            if cache: await uvicore.cache.put(cache.get('key'), results, seconds=cache.get('seconds'))
 
         return results
 

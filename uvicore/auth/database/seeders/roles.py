@@ -11,10 +11,13 @@ async def seed():
     # Get all permissions
     perms = await Permission.query().key_by('name').get()
 
-    await Role.insert([
+    await Role.insert_with_relations([
         {
             'name': 'Administrator',
             'superadmin': True,
+            'permissions': [
+                perms.get('admin'),
+            ]
         },
         {
             'name': 'Users',

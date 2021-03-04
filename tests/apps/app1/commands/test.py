@@ -10,6 +10,31 @@ async def cli():
     from app1 import models
 
 
+
+
+    user = await models.User.query().include(
+        'groups.roles.permissions',
+        #'roles',
+        'roles.permissions',
+        'posts.creator.info',
+        'posts.creator.creator.info',
+        #'creator.info',
+    ).find(2)
+    dd(user)
+
+
+
+
+
+
+
+
+
+    dd('doneo play')
+
+
+
+
     # Redis
     # from uvicore.redis import Redis
 

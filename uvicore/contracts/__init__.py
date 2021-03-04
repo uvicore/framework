@@ -20,6 +20,7 @@ from .router import (ApiRoute, ApiRouter, ModelRouter, Router, Routes,
                      WebRoute, WebRouter)
 from .server import Server
 from .template import Template
+from .userinfo import UserInfo
 
 # The contracts package uses a __init__.py because users will import these
 # methods from their own apps and we want a nicer import which looks

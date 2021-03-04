@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from .connection import Connection
 from uvicore.typing import Dict, List, Any
+from prettyprinter import pretty_call, register_pretty
 
 
 class Package(Dict):
@@ -104,3 +105,15 @@ from .router import WebRoute, ApiRoute  # isort:skip
 #     @abstractmethod
 #     def connection(self, name: str = None) -> Connection:
 #         pass
+
+
+
+@register_pretty(Package)
+def pretty_entity(value, ctx):
+    """Custom pretty printer for my SuperDict"""
+    # This printer removes the class name uvicore.types.Dict and makes it print
+    # with a regular {.  This really cleans up the output!
+
+    # SuperDict are printed as Dict, but this Package SuperDict should
+    # be printed more like a class with key=value notation, so use **values
+    return pretty_call(ctx, 'Package', **value)

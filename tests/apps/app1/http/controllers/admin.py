@@ -11,7 +11,7 @@ class Admin(Controller):
 
     #user: User = Guard(['scope1'], guard='web')
     #user: User = Guard(['scope1'])
-    #user: User = Guard(guard='web')
+    user: User = Guard()
 
     def register(self, route: WebRouter):
 

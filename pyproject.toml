@@ -36,13 +36,13 @@ colored = "^1.4.2"
 prettyprinter = "^0.18.0"
 environs = "^9.3.0"
 Jinja2 = "^2.11.2"
-ipython = "^7.19.0"
 requests = "^2.25.1"
 itsdangerous = "^1.1.0"
 uvloop = "^0.14.0"
 httptools = "^0.1.1"
 python-multipart = "^0.0.5"
 argon2-cffi = "^20.1.0"
+ipython = "^7.21.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
@@ -54,6 +54,7 @@ mkdocs = "^1.1.2"
 mkdocs-material = "^6.2.6"
 jupyterlab = "^3.0.5"
 aioredis = "^1.3.1"
+bpython = "^0.21"
 
 [build-system]
 requires = ["poetry>=0.12"]

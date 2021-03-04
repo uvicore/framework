@@ -9,6 +9,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.orm.fields import Relation
 from uvicore.http.exceptions import HTTPException
+from uvicore.auth import UserInfo
 
 
 @uvicore.service()
@@ -19,38 +20,82 @@ class ModelRoute:
         """Build dynamic model CRUD routes"""
 
         @route.get('/' + path, response_model=typing.List[Model], tags=tags)
-        async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
-            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
-            includes = include.split(',')
-            return await Model.query().include(*includes).get()
-
-        #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
-        @route.get('/' + path + '/{id}', tags=tags)
-        async def get(id: typing.Any, request: Request, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        async def list(include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
             includes = include.split(',') if include else []
 
-            # Fix me, i already inject the User. if permissions were there, I don't need request at all!
-            self.guard_include_permissions(includes, request)
-            return await Model.query().include(*includes).find(id)
+            self.guard_include_permissions(Model, includes, user)
+            return await Model.query().include(*includes).cache().get()
 
-    def guard_include_permissions(self, includes: typing.List, request: Request):
+        #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
+        @route.get('/' + path + '/{id}', tags=tags)
+        async def get(id: typing.Any, include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
+            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
+            includes = include.split(',') if include else []
+
+            self.guard_include_permissions(Model, includes, user)
+            return await Model.query().include(*includes).cache().find(id)
+
+    def guard_include_permissions(self, Model, includes: typing.List, user: UserInfo):
+        # No includes, skip
         if not includes: return
-        for include in includes:
-            field = Model.modelfields.get(include)
-            if not field: continue
-            if not field.relation: continue
-            relation: Relation = field.relation.fill(field)
-            tablename = relation.entity.tablename
-            permission = tablename + '.read'
 
-            #FIXME, lets assume user_permissions are in the user model
-            user_permissions = request.scope.get('user_permissions')
-            if permission not in user_permissions:
-                raise HTTPException(
-                    status_code=401,
-                    detail="Access denied to {}".format(tablename)
-                )
+        # User is superadmin, allow
+        if user.superadmin: return
+
+        # Loop each include and parts
+        for include in includes:
+
+            # Includes are split into dotnotation "parts".  We have to walk down each parts relations
+            parts = [include]
+            if '.' in include: parts = include.split('.')
+
+            entity = Model
+            for part in parts:
+
+                # Get field for this "include part".  Remember entity here is not only Model, but a walkdown
+                # based on each part (separated by dotnotation)
+                field = entity.modelfields.get(part)  # Don't use modelfield() as it throws exception
+
+                # Field not found, include string was a typo
+                if not field: continue
+
+                # Field has a column entry, which means its NOT a relation
+                if field.column: continue
+
+                # Field is not an actual relation
+                if not field.relation: continue
+
+                # Get actual relation object
+                relation = field.relation.fill(field)
+
+                # Get model permission string for this relation
+                model_permission = relation.entity.tablename + '.read'
+
+                # Check if user has permissino to child relatoin (or superadmin)
+                if model_permission not in user.permissions:
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Access denied to {}".format(model_permission)
+                    )
+
+                # Walk down each "include parts" entities
+                entity = relation.entity
+
+
+
+            # if not field: continue
+            # if not field.relation: continue
+            # relation: Relation = field.relation.fill(field)
+            # tablename = relation.entity.tablename
+            # permission = tablename + '.read'
+
+            # # Check if user has permissino to child relatoin (or superadmin)
+            # if user.superadmin == False and permission not in user.permissions:
+            #     raise HTTPException(
+            #         status_code=401,
+            #         detail="Access denied to {}".format(tablename)
+            #     )
 
 
 
@@ -155,7 +200,7 @@ class ModelRouter(Controller):
                 'tags': tags,
                 'uvicore': uvicore,
                 'typing': typing,
-                'User': User,
+                'UserInfo': UserInfo,
                 'Guard': Guard,
                 'Request': Request,
                 'HTTPException': HTTPException,

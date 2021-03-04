@@ -7,6 +7,16 @@ from uvicore.auth.models.permission import Permission
 async def seed():
     #from uvicore.auth.models
 
+    # NOTICE, each model role is seeded from the db seeder command
+    # This is where I add additional permissions
+
+    await Permission.insert([
+        {
+            'entity': None,
+            'name': 'admin',
+        },
+    ])
+
     # NO, we do this from db seeder command now
 
     # uvicore.log.item('Seeding table permissions')
