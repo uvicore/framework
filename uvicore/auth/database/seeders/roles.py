@@ -20,7 +20,7 @@ async def seed():
             ]
         },
         {
-            'name': 'Users',
+            'name': 'User',
         },
     ])
 

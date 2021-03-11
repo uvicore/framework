@@ -56,7 +56,7 @@ async def seed():
         #'user_id': 2 # NOT needed as its inferred
     })
     await user.link('groups', [
-        groups['Manager']
+        groups['Operations Manager']
     ])
     await user.link('roles', [
         roles['Post Users']

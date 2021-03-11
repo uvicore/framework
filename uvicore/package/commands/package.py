@@ -39,9 +39,9 @@ def get(package: str):
         dump(pkg)
         print()
 
-        log.header("Deep merged configs for " + package)
-        log.line()
-        dump(pkg.config())
+        #log.header("Deep merged configs for " + package)
+        #log.line()
+        #dump(pkg.config())
     else:
         exit(f"Package {package} not found")
 

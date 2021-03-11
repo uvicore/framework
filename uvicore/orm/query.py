@@ -448,7 +448,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                 # Relation name is a __ join of all parts walked thus far
                 relation_name = '__'.join(parts_added)
 
-                # Get relation model class from IoC or dynamic Imports
+                # Get actual relation object
                 relation = field.relation.fill(field)
 
                 # Set a new name based on relation_name dot notation for nested relations

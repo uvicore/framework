@@ -14,8 +14,11 @@ from uvicore.http.routing import Routes, WebRouter
 @uvicore.routes()
 class Web(Routes):
 
-    # If I wanted to apply global auth to every route, I could do it here
-    #user: User = Guard(['posts.read'], guard='web')
+    # Route Middleware - Highest route level
+    #middleware = [Guard()]
+
+    # Auth is a shortcut to append to middleware
+    #auth = Guard()
 
     def register(self, route: WebRouter):
 
@@ -23,15 +26,18 @@ class Web(Routes):
         route.controllers = 'app1.http.controllers'
 
         # Public Routes
+        #@route.group()
+        #def public_routes():
         route.controller('home')
         route.controller('about')
         route.controller('login')
 
 
         # Private Routes
-        @route.group(auth=Guard(guard='web'))
+        #@route.group(auth=Guard(guard='web'))
+        #@route.group(middleware=[Guard(guard='web')])
         @route.group()
-        def private():
+        def private_routes():
             route.controller('admin')
 
 

@@ -26,14 +26,16 @@ class ApiRouter(Router['ApiRoute']):
         autoprefix: bool = True,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
-        middleware: List = [],
+        middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
     ):
         # Build parameters
         methods = ['GET']
-        params = {key:value for key, value in locals().items() if key != 'self'}
-        #params = locals()
-        #params.pop('self')
+        #params = {key:value for key, value in locals().items() if key != 'self'}
+        params = locals()
+        params.pop('self')
 
         # Pass to generic add method
         return self.add(**params)
@@ -47,12 +49,15 @@ class ApiRouter(Router['ApiRoute']):
         autoprefix: bool = True,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
-        middleware: List = [],
+        middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
     ):
         """Generic add method and decorator"""
 
         # Convert auth helper param to middleware
+        if middleware is None: middleware = []
         if auth: middleware.append(auth)
 
         # Clean path and name
@@ -68,6 +73,8 @@ class ApiRouter(Router['ApiRoute']):
                 'response_model': response_model,
                 'tags': tags,
                 'middleware': middleware,
+                'summary': summary,
+                'description': description,
                 'original_path': path,
                 'original_name': name,
             })

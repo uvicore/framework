@@ -7,6 +7,7 @@ from uvicore.auth.models import Group, Role
 from uvicore.auth.database.tables import users as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
 from uvicore.auth import UserInfo
+from uvicore.support.hash import sha1
 
 
 @uvicore.model()
@@ -94,17 +95,20 @@ class User(Model['User'], metaclass=ModelMetaclass):
     async def userinfo(entity, provider: Dict, id: int = None, username: str = None, password: str = None) -> UserInfo:
         """Build Auth User Info Object and optionally validate password if provided"""
 
+        # Get password hash for cache key.  Password is still required to pull the right cache key
+        # or else someone could login with an invalid password for the duration of the cache
+        password_hash = '/' + sha1(password) if password is not None else ''
+        if password is not None: password_hash = sha1(password)
+
         # Check if user already validated in cache
-        cache_key = 'auth/userinfo/' + username
+        cache_key = 'auth/userinfo/' + username + password_hash
         if await uvicore.cache.has(cache_key):
-            dump('FROM CACHE')
-            # Retrieve user from cache, no password check required
+            # User is already validated and cached
+            # Retrieve user from cache, no password check required because cache key has password has in it
             userinfo = await uvicore.cache.get(cache_key)
-            #dump(userinfo)
             return userinfo
 
         else:
-            dump('FROM DB')
             # Cache not found.  Query user, validate password and convert to userinfo object
             # Do NOT utilize ORM cache, we handle here manually
 

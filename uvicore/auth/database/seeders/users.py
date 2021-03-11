@@ -29,7 +29,7 @@ async def seed():
     ).save()
 
     await user.link('groups', [
-        groups['Users']
+        groups['User']
     ])
 
     # users = []

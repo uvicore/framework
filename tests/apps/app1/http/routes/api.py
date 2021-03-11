@@ -8,8 +8,15 @@ from app1.models.post import Post
 from uvicore.auth.middleware import Guard
 
 from uvicore.auth.models import User
+from uvicore.auth import UserInfo
 
 from app1.http.api.post import Post as PostController
+from datetime import datetime
+
+# Define our default auth guard
+#guard = RouteGuard('api')
+#dump(guard.__dict__)
+
 
 @uvicore.routes()
 class Api(Routes):
@@ -18,11 +25,19 @@ class Api(Routes):
     #x: str = 'xx'
     #guard: str = 'web'
     #user: User = Guard(['admin'])
+    #auth = Guard(['scope0'], guard='api')
 
     def register(self, route: ApiRouter):
 
+        # Define controller base path
+        route.controllers = 'app1.http.api'
+
         # Include dynamic model CRUD API endpoints (the "auto API")!
-        route.include(ModelRouter)
+        @route.group(auth=Guard(['scope-AUTO'], guard='api'))
+        def autoapi():
+            # I should add a flag to NOT auto add Guard() to each model endpoint
+            # If I wanted a fully public model router
+            route.include(ModelRouter)
 
         async def get_method() -> Post:
             #return response.Text('Get API Method Here!')
@@ -31,6 +46,42 @@ class Api(Routes):
         # # Raw add with methods
         # #route.add('/get_method1', get_method, ['GET'], response_model=Post)  # Or infer response_model
         route.add('/get_method1', get_method, ['GET'])
+
+
+        #@route.group()
+        @route.group(auth=Guard(['scope1', 'scope2'], guard='api'))
+        def ping_group():
+
+            @route.get('/ping', auth=Guard(['scope3']))
+            #@route.get('/ping')
+            def ping(request: Request, user: UserInfo = Guard(['scope4'])):
+            #def ping(request: Request):
+                user = request.scope.get('user')
+                return {
+                    'message': 'pong {}'.format(datetime.now()),
+                    'user': user
+                }
+
+
+        @route.group()
+        def test():
+            route.include('post')
+            # @route.get('/ping2')
+            # def ping():
+            #     return {'message': 'pong {}'.format(datetime.now())}
+
+
+        @route.group()
+        def public_api():
+
+            @route.get('/public')
+            def pub(request: Request):
+                user = request.scope.get('user')
+                return {
+                    'message': 'public endpoint here',
+                    'user': user
+                }
+
 
 
         # #@route.get('/post2', tags=["Post"], middleware=[Guard(['admin'])])
@@ -151,4 +202,3 @@ class Api(Routes):
         #route.domain('something.else.com')
 
 
-        return route

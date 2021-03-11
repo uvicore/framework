@@ -22,7 +22,7 @@ config = {
     # --------------------------------------------------------------------------
     'server': {
         'app': 'app1.http.server:http',
-        'host': env('SERVER_HOST', '127.0.0.1'),
+        'host': env('SERVER_HOST', '0.0.0.0'),
         'port': env.int('SERVER_PORT', 5000),
         'reload': env.bool('SERVER_RELOAD', True),
         'access_log': env.bool('SERVER_ACCESS_LOG', True),
@@ -46,7 +46,7 @@ config = {
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost'],
+                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.com'],
                     'www_redirect': True,
                 }
             },
@@ -84,14 +84,14 @@ config = {
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost'],
+                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.io'],
                     'www_redirect': True,
                 }
             },
             'CORS': {
                 'module': 'uvicore.http.middleware.CORS',
                 'options': {
-                    'allow_origins': ['127.0.0.1', 'localhost'],
+                    'allow_origins': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.io'],
                     'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
                     'allow_headers': [],
                     'allow_credentials': False,
@@ -122,20 +122,50 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # HTTP Auth Guards used in Web and API Endpoints
+    # HTTP auth guards, authenticator middleware and user providers
+    #
+    # Each route or controller can specify an auth guard to use.  Web and API
+    # endpoints often use different guards for authentication.  Often times
+    # multiple authentication methods are used.  For example, API routes may
+    # authenticate using JWT Bearer tokens AND Digest Auth while web routes
+    # may only use Session Auth.  Each of these authenticators has various
+    # options which are generally the same when applied to multiple guards.
+    # The 'options' Dict allows deep merging of default options to eliminate
+    # duplication in this config.
     # --------------------------------------------------------------------------
     'auth': {
-        'default': 'api', # should be per WebRouter or ApiRouter probably
+        # Default auth guard to use if none specified in route middleware (auth=Guard(guard='web'))
+        'default': 'web',
+
+        # Auth Guards with one or more authenticator middleware
         'guards': {
             'web': {
-                'driver': 'uvicore.auth.middleware.Basic',
-                'provider': 'users',
+                'authenticators': {
+                    'basic': {
+                        # Deep merge default options from 'options' Dictionary below.
+                        # Can override any default options by specifying them here
+                        'options': 'basic',
+                        #'return_www_authenticate_header': True,
+                    }
+                },
             },
             'api': {
-                'driver': 'uvicore.auth.middleware.Basic',
-                'provider': 'users',
+                'authenticators': {
+                    'jwt': {
+                        # Deep merge default options from 'options' Dictionary below.
+                        # Can override any default options by specifying them here
+                        'options': 'jwt',
+                    },
+                    'basic': {
+                        # Deep merge default options from 'options' Dictionary below.
+                        # Can override any default options by specifying them here
+                        'options': 'basic',
+                    },
+                },
             }
         },
+
+        # User repository providers
         'providers': {
             'users': {
                 'module': 'uvicore.auth.models.user.User',
@@ -144,6 +174,42 @@ config = {
                 'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
             },
         },
+
+        # Authenticator default options
+        'options': {
+            'basic': {
+                'module': 'uvicore.auth.middleware.Basic',
+                'provider': 'users',
+                'return_www_authenticate_header': False,
+                'realm': 'App1 Realm'
+            },
+            'jwt': {
+                'module': 'uvicore.auth.middleware.Jwt',
+                'provider': 'users',
+
+                # Settings used when there is an API gateway upstream from this API
+                'api_gateway': {
+                    'enabled': True,
+                    'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
+                    #'anonymous_header': None,
+                },
+
+                # Settings used when the user auth and JWT did not originate from this app itself
+                # but from an external Identity Provider
+                'external_idp': {
+                    'enabled': True,
+
+                    'auto_create_user': True,
+                    'sync_scopes': True,
+                },
+                'verify_signature': True,  # False only if a local upstream API gateway has already pre-validated
+                'audience': 'd709a432-5edc-44c7-8721-4cf123473c45',  # FusionAuth App ID
+                'algorithms': ['RS256'],
+                #'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnc84SDViVX8JNye2GVQZ\nixAwG2PWXoOhkj++wGASoAXs2LN0Ue48conxf/0bgEtq6kcbLPR23SieqBZA77vc\nyulimMbzfwNczyP3FRo8wSCqRgJipTse87WItd8ga2MUCzSS8q19V4swUT4T23Su\nDiG/Ry5f1sYbvxP2kJAJMUCzVbS7STxh33h65Bj+P6JdzrCJi+yrLqg928RHjLIF\ngDy4MyFBLTI8w5u6IJi1TLm6h9lj3YqSa/qDkkIardnnZa7Xj0IJCEB9c+RD4Q7C\n+jco6g2Vr9oLP8Mg3c5lZPNVzcXC67UMVk9lK+zrlfPDI/m2+9kyTc/58S9ZUTFJ\nQwIDAQAB\n-----END PUBLIC KEY-----',
+                'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
+            },
+
+        }
     },
 
 
@@ -254,11 +320,14 @@ config = {
     'cache': {
         'default': 'redis',
         'stores': {
+            # 'array': {
+            #     'driver': 'uvicore.cache.backend.Array',
+            # }
             'redis': {
                 'driver': 'uvicore.cache.backends.Redis',
                 'connection': 'cache',
                 'prefix': 'app1::cache/',
-                'seconds': 30,  # 0=forever
+                'seconds': 10,  # 0=forever
             },
         },
     },

@@ -15,7 +15,7 @@ class WebRouter(Router['WebRoute']):
         *,
         name: Optional[str] = None,
         autoprefix: bool = True,
-        middleware: List = [],
+        middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
     ):
         # Build parameters
@@ -35,12 +35,13 @@ class WebRouter(Router['WebRoute']):
         *,
         name: Optional[str] = None,
         autoprefix: bool = True,
-        middleware: List = [],
+        middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
     ):
         """Generic add method and decorator"""
 
         # Convert auth helper param to middleware
+        if middleware is None: middleware = []
         if auth: middleware.append(auth)
 
         # Clean path and name

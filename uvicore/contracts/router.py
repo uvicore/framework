@@ -17,9 +17,9 @@ class WebRoute(Dict):
     name: str
     endpoint: Callable
     methods: List[str]
+    middleware: Optional[List]
     original_path: str
     original_name: str
-    xxxweb: str
 
 
 class ApiRoute(Dict):
@@ -32,9 +32,13 @@ class ApiRoute(Dict):
     name: str
     endpoint: Callable
     methods: List[str]
+    response_model: Optional[Any]
+    tags: Optional[List]
+    middleware: Optional[List]
+    summary: Optional[str]
+    description: Optional[str]
     original_path: str
     original_name: str
-    yyyapi: str
 
 
 class Routes(ABC):

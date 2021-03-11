@@ -20,9 +20,9 @@ async def seed():
             ]
         },
         {
-            'name': 'Users',
+            'name': 'User',
             'roles': [
-                roles['Users']
+                roles['User']
             ]
         },
     ])

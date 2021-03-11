@@ -7,100 +7,68 @@ from uvicore.auth import UserInfo
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
 from fastapi.security import SecurityScopes
-from uvicore.http.exceptions import HTTPException
-
+from uvicore.http.exceptions import HTTPException, PermissionDenied, NotAuthenticated, InvalidCredentials
+from uvicore.auth.middleware.auth import Auth
 
 @uvicore.service()
-class Basic:
-    """Basic Auth Route Middleware"""
+class Basic(Auth):
+    """Basic HTTP Authentication Route Middleware"""
 
-    def __init__(self, guard: str, provider: Dict):
-        self.guard = guard
-        self.provider = provider
+    def __init__(self, config: Dict):
+        self.config = config
 
     async def __call__(self, scopes: SecurityScopes, request: Request):
-        dump(scopes.__dict__, self.guard)
+        dump('BASIC HERE')
+        dump(scopes.__dict__, self.config)
 
-        authorization: str = request.headers.get("Authorization")
-        scheme, param = get_authorization_scheme_param(authorization)
+        # Assume unauthorized
+        authorized = False
 
-        # Define Basic Auth unauthorized header
-        unauthorized_headers = {"WWW-Authenticate": "Basic"}
+        # Parse authorization header
+        authorization, scheme, param = self.auth_header(request)
 
-        # If not yet authorized, send Basic Auth headers
-        if not authorization or scheme.lower() != "basic":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated",
-                headers=unauthorized_headers,
-            )
+        # Define Basic Auth unauthorized header only if we are allowed to return them, else None
+        unauthorized_headers = None
+        if self.config.return_www_authenticate_header:
+            unauthorized_headers = {'WWW-Authenticate': 'Basic'}
+            if self.config.realm: unauthorized_headers = {'WWW-Authenticate': 'Basic realm="{}"'.format(self.config.realm)}
 
-        # Define invalid authentication credentials exception
-        invalid_user_credentials_exc = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers=unauthorized_headers,
-        )
+        # This authorization method not provided or attempted, goto next guard in middleware stack
+        if not authorization or scheme != "basic":
+            if self.config.return_www_authenticate_header:
+                # Only add WWW-Authenticate header if configured.  If Basic auth is the LAST of the guard stack
+                # and we are in Web guard, we can safely prompt the browser Login box
+                raise NotAuthenticated(unauthorized_headers)
+            else:
+                # Return None means goto next middleware in guard stack
+                return None
 
-        # Get the Basic Auth user/pass
+        # Try to get the Basic Auth credentials
         try:
             data = b64decode(param).decode("ascii")
         except Exception:
-            raise invalid_user_credentials_exc
+            # No credentials defined from basic auth header
+            raise InvalidCredentials(unauthorized_headers)
         username, separator, password = data.partition(":")
-        if not separator: raise invalid_user_credentials_exc
 
-        authorized = False
+        # Incomplete username or password provided
+        if not separator: raise InvalidCredentials(unauthorized_headers)
 
-        # Get user query method
-        user_model = module.load(self.provider.module).object
-        user_method = getattr(user_model, self.provider.method)
-        user: UserInfo = await user_method(**{
-            'provider': self.provider,
-            'username': username,
-            'password': password or '',  # Must not be None or no validation takes places
-        })
+        # Get user model and validate credentials
+        user = await self.get_user(username, password or '', self.config.provider)
 
-        # If user returned, password has been validated
-        if user: authorized = True
+        # If no user returned, validation has failed or user not found
+        if user is None: raise InvalidCredentials(unauthorized_headers)
 
         # Hack logout by uncommenting this once
-        #raise invalid_user_credentials_exc
+        #raise InvalidCredentials(unauthorized_headers)
 
-        # Get Route Permissions
-        route_permissions = scopes.scopes
+        # Validate Permissions
+        #self.validate_permissions(user, scopes)
 
-        # Compare users permissions with endpoint permissions (unless superadmin, always pass)
-        # If no route premissions, then anyone logged in can access the route, no restrictions except authenticated
-        if authorized and route_permissions and user.superadmin == False:
-            authorized = False
-            for permission in route_permissions:
-                if permission in user.permissions:
-                    # This is an OR, if any one of these, then pass
-                    authorized = True
-                    break
-            if not authorized:
-                # This means they are logged in, but they don't have the proper permissions.
-                # So show access denied, not a prompt for password
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid permissions",
-                )
+        # Authorization successful.
+        # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')
+        request.scope['user'] = user
 
-
-        if authorized:
-            # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')
-            request.scope['user'] = user
-
-            # Return user in case we are using this guard as a dependency injected FastAPI parameter
-            return user
-        else:
-            # Not authorized, return invalid credentials 401
-            raise invalid_user_credentials_exc
-
-
-def get_authorization_scheme_param(authorization_header_value: str) -> Tuple[str, str]:
-    if not authorization_header_value:
-        return "", ""
-    scheme, _, param = authorization_header_value.partition(" ")
-    return scheme, param
+        # Return user in case we are using this guard as a dependency injected route parameter
+        return user

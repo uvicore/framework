@@ -1,6 +1,7 @@
 from __future__ import annotations
 import uvicore
 import inspect
+from functools import partial
 from uvicore import contracts
 from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator
 from uvicore.support.dumper import dump, dd
@@ -74,7 +75,7 @@ class Router(contracts.Router, Generic[R]):
             module = load(module).object
 
         # fixme, if string import it...
-        controller = module(self.package)
+        controller: Routes = module(self.package)
 
         # New self (Web or Api) router instance
         router = self.__class__(self.package, self.prefix + prefix, self.name + '.' + name, self.controllers)
@@ -83,10 +84,10 @@ class Router(contracts.Router, Generic[R]):
         router = controller.register(router)
 
         # Add contoller class level attributes as middleware to each route on this controller
-        controller_middlewares = controller.middleware()
+        controller_middlewares = controller._middleware()
         if controller_middlewares:
             for route in router.routes.values():
-                route.middleware = self._merge_route_middleware(controller_middlewares, route.middleware)
+                (route.middleware, route.endpoint) = self._merge_route_middleware(controller_middlewares, route.middleware, route.endpoint)
 
         # Merge controllers routes into this main (parent of recursion) router
         #dump(router.routes)
@@ -115,20 +116,25 @@ class Router(contracts.Router, Generic[R]):
         routes: Optional[List] = None,
         name: str = '',
         autoprefix: bool = True,
-        middleware: List = [],
+        middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
     ):
-        # Other params per group might be:
-        # response_class, include_in_schame, tags, dependencies, maybe response_model??
-        # Detect decorator
-        #if not routes:
-            #dd('decorat')
+        """Route groups method and decorator"""
 
         # Convert auth helper param to middleware
+        if middleware is None: middleware = []
         if auth: middleware.append(auth)
 
+        # Get name
+        if not name: name = prefix
+
+        # Clean name
+        if name:
+            name = name.replace('/', '.')
+            if name[-1] == '.': name = name[0:-1]  # Remove trailing .
+            if name[0] == '.': name = name[1:]     # Remove beginning .
+
         def handle(routes):
-            nonlocal prefix, name, autoprefix
             # Controllers return multiple routes as a List, so flatten everything into one List
             all_routes = []
             for route in routes:
@@ -146,58 +152,57 @@ class Router(contracts.Router, Generic[R]):
                 if route.name in self.routes:
                     self.routes.pop(route.name)
 
-                # Get name
-                if not name: name = prefix
-
-                # Clean name
-                if name:
-                    name = name.replace('/', '.')
-                    if name[-1] == '.': name = name[0:-1]  # Remove trailing .
-                    if name[0] == '.': name = name[1:]     # Remove beginning .
-
-                # Get full paths
-                full_path = prefix + route.original_path
-                full_name = name + '.' + route.original_name
-
-
                 # Strip global prefix if exists
                 path = route.path
-                if len(path) > len(self.prefix) and path[0:len(self.prefix)] == self.prefix:
+                if len(path) >= len(self.prefix) and path[0:len(self.prefix)] == self.prefix:
                     path = path[len(self.prefix):]
 
                 rname = route.name
-                if len(rname) > len(self.name) and rname[0:len(self.name)] == self.name:
+                if len(rname) >= len(self.name) and rname[0:len(self.name)] == self.name:
                     rname = rname[len(self.name) + 1:]
 
                 full_path = prefix + path
                 full_name = name + '.' + rname
 
-
                 # Get route middleware based on parent child overrides
-                route_middleware = self._merge_route_middleware(middleware, route.middleware)
+                (route_middleware, route.endpoint) = self._merge_route_middleware(middleware, route.middleware, route.endpoint)
+                #dump(route, middleware, route.middleware)
 
                 # Add new route with new group prefix and name
-                new_route = self.add(
-                    path=full_path,
-                    endpoint=route.endpoint,
-                    methods=route.methods,
-                    name=full_name,
-                    autoprefix=autoprefix,
-                    #middleware=route.middleware or middleware  # Closest one to the route wins
-                    middleware=route_middleware
-                )
+                # Because this is a polymorphic router (works for Web and API router)
+                # The self.add methods will be different.  The actual route should mimic the self.add
+                # parameters, so modify the route when calculated values and pass in as
+                # self.add **kwargs
+                route.path = full_path
+                route.name = full_name
+                route.autoprefix = autoprefix,
+                route.middleware = route_middleware
+                del route.original_path
+                del route.original_name
+
+                # NO, this didn't handle polymorphic router.  self.add is different for each router.
+                # new_route = self.add(
+                #     path=full_path,
+                #     endpoint=route.endpoint,
+                #     methods=route.methods,
+                #     name=full_name,
+                #     autoprefix=autoprefix,
+                #     #middleware=route.middleware or middleware  # Closest one to the route wins
+                #     middleware=route_middleware
+                # )
+                new_route = self.add(**route)
                 new_routes.append(new_route)
 
             # Return new routes for recursive nested groups
             return new_routes
 
-       # Method access
+        # Method access
         if routes: return handle(routes)
 
         # Decorator access
         def decorator(func):
             # Backup and clear existing routes
-            all_routes = self._routes.copy()
+            all_routes = self._routes.clone()
             self._routes = Dict()
 
             # Get routes from the group method
@@ -209,67 +214,182 @@ class Router(contracts.Router, Generic[R]):
                 routes.append(route)
 
             # Restore all routes besides the ones in the gruop method
-            self._routes = all_routes.copy()
+            self._routes = all_routes.clone()
 
             # Add these routes to the proper group
             handle(routes)
             return func
         return decorator
 
-    def _merge_route_middleware(self, parent_middleware: List, child_middleware: List):
+    def _merge_route_middleware(self, parent_middleware: List, child_middleware: List, endpoint: Callable) -> Tuple[List, Callable]:
+        """Merge parent route middleware into child, children parameters win in merge.
+
+        If endpoing method is middleware, merge that also and return a new partial endpoint
+        """
+
+        # Merge helper
+        def merge(parent_middleware, child_middleware):
+            # Get middleware __init__ params
+            inspection = inspect.signature(parent_middleware.__init__)
+            params = [x for x in inspection.parameters]
+
+            # Build params key value Dict
+            parent_params = Dict()
+            child_params = Dict()
+            for param in params:
+                # If param value is None do NOT add to kwargs or even the None will win in a merge
+                if getattr(parent_middleware, param) is not None:
+                    parent_params[param] = getattr(parent_middleware, param)
+                if getattr(child_middleware, param) is not None:
+                    child_params[param] = getattr(child_middleware, param)
+
+            # Deep merge params
+            kwargs = deep_merge(child_params, parent_params, merge_lists=True)
+
+            # Instantiate new middleware with new params
+            # We can't just set child_middleware new dict values becuase it has already fired up
+            # its super.__init__, so changing values now does nothing.  Instead we replace it with an all
+            # new instantiated Guard
+            new_middleware = parent_middleware.__class__(**kwargs)
+            return new_middleware
+
+        # New merged middleware
+        middlewares = []
+
+        # Both parent and child have middleware. If both have the same middleware,
+        # create a new middleware based on a merge of parameters where CHILD params WIN.
+        if parent_middleware and child_middleware:
+            for child_middleware in child_middleware:
+                found = False
+                for parent_middleware in parent_middleware:
+                    if str(parent_middleware) == str(child_middleware):
+                        found = True
+                        break
+
+                if not found:
+                    # No matching parent middleware, use child
+                    middlewares.append(child_middleware)
+                else:
+                    # Found matching parent and child middleware.  Create new middleware with merged parameters of the two
+                    # Because of the break statement, the current parent_middleware variable is the match
+                    middlewares.append(merge(parent_middleware, child_middleware))
+
+        elif parent_middleware:
+            # We have parent middleware, no children
+            middlewares = copy(parent_middleware)
+
+        elif child_middleware:
+            # We have child middleware, no parent
+            middlewares = copy(child_middleware)
+
+        # Check each endpoints params and look at its default value
+        # Compare that default value to our list of middleware
+        # If they are the same, REMOVE the middleware from our list
+        # or we will trigger the same middleware twice.  Once in a group/controller
+        # and once on the actual function parameter (with FastAPI Depends) as well.
+        final_middleware = []
+        if middlewares:
+            # Get endpoing method signature end parameters
+            endpoint_signature = inspect.signature(endpoint)
+            endpoint_params = endpoint_signature.parameters
+
+            # Loop all merged parent/child middleware
+            for middleware in middlewares:
+                add = True
+
+                # Loop each endpoint parameter
+                for endpoint_param in endpoint_params.values():
+                    # Endpoint middleware will be the default value of a parameter
+                    endpoint_middleware = endpoint_param.default
+
+                    # Compare the endpoint default value with the current middleware
+                    # If they are the same, this endpint parameter is middleware and matches
+                    # on of our previously defined merged middlewares.
+                    # If we find a match do NOT add current middleware to final_middleware to eliminate
+                    # duplicate middleware being run twice.
+                    if str(middleware) == str(endpoint_middleware):
+                        # Do NOT add this middleware to final_middleware
+                        add = False
+
+                        # Merge endpoint middleware to higher level matched middleware
+                        # This will merge scopes and other parameters to provide scope hierarchy
+                        new_endpoint_middleware = merge(middleware, endpoint_middleware)
+
+                        # Create a partial endpoint method with our new middleware parameter injected
+                        # Partials see https://levelup.gitconnected.com/changing-pythons-original-behavior-8a43b7d1c55d
+                        endpoint = partial(endpoint, **{
+                            endpoint_param.name: new_endpoint_middleware
+                        })
+
+                        # There will not be another endpoint param matching this one middleware, break
+                        break
+
+                if add:
+                    # No endpoint middleware found, add current middleware
+                    final_middleware.append(middleware)
+
+        # Return new merged middleware and modified partial endpoint
+        return (final_middleware, endpoint)
+
+    def _merge_route_middlewareOLD(self, parent_middleware: List, child_middleware: List) -> List:
         """Merge parent route middleware into child, children parameters win in merge."""
 
         # Parent has no middleware to merge into child
         if not parent_middleware: return child_middleware
 
-        if not child_middleware:
-            # Child has no middleware of its own, add parent level middleware to this route
-            return copy(parent_middleware)
+        # if not child_middleware:
+        #     # Child has no middleware of its own, add parent level middleware to this route
+        #     return copy(parent_middleware)
+
+        # Merge helper
+        def merge(parent_middleware, child_middleware):
+            # Get middleware __init__ params
+            inspection = inspect.signature(parent_middleware.__init__)
+            params = [x for x in inspection.parameters]
+
+            # Build params key value Dict
+            parent_params = Dict()
+            child_params = Dict()
+            for param in params:
+                # If param value is None do NOT add to kwargs or even the None will win in a merge
+                if getattr(parent_middleware, param) is not None:
+                    parent_params[param] = getattr(parent_middleware, param)
+                if getattr(child_middleware, param) is not None:
+                    child_params[param] = getattr(child_middleware, param)
+
+            # Deep merge params
+            kwargs = deep_merge(child_params, parent_params, merge_lists=True)
+
+            # Instantiate new middleware with new params
+            # We can't just set child_middleware new dict values becuase it has already fired up
+            # its super.__init__, so changing values now does nothing.  Instead we replace it with an all
+            # new instantiated Guard
+            new_middleware = parent_middleware.__class__(**kwargs)
+            return new_middleware
+
 
         # Both parent and child have middleware. If both have the same middleware,
         # create a new middleware based on a merge of parameters where CHILD params WIN.
-        middleware = []
-        for child_middleware in child_middleware:
-            found = False
-            for parent_middleware in parent_middleware:
-                if str(parent_middleware) == str(child_middleware):
-                    found = True
-                    break
+        middlewares = []
+        if child_middleware:
+            for child_middleware in child_middleware:
+                found = False
+                for parent_middleware in parent_middleware:
+                    if str(parent_middleware) == str(child_middleware):
+                        found = True
+                        break
 
-            if not found:
-                # No matching controller middleware found
-                middleware.append(child_middleware)
-            else:
-                # Found matching controller and route middleware.  Create new middleware with merged parameters of the two
-                # Because of the break, the current parent_middleware variable is the match
+                if not found:
+                    # No matching controller middleware found
+                    middlewares.append(child_middleware)
+                else:
+                    # Found matching controller and route middleware.  Create new middleware with merged parameters of the two
+                    # Because of the break, the current parent_middleware variable is the match
+                    middlewares.append(merge(parent_middleware, child_middleware))
+        else:
+            middlewares = copy(parent_middleware)
 
-                # Get middleware __init__ params
-                inspection = inspect.signature(parent_middleware.__init__)
-                params = [x for x in inspection.parameters]
-
-                # Build params key value Dict
-                controller_params = Dict()
-                route_params = Dict()
-                for param in params:
-                    # If param value is None do NOT add to kwargs or even the None will win in a merge
-                    if getattr(parent_middleware, param) is not None:
-                        controller_params[param] = getattr(parent_middleware, param)
-                    if getattr(child_middleware, param) is not None:
-                        route_params[param] = getattr(child_middleware, param)
-
-                # Deep merge params
-                kwargs = deep_merge(route_params, controller_params, merge_lists=True)
-
-                # Instantiate new middleware with new params
-                new_middleware = parent_middleware.__class__(**kwargs)
-
-                # Add new middleware
-                middleware.append(new_middleware)
-
-        # Return new merged middleware
-        return middleware
-
-
+        return middlewares
 
     def _clean_add(self, path: str, name: str, autoprefix: bool):
         # Clean path
@@ -299,6 +419,8 @@ class Router(contracts.Router, Generic[R]):
 @uvicore.service()
 class Routes(contracts.Routes):
     """Routes and Controller Class"""
+    middleware = None
+    auth = None
 
     @property
     def package(self) -> contracts.Package:
@@ -307,12 +429,15 @@ class Routes(contracts.Routes):
     def __init__(self, package: contracts.Package):
         self._package = package
 
-    def middleware(self):
-        # Get class level attributes as route middleware
+    def _middleware(self):
+        # Get class level middleware
         middlewares = []
-        if '__annotations__' in self.__class__.__dict__:
-            for key, value in self.__class__.__annotations__.items():
-                middlewares.append(getattr(self, key))
+        if self.auth: middlewares.append(self.auth)
+        if self.middleware: middlewares.extend(self.middleware)
         return middlewares
+        # if '__annotations__' in self.__class__.__dict__:
+        #     for key, value in self.__class__.__annotations__.items():
+        #         middlewares.append(getattr(self, key))
+        # return middlewares
 
 

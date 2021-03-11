@@ -43,6 +43,8 @@ httptools = "^0.1.1"
 python-multipart = "^0.0.5"
 argon2-cffi = "^20.1.0"
 ipython = "^7.21.0"
+PyJWT = "^2.0.1"
+cryptography = "^3.4.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"

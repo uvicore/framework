@@ -12,6 +12,97 @@ async def cli():
 
 
 
+
+    #await uvicore.cache.put('cocknballs', 'whatever I want')
+
+    #dump( await uvicore.cache.get('cocknballs') )
+
+
+
+
+    # async def get_users():
+    #     dump('QUERY DB')
+    #     return await models.User.query().find(1)
+
+    # await uvicore.cache.remember('users', get_users, seconds=10)
+    # users = await uvicore.cache.get('users')
+    # dump(users)
+
+
+
+
+
+    # users = await models.User.query().cache(tag='taylor').find(1)
+    # await uvicore.cache.flush(tags=['taylor'])
+    # dump(users)
+
+
+    await uvicore.cache.put('ioc_bindings', uvicore.ioc.binding('uvicore.database.db.Db'))
+
+    dump ( await uvicore.cache.get('ioc_bindings') )
+
+
+
+
+
+
+
+
+
+    dd('DONE PLAY')
+
+
+
+
+
+
+    #last_updated = keystone.get('permits_last_updated')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     user = await models.User.query().include(
         'groups.roles.permissions',
         #'roles',

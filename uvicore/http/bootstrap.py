@@ -6,10 +6,13 @@ from uvicore.support.dumper import dump, dd
 from uvicore.foundation.events.app import Booted as OnAppBooted
 from uvicore.contracts import Package as Package
 from uvicore.console import command_is
-from starlette.applications import Starlette as _Starlette
-from fastapi import FastAPI as _FastAPI
+from starlette.applications import Starlette
+from fastapi import FastAPI
 from uvicore.http import response
 from uvicore.http.events import server as HttpServerEvents
+from uvicore.http.routing.router import Routes
+from functools import partial, update_wrapper
+from uvicore.http.routing import ApiRoute, WebRoute
 
 
 class Http(Handler):
@@ -90,6 +93,8 @@ class Http(Handler):
 
 
         # # Experiment add custom exceptions
+        # When you do, see if you can get JSON responses to api_server and HTML responses to web_server
+        # And adjust the JSON from fastapi exception_handler.py to {message} not {detail} to look more like kongs return
         # async def internal_server_error_500(request, exc):
         #     print(exc)
         #     return response.HTML(content='custom 500 internal server error', status_code=500)
@@ -149,7 +154,7 @@ class Http(Handler):
         name_prefix = package.web.name_prefix
 
         # Import main web routes module
-        routes = module.load(routes_module).object(package)
+        routes: Routes = module.load(routes_module).object(package)
 
         # Get name prefix from package name plus custom name prefix
         if name_prefix:
@@ -166,10 +171,10 @@ class Http(Handler):
         router = routes.register(router)
 
         # Merge routes level middleware into each route
-        routes_middleware = routes.middleware()
+        routes_middleware = routes._middleware()
         if routes_middleware:
             for route in router.routes.values():
-                route.middleware = router._merge_route_middleware(routes_middleware, route.middleware)
+                (route.middleware, route.endpoint) = router._merge_route_middleware(routes_middleware, route.middleware, route.endpoint)
 
         # Return routes
         return router.routes
@@ -193,7 +198,7 @@ class Http(Handler):
         name_prefix = package.api.name_prefix
 
         # Import main web routes module
-        routes = module.load(routes_module).object(package)
+        routes: Routes = module.load(routes_module).object(package)
 
         # Get name prefix from package name plus custom name prefix
         if name_prefix:
@@ -209,31 +214,16 @@ class Http(Handler):
         # Get returned router with all defined routes
         router = routes.register(router)
 
-
-
-        # Auto add all class level attribtes as middleware on each route
-        # if '__annotations__' in routes.__class__.__dict__:
-        #     middlewares = []
-        #     for key, value in routes.__class__.__annotations__.items():
-        #         middlewares.append(getattr(routes, key))
-
-        #     for route in router.routes.values():
-        #         if route.middleware is None:
-        #             route.middleware = middlewares
-        #         else:
-        #             for middleware in middlewares:
-        #                 for rmiddleware in route.middleware:
-        #                     found = False
-        #                     if str(rmiddleware) == str(middleware):
-        #                         found = True
-        #                         break
-        #                 if not found:
-        #                     route.middleware.append(middleware)
+        # Merge routes level middleware into each route
+        routes_middleware = routes._middleware()
+        if routes_middleware:
+            for route in router.routes.values():
+                (route.middleware, route.endpoint) = router._merge_route_middleware(routes_middleware, route.middleware, route.endpoint)
 
         #Return routes
         return router.routes
 
-    def merge_routes(self) -> Tuple[Dict, Dict]:
+    def merge_routes(self) -> Tuple[Dict[str, WebRoute], Dict[str, ApiRoute]]:
         """Merge all packages web and api routes together"""
         web_routes = Dict()
         api_routes = Dict()
@@ -245,25 +235,25 @@ class Http(Handler):
                 api_routes.merge(package.api.routes)
         return (web_routes, api_routes)
 
-    def create_http_servers(self, web_routes, api_routes) -> Tuple[_Starlette, _FastAPI, _FastAPI]:
+    def create_http_servers(self, web_routes: Dict[str, WebRoute], api_routes: Dict[str, ApiRoute]) -> Tuple[Starlette, FastAPI, FastAPI]:
         """Fire up one or multiple HTTP servers"""
 
         # If we have both web and api routes then we will submount subservers.
         # If not, we will only use one server.
-        base_server: _Starlette = None
-        web_server: _FastAPI = None
-        api_server: _FastAPI = None
+        base_server: Starlette = None
+        web_server: FastAPI = None
+        api_server: FastAPI = None
         debug = uvicore.config('app.debug'),
 
         # Base server is Starlette
         if web_routes and api_routes:
-            base_server = _Starlette(
+            base_server = Starlette(
                 debug=debug,
             )
 
         # Web server is FastAPI with NO OpenAPI setup
         if web_routes:
-            web_server = _FastAPI(
+            web_server = FastAPI(
                 debug=debug,
                 version=uvicore.app.version,
                 openapi_url=None,
@@ -272,7 +262,7 @@ class Http(Handler):
 
         # Api server is FastAPI with OpenAPI setup
         if api_routes:
-            api_server = _FastAPI(
+            api_server = FastAPI(
                 debug=debug,
                 title=uvicore.config('app.api.openapi.title'),
                 version=uvicore.app.version,
@@ -284,7 +274,7 @@ class Http(Handler):
             )
         return (base_server, web_server, api_server)
 
-    def add_middleware(self, web_server, api_server) -> None:
+    def add_middleware(self, web_server: FastAPI, api_server: FastAPI) -> None:
         """Add global web and api middleware to their respective servers"""
 
         # Add global web middleware
@@ -299,7 +289,7 @@ class Http(Handler):
                 cls = module.load(middleware.module).object
                 api_server.add_middleware(cls, **middleware.options)
 
-    def add_web_routes(self, web_server, web_routes, prefix) -> None:
+    def add_web_routes(self, web_server, web_routes: Dict[str, WebRoute], prefix) -> None:
         """Add web routes to the web server"""
         for route in web_routes.values():
             web_server.add_api_route(
@@ -319,11 +309,30 @@ class Http(Handler):
             #     name=route.name,
             # )
 
-    def add_api_routes(self, api_server, api_routes, prefix) -> None:
+    def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute], prefix) -> None:
         """Add api routes to the api server"""
         for route in api_routes.values():
+            endpoint_func = route.endpoint
+            response_model = route.response_model
+
+            # If endpoint is partial, grab inside func for type hindint and docstrings
+            if isinstance(route.endpoint, partial):
+                # Endpoint is a partial (was overwritten to default some higher order middleware)
+                # A partial overwrites the original docstring.  Functools update_wrapper will copy it back
+                # as well as handle merging of other important properties
+                #update_wrapper(route.endpoint, route.endpoint.func)
+                endpoint_func = route.endpoint.func
+
+                # Blank out the __doc__ on actual Partial itself, not actual endpoint inside partial.
+                # If not, OpenAPI doc description will be partial(func, *args, **keywords) - new function with partial application etc...
+                route.endpoint.__doc__ = None
+
             # Get response model from parameter or infer from endpoint return type hint
-            response_model = route.response_model if route.response_model else get_type_hints(route.endpoint).get('return')
+            #response_model = route.response_model if route.response_model else get_type_hints(endpoint_func).get('return')
+            response_model = route.response_model or get_type_hints(endpoint_func).get('return')
+
+            # Get openapi description from route param or endpoint docstring
+            description = route.description or endpoint_func.__doc__
 
             # Add route
             api_server.add_api_route(
@@ -334,10 +343,15 @@ class Http(Handler):
                 response_model=response_model,
                 tags=route.tags,
                 dependencies=route.middleware,
+                summary=route.summary,
+                description=description,
             )
 
     def configure_webserver(self, web_server) -> None:
         """Configure the webserver with public, asset and view paths and template options"""
+
+        # Ignore if web_server was never fired up
+        if not web_server: return
 
         # Loop each package with an HTTP definition and add to our HTTP server
         public_paths = []
@@ -410,7 +424,7 @@ class Http(Handler):
         # Initialize template system
         templates.init()
 
-    def get_prefix(self, confpath) -> str:
+    def get_prefix(self, confpath: str) -> str:
         """Get configured web and api prefixes ensuring "" prefix and no trailing /, or / if blank)"""
         prefix = uvicore.config(confpath)
         #if not prefix: prefix = '/'

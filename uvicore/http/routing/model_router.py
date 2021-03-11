@@ -8,7 +8,7 @@ from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.orm.fields import Relation
-from uvicore.http.exceptions import HTTPException
+from uvicore.http.exceptions import HTTPException, PermissionDenied
 from uvicore.auth import UserInfo
 
 
@@ -74,10 +74,13 @@ class ModelRoute:
 
                 # Check if user has permissino to child relatoin (or superadmin)
                 if model_permission not in user.permissions:
-                    raise HTTPException(
-                        status_code=401,
-                        detail="Access denied to {}".format(model_permission)
-                    )
+                    # I convert model_permissins to a list for consistency with other permission denied errors
+                    # although there will always be just one model_permission in this function
+                    # raise HTTPException(
+                    #     status_code=401,
+                    #     detail="Permission denied to {}".format(str([model_permission]))
+                    # )
+                    raise PermissionDenied(model_permission)
 
                 # Walk down each "include parts" entities
                 entity = relation.entity
@@ -154,7 +157,6 @@ class ModelRoute:
     #     #return await Model.query().include(*include.split(',')).find(id)
 
 
-
 @uvicore.controller()
 class ModelRouter(Controller):
 
@@ -204,6 +206,7 @@ class ModelRouter(Controller):
                 'Guard': Guard,
                 'Request': Request,
                 'HTTPException': HTTPException,
+                'PermissionDenied': PermissionDenied,
             })
 
         # Return router
