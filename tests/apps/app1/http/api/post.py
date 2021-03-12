@@ -7,7 +7,7 @@ from app1 import models
 
 from uvicore.auth.middleware import Guard
 
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 
 
 @uvicore.controller()
@@ -23,7 +23,7 @@ class Post(Controller):
         #@route.get('/post4', middleware=[Auth('model-perms')])
         #@route.get('/post4', auth=Guard('model-perms'))
         @route.get('/post4')
-        async def post4(id: str, user: UserInfo = Guard()) -> models.Post:
+        async def post4(id: str, user: User = Guard()) -> models.Post:
             """This docstring shows up in OpenAPI Docs"""
             #return '/group1/post4'
             return await models.Post.query().find(4)

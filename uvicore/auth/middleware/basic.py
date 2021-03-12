@@ -3,7 +3,7 @@ from base64 import b64decode
 from uvicore.http import status
 from uvicore.typing import Tuple, Dict
 from uvicore.http import Request
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
 from fastapi.security import SecurityScopes
@@ -54,8 +54,8 @@ class Basic(Auth):
         # Incomplete username or password provided
         if not separator: raise InvalidCredentials(unauthorized_headers)
 
-        # Get user model and validate credentials
-        user = await self.get_user(username, password or '', self.config.provider)
+        # Get user and validate credentials
+        user: User = await self.retrieve_user(username, password or '', self.config.provider)
 
         # If no user returned, validation has failed or user not found
         if user is None: raise InvalidCredentials(unauthorized_headers)
@@ -64,7 +64,7 @@ class Basic(Auth):
         #raise InvalidCredentials(unauthorized_headers)
 
         # Validate Permissions
-        #self.validate_permissions(user, scopes)
+        self.validate_permissions(user, scopes)
 
         # Authorization successful.
         # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')

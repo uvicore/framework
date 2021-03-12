@@ -9,7 +9,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.orm.fields import Relation
 from uvicore.http.exceptions import HTTPException, PermissionDenied
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 
 
 @uvicore.service()
@@ -20,7 +20,7 @@ class ModelRoute:
         """Build dynamic model CRUD routes"""
 
         @route.get('/' + path, response_model=typing.List[Model], tags=tags)
-        async def list(include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
+        async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
             includes = include.split(',') if include else []
 
@@ -29,14 +29,14 @@ class ModelRoute:
 
         #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
         @route.get('/' + path + '/{id}', tags=tags)
-        async def get(id: typing.Any, include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
+        async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
             includes = include.split(',') if include else []
 
             self.guard_include_permissions(Model, includes, user)
             return await Model.query().include(*includes).cache().find(id)
 
-    def guard_include_permissions(self, Model, includes: typing.List, user: UserInfo):
+    def guard_include_permissions(self, Model, includes: typing.List, user: User):
         # No includes, skip
         if not includes: return
 
@@ -160,6 +160,11 @@ class ModelRoute:
 @uvicore.controller()
 class ModelRouter(Controller):
 
+    # def __init__(self, package, guards: bool):
+    #     """Init override to add custom guards parameter"""
+    #     super().__init__(package)
+    #     self.guards = guards
+
     def register(self, route: ApiRouter):
 
         # Get all models in tablename sorted order from Ioc bindings
@@ -202,7 +207,7 @@ class ModelRouter(Controller):
                 'tags': tags,
                 'uvicore': uvicore,
                 'typing': typing,
-                'UserInfo': UserInfo,
+                'User': User,
                 'Guard': Guard,
                 'Request': Request,
                 'HTTPException': HTTPException,

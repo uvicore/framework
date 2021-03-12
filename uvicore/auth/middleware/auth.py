@@ -1,13 +1,14 @@
 import uvicore
 from uvicore.http import status
 from uvicore.http import Request
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 from uvicore.support import module
 from fastapi.params import Security
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd
 from uvicore.typing import Optional, Sequence, Callable, Any, List, Dict, Tuple
 from uvicore.http.exceptions import HTTPException, PermissionDenied, NotAuthenticated, InvalidCredentials
+from uvicore.contracts import UserProvider
 
 @uvicore.service()
 class RouteGuard:
@@ -192,18 +193,18 @@ class Authenticator:
 class Auth:
     """Base Auth middleware class"""
 
-    async def get_user(self, username: str, password: str, provider: Dict):
-        user_model = module.load(provider.module).object
-        user_method = getattr(user_model, provider.method)
-        user: UserInfo = await user_method(**{
-            'provider': provider,
-            'username': username,
-            'password': password,
-        })
+    async def retrieve_user(self, username: str, password: str, provider: Dict) -> Optional[User]:
+        # Import our user provider defined in auth config
+        user_provider: UserProvider = module.load(provider.module).object()
+
+        # Get user from user provider and validate password
+        # If returned user is None, validation has failed, user is disabled or user not found
+        user = await user_provider.retrieve_by_credentials(username, password, **provider.options)
+
         # Do not throw error if no user or not validated here.  We let the middleware handle that
         return user
 
-    def validate_permissions(self, user: UserInfo, scopes: SecurityScopes) -> None:
+    def validate_permissions(self, user: User, scopes: SecurityScopes) -> None:
         # Superadmin is always allowed
         if user.superadmin: return
 

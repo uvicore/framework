@@ -1,7 +1,7 @@
 import uvicore
 from uvicore.support.dumper import dd, dump
 from uvicore.auth.middleware.auth import Guard
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 from uvicore.http import Request, response
 from uvicore.http.routing import WebRouter, Controller
 from fastapi import Depends
@@ -19,7 +19,7 @@ class Admin(Controller):
         #@route.get('/admin', name='admin', auth=Guard(['scope2'], guard='web'))
         #@route.get('/admin', name='admin', auth=Guard())
         @route.get('/admin', name='admin')
-        #def home(request: Request, user: UserInfo = Guard()):
+        #def home(request: Request, user: User = Guard()):
         def home(request: Request):
             #return user.email
             return response.View('app1/admin.j2', {

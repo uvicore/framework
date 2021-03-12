@@ -1,10 +1,10 @@
 import uvicore
 from uvicore.typing import Dict, Tuple
 from uvicore.http import Request
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd
-from uvicore.http.exceptions import HTTPException, PermissionDenied
+from uvicore.http.exceptions import HTTPException, PermissionDenied, InvalidCredentials
 from uvicore.http import status
 from uvicore.support import module
 import jwt
@@ -137,15 +137,15 @@ class Jwt(Auth):
         #     'name': 'Admin|Istrator'
         # }
 
-        # Get user model and validate credentials
-        user = await self.get_user(payload.email, None, self.config.provider)
+        # Get user and validate credentials
+        user: User = await self.retrieve_user(payload.email, None, self.config.provider)
 
         # If user is none and auto_create_user is enabled, auto-create user
         # Link user up to groups table based on JWT roles
         # Now self.get_user again
 
         # If no user returned, validation has failed or user not found
-        if user is None: raise InvalidCredentials(unauthorized_headers)
+        if user is None: raise InvalidCredentials()
 
         # Validate Permissions
         #self.validate_permissions(user, scopes)

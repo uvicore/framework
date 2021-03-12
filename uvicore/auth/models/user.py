@@ -6,7 +6,7 @@ from uvicore.support.dumper import dd, dump
 from uvicore.auth.models import Group, Role
 from uvicore.auth.database.tables import users as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
-from uvicore.auth import UserInfo
+from uvicore.auth import User as AuthUser
 from uvicore.support.hash import sha1
 
 
@@ -90,102 +90,6 @@ class User(Model['User'], metaclass=ModelMetaclass):
         description="User Roles",
         relation=BelongsToMany('uvicore.auth.models.role.Role', join_tablename='user_roles', left_key='user_id', right_key='role_id'),
     )
-
-    @classmethod
-    async def userinfo(entity, provider: Dict, id: int = None, username: str = None, password: str = None) -> UserInfo:
-        """Build Auth User Info Object and optionally validate password if provided"""
-
-        # Get password hash for cache key.  Password is still required to pull the right cache key
-        # or else someone could login with an invalid password for the duration of the cache
-        password_hash = '/' + sha1(password) if password is not None else ''
-        if password is not None: password_hash = sha1(password)
-
-        # Check if user already validated in cache
-        cache_key = 'auth/userinfo/' + username + password_hash
-        if await uvicore.cache.has(cache_key):
-            # User is already validated and cached
-            # Retrieve user from cache, no password check required because cache key has password has in it
-            userinfo = await uvicore.cache.get(cache_key)
-            return userinfo
-
-        else:
-            # Cache not found.  Query user, validate password and convert to userinfo object
-            # Do NOT utilize ORM cache, we handle here manually
-
-            # Find based on ID or email
-            kwargs = {entity.pk: id} if id else {'email': username}
-
-            # Get includes from auth config
-            includes = provider.includes
-
-            user = await (entity.query()
-                .include(*includes)
-                #.where('disabled', False) # Throws Warning: Truncated incorrect DOUBLE value: '=', even with 0 or 1, string fixes it
-                .where('disabled', '0')
-                .show_writeonly(['password'])
-                .find(**kwargs)
-            )
-            # User not found or disabled.  Return None means not verified or found.
-            if not user: return None
-
-            # If password, validate
-            if password is not None:
-                if not pwd.verify(password, user.password):
-                    # Invalid password.  Return None means not verified or found.
-                    return None
-
-            # Build result SuperDict
-            userinfo = UserInfo()
-            userinfo.id = user.id
-            userinfo.uuid = user.uuid
-            userinfo.email = user.email
-            userinfo.first_name = user.first_name
-            userinfo.last_name = user.last_name
-            userinfo.title = user.title
-            userinfo.avatar_url = user.avatar_url
-
-            # Get users groups->roles->permissions (roles linked to a group)
-            groups = []
-            roles = []
-            permissions = []
-            if 'groups' in includes:
-                user_groups = user.groups
-                if user_groups:
-                    for group in user_groups:
-                        groups.append(group.name)
-                        if not group.roles: continue
-                        for role in group.roles:
-                            roles.append(role.name)
-                            if not role.permissions: continue
-                            for permission in role.permissions:
-                                permissions.append(permission.name)
-
-            # Get users roles->permissions (roles linked directly to the user)
-            if 'roles' in includes:
-                user_roles = user.roles
-                if user_roles:
-                    for role in user_roles:
-                        roles.append(role.name)
-                        if not role.permissions: continue
-                        for permission in role.permissions:
-                            permissions.append(permission.name)
-
-            # Unique groups, roles and permissions (sets are unique)
-            userinfo.groups = list(set(groups))
-            userinfo.roles = list(set(roles))
-            userinfo.permissions = list(set(permissions))
-
-            # Set super admin, existence of 'admin' permission
-            userinfo.superadmin = False
-            if 'admin' in userinfo.permissions:
-                # No need for any permissinos besides ['admin']
-                userinfo.permissions = ['admin']
-                userinfo.superadmin = True
-
-            # Save to cache
-            await uvicore.cache.put(cache_key, userinfo, seconds=10)
-            #dump(userinfo)
-            return userinfo
 
     async def _before_save(self) -> None:
         """Hook fired before record is saved (inserted or updated)"""

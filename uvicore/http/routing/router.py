@@ -46,7 +46,7 @@ class Router(contracts.Router, Generic[R]):
             if name[0] == '.': name = name[1:]     # Remove beginning .
         self.name = name
 
-    def controller(self, module: Union[str, Callable], *, prefix: str = '', name: str = ''):
+    def controller(self, module: Union[str, Callable], *, prefix: str = '', name: str = '', params: Dict = {}):
         if prefix:
             if prefix[-1] == '/': prefix = prefix[0:-1]  # Remove trailing /
             if prefix[0] != '/': prefix = '/' + prefix   # Add beginning /
@@ -75,7 +75,7 @@ class Router(contracts.Router, Generic[R]):
             module = load(module).object
 
         # fixme, if string import it...
-        controller: Routes = module(self.package)
+        controller: Routes = module(self.package, **params)
 
         # New self (Web or Api) router instance
         router = self.__class__(self.package, self.prefix + prefix, self.name + '.' + name, self.controllers)
@@ -100,9 +100,9 @@ class Router(contracts.Router, Generic[R]):
 
         return routes
 
-    def include(self, module, *, prefix: str = '', name: str = ''):
+    def include(self, module, *, prefix: str = '', name: str = '', params: Dict = {}):
         """Alias to controller"""
-        self.controller(module=module, prefix=prefix, name=name)
+        self.controller(module=module, prefix=prefix, name=name, params=params)
 
     def override(self, package_name: str, route_name: str, endpoint: Callable):
         # We have a package_name like mreschke.wiki

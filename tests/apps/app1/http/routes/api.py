@@ -8,7 +8,7 @@ from app1.models.post import Post
 from uvicore.auth.middleware import Guard
 
 from uvicore.auth.models import User
-from uvicore.auth import UserInfo
+from uvicore.auth import User
 
 from app1.http.api.post import Post as PostController
 from datetime import datetime
@@ -37,6 +37,7 @@ class Api(Routes):
         def autoapi():
             # I should add a flag to NOT auto add Guard() to each model endpoint
             # If I wanted a fully public model router
+            #route.include(ModelRouter, params={'guards': True})
             route.include(ModelRouter)
 
         async def get_method() -> Post:
@@ -54,9 +55,17 @@ class Api(Routes):
 
             @route.get('/ping', auth=Guard(['scope3']))
             #@route.get('/ping')
-            def ping(request: Request, user: UserInfo = Guard(['scope4'])):
+            def ping(request: Request, user: User = Guard(['scope4'])):
             #def ping(request: Request):
                 user = request.scope.get('user')
+                dump(user)
+                dump(user.name)
+                dump(user.permissions)
+                dump(user.can(['posts.read', 'comments.read']))
+
+                if user.can('posts.read'):
+                    dump('yes user can posts.read')
+
                 return {
                     'message': 'pong {}'.format(datetime.now()),
                     'user': user

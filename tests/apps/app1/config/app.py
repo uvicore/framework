@@ -168,11 +168,11 @@ config = {
         # User repository providers
         'providers': {
             'users': {
-                'module': 'uvicore.auth.models.user.User',
-                'method': 'userinfo',
-                'model': 'uvicore.auth.models.user.User',
-                'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
-            },
+                'module': 'uvicore.auth.user.UserProvider',
+                'options': {
+                    'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
+                }
+            }
         },
 
         # Authenticator default options
