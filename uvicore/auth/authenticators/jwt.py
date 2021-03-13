@@ -2,7 +2,7 @@ import jwt
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
-from uvicore.typing import Dict, Optional
+from uvicore.typing import Dict, Optional, Union
 from uvicore.auth.authenticators.base import Authenticator
 from uvicore.http.exceptions import NotAuthenticated, InvalidCredentials, HTTPException
 from uvicore.contracts import User
@@ -13,22 +13,25 @@ class Jwt(Authenticator):
 
     # Notice:  Do not ever throw or return an error from authenticators.
     # If there is any auth problem (no headers, invalid or expired tokens, bad password)
-    # then return None instead.  Any issues or invalid credentials causes the global
+    # then return True or False instead.  Any issues or invalid credentials causes the global
     # Authentication middleware to inject an Anonymous user, not to throw errors.
     # Any permissions errors happen at a route level when checking of the route
     # require an authenticated user or valid scope/role.
 
-    def __init__(self, config: Dict):
-        self.config = config
+    # Return of False means this authorization method is not being attempted
+    # Return of True means this authorization method was being attempted, but failed validation
+    # Return of User object means a valid user was found
 
-    async def authenticate(self, request: HTTPConnection) -> Optional[User]:
+    async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
+        dump('JWT Authenticator HERE')
+
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
 
         # This authorization method not provided or attempted, goto next authenticator
         if not authorization or scheme != "bearer":
-            # Return None means goto next authenticator in authorization middleware
-            return None
+            # Return of False means this authorization method is not being attempted
+            return False
 
         # Decode JWT
         try:
@@ -45,7 +48,7 @@ class Jwt(Authenticator):
                 # jwt.decode also validates the aud claim.  Since we are skipping validation, we'll still validate aud claim here.
                 if payload.aud != self.config.audience:
                     # No exception, just return None to denote Anonymous
-                    return
+                    return True
                     # return HTTPException(
                     #     status_code=status.HTTP_401_UNAUTHORIZED,
                     #     detail="Invalid audience",
@@ -59,7 +62,7 @@ class Jwt(Authenticator):
             #     detail=str(e),
             # )
             # No exception, just return None to denote Anonymous
-            return
+            return True
 
         #dump('JWT', payload)
 

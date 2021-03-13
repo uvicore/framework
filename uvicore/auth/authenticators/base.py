@@ -11,10 +11,14 @@ from uvicore.contracts import Authenticator as AuthenticatorInterface
 class Authenticator(AuthenticatorInterface):
     """Base authenticator class"""
 
+    def __init__(self, config: Dict):
+        self.config = config
+
+    # This can probably be private _ ??
     async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[User]:
         """Retrieve user from User Provider backend"""
 
-        # Import our user provider defined in auth config
+        # Import user provider defined in auth config
         user_provider: UserProvider = module.load(provider.module).object()
 
         # Get user from user provider and validate password
@@ -36,6 +40,7 @@ class Authenticator(AuthenticatorInterface):
         # Do not throw error if no user or not validated here.  We let the middleware handle that
         return user
 
+    # NO, needs to move
     def validate_permissions(self, user: User, scopes: List) -> None:
         """Validate logged in users permissions again route permissions"""
 
@@ -57,6 +62,7 @@ class Authenticator(AuthenticatorInterface):
         # No matching permissinos means they are logged in, but they don't have the proper permissions.
         raise PermissionDenied(route_permissions)
 
+    # This can probably be private _ ??
     def auth_header(self, request) -> Tuple[str, str, str]:
         """Extract authorization header parts"""
         authorization = request.headers.get('Authorization')

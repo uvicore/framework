@@ -89,6 +89,7 @@ config = {
             'redoc_url': '/redoc',
         },
         'middleware': OrderedDict({
+            # Only allow this site to be hosted from these domains
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
@@ -96,6 +97,8 @@ config = {
                     'www_redirect': True,
                 }
             },
+
+            # Only allow these domains to access routes
             'CORS': {
                 'module': 'uvicore.http.middleware.CORS',
                 'options': {
@@ -108,6 +111,8 @@ config = {
                     'max_age': 600,
                 }
             },
+
+            # Detect one or more authentication mechanisms and load valid or anonymous user into request.user
             'Authentication': {
                 # All options are configured in the 'auth' section of this app config
                 'module': 'uvicore.http.middleware.Authentication',

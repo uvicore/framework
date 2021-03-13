@@ -8,7 +8,8 @@ from app1.models.post import Post
 from uvicore.auth.middleware import Guard
 
 from uvicore.auth.models import User
-from uvicore.auth import User
+#from uvicore.auth import User
+from uvicore.contracts import User
 
 from app1.http.api.post import Post as PostController
 from datetime import datetime
@@ -23,6 +24,8 @@ class Api(Routes):
     #user: User = Guard(['admin'])
     #auth = Guard(['scope0'], guard='api')
 
+    #scopes = ['authenticated', 'admin']
+
     def register(self, route: ApiRouter):
 
         # Define controller base path
@@ -30,6 +33,7 @@ class Api(Routes):
 
         # Include dynamic model CRUD API endpoints (the "auto API")!
         #@route.group(auth=Guard(['scope-AUTO'], guard='api'))
+        #@route.group(scopes=['authenticated', 'api.access'])
         @route.group()
         def autoapi():
             # I should add a flag to NOT auto add Guard() to each model endpoint
@@ -48,12 +52,19 @@ class Api(Routes):
 
         @route.group()
         #@route.group(auth=Guard(['scope1', 'scope2'], guard='api'))
+        #@route.group(scopes=['scope1', 'scope2'])
         def ping_group():
 
             #@route.get('/ping', auth=Guard(['scope3']))
             @route.get('/ping')
+            #@route.get('/ping', scopes=['scope3'])
             #def ping(request: Request, user: User = Guard(['scope4'])):
             def ping(request: Request):
+            #def ping(request: Request, user: User):  # If I hacked FastAPI dep code
+            #def ping(request: Request, user: User = User()):  # If I made a depends Class like my old Guard()
+                user: User = request.user
+
+
                 #user = request.scope.get('user')
                 #dump(user)
                 #dump(user.name)

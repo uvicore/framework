@@ -33,7 +33,7 @@ class Authentication:
         # The base connection that works for HTTP and WebSockets.  Request inherits from HTTPConnection
         request = HTTPConnection(scope)
 
-        # Loop each authenticator
+        # Loop each authenticator until one is a success
         user = None
         for authenticator in self.config.authenticators.values():
             # Load authenticator backend
@@ -43,34 +43,57 @@ class Authentication:
                 raise Exception('Issue trying to import authenticator module defined in app.auth config - {}'.format(str(e)))
 
             # Call backend authenticate() method
-            user: User = await backend.authenticate(request)
+            # Return of False means this authorization method is not being attempted
+            # Return of True means this authorization method was being attempted, but failed validation
+            # Return of User object means a valid user was found
+            user = await backend.authenticate(request)
+
+            # Determine if we should continue to next authenticator
+            # Return of True means this authorization method was being attempted, but failed validation
+            # This means we can SKIP the next authenticators as they are not being attempted.
+            if isinstance(user, bool) and user == True:
+                break
+
+            # If User object returned, validation success, stop authenticator itteration
+            if isinstance(user, User):
+                break
 
             # Check for exception and return
             # NO, authenticators should NEVER return errors, only valid User or None
             # if isinstance(user, HTTPException):
             #     return await self.error_response(user, scope, receive, send)
 
-            # If user found, stop authenticator itteration
-            if user is not None: break
-
-
-        # If all authenticators returned None, user is not logged in with any method.
-        # Build an anonymouse user object to inject into the request scope
-        if user is None:
-            anonymous_provider: UserProvider = module.load(self.config.default_provider.module).object()
-            params = self.config.default_provider.options.clone()
-            params.merge(self.config.default_provider.anonymous_options)
-            provider_method = anonymous_provider.retrieve_by_username
-            if 'id' in params: provider_method = anonymous_provider.retrieve_by_id
-            if 'uuid' in params: provider_method = anonymous_provider.retrieve_by_uuid
-            user = await provider_method(request=request, **params)
+        # Retrieve anonymous user from default_provider backend
+        # If all authenticators returned no User object, user is not logged in with any method.
+        # Build an anonymous user object to inject into the request scope
+        if not isinstance(user, User):
+            user = await self.retrieve_anonymous_user(request)
 
         # Add user to request
         scope["user"] = user
         scope["auth"] = user.permissions
 
-        # Next middleware in stack
+        # Next global middleware in stack
         await self.app(scope, receive, send)
+
+    async def retrieve_anonymous_user(self, request: HTTPConnection):
+        """Retrieve anonymous user from User Provider backend"""
+
+        # Import user provider defined in auth config
+        # Anonymous user provider is always the 'default_provider'
+        user_provider: UserProvider = module.load(self.config.default_provider.module).object()
+
+        # Get additional provider kwargs from options and anonymous_options config
+        kwargs = self.config.default_provider.options.clone()
+        kwargs.merge(self.config.default_provider.anonymous_options)  # Anonymous wins in merge
+
+        # Alter provider method called based on existence of username, id, or uuid parameters
+        provider_method = user_provider.retrieve_by_username
+        if 'id' in kwargs: provider_method = user_provider.retrieve_by_id
+        if 'uuid' in kwargs: provider_method = user_provider.retrieve_by_uuid
+
+        # Call user provider method passing in defined kwargs
+        return await provider_method(request=request, **kwargs)
 
     def load_config(self):
         """Get web or api auth config and merge default options and providers"""
