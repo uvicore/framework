@@ -10,42 +10,6 @@ from uvicore.typing import Optional, Sequence, Callable, Any, List, Dict, Tuple
 from uvicore.http.exceptions import HTTPException, PermissionDenied, NotAuthenticated, InvalidCredentials
 from uvicore.contracts import UserProvider
 
-@uvicore.service()
-class RouteGuard:
-    def __init__(self, guard: str = None):
-        # Get auth_config from app config
-        auth_config = uvicore.config.app.auth
-
-        # Set default guard if none providedGet actual guard from app config
-        if guard is None: guard = auth_config.default
-
-        # Get actual guard config
-        if guard not in auth_config.guards:
-            raise Exception('Guard {} not found in app config'.format(guard))
-        guard_config = auth_config.guards[guard].clone()  # Clone becuase I add name below
-
-        # Add name to guard config (its a clone, its ok)
-        guard_config.name = guard
-
-        # Get all authenticator options from auth_config
-        options = auth_config.options
-
-        # Get all providers from auth_config
-        providers = auth_config.providers
-
-        # Add instance variables
-        self.guard = guard
-        self.config = guard_config
-        self.options = options
-        self.providers = providers
-
-    def __call__(self, scopes: Optional[Sequence[str]] = None):
-        # Ensure scopes is a List, to allow for singles
-        if scopes: scopes = [scopes] if isinstance(scopes, str) else list(scopes)
-
-        # Return new Security Depends
-        return Security(dependency=Authenticator(self.config, self.options, self.providers), scopes=scopes, use_cache=True)
-
 
 @uvicore.service()
 class Guard(Security):
@@ -194,6 +158,7 @@ class Auth:
     """Base Auth middleware class"""
 
     async def retrieve_user(self, username: str, password: str, provider: Dict) -> Optional[User]:
+        """Retrieve user from User Provider backend"""
         # Import our user provider defined in auth config
         user_provider: UserProvider = module.load(provider.module).object()
 
@@ -205,6 +170,8 @@ class Auth:
         return user
 
     def validate_permissions(self, user: User, scopes: SecurityScopes) -> None:
+        """Validate logged in users permissions again route permissions"""
+
         # Superadmin is always allowed
         if user.superadmin: return
 
@@ -224,6 +191,7 @@ class Auth:
         raise PermissionDenied(route_permissions)
 
     def auth_header(self, request) -> Tuple[str, str, str]:
+        """Extract authorization header parts"""
         authorization = request.headers.get('Authorization')
         if not authorization: return (authorization, '', '')
         scheme, _, param = authorization.partition(' ')

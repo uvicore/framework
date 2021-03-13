@@ -3,7 +3,6 @@ from base64 import b64decode
 from uvicore.http import status
 from uvicore.typing import Tuple, Dict
 from uvicore.http import Request
-from uvicore.auth import User
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
 from fastapi.security import SecurityScopes
@@ -38,7 +37,7 @@ class Basic(Auth):
             if self.config.return_www_authenticate_header:
                 # Only add WWW-Authenticate header if configured.  If Basic auth is the LAST of the guard stack
                 # and we are in Web guard, we can safely prompt the browser Login box
-                raise NotAuthenticated(unauthorized_headers)
+                raise NotAuthenticated(headers=unauthorized_headers)
             else:
                 # Return None means goto next middleware in guard stack
                 return None
@@ -48,20 +47,20 @@ class Basic(Auth):
             data = b64decode(param).decode("ascii")
         except Exception:
             # No credentials defined from basic auth header
-            raise InvalidCredentials(unauthorized_headers)
+            raise InvalidCredentials(headers=unauthorized_headers)
         username, separator, password = data.partition(":")
 
         # Incomplete username or password provided
-        if not separator: raise InvalidCredentials(unauthorized_headers)
+        if not separator: raise InvalidCredentials(headers=unauthorized_headers)
 
         # Get user and validate credentials
-        user: User = await self.retrieve_user(username, password or '', self.config.provider)
+        user = await self.retrieve_user(username, password or '', self.config.provider)
 
         # If no user returned, validation has failed or user not found
-        if user is None: raise InvalidCredentials(unauthorized_headers)
+        if user is None: raise InvalidCredentials(headers=unauthorized_headers)
 
         # Hack logout by uncommenting this once
-        #raise InvalidCredentials(unauthorized_headers)
+        #raise InvalidCredentials(headers=unauthorized_headers)
 
         # Validate Permissions
         self.validate_permissions(user, scopes)

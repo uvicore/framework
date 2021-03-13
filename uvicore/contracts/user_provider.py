@@ -1,32 +1,56 @@
 from abc import ABC, abstractmethod
+from uvicore.typing import Union, List, Dict
 from uvicore.contracts.user import User
+from uvicore.http.request import HTTPConnection
 
 
 class UserProvider(ABC):
 
-    @abstractmethod
-    def retrieve_by_id(self, id) -> User:
-        """Retrieve the user from the database by primary key.  No validation."""
-        pass
+    def __init__(self):
+        # Default field mapping for each method below, easily overridable in your custom user providers!
+        self.field_map = {
+            'id': 'id',
+            'uuid': 'uuid',
+            'username': 'username',
+        }
 
-    @abstractmethod
-    async def retrieve_by_uuid(self, uuid: str) -> User:
-        """Retrieve the user from the database by uuid.  No validation."""
-        pass
+    async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, **kwargs) -> User:
+        """Retrieve user by primary key from the user provider backend.  No validation."""
+        field = self.field_map['id']
+        return await self._retrieve_user(field, id, request, **kwargs)
 
-    @abstractmethod
-    async def retrieve_by_username(self, username: str) -> User:
-        """Retrieve the user from the database by username.  No validation."""
-        pass
+    async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, **kwargs) -> User:
+        """Retrieve the user by uuid from the user provider backend.  No validation."""
+        field = self.field_map['uuid']
+        return await self._retrieve_user(field, uuid, request, **kwargs)
 
-    @abstractmethod
-    async def retrieve_by_credentials(self, username: str, password: str) -> User:
-        """Retrieve the user from the database by username and validate the password"""
-        pass
+    async def retrieve_by_username(self, username: str, request: HTTPConnection, **kwargs) -> User:
+        """Retrieve the user by username from the user provider backend.  No validation."""
+        field = self.field_map['username']
+        return await self._retrieve_user(field, username, request, **kwargs)
+
+    async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, **kwargs) -> User:
+        """Retrieve the user by username from the user provider backend AND validate the password if not None"""
+        field = self.field_map['username']
+        return await self._retrieve_user(field, username, request, password=password, **kwargs)
+
+
 
     # @abstractmethod
-    # async def validateCredentials(user, password: str) -> bool:
-    #     """# Validates an existing user"""
-    #     pass
+    # async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, options: Dict = {}) -> User:
+    #     """Retrieve user by primary key from the user provider backend.  No validation."""
+
+    # @abstractmethod
+    # async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, options: Dict = {}) -> User:
+    #     """Retrieve the user by uuid from the user provider backend.  No validation."""
+
+    # @abstractmethod
+    # async def retrieve_by_username(self, username: str, request: HTTPConnection, options: Dict = {}) -> User:
+    #     """Retrieve the user by username from the user provider backend.  No validation."""
+
+    # @abstractmethod
+    # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, options: Dict = {}) -> User:
+    #     """Retrieve the user by username from the user provider backend AND validate the password if not None"""
+
 
 

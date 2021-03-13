@@ -3,7 +3,8 @@ from starlette.background import BackgroundTask as _BackgroundTask
 from starlette.templating import _TemplateResponse
 
 # Proxy starlette response APIs
-from starlette.responses import Response as Generic
+#from starlette.responses import Response as Generic
+from starlette.responses import Response
 from starlette.responses import PlainTextResponse as Text
 from starlette.responses import HTMLResponse as HTML
 from starlette.responses import JSONResponse as JSON

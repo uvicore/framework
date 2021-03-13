@@ -21,9 +21,11 @@ class Admin(Controller):
         @route.get('/admin', name='admin')
         #def home(request: Request, user: User = Guard()):
         def home(request: Request):
+            user = request.user
             #return user.email
             return response.View('app1/admin.j2', {
-                'request': request
+                'request': request,
+                'user': user,
             })
 
         # Return router

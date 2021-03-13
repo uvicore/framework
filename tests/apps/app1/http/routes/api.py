@@ -13,10 +13,6 @@ from uvicore.auth import User
 from app1.http.api.post import Post as PostController
 from datetime import datetime
 
-# Define our default auth guard
-#guard = RouteGuard('api')
-#dump(guard.__dict__)
-
 
 @uvicore.routes()
 class Api(Routes):
@@ -33,7 +29,8 @@ class Api(Routes):
         route.controllers = 'app1.http.api'
 
         # Include dynamic model CRUD API endpoints (the "auto API")!
-        @route.group(auth=Guard(['scope-AUTO'], guard='api'))
+        #@route.group(auth=Guard(['scope-AUTO'], guard='api'))
+        @route.group()
         def autoapi():
             # I should add a flag to NOT auto add Guard() to each model endpoint
             # If I wanted a fully public model router
@@ -49,26 +46,26 @@ class Api(Routes):
         route.add('/get_method1', get_method, ['GET'])
 
 
-        #@route.group()
-        @route.group(auth=Guard(['scope1', 'scope2'], guard='api'))
+        @route.group()
+        #@route.group(auth=Guard(['scope1', 'scope2'], guard='api'))
         def ping_group():
 
-            @route.get('/ping', auth=Guard(['scope3']))
-            #@route.get('/ping')
-            def ping(request: Request, user: User = Guard(['scope4'])):
-            #def ping(request: Request):
-                user = request.scope.get('user')
-                dump(user)
-                dump(user.name)
-                dump(user.permissions)
-                dump(user.can(['posts.read', 'comments.read']))
+            #@route.get('/ping', auth=Guard(['scope3']))
+            @route.get('/ping')
+            #def ping(request: Request, user: User = Guard(['scope4'])):
+            def ping(request: Request):
+                #user = request.scope.get('user')
+                #dump(user)
+                #dump(user.name)
+                #dump(user.permissions)
+                #dump(user.can(['posts.read', 'comments.read']))
 
-                if user.can('posts.read'):
-                    dump('yes user can posts.read')
+                #if user.can('posts.read'):
+                #    dump('yes user can posts.read')
 
                 return {
                     'message': 'pong {}'.format(datetime.now()),
-                    'user': user
+                    #'user': user
                 }
 
 

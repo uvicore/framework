@@ -1,3 +1,14 @@
 <h1>Private Admin Page</h1>
 
-<a href="{{url('app1.home')}}">Home</a>
+<a href="{{ url('app1.home') }}">Home</a>
+
+<hr>
+
+{{ user }}<hr>
+Name: {{ user.name }}<hr>
+Username: {{ user.username }}<hr>
+User can read posts: {{ user.can('posts.read') }}<hr>
+User is admin: {{ user.is_admin }}<hr>
+Groups: {{ user.groups }}<hr>
+Roles: {{ user.roles }}<hr>
+Permissions: {{ user.permissions }}<hr>

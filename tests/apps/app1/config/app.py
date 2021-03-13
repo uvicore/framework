@@ -50,6 +50,14 @@ config = {
                     'www_redirect': True,
                 }
             },
+            'Authentication': {
+                # All options are configured in the 'auth' section of this app config
+                'module': 'uvicore.http.middleware.Authentication',
+                'options': {
+                    'route_type': 'web',  # web or api only
+                }
+            },
+
             # If you have a loadbalancer with SSL termination in front of your web
             # app, don't use this redirection to enforce HTTPS as it is always HTTP internally.
             # 'HTTPSRedirect': {
@@ -100,6 +108,13 @@ config = {
                     'max_age': 600,
                 }
             },
+            'Authentication': {
+                # All options are configured in the 'auth' section of this app config
+                'module': 'uvicore.http.middleware.Authentication',
+                'options': {
+                    'route_type': 'api',  # web or api only
+                }
+            },
 
         }),
     },
@@ -134,9 +149,141 @@ config = {
     # duplication in this config.
     # --------------------------------------------------------------------------
     'auth': {
+
+        # Web route authenticators and user providers
+        'web': {
+            # Default provider used for anonymous retrieval and for authenticators that do not specify their own
+            'default_provider': 'orm',
+
+            # Authenticators, multiples allow many forms of authentication
+            'authenticators': {
+                # 'jwt': {
+                #     # Deep merge default options from 'options' Dictionary below.
+                #     # Can override any default options by specifying them here
+                #     'default_options': 'jwt',
+                # },
+
+                'basic': {
+                    # Deep merge default options from 'options' Dictionary below.
+                    # Can override any default options by specifying them here
+                    'default_options': 'basic',
+                    'realm': 'App1 Web Realm',
+                },
+            },
+        },
+
+        # Api route authenticators and user providers
+        'api': {
+            # Default provider used for anonymous retrieval and for authenticators that do not specify their own
+            'default_provider': 'orm',
+
+            # Authenticators, multiples allow many forms of authentication
+            'authenticators': {
+                'jwt': {
+                    # Deep merge default options from 'options' Dictionary below.
+                    # Can override any default options by specifying them here
+                    'default_options': 'jwt',
+                    #'provider': 'jwt',
+                },
+                'basic': {
+                    # Deep merge default options from 'options' Dictionary below.
+                    # Can override any default options by specifying them here
+                    'default_options': 'basic',
+                    'realm': 'App1 API Realm',
+                },
+            },
+        },
+
+        # User repository providers
+        'providers': {
+            'orm': {
+                'module': 'uvicore.auth.user_providers.Orm',
+                # Options are passed as parameters into the UserProvider retrieve methods
+                'options': {
+                    'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
+                },
+                # Anonymous options are MERGED with options to get the anonymous user only with not authenticated
+                'anonymous_options': {
+                    'username': 'anonymous@example.com',
+                    'anonymous': True,
+                },
+            },
+            'jwt': {
+                'module': 'uvicore.auth.user_providers.Jwt',
+                'options': {
+                    # Map JWT keys into User attrributes
+                    'jwt_mapping': {
+                        # FusionAuth JWT Mappings
+                        'id': lambda jwt: jwt['sub'],
+                        'uuid': lambda jwt: jwt['sub'],
+                        'username': lambda jwt: jwt['email'],
+                        'email': lambda jwt: jwt['email'],
+                        'first_name': lambda jwt: jwt['name'].split('|')[0],
+                        'last_name': lambda jwt: jwt['name'].split('|')[1],
+                        'roles': lambda jwt: jwt['roles'],
+                        'permissions': lambda jwt: jwt['roles'],
+                        'superadmin': lambda jwt: 'Administrator' in jwt['roles'],
+                    },
+                },
+                'anonymous_options': {
+                    'anonymous': True,
+                    'username': 'anonymous@example.com',
+                    'anonymous_user': {
+                        'id': 1,
+                        'uuid': 'anon-from-config',
+                        'username': 'anonymous@example.com2',
+                        'email': 'anonymous@example.com2',
+                        'first_name': 'Anonymous',
+                        'last_name': 'User',
+                        'title': 'Anonymous',
+                        'avatar': '',
+                        'groups': [],
+                        'roles': [],
+                        'permissions': ['anon_perm'],
+                        'superadmin': False,
+                    }
+                },
+            },
+        },
+
+        # Authenticator default options
+        'default_options': {
+            'basic': {
+                #'module': 'uvicore.auth.middleware.Basic',
+                'module': 'uvicore.auth.authenticators.Basic',
+                #'provider': 'orm',  # Or use the default_provider
+                'return_www_authenticate_header': True,
+                'realm': 'App1 Realm'
+            },
+            'jwt': {
+                'module': 'uvicore.auth.authenticators.Jwt',
+                #'provider': 'orm',  # Or use the default_provider
+
+                # Settings used when there is an API gateway upstream from this API
+                'api_gateway': {
+                    'enabled': True,
+                    'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
+                    #'anonymous_header': None,
+                },
+
+                # Settings used when the user auth and JWT did not originate from this app itself
+                # but from an external Identity Provider
+                'external_idp': {
+                    'enabled': True,
+                    'auto_create_user': True,
+                    'sync_scopes': True,
+                },
+                'verify_signature': True,  # False only if a local upstream API gateway has already pre-validated
+                'audience': 'd709a432-5edc-44c7-8721-4cf123473c45',  # FusionAuth App ID
+                'algorithms': ['RS256'],
+                'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
+            },
+        },
+
+
+        # OBSOLETE SOON
         # Default auth guard to use if none specified in route middleware (auth=Guard(guard='web'))
         'default': 'web',
-
         # Auth Guards with one or more authenticator middleware
         'guards': {
             'web': {
@@ -145,7 +292,7 @@ config = {
                         # Deep merge default options from 'options' Dictionary below.
                         # Can override any default options by specifying them here
                         'options': 'basic',
-                        #'return_www_authenticate_header': True,
+                        'return_www_authenticate_header': False,
                     }
                 },
             },
@@ -165,51 +312,6 @@ config = {
             }
         },
 
-        # User repository providers
-        'providers': {
-            'users': {
-                'module': 'uvicore.auth.user.UserProvider',
-                'options': {
-                    'includes': ['roles', 'roles.permissions', 'groups', 'groups.roles', 'groups.roles.permissions'],
-                }
-            }
-        },
-
-        # Authenticator default options
-        'options': {
-            'basic': {
-                'module': 'uvicore.auth.middleware.Basic',
-                'provider': 'users',
-                'return_www_authenticate_header': False,
-                'realm': 'App1 Realm'
-            },
-            'jwt': {
-                'module': 'uvicore.auth.middleware.Jwt',
-                'provider': 'users',
-
-                # Settings used when there is an API gateway upstream from this API
-                'api_gateway': {
-                    'enabled': True,
-                    'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
-                    #'anonymous_header': None,
-                },
-
-                # Settings used when the user auth and JWT did not originate from this app itself
-                # but from an external Identity Provider
-                'external_idp': {
-                    'enabled': True,
-
-                    'auto_create_user': True,
-                    'sync_scopes': True,
-                },
-                'verify_signature': True,  # False only if a local upstream API gateway has already pre-validated
-                'audience': 'd709a432-5edc-44c7-8721-4cf123473c45',  # FusionAuth App ID
-                'algorithms': ['RS256'],
-                #'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnc84SDViVX8JNye2GVQZ\nixAwG2PWXoOhkj++wGASoAXs2LN0Ue48conxf/0bgEtq6kcbLPR23SieqBZA77vc\nyulimMbzfwNczyP3FRo8wSCqRgJipTse87WItd8ga2MUCzSS8q19V4swUT4T23Su\nDiG/Ry5f1sYbvxP2kJAJMUCzVbS7STxh33h65Bj+P6JdzrCJi+yrLqg928RHjLIF\ngDy4MyFBLTI8w5u6IJi1TLm6h9lj3YqSa/qDkkIardnnZa7Xj0IJCEB9c+RD4Q7C\n+jco6g2Vr9oLP8Mg3c5lZPNVzcXC67UMVk9lK+zrlfPDI/m2+9kyTc/58S9ZUTFJ\nQwIDAQAB\n-----END PUBLIC KEY-----',
-                'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
-            },
-
-        }
     },
 
 

@@ -1,1 +1,1 @@
-from .user import User, UserProvider
+from .user import User

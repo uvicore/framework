@@ -16,16 +16,20 @@ class Post(Controller):
     #user: User = Auth(['post.controller'], guard='api')
     #user: User = Auth()
     #user: User = Guard()
-    auth = Guard()
+    #auth = Guard()
 
     def register(self, route: ApiRouter):
 
         #@route.get('/post4', middleware=[Auth('model-perms')])
         #@route.get('/post4', auth=Guard('model-perms'))
         @route.get('/post4')
-        async def post4(id: str, user: User = Guard()) -> models.Post:
+        #async def post4(id: str, user: User = Guard()) -> models.Post:
+        async def post4(request: Request) -> models.Post:
             """This docstring shows up in OpenAPI Docs"""
-            #return '/group1/post4'
+            dump('=============================================================')
+            dump('REQUEST __dict__ FROM /post4 CONTROLLER:')
+            dump('=============================================================')
+            dump(request.__dict__)
             return await models.Post.query().find(4)
 
         # Return router

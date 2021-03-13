@@ -1,7 +1,6 @@
 import uvicore
 from uvicore.typing import Dict, Tuple
 from uvicore.http import Request
-from uvicore.auth import User
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd
 from uvicore.http.exceptions import HTTPException, PermissionDenied, InvalidCredentials
@@ -92,7 +91,7 @@ class Jwt(Auth):
 
         # This authorization method not provided or attempted, goto next guard in middleware stack
         if not authorization or scheme != "bearer":
-            # Return None means goto next middleware in guard stack
+            # Return None means goto next authenticator in authorization middleware
             return None
 
         # Decode JWT
@@ -138,7 +137,7 @@ class Jwt(Auth):
         # }
 
         # Get user and validate credentials
-        user: User = await self.retrieve_user(payload.email, None, self.config.provider)
+        user = await self.retrieve_user(payload.email, None, self.config.provider)
 
         # If user is none and auto_create_user is enabled, auto-create user
         # Link user up to groups table based on JWT roles
@@ -148,7 +147,7 @@ class Jwt(Auth):
         if user is None: raise InvalidCredentials()
 
         # Validate Permissions
-        #self.validate_permissions(user, scopes)
+        #self.validate_permissions(user, scopes.scopes)
 
         # Authorization successful.
         # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')

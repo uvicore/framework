@@ -22,6 +22,7 @@ from .server import Server
 from .template import Template
 from .user import User
 from .user_provider import UserProvider
+from .authenticator import Authenticator
 
 # The contracts package uses a __init__.py because users will import these
 # methods from their own apps and we want a nicer import which looks
