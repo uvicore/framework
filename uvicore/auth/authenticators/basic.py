@@ -58,8 +58,8 @@ class Basic(Authenticator):
         user: User = await self.retrieve_user(username, password or '', self.config.provider, request)
 
         # If no user returned, validation has failed or user not found
-        #if user is None: return InvalidCredentials(headers=unauthorized_headers)
-        #if user is None: return InvalidCredentials(headers=unauthorized_headers)
+        # If user is None: return InvalidCredentials(headers=unauthorized_headers)
+        # If user is None: return InvalidCredentials(headers=unauthorized_headers)
 
         # Hack logout by uncommenting this once
         #return InvalidCredentials(headers=unauthorized_headers)

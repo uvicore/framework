@@ -63,11 +63,20 @@ class Authentication:
             # if isinstance(user, HTTPException):
             #     return await self.error_response(user, scope, receive, send)
 
+        # If valid user is logged in, append 'authenticated' to permissions
+        if isinstance(user, User):
+            if 'authenticated' not in user.permissions:
+                user.permissions.insert(0, 'authenticated')
+
         # Retrieve anonymous user from default_provider backend
         # If all authenticators returned no User object, user is not logged in with any method.
         # Build an anonymous user object to inject into the request scope
         if not isinstance(user, User):
             user = await self.retrieve_anonymous_user(request)
+
+            # Ensure 'authenticated' is NOT in anonymous user permissions
+            if 'authenticated' in user.permissions:
+                user.permissions.remove('authenticated')
 
         # Add user to request
         scope["user"] = user

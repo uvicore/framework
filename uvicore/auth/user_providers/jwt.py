@@ -6,7 +6,8 @@ from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.auth.support import password as pwd
-from uvicore.typing import List, Union, Any, Dict
+from uvicore.typing import List, Union, Any, Dict, Optional, Callable
+from uvicore.support import module
 
 
 @uvicore.service()
@@ -29,6 +30,7 @@ class Jwt(UserProvider):
 
         # Parameters from authenticator method
         jwt: Dict = {},
+        role_permission_mapper: Optional[Callable] = None,
 
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,
@@ -57,6 +59,15 @@ class Jwt(UserProvider):
                 superadmin=jwt_mapping.superadmin(jwt) or jwt.admin or False,
                 authenticated=True,
             )
+
+        # If a role_permission_mapper callable is passed, call it to map
+        # JWT roles to static hard coded permissions for stateless scopes
+        if role_permission_mapper is not None:
+            # Import mapper passing in user object
+            mapper = module.load(role_permission_mapper).object()
+
+            # Call __call__ on mapper
+            user.permissions = await mapper(user)
 
         # Return user
         return user

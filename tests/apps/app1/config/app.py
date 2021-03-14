@@ -158,7 +158,7 @@ config = {
         # Web route authenticators and user providers
         'web': {
             # Default provider used for anonymous retrieval and for authenticators that do not specify their own
-            'default_provider': 'orm',
+            'default_provider': 'user_model',
 
             # Authenticators, multiples allow many forms of authentication
             'authenticators': {
@@ -180,7 +180,7 @@ config = {
         # Api route authenticators and user providers
         'api': {
             # Default provider used for anonymous retrieval and for authenticators that do not specify their own
-            'default_provider': 'orm',
+            'default_provider': 'jwt',
 
             # Authenticators, multiples allow many forms of authentication
             'authenticators': {
@@ -201,7 +201,7 @@ config = {
 
         # User repository providers
         'providers': {
-            'orm': {
+            'user_model': {
                 'module': 'uvicore.auth.user_providers.Orm',
                 # Options are passed as parameters into the UserProvider retrieve methods
                 'options': {
@@ -229,6 +229,9 @@ config = {
                         'permissions': lambda jwt: jwt['roles'],
                         'superadmin': lambda jwt: 'Administrator' in jwt['roles'],
                     },
+                    # Callable called (if not None) during user provider retrieve_user.
+                    # Used for stateless static User roles (from JWT) to user permission mapping.
+                    'role_permission_mapper': 'app1.http.permissions.Mapper',
                 },
                 'anonymous_options': {
                     'anonymous': True,
@@ -243,8 +246,8 @@ config = {
                         'title': 'Anonymous',
                         'avatar': '',
                         'groups': [],
-                        'roles': [],
-                        'permissions': ['anon_perm'],
+                        'roles': ['Anonymous'],
+                        'permissions': [],
                         'superadmin': False,
                     }
                 },
@@ -256,13 +259,13 @@ config = {
             'basic': {
                 #'module': 'uvicore.auth.middleware.Basic',
                 'module': 'uvicore.auth.authenticators.Basic',
-                #'provider': 'orm',  # Or use the default_provider
+                #'provider': 'user_model',  # Or use the default_provider
                 'return_www_authenticate_header': True,
                 'realm': 'App1 Realm'
             },
             'jwt': {
                 'module': 'uvicore.auth.authenticators.Jwt',
-                #'provider': 'orm',  # Or use the default_provider
+                #'provider': 'user_model',  # Or use the default_provider
 
                 # Settings used when there is an API gateway upstream from this API
                 'api_gateway': {
@@ -283,38 +286,6 @@ config = {
                 'algorithms': ['RS256'],
                 'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
             },
-        },
-
-
-        # OBSOLETE SOON
-        # Default auth guard to use if none specified in route middleware (auth=Guard(guard='web'))
-        'default': 'web',
-        # Auth Guards with one or more authenticator middleware
-        'guards': {
-            'web': {
-                'authenticators': {
-                    'basic': {
-                        # Deep merge default options from 'options' Dictionary below.
-                        # Can override any default options by specifying them here
-                        'options': 'basic',
-                        'return_www_authenticate_header': False,
-                    }
-                },
-            },
-            'api': {
-                'authenticators': {
-                    'jwt': {
-                        # Deep merge default options from 'options' Dictionary below.
-                        # Can override any default options by specifying them here
-                        'options': 'jwt',
-                    },
-                    'basic': {
-                        # Deep merge default options from 'options' Dictionary below.
-                        # Can override any default options by specifying them here
-                        'options': 'basic',
-                    },
-                },
-            }
         },
 
     },

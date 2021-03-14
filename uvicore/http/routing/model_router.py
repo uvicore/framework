@@ -9,18 +9,22 @@ from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.orm.fields import Relation
 from uvicore.http.exceptions import HTTPException, PermissionDenied
-from uvicore.auth import User
+#from uvicore.auth import User
+from uvicore.contracts import User
+from uvicore.http.routing import Guard
 
 
 @uvicore.service()
 class ModelRoute:
     """Dynamic Model CRUD Routes"""
 
-    def routes(self, Model, route, path, tags):
+    def routes(self, Model, route, path, tags, scopes):
         """Build dynamic model CRUD routes"""
 
-        @route.get('/' + path, response_model=typing.List[Model], tags=tags)
-        async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        @route.get('/' + path, response_model=typing.List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
+        #async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        async def list(request: Request, include: typing.Optional[str] = ''):
+            user: User = request.user
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
             includes = include.split(',') if include else []
 
@@ -28,8 +32,10 @@ class ModelRoute:
             return await Model.query().include(*includes).cache().get()
 
         #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
-        @route.get('/' + path + '/{id}', tags=tags)
-        async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        @route.get('/' + path + '/{id}', tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
+        #async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        async def get(request: Request, id: typing.Any, include: typing.Optional[str] = ''):
+            user: User = request.user
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
             includes = include.split(',') if include else []
 
@@ -70,17 +76,29 @@ class ModelRoute:
                 relation = field.relation.fill(field)
 
                 # Get model permission string for this relation
-                model_permission = relation.entity.tablename + '.read'
+                model_permissions = [relation.entity.tablename + '.read'] if scopes is None else scopes
 
-                # Check if user has permissino to child relatoin (or superadmin)
-                if model_permission not in user.permissions:
-                    # I convert model_permissins to a list for consistency with other permission denied errors
-                    # although there will always be just one model_permission in this function
-                    # raise HTTPException(
-                    #     status_code=401,
-                    #     detail="Permission denied to {}".format(str([model_permission]))
-                    # )
-                    raise PermissionDenied(model_permission)
+                # User must have ALL scopes defined on the route (an AND statement)
+                authorized = True
+                missing_scopes = []
+                for scope in model_permissions:
+                    if scope not in user.permissions:
+                        authorized = False
+                        missing_scopes.append(scope)
+
+                # # Check if user has permissino to child relatoin (or superadmin)
+                # if model_permission not in user.permissions:
+                #     # I convert model_permissins to a list for consistency with other permission denied errors
+                #     # although there will always be just one model_permission in this function
+                #     # raise HTTPException(
+                #     #     status_code=401,
+                #     #     detail="Permission denied to {}".format(str([model_permission]))
+                #     # )
+                #     print('be')
+                #     raise PermissionDenied(model_permission)
+
+                if not authorized:
+                    raise PermissionDenied(missing_scopes)
 
                 # Walk down each "include parts" entities
                 entity = relation.entity
@@ -160,10 +178,10 @@ class ModelRoute:
 @uvicore.controller()
 class ModelRouter(Controller):
 
-    # def __init__(self, package, guards: bool):
-    #     """Init override to add custom guards parameter"""
-    #     super().__init__(package)
-    #     self.guards = guards
+    def __init__(self, package, scopes: typing.List = None):
+        """Init override to add custom guards parameter"""
+        super().__init__(package)
+        self.scopes = scopes
 
     def register(self, route: ApiRouter):
 
@@ -172,10 +190,11 @@ class ModelRouter(Controller):
 
         # Get source code for ModelRouter
         modelroute = inspect.getsource(ModelRoute)
-        modelroute += "ModelRoute().routes(Model, route, path, tags)"
+        modelroute += "ModelRoute().routes(Model, route, path, tags, scopes)"
 
-        from uvicore.auth.middleware import Guard
-        from uvicore.auth.models import User
+        #from uvicore.auth.middleware import Guard
+        #from uvicore.auth.models import User
+
 
         # Loop each sorted model and dynamically add a ModelRouter
         for key, binding in models.items():
@@ -212,6 +231,7 @@ class ModelRouter(Controller):
                 'Request': Request,
                 'HTTPException': HTTPException,
                 'PermissionDenied': PermissionDenied,
+                'scopes': self.scopes,
             })
 
         # Return router

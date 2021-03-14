@@ -64,7 +64,7 @@ class User(UserInterface):
         """Check if user has ALL of these permissions"""
         if self.superadmin: return True
 
-        permissions = [permissions] if isinstance(permissions, str) else permissions
+        permissions = [permissions] if isinstance(permissions, str) else list(permissions)
 
         for permission in permissions:
             if permission not in self.permissions:
@@ -75,7 +75,7 @@ class User(UserInterface):
         """Check if user has any one of these permissions"""
         if self.superadmin: return True
 
-        permissions = [permissions] if isinstance(permissions, str) else permissions
+        permissions = [permissions] if isinstance(permissions, str) else list(permissions)
 
         for permission in permissions:
             if permission in self.permissions:

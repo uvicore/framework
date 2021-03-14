@@ -5,7 +5,10 @@ from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
-from uvicore.auth.middleware.auth import Guard
+
+
+from uvicore.http.routing.guard import Guard
+#from uvicore.auth.middleware.auth import Guard
 
 # from fastapi import APIRouter as _FastAPIRouter
 # from uvicore.typing import Any, Type, List, Callable, Optional
@@ -28,6 +31,7 @@ class ApiRouter(Router['ApiRoute']):
         tags: Optional[List[str]] = None,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
     ):
@@ -51,14 +55,16 @@ class ApiRouter(Router['ApiRoute']):
         tags: Optional[List[str]] = None,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
     ):
         """Generic add method and decorator"""
 
-        # Convert auth helper param to middleware
+        # Convert auth and scope helper param to middleware
         if middleware is None: middleware = []
         if auth: middleware.append(auth)
+        if scopes: middleware.append(Guard(scopes))
 
         # Clean path and name
         (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)

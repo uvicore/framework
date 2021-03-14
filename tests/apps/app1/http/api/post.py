@@ -1,13 +1,12 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.http import Request, response
-from uvicore.http.routing import Controller, ApiRouter
+from uvicore.http.routing import Controller, ApiRouter, Guard
 
 from app1 import models
 
-from uvicore.auth.middleware import Guard
-
-from uvicore.auth import User
+#from uvicore.auth import User
+from uvicore.contracts import User
 
 
 @uvicore.controller()
@@ -18,18 +17,22 @@ class Post(Controller):
     #user: User = Guard()
     #auth = Guard()
 
+    #scopes = ['authenticated']
+
     def register(self, route: ApiRouter):
 
         #@route.get('/post4', middleware=[Auth('model-perms')])
         #@route.get('/post4', auth=Guard('model-perms'))
+        #@route.get('/post4', scopes=['posts.read'])
         @route.get('/post4')
         #async def post4(id: str, user: User = Guard()) -> models.Post:
-        async def post4(request: Request) -> models.Post:
+        async def post4(request: Request, user: User = Guard(['posts.read'])) -> models.Post:
             """This docstring shows up in OpenAPI Docs"""
-            dump('=============================================================')
-            dump('REQUEST __dict__ FROM /post4 CONTROLLER:')
-            dump('=============================================================')
-            dump(request.__dict__)
+            #dump('=============================================================')
+            #dump('REQUEST __dict__ FROM /post4 CONTROLLER:')
+            #dump('=============================================================')
+            #dump(request.__dict__)
+            dump('POST4 User:', user)
             return await models.Post.query().find(4)
 
         # Return router

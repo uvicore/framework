@@ -1,17 +1,19 @@
 from __future__ import annotations
 import uvicore
 import inspect
+from copy import copy
 from functools import partial
 from uvicore import contracts
-from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator
-from uvicore.support.dumper import dump, dd
-from uvicore.support import str as string
 from uvicore.support.module import load
+from uvicore.support import str as string
+from uvicore.support.dumper import dump, dd
+from uvicore.http.routing.guard import Guard
 from uvicore.support.dictionary import deep_merge
-from copy import copy
+from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
+
 
 @uvicore.service()
 class Router(contracts.Router, Generic[R]):
@@ -46,7 +48,7 @@ class Router(contracts.Router, Generic[R]):
             if name[0] == '.': name = name[1:]     # Remove beginning .
         self.name = name
 
-    def controller(self, module: Union[str, Callable], *, prefix: str = '', name: str = '', params: Dict = {}):
+    def controller(self, module: Union[str, Callable], *, prefix: str = '', name: str = '', options: Dict = {}):
         if prefix:
             if prefix[-1] == '/': prefix = prefix[0:-1]  # Remove trailing /
             if prefix[0] != '/': prefix = '/' + prefix   # Add beginning /
@@ -60,7 +62,7 @@ class Router(contracts.Router, Generic[R]):
             if name[-1] == '.': name = name[0:-1]  # Remove trailing .
             if name[0] == '.': name = name[1:]     # Remove beginning .
 
-        # Instantiate Controller
+        # Import controller module from string
         if type(module) == str:
             if self.controllers:
                 if '.' not in module:
@@ -74,8 +76,8 @@ class Router(contracts.Router, Generic[R]):
                     pass
             module = load(module).object
 
-        # fixme, if string import it...
-        controller: Routes = module(self.package, **params)
+        # Instantiate controller file
+        controller: Routes = module(self.package, **options)
 
         # New self (Web or Api) router instance
         router = self.__class__(self.package, self.prefix + prefix, self.name + '.' + name, self.controllers)
@@ -100,9 +102,9 @@ class Router(contracts.Router, Generic[R]):
 
         return routes
 
-    def include(self, module, *, prefix: str = '', name: str = '', params: Dict = {}):
+    def include(self, module, *, prefix: str = '', name: str = '', options: Dict = {}):
         """Alias to controller"""
-        self.controller(module=module, prefix=prefix, name=name, params=params)
+        self.controller(module=module, prefix=prefix, name=name, options=options)
 
     def override(self, package_name: str, route_name: str, endpoint: Callable):
         # We have a package_name like mreschke.wiki
@@ -118,12 +120,17 @@ class Router(contracts.Router, Generic[R]):
         autoprefix: bool = True,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
     ):
         """Route groups method and decorator"""
 
         # Convert auth helper param to middleware
         if middleware is None: middleware = []
         if auth: middleware.append(auth)
+
+        # Convert scopes to Guard route middleware
+        if scopes:
+            middleware.append(Guard(scopes))
 
         # Get name
         if not name: name = prefix
@@ -419,8 +426,9 @@ class Router(contracts.Router, Generic[R]):
 @uvicore.service()
 class Routes(contracts.Routes):
     """Routes and Controller Class"""
-    middleware = None
-    auth = None
+    # middleware = None
+    # auth = None
+    # scopes = None
 
     @property
     def package(self) -> contracts.Package:
@@ -434,6 +442,8 @@ class Routes(contracts.Routes):
         middlewares = []
         if self.auth: middlewares.append(self.auth)
         if self.middleware: middlewares.extend(self.middleware)
+        if self.scopes: middlewares.append(Guard(self.scopes))
+
         return middlewares
         # if '__annotations__' in self.__class__.__dict__:
         #     for key, value in self.__class__.__annotations__.items():

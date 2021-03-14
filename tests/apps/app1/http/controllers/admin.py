@@ -1,9 +1,8 @@
 import uvicore
 from uvicore.support.dumper import dd, dump
-from uvicore.auth.middleware.auth import Guard
 from uvicore.auth import User
 from uvicore.http import Request, response
-from uvicore.http.routing import WebRouter, Controller
+from uvicore.http.routing import WebRouter, Controller, Guard
 from fastapi import Depends
 
 @uvicore.controller()

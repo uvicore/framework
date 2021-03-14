@@ -1,9 +1,8 @@
 import uvicore
 from uvicore.auth.models import User
-from uvicore.auth.middleware.auth import Guard
 from uvicore.support.dumper import dump, dd
 from uvicore.http import Request, response
-from uvicore.http.routing import Routes, WebRouter
+from uvicore.http.routing import Routes, WebRouter, Guard
 
 
 # Final word in flat vs def vs Class with def.

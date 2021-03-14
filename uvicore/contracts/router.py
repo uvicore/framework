@@ -44,6 +44,10 @@ class ApiRoute(Dict):
 class Routes(ABC):
     """Routes and Controller Class"""
 
+    middleware = None
+    auth = None
+    scopes = None
+
     @abstractproperty
     def package(self) -> Package: pass
 
