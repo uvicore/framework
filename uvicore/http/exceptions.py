@@ -43,3 +43,14 @@ class InvalidCredentials(HTTPException):
             detail=detail,
             headers=headers,
         )
+
+
+class NotFound(HTTPException):
+    def __init__(self, message: str = None, *, headers: Optional[Dict[str, Any]] = None):
+        detail = 'Not found'
+        if message: detail += ' - ' + str(message)
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail,
+            headers=headers,
+        )

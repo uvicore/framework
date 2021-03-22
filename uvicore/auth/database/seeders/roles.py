@@ -14,13 +14,15 @@ async def seed():
     await Role.insert_with_relations([
         {
             'name': 'Administrator',
-            'superadmin': True,
             'permissions': [
                 perms.get('admin'),
             ]
         },
         {
             'name': 'User',
+        },
+        {
+            'name': 'Anonymous',
         },
     ])
 

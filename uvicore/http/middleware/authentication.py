@@ -81,7 +81,6 @@ class Authentication:
                 user.permissions.remove('authenticated')
 
         # Add user to request
-        dump(user)
         scope['user'] = user
         #scope["auth"] = user.permissions  # No, this was starlette example of where to place scopes
 

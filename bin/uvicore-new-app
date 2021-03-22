@@ -63,7 +63,7 @@ function check_dependencies() {
 
 # Install uvicore
 function install() {
-    echo; header "Installing Uvicore Package Schema $branch $repo into $path"; line
+    echo; header "Installing Uvicore Package Schematic $branch $repo into $path"; line
 
     if [ -d "$path" ]; then
        error "Directory $path already exists.  Probably not what you wanted."
@@ -109,7 +109,7 @@ else
     echo
 
     echo -n "Continue to clone and execute $path/.install/install.py (y/N)? "; read answer
-    if [ "$answer" != "${answer#[Yy]}" ] ;then
+    if [ "$answer" != "${answer#[Yy]}" ]; then
         install
     else
         echo

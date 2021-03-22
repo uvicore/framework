@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional
+from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator
 from uvicore.http.routing.router import Router
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import WebRoute as RouteInterface
@@ -40,7 +40,7 @@ class WebRouter(Router['WebRoute']):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
-    ):
+    ) -> Callable[[Decorator], Decorator]:
         """Generic add method and decorator"""
 
         # Convert auth and scope helper param to middleware
@@ -69,7 +69,7 @@ class WebRouter(Router['WebRoute']):
         if endpoint: return handle(endpoint)
 
         # Decorator access
-        def decorator(func):
+        def decorator(func: Decorator) -> Decorator:
             handle(func)
             return func
         return decorator

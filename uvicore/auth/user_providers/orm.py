@@ -110,6 +110,8 @@ class Orm(UserProvider):
         permissions = sorted(list(set(permissions)))
 
         # Set super admin, existence of 'admin' permission
+        # Fixme, there is a 'superadmin' field on the roles table.
+        # If user is in any role with superadmin=True they are a superadmin
         superadmin = False
         if 'admin' in permissions:
             # No need for any permissinos besides ['admin']

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Optional, Dict, Union
+from uvicore.typing import Optional, Dict, Union, List
 from uvicore.auth.support import password as pwd
 from uvicore.support.dumper import dd, dump
 from uvicore.auth.models import Group, Role
@@ -122,3 +122,7 @@ class User(Model['User'], metaclass=ModelMetaclass):
         # Convert password to hash if is plain text (works for first insert and updates)
         if self.password is not None and 'argon2' not in self.password:
             self.password = pwd.create(self.password)
+
+
+# Required because I reference myself (creator_id)
+User.update_forward_refs()

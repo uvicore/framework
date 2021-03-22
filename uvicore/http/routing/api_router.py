@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional
+from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator
 from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
@@ -58,7 +58,7 @@ class ApiRouter(Router['ApiRoute']):
         scopes: Optional[List] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
-    ):
+    ) -> Callable[[Decorator], Decorator]:
         """Generic add method and decorator"""
 
         # Convert auth and scope helper param to middleware
@@ -91,7 +91,7 @@ class ApiRouter(Router['ApiRoute']):
         if endpoint: return handle(endpoint)
 
         # Decorator access
-        def decorator(func):
+        def decorator(func: Decorator) -> Decorator:
             handle(func)
             return func
         return decorator

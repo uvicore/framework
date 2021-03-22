@@ -1,7 +1,7 @@
 import uuid
 import uvicore
 from uvicore.auth.models.user import User
-from uvicore.auth.models.group import Group
+from uvicore.auth.models.role import Role
 from uvicore.support.dumper import dump, dd
 
 
@@ -9,8 +9,8 @@ from uvicore.support.dumper import dump, dd
 async def seed():
     uvicore.log.item('Seeding table users')
 
-    # Get all groups keyed by name
-    groups = await Group.query().key_by('name').get()
+    # Get all roles keyed by name
+    roles = await Role.query().key_by('name').get()
 
     unique_id = str(uuid.uuid4())
     # How you "would" do it, but None password means login never allowed
@@ -29,8 +29,8 @@ async def seed():
         creator_id=1,
     ).save()
 
-    await user.link('groups', [
-        groups['User']
+    await user.link('roles', [
+        roles['Anonymous']
     ])
 
     # users = []

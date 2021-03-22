@@ -9,7 +9,7 @@ from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.http.routing.guard import Guard
 from uvicore.support.dictionary import deep_merge
-from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator
+from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator, Optional
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -48,7 +48,14 @@ class Router(contracts.Router, Generic[R]):
             if name[0] == '.': name = name[1:]     # Remove beginning .
         self.name = name
 
-    def controller(self, module: Union[str, Callable], *, prefix: str = '', name: str = '', options: Dict = {}):
+    def controller(self,
+        module: Union[str, Callable],
+        *,
+        prefix: str = '',
+        name: str = '',
+        tags: Optional[List[str]] = None,
+        options: Dict = {}
+    ) -> List:
         if prefix:
             if prefix[-1] == '/': prefix = prefix[0:-1]  # Remove trailing /
             if prefix[0] != '/': prefix = '/' + prefix   # Add beginning /
@@ -102,9 +109,16 @@ class Router(contracts.Router, Generic[R]):
 
         return routes
 
-    def include(self, module, *, prefix: str = '', name: str = '', options: Dict = {}):
+    def include(self,
+        module: Union[str, Callable],
+        *,
+        prefix: str = '',
+        name: str = '',
+        tags: Optional[List[str]] = None,
+        options: Dict = {}
+    ) -> List:
         """Alias to controller"""
-        self.controller(module=module, prefix=prefix, name=name, options=options)
+        self.controller(module=module, prefix=prefix, name=name, tags=tags, options=options)
 
     def override(self, package_name: str, route_name: str, endpoint: Callable):
         # We have a package_name like mreschke.wiki
@@ -121,7 +135,7 @@ class Router(contracts.Router, Generic[R]):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
-    ):
+    ) -> Callable[[Decorator], Decorator]:
         """Route groups method and decorator"""
 
         # Convert auth helper param to middleware
@@ -207,7 +221,7 @@ class Router(contracts.Router, Generic[R]):
         if routes: return handle(routes)
 
         # Decorator access
-        def decorator(func):
+        def decorator(func: Decorator) -> Decorator:
             # Backup and clear existing routes
             all_routes = self._routes.clone()
             self._routes = Dict()

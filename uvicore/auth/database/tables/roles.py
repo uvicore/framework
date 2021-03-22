@@ -21,7 +21,7 @@ class Roles(Table):
     schema = [
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('name', sa.String(length=100)),
-        sa.Column('superadmin', sa.Boolean, default=False)
+        #sa.Column('superadmin', sa.Boolean, default=False)
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

@@ -23,10 +23,10 @@ class Role(Model['Role'], metaclass=ModelMetaclass):
         required=True,
     )
 
-    superadmin: bool = Field('superadmin',
-        default=False,
-        description="Role is SuperAdmin"
-    )
+    # superadmin: bool = Field('superadmin',
+    #     default=False,
+    #     description="Role is SuperAdmin"
+    # )
 
     # Many-To-Many via role_permissions pivot table
     permissions: Optional[List[Permission]] = Field(None,

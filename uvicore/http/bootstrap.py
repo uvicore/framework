@@ -108,7 +108,7 @@ class Http(Handler):
 
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
-        debug_dump = True
+        debug_dump = False
         if debug_dump:
             dump('#################################################################')
             dump("Main HTTP Server APPLICATION", uvicore.app.http.__dict__)
