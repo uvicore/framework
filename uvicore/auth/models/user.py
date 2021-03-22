@@ -8,6 +8,7 @@ from uvicore.auth.database.tables import users as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
 from uvicore.auth import User as AuthUser
 from uvicore.support.hash import sha1
+from datetime import datetime
 
 
 @uvicore.model()
@@ -19,6 +20,7 @@ class User(Model['User'], metaclass=ModelMetaclass):
 
     id: Optional[int] = Field('id',
         primary=True,
+        required=False,
         description='User Primary ID',
         sortable=True,
         searchable=True,
@@ -29,8 +31,13 @@ class User(Model['User'], metaclass=ModelMetaclass):
         required=False,
     )
 
+    username: str = Field('username',
+        description='User Login Username',
+        required=True,
+    )
+
     email: str = Field('email',
-        description='User Email and Username',
+        description='User Email',
         required=True,
     )
 
@@ -77,6 +84,23 @@ class User(Model['User'], metaclass=ModelMetaclass):
         description="Post Creator User Model",
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
+    )
+
+    created_at: Optional[datetime] = Field('created_at',
+        description='Created at Datetime',
+        required=False,
+        read_only=True,
+    )
+
+    updated_at: Optional[datetime] = Field('updated_at',
+        description='Updated at Datetime',
+        required=False,
+        read_only=True,
+    )
+
+    login_at: Optional[datetime] = Field('login_at',
+        description='Last Login Datetime',
+        required=False,
     )
 
     # Many-To-Many via user_groups pivot table

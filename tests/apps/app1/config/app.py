@@ -1,6 +1,10 @@
 from uvicore.typing import OrderedDict
 from uvicore.configuration import env
 
+# Running application configuration.
+# This config only applies if this package is running as the main application.
+# Accessible at config('app')
+
 config = {
 
     # --------------------------------------------------------------------------
@@ -38,15 +42,24 @@ config = {
     # --------------------------------------------------------------------------
     'web': {
         'prefix': '',
+
+        # Static Assets
+        # Leaving all blank uses the served apps host and defailt /assets path.
+        # Setting only a path uses the served apps host with a custom path.
+        # Setting both overrides the entire url completely.  Usefull when your
+        # assets are on a separate server or being hosted from a webpack hot reload.
+        # The actual folder in your package that holds these assets is defined in your
+        # packages service provider in the Http mixin using self.assets() method.
         'asset': {
-            'host': 'http://some.assetserver.com',
-            'path': '/static',
+            'host': env('ASSET_HOST', None),
+            'path': env('ASSET_PATH', '/assets'),
         },
+
         'middleware': OrderedDict({
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.com'],
+                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.com'],
                     'www_redirect': True,
                 }
             },
@@ -93,7 +106,7 @@ config = {
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.io'],
+                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
                     'www_redirect': True,
                 }
             },
@@ -102,7 +115,7 @@ config = {
             'CORS': {
                 'module': 'uvicore.http.middleware.CORS',
                 'options': {
-                    'allow_origins': ['127.0.0.1', 'localhost', 'sunjaro', 'uvicore-local.sunfinity.io'],
+                    'allow_origins': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
                     'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
                     'allow_headers': [],
                     'allow_credentials': False,
@@ -126,32 +139,16 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Static Assets
+    # HTTP Authentication Middleware Configuration
     #
-    # Leaving all blank uses the served apps host and defailt /assets path.
-    # Setting only a path uses the served apps host with a custom path.
-    # Setting both overrides the entire url completely.  Usefull when your
-    # assets are on a separate server or being hosted from a webpack hot reload.
-    # The actual folder in your package that holds these assets is defined in your
-    # packages service provider in the Http mixin using self.assets() method.
-    # --------------------------------------------------------------------------
-    # 'asset': {
-    #     'host': 'http://some.assetserver.com',
-    #     'path': '/static',
-    # },
-
-
-    # --------------------------------------------------------------------------
-    # HTTP auth guards, authenticator middleware and user providers
-    #
-    # Each route or controller can specify an auth guard to use.  Web and API
-    # endpoints often use different guards for authentication.  Often times
-    # multiple authentication methods are used.  For example, API routes may
-    # authenticate using JWT Bearer tokens AND Digest Auth while web routes
-    # may only use Session Auth.  Each of these authenticators has various
-    # options which are generally the same when applied to multiple guards.
-    # The 'options' Dict allows deep merging of default options to eliminate
-    # duplication in this config.
+    # Both web and api routes can have their own authentication middleware.
+    # Configuration for each is provided below in the 'web' and 'api' sections.
+    # Multiple authenticators may be used.  For example, API routes may
+    # authenticate using JWT, Digest or Basic auth while web routes may
+    # only authenticate with Session auth. Each of these authenticators has
+    # various options and user providers which are generally the same when
+    # applied to multiple authenticators. The 'default_options' and 'providers'
+    # Dict allows deep merging of default options to eliminate config duplication.
     # --------------------------------------------------------------------------
     'auth': {
 
@@ -159,6 +156,23 @@ config = {
         'web': {
             # Default provider used for anonymous retrieval and for authenticators that do not specify their own
             'default_provider': 'user_model',
+
+            # Unauthenticated handler
+            'unauthenticated_handler': {
+                # If redirect defined, redirect to this URL on authentication or authorization failures.
+                # If '/' found in redirect it will use the redirect as a URL.  If no / and a . is found
+                # it will be used as a route name.  Referer ?referer=page automatically added
+                'redirect': 'app1.login',
+
+                # If no redirect defined a PermissionDenied or NotAuthenticated exception is thrown
+                # You can specify custom headers to be thwon with those exceptions.  Useful for Basic Auth
+                # WWW-Authenticate headers to prompt a brower based login prompt.
+                'exception': {
+                    'headers': {
+                        'WWW-Authenticate': 'Basic realm="App1 Web Realm"'
+                    },
+                },
+            },
 
             # Authenticators, multiples allow many forms of authentication
             'authenticators': {
@@ -172,7 +186,6 @@ config = {
                     # Deep merge default options from 'options' Dictionary below.
                     # Can override any default options by specifying them here
                     'default_options': 'basic',
-                    'realm': 'App1 Web Realm',
                 },
             },
         },
@@ -180,7 +193,7 @@ config = {
         # Api route authenticators and user providers
         'api': {
             # Default provider used for anonymous retrieval and for authenticators that do not specify their own
-            'default_provider': 'jwt',
+            'default_provider': 'user_model',
 
             # Authenticators, multiples allow many forms of authentication
             'authenticators': {
@@ -194,7 +207,6 @@ config = {
                     # Deep merge default options from 'options' Dictionary below.
                     # Can override any default options by specifying them here
                     'default_options': 'basic',
-                    'realm': 'App1 API Realm',
                 },
             },
         },
@@ -209,14 +221,14 @@ config = {
                 },
                 # Anonymous options are MERGED with options to get the anonymous user only with not authenticated
                 'anonymous_options': {
-                    'username': 'anonymous@example.com',
+                    'username': 'anonymous',
                     'anonymous': True,
                 },
             },
             'jwt': {
                 'module': 'uvicore.auth.user_providers.Jwt',
                 'options': {
-                    # Map JWT keys into User attrributes
+                    # Map JWT keys into User attrributes. User to build user object from JWT.
                     'jwt_mapping': {
                         # FusionAuth JWT Mappings
                         'id': lambda jwt: jwt['sub'],
@@ -229,18 +241,27 @@ config = {
                         'permissions': lambda jwt: jwt['roles'],
                         'superadmin': lambda jwt: 'Administrator' in jwt['roles'],
                     },
-                    # Callable called (if not None) during user provider retrieve_user.
-                    # Used for stateless static User roles (from JWT) to user permission mapping.
-                    'role_permission_mapper': 'app1.http.permissions.Mapper',
+                    # If role_permission_map is defined, map user 'permissions' into
+                    # user 'roles' matching these rules Dictionary.  Used for stateless static
+                    # User roles (from JWT) to user permission mapping.
+                    'role_permission_map': {
+                        'Anonymous': [
+                            'anonymous',
+                            'posts.read',
+                        ],
+                        'Employee': [
+                            'posts.read',
+                        ],
+                    },
                 },
                 'anonymous_options': {
                     'anonymous': True,
-                    'username': 'anonymous@example.com',
+                    'username': 'anonymous',
                     'anonymous_user': {
                         'id': 1,
                         'uuid': 'anon-from-config',
-                        'username': 'anonymous@example.com2',
-                        'email': 'anonymous@example.com2',
+                        'username': 'anonymous',
+                        'email': 'anonymous@example.com',
                         'first_name': 'Anonymous',
                         'last_name': 'User',
                         'title': 'Anonymous',
@@ -261,30 +282,43 @@ config = {
                 'module': 'uvicore.auth.authenticators.Basic',
                 #'provider': 'user_model',  # Or use the default_provider
                 'return_www_authenticate_header': True,
-                'realm': 'App1 Realm'
             },
             'jwt': {
                 'module': 'uvicore.auth.authenticators.Jwt',
                 #'provider': 'user_model',  # Or use the default_provider
 
                 # Settings used when there is an API gateway upstream from this API
-                'api_gateway': {
-                    'enabled': True,
-                    'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
-                    #'anonymous_header': None,
-                },
+                'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
 
                 # Settings used when the user auth and JWT did not originate from this app itself
                 # but from an external Identity Provider
-                'external_idp': {
-                    'enabled': True,
-                    'auto_create_user': True,
-                    'sync_scopes': True,
+                'auto_create_user': True,
+                'auto_create_user_jwt_mapping': {
+                    # FusionAuth JWT Mappings
+                    'uuid': lambda jwt: jwt['sub'],
+                    'username': lambda jwt: jwt['email'],
+                    'email': lambda jwt: jwt['email'],
+                    'first_name': lambda jwt: jwt['name'].split('|')[0],
+                    'last_name': lambda jwt: jwt['name'].split('|')[1],
+                    'title': '',
+                    'avatar': '',
+                    'creator_id': 1,
+                    'groups': lambda jwt: jwt['roles'],
                 },
-                'verify_signature': True,  # False only if a local upstream API gateway has already pre-validated
+                # Sync users scopes (rules/groups) form JWT with user provider
+                # Does not sync on every request but is buffered with the default cache TTL seconds.
+                'sync_scopes': True,
+
+                # JWT Validation
+                'verify_signature': False,  # False only if a local upstream API gateway has already pre-validated
                 'audience': 'd709a432-5edc-44c7-8721-4cf123473c45',  # FusionAuth App ID
                 'algorithms': ['RS256'],
+
+                # Secret for sunjaro
                 'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
+
+                # Secret for p53
+                #'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1ohyYNWDXOA6follmvIX\n034k5IWFLlgpwq7CA+IxFSGpnzRpOlL/22oQ/SbH4PmofWKs9qPYeRl8md5XRZus\nO+Ed8tHi7Ltz7Cjl42xX27bTLN1dqVgbecbfcUiWKlYQt1CrbNda6rCXBOx3whYQ\nfZz8G1yn7I4x55lIa14ojzRdXW7oMcJeKGdS7BPeqQ3rsreLYyk3OMwZEzq7JPXa\nxl9NuSCVEhcDgW+nHua4AauKG/JnkXRExiR65g6hINQyVYk7I6HOLTNVYZQcg/Rf\nQ84HuW6N8bgsrULkm7+KVvACsZRgdrO2ewr7ZMXpW2tbaq2GqgUNNeoZCP7EQgQZ\nEwIDAQAB\n-----END PUBLIC KEY-----',
             },
         },
 

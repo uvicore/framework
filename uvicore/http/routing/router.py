@@ -226,6 +226,7 @@ class Router(contracts.Router, Generic[R]):
             # Add these routes to the proper group
             handle(routes)
             return func
+
         return decorator
 
     def _merge_route_middleware(self, parent_middleware: List, child_middleware: List, endpoint: Callable) -> Tuple[List, Callable]:

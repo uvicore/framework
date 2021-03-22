@@ -72,7 +72,7 @@ class ApiRouter(Router['ApiRoute']):
         def handle(endpoint):
             # Create route SuperDict
             route = ApiRoute({
-                'path': full_path,
+                'path': full_path or '/',
                 'name': full_name,
                 'endpoint': endpoint,
                 'methods': methods,

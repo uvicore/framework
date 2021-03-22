@@ -190,6 +190,7 @@ class Application(ApplicationInterface):
             #x.dotset(package_name, package.Definition({
             self._packages[package_name] = Package({
                 'name': package_name,
+                'short_name': package_name.split('.')[-1] if '.' in package_name else package_name,
                 'main': True if package_name == self.main else False,
                 'path': location(package_name),
             })
@@ -222,8 +223,6 @@ class Application(ApplicationInterface):
             # service = {'provider': 'uvicore.configuration.services.Configuration'}
 
             # Import the provider and call boot()
-            #dd(self.package(main=True))
-            #dd(self.package(package_name))
             provider = load(service['provider']).object(
                 app=self,
                 name=package_name,

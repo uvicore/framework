@@ -7,6 +7,8 @@ from uvicore.auth.support import password as pwd
 from uvicore.http.request import HTTPConnection
 from uvicore.typing import List, Union, Any, Dict
 from uvicore.auth.models.user import User as Model
+from uvicore.auth.models.group import Group
+from datetime import datetime
 
 
 @uvicore.service()
@@ -16,12 +18,12 @@ class Orm(UserProvider):
     This is NOT a stateless user provider as it queries the user, groups, roles tables from a database.
     """
 
-    def __init__(self):
-        # Only need for an __init__ override is to modify field mappings
-        super().__init__()
+    # def __init__(self):
+    #     # Only need for an __init__ override is to modify field mappings
+    #     super().__init__()
 
-        # Temp, until I add username to ORM model
-        self.field_map['username'] = 'email'
+    #     # Temp, until I add username to ORM model
+    #     self.field_map['username'] = 'email'
 
     async def _retrieve_user(self,
         key_name: str,
@@ -37,6 +39,7 @@ class Orm(UserProvider):
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,
     ) -> User:
+        """Retrieve user from backend"""
 
         # Get password hash for cache key.  Password is still required to pull the right cache key
         # or else someone could login with an invalid password for the duration of the cache
@@ -50,10 +53,11 @@ class Orm(UserProvider):
             user = await uvicore.cache.get(cache_key)
             return user
 
-        # Cache not found.  Query user, validate password and convert to user class
         # ORM is currently thworing a Warning: Truncated incorrect DOUBLE value: '='
         # when using actual bool as bit value.  So I convert to '1' or '0' strings instead
         disabled = '1' if anonymous else '0'
+
+        # Cache not found.  Query user, validate password and convert to user class
         kwargs = {key_name: key_value}
         db_user = await (Model.query()
             .include(*includes)
@@ -64,6 +68,9 @@ class Orm(UserProvider):
 
         # User not found or disabled.  Return None means not verified or found.
         if not db_user: return None
+
+        # If we are checking passwords and the db_user has NO password, user cannot be logged into
+        if password is not None and db_user.password is None: return None
 
         # If password, validate credentials
         if password is not None:
@@ -113,7 +120,7 @@ class Orm(UserProvider):
         user = User(
             id=db_user.id,
             uuid=db_user.uuid,
-            username=db_user.email,
+            username=db_user.username,
             email=db_user.email,
             first_name=db_user.first_name,
             last_name=db_user.last_name,
@@ -123,24 +130,36 @@ class Orm(UserProvider):
             roles=roles,
             permissions=permissions,
             superadmin=superadmin,
-            authenticated=True,
+            authenticated=not anonymous,
         )
 
         # Save to cache
-        await uvicore.cache.put(cache_key, user, seconds=10)
+        await uvicore.cache.put(cache_key, user)
 
         # Return to user
         return user
 
+    async def create_user(self, request: HTTPConnection, **kwargs):
+        """Create new user in backend"""
 
+        # Get groups from kwargs
+        groups = kwargs.pop('groups')
 
-    # These two are temporary to overwrite username to email field
-    # Once I add username to ORM model, I can remove these and use the interfaces defaults
+        # Set other kwargs values
+        kwargs['disabled'] = False
+        kwargs['login_at'] = datetime.now()
 
-    # async def retrieve_by_username(self, username: str, request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve the user by username from the user provider backend.  No validation."""
-    #     return await self._retrieve_user('email', username, request, **kwargs)
+        # Build user model
+        user = Model(**kwargs)
 
-    # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve the user by username from the user provider backend AND validate the password if not None"""
-    #     return await self._retrieve_user('email', username, request, password=password, **kwargs)
+        # Get actual groups in backend from groups array
+        real_groups = await Group.query().where('name', 'in', groups).get()
+
+        # Save user
+        await user.save()
+
+        # Link real_groups
+        await user.link('groups', real_groups)
+
+        # Return new user
+        return user

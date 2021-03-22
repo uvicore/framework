@@ -9,8 +9,8 @@ def url(context: dict, name: str, **path_params: Any) -> str:
 def asset(context: dict, path: str) -> str:
 
     # Detect custom host and path
-    asset_host = uvicore.config.app.asset.host
-    asset_path = uvicore.config.app.asset.path or '/assets'
+    asset_host = uvicore.config.app.web.asset.host
+    asset_path = uvicore.config.app.web.asset.path or '/assets'
 
     if asset_host:
         # Using a custom asset host

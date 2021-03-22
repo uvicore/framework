@@ -30,24 +30,25 @@ class Jwt(UserProvider):
 
         # Parameters from authenticator method
         jwt: Dict = {},
-        role_permission_mapper: Optional[Callable] = None,
+        role_permission_map: Optional[Dict] = None,
 
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,
     ) -> User:
+        """Retrieve user from backend"""
 
         if anonymous:
             # User is not logged in.
             # New anonymous user based on anonymous user configuration
-            anonymous_user['authenticated'] = False
             user = User(**anonymous_user)
+            user.authenticated = False
 
         else:
             # New user based on JWT and mappings configuration
             user = User(
                 id=jwt_mapping.id(jwt) or jwt.sub or 'Unknown',
                 uuid=jwt_mapping.uuid(jwt) or jwt.sub or 'Unknown',
-                username=jwt_mapping.email(jwt) or jwt.email or 'Unknown',
+                username=jwt_mapping.username(jwt) or jwt.email or 'Unknown',
                 email=jwt_mapping.email(jwt) or jwt.email or 'Unknown',
                 first_name=jwt_mapping.first_name(jwt) or jwt.first_name or '',
                 last_name=jwt_mapping.last_name(jwt) or jwt.last_name or '',
@@ -60,32 +61,20 @@ class Jwt(UserProvider):
                 authenticated=True,
             )
 
-        # If a role_permission_mapper callable is passed, call it to map
-        # JWT roles to static hard coded permissions for stateless scopes
-        if role_permission_mapper is not None:
+        # If a role_permission_map Dict is passed, map user 'roles' into user
+        # permissions for stateless scopes
+        if role_permission_map is not None:
             # Import mapper passing in user object
-            mapper = module.load(role_permission_mapper).object()
+            #mapper = module.load(role_permission_mapper).object()
 
             # Call __call__ on mapper
-            user.permissions = await mapper(user)
+            #user.permissions = await mapper(user)
+
+            permissions = []
+            for role in user.roles:
+                if role in role_permission_map:
+                    permissions.extend(role_permission_map[role])
+            user.permissions = permissions
 
         # Return user
         return user
-
-    # async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve user by primary key from the user provider backend.  No validation."""
-    #     return await self._retrieve_user('id', id, request, **kwargs)
-
-    # async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve the user by uuid from the user provider backend.  No validation."""
-    #     return await self._retrieve_user('uuid', uuid, request, **kwargs)
-
-    # async def retrieve_by_username(self, username: str, request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve the user by username from the user provider backend.  No validation."""
-    #     return await self._retrieve_user('email', username, request, **kwargs)
-
-    # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, **kwargs) -> User:
-    #     """Retrieve the user by username from the user provider backend AND validate the password if not None"""
-    #     return await self._retrieve_user('email', username, request, password=password, **kwargs)
-
-

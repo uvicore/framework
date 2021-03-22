@@ -35,7 +35,7 @@ class Authentication:
 
         # Loop each authenticator until one is a success
         user = None
-        for authenticator in self.config.authenticators.values():
+        for authenticator_name, authenticator in self.config.authenticators.items():
             # Load authenticator backend
             try:
                 backend: Authenticator = module.load(authenticator.module).object(authenticator)
@@ -43,9 +43,9 @@ class Authentication:
                 raise Exception('Issue trying to import authenticator module defined in app.auth config - {}'.format(str(e)))
 
             # Call backend authenticate() method
-            # Return of False means this authorization method is not being attempted
-            # Return of True means this authorization method was being attempted, but failed validation
-            # Return of User object means a valid user was found
+            # Return of False means this authentication method is not being attempted, try next authenticator
+            # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
+            # Return of User object means a valid user was found, skip next authenticator
             user = await backend.authenticate(request)
 
             # Determine if we should continue to next authenticator
@@ -59,9 +59,10 @@ class Authentication:
                 break
 
             # Check for exception and return
-            # NO, authenticators should NEVER return errors, only valid User or None
-            # if isinstance(user, HTTPException):
-            #     return await self.error_response(user, scope, receive, send)
+            # Should never happen as authenticators never produce an Exception
+            # But if it ever does, then I can handle it properly here
+            if isinstance(user, HTTPException):
+                return await self.error_response(user, scope, receive, send)
 
         # If valid user is logged in, append 'authenticated' to permissions
         if isinstance(user, User):
@@ -74,13 +75,21 @@ class Authentication:
         if not isinstance(user, User):
             user = await self.retrieve_anonymous_user(request)
 
-            # Ensure 'authenticated' is NOT in anonymous user permissions
+            # Ensure authenticated is False
+            user.authenticated = False
             if 'authenticated' in user.permissions:
                 user.permissions.remove('authenticated')
 
         # Add user to request
-        scope["user"] = user
-        scope["auth"] = user.permissions
+        dump(user)
+        scope['user'] = user
+        #scope["auth"] = user.permissions  # No, this was starlette example of where to place scopes
+
+        # Add route_type (web or api) to request for guard.py usage
+        scope['route_type'] = self.route_type
+
+        # Add matched authenticator to request for later usage (like logout functionality)
+        scope['authenticator'] = authenticator_name
 
         # Next global middleware in stack
         await self.app(scope, receive, send)
@@ -150,7 +159,7 @@ class Authentication:
         # Returned merge config for all authenticators
         return config
 
-    async def error_response_OBSOLETE(self, user: User, scope: Scope, receive: Receive, send: Send):
+    async def error_response(self, user: User, scope: Scope, receive: Receive, send: Send):
         """Build and return error response"""
         if self.route_type == 'web':
             # Fixme, how can I use the user customized 401 HTML?

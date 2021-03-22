@@ -20,6 +20,7 @@ class Web(Routes):
     #auth = Guard()
 
     def register(self, route: WebRouter):
+        """Register Web Route Endpoints"""
 
         # Define controller base path
         route.controllers = 'app1.http.controllers'
@@ -31,12 +32,13 @@ class Web(Routes):
         route.controller('about')
         route.controller('login')
 
-
         # Private Routes
         #@route.group(auth=Guard(guard='web'))
         #@route.group(middleware=[Guard(guard='web')])
-        @route.group()
+        @route.group(scopes=['authenticated'])
+        #@route.group()
         def private_routes():
+
             route.controller('admin')
 
 

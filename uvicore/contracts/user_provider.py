@@ -34,6 +34,8 @@ class UserProvider(ABC):
         field = self.field_map['username']
         return await self._retrieve_user(field, username, request, password=password, **kwargs)
 
+    async def create_user(self, request: HTTPConnection, **kwargs):
+        """Retrieve user from backend"""
 
 
     # @abstractmethod

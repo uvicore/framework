@@ -10,7 +10,7 @@ class Home(Controller):
     def register(self, route: WebRouter):
 
         @route.get('/', name='home')
-        def home(request: Request):
+        async def home(request: Request):
             return response.View('app1/home.j2', {
                 'request': request
             })

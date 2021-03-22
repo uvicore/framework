@@ -25,6 +25,7 @@ class Users(Table):
     schema = [
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('uuid', sa.String(length=36), unique=True),
+        sa.Column('username', sa.String(length=50), unique=True),
         sa.Column('email', sa.String(length=50), unique=True),
         sa.Column('first_name', sa.String(length=30)),
         sa.Column('last_name', sa.String(length=30)),

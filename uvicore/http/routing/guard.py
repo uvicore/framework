@@ -5,7 +5,8 @@ from fastapi.params import Security
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import User
-from uvicore.http.exceptions import PermissionDenied
+from uvicore.http.exceptions import PermissionDenied, NotAuthenticated, HTTPException
+from uvicore.http.response import Redirect
 
 
 @uvicore.service()
@@ -29,7 +30,7 @@ class Scopes:
         # Get user from request.  Will always exist.  If not logged it will be
         # the anonymous user which may still have permissions/scopes to compare
         user: User = request.user
-        dump('USER PERMISSIONS', user.permissions)
+        #dump('USER PERMISSIONS', user.permissions)
 
         # If no scopes, allow access
         if not scopes: return user
@@ -45,15 +46,47 @@ class Scopes:
                 authorized = False
                 missing_scopes.append(scope)
 
-        dump('-----------------------------------------------------------------')
-        dump('Auth Route Guard HERE:', scopes, user)
-        dump('-----------------------------------------------------------------')
+        #dump('-----------------------------------------------------------------')
+        #dump('Auth Route Guard HERE:', scopes, user)
+        #dump('-----------------------------------------------------------------')
 
-        if not authorized:
-            # User does not have all route scopes, handle permission denied
-            raise PermissionDenied(missing_scopes)
+        # Hack logout of basic auth
+        #raise NotAuthenticated(headers={'WWW-Authenticate': 'Basic realm="App1 Web Realm"'})
+
+        # Authorized and authenticated.  Return user in case Guard() is being used
+        # as a route parameter using FastAPI Depends.  User will be injected back to param value.
+        if authorized: return user
+
+        # Not authorized or possibly even authenticated
+        # Get unauthenticated handler from auth config
+        # Route type (web or api) is added to request.scope from authentication middleware
+        route_type = request.scope.get('route_type') or 'api'
+
+        # Get the route auth config based on route_type
+        auth_config = uvicore.config.app.auth[route_type]
+
+        # Default unauthenticated is to raise exception.
+        # Check for redirect override or additional exception headers
+        if auth_config.unauthenticated_handler.redirect:
+            location = auth_config.unauthenticated_handler.redirect
+            if '/' not in location and '.' in location: location = request.url_for(location)
+            separator = '&' if '?' in location else '?'
+            referer = separator + "referer=" + str(request.scope.get('path'))
+            raise HTTPException(status_code=301, headers={
+                'Location': location + referer
+            })
+
+        # Check for additional exception headers
+        exception_headers = None
+        if auth_config.unauthenticated_handler.exception:
+            exception_headers = auth_config.unauthenticated_handler.exception.headers
+
+        if user.authenticated:
+            # User authenticated but does not have all route scopes
+            raise PermissionDenied(missing_scopes, headers=exception_headers)
         else:
-            return user
+            # User is not even logged in
+            raise NotAuthenticated(headers=exception_headers)
 
     def validate_permissions(self, user: User, scopes: SecurityScopes) -> None:
         """Validate logged in users permissions again route permissions"""

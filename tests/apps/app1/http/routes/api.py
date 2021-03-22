@@ -28,6 +28,7 @@ class Api(Routes):
     #scopes = ['authenticated']
 
     def register(self, route: ApiRouter):
+        """Register API Route Endpoints"""
 
         # Define controller base path
         route.controllers = 'app1.http.api'
@@ -42,6 +43,7 @@ class Api(Routes):
             # If I wanted a fully public model router
             #route.include(ModelRouter, options={'scopes': ['authenticated']})
             route.include(ModelRouter)
+            pass
 
         async def get_method() -> Post:
             #return response.Text('Get API Method Here!')
@@ -62,7 +64,7 @@ class Api(Routes):
             @route.get('/ping')
             #@route.get('/ping', scopes=['posts.create'])
             #def ping(request: Request, user: User = Guard(['scope4'])):
-            def ping(request: Request, user: User = Guard(['posts.create'])):
+            def ping(request: Request, user: User = Guard(['posts.read'])):
             #def ping(request: Request, user: User):  # If I hacked FastAPI dep code
             #def ping(request: Request, user: User = User()):  # If I made a depends Class like my old Guard()
                 #user: User = request.user

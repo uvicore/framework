@@ -8,7 +8,7 @@ from uvicore.support.dumper import dump, dd
 
 
 @uvicore.provider()
-class App1(ServiceProvider, Cli, Redis, Db, Http):
+class App1(ServiceProvider, Cli, Db, Redis, Http):
 
     def register(self) -> None:
         # Register configs

@@ -19,12 +19,13 @@ async def seed():
 
     user = await User(
         uuid=unique_id,
+        username='anonymous',
         email='anonymous@example.com',
         first_name='Anonymous',
         last_name='User',
         title='Anonymous',
         disabled=True,
-        password='techie',
+        password=None,
         creator_id=1,
     ).save()
 

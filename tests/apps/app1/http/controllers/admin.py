@@ -17,9 +17,15 @@ class Admin(Controller):
         #@route.get('/admin', name='admin', auth=Guard(['scope2']))
         #@route.get('/admin', name='admin', auth=Guard(['scope2'], guard='web'))
         #@route.get('/admin', name='admin', auth=Guard())
+        #@route.get('/admin', name='admin', scopes=['authenticated'])
         @route.get('/admin', name='admin')
         #def home(request: Request, user: User = Guard()):
-        def home(request: Request):
+        async def home(request: Request, user: User = Guard()):
+            #from uvicore.http.response import Redirect
+            #return Redirect('/wiki')
+
+            dump(user)
+
             user = request.user
             #return user.email
             return response.View('app1/admin.j2', {

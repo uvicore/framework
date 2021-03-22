@@ -39,6 +39,7 @@ async def seed():
 
     # You can insert one so you can insert relations right after
     user = await User(
+        username='manager1@example.com',
         email='manager1@example.com',
         first_name='Manager',
         last_name='One',
@@ -65,6 +66,7 @@ async def seed():
     # You can use .insert() as a List of model instances
     await User.insert([
         User(
+            username='manager2@example.com',
             email='manager2@example.com',
             first_name='Manager',
             last_name='Two',
@@ -82,6 +84,7 @@ async def seed():
     # You can also user .insert() as a list of Dict
     await User.insert([
         {
+            'username': 'user1@example.com',
             'email': 'user1@example.com',
             'first_name': 'User',
             'last_name': 'One',

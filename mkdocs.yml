@@ -11,11 +11,8 @@ edit_uri: ''
 
 # Navigation
 nav:
-  - Prologue:
-    - index.md
-    - release-notes.md
-    - mkdocs-help.md
   - Getting Started:
+    - index.md
     - installation.md
     - configuration.md
     - directory-structure.md
@@ -33,6 +30,10 @@ nav:
     - bootstrap.md
   - Digging Deeper:
     - events.md
+  - Epologue:
+    - release-notes.md
+    - mkdocs-help.md
+
 
 # Plugins
 plugins:
@@ -88,8 +89,8 @@ theme:
     code: Roboto Mono
   #favicon: assets/favicon.png
   features:
-    #- instant
-    - tabs
+    - navigation.instant
+    - navigation.tabs
   icon:
     logo: fontawesome/solid/bong
     repo: fontawesome/brands/github

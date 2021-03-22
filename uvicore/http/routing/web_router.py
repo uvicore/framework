@@ -5,6 +5,7 @@ from uvicore.http.routing.router import Router
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import WebRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
+from uvicore.http.routing.guard import Guard
 
 
 @uvicore.service()

@@ -18,9 +18,9 @@ class Basic(Authenticator):
     # Any permissions errors happen at a route level when checking of the route
     # require an authenticated user or valid scope/role.
 
-    # Return of False means this authorization method is not being attempted
-    # Return of True means this authorization method was being attempted, but failed validation
-    # Return of User object means a valid user was found
+    # Return of False means this authentication method is not being attempted, try next authenticator
+    # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
+    # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
         dump('BASIC Authenticator HERE')
@@ -28,41 +28,27 @@ class Basic(Authenticator):
         # Parse authorization header
         authorization, scheme, param = self.auth_header(request)
 
-        # Define Basic Auth unauthoridzed header only if we are allowed to return them, else None
-        # NO, not here, we don't care if you are logged in
-        # unauthorized_headers = None
-        # if self.config.return_www_authenticate_header:
-        #     unauthorized_headers = {'WWW-Authenticate': 'Basic'}
-        #     if self.config.realm: unauthorized_headers = {'WWW-Authenticate': 'Basic realm="{}"'.format(self.config.realm)}
-
-        # This authorization method not provided or attempted, goto next authenticator
+        # This authentication method not provided or attempted, goto next authenticator
         if not authorization or scheme != "basic":
-            # Return of False means this authorization method is not being attempted
+            # Return of False means this authentication method is not being attempted
+            # goto next authenticator in stack
             return False
 
         # Try to get the Basic Auth credentials
         try:
             data = b64decode(param).decode("ascii")
         except Exception:
-            # No credentials defined from basic auth header
+            # No credentials defined from basic auth header, return True to denote Anonymous user and skip next authenticator
             return True
 
         # Get username and password from basic auth header
         username, separator, password = data.partition(":")
 
         # Incomplete username or password provided
-        #if not separator: return InvalidCredentials(headers=unauthorized_headers)
         if not separator: return True
 
         # Get user and validate credentials
         user: User = await self.retrieve_user(username, password or '', self.config.provider, request)
 
-        # If no user returned, validation has failed or user not found
-        # If user is None: return InvalidCredentials(headers=unauthorized_headers)
-        # If user is None: return InvalidCredentials(headers=unauthorized_headers)
-
-        # Hack logout by uncommenting this once
-        #return InvalidCredentials(headers=unauthorized_headers)
-
-        # Return user.  Could be none if not authenticated or user object of authenticated
-        return user
+        # Return user.  If no user return True to denote Anonymous User and skip next authenticator
+        return user or True

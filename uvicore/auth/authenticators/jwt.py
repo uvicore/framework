@@ -1,8 +1,8 @@
-import jwt
 import uvicore
+from jwt import decode
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
-from uvicore.typing import Dict, Optional, Union
+from uvicore.typing import Dict, Optional, Union, Callable
 from uvicore.auth.authenticators.base import Authenticator
 from uvicore.http.exceptions import NotAuthenticated, InvalidCredentials, HTTPException
 from uvicore.contracts import User
@@ -18,57 +18,91 @@ class Jwt(Authenticator):
     # Any permissions errors happen at a route level when checking of the route
     # require an authenticated user or valid scope/role.
 
-    # Return of False means this authorization method is not being attempted
-    # Return of True means this authorization method was being attempted, but failed validation
-    # Return of User object means a valid user was found
+    # Return of False means this authentication method is not being attempted, try next authenticator
+    # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
+    # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
-        dump('JWT Authenticator HERE')
+        #dump('JWT Authenticator HERE')
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
 
-        # This authorization method not provided or attempted, goto next authenticator
+        # This authentication method not provided or attempted, goto next authenticator
         if not authorization or scheme != "bearer":
-            # Return of False means this authorization method is not being attempted
+            # Return of False means this authentication method is not being attempted
+            # goto next authenticator in stack
             return False
 
-        # Decode JWT
+        # Detect anonymous API access.
+        # API gateways that allow anonymous access to an API will pass the request
+        # downstream even if the token is missing, invalid or expired.
+        # When they do, they add a header notifying downstream that auth has failed
+        # but anonymous access is still allowed.  For Kong this header is x-anonymous-consumer
+        # If the API gateway does not allow anonymous access, downstream won't even be proxied.
+        #dump(request.headers)
+        if (self.config.anonymous_header and self.config.anonymous_header in request.headers):
+            # Anonymous header found, return True to denote Anonymous user and skip next authenticator
+            return True
+
+        # Decode JWT with or without verification
+        jwt = None
         try:
             if self.config.verify_signature:
                 # With secret algorithm validation
-                dump('WITH Validation')
-                payload = Dict(jwt.decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
+                #dump('WITH Validation')
+                jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
             else:
                 # Without validation
-                dump('WITHOUT Validation')
-                payload = Dict(jwt.decode(token, options={"verify_signature": False}))
+                #dump('WITHOUT Validation')
+                jwt = Dict(decode(token, options={"verify_signature": False}))
 
                 # Validate aud claim
                 # jwt.decode also validates the aud claim.  Since we are skipping validation, we'll still validate aud claim here.
-                if payload.aud != self.config.audience:
-                    # No exception, just return None to denote Anonymous
+                if jwt.aud != self.config.audience:
+                    # Audience mismatch, return True to denote Anonymous user and skip next authenticator
                     return True
-                    # return HTTPException(
-                    #     status_code=status.HTTP_401_UNAUTHORIZED,
-                    #     detail="Invalid audience",
-                    # )
-
         except Exception as e:
-            # Issue with validation.  Bad key, token expired...
-            # Pass JWT library exception message right through with a generic 401
-            # return HTTPException(
-            #     status_code=401,
-            #     detail=str(e),
-            # )
-            # No exception, just return None to denote Anonymous
+            # Issue with validating JWT, return True to denote Anonymous user and skip next authenticator
             return True
 
-        #dump('JWT', payload)
+        #dump('JWT', jwt)
 
         # Get user and validate credentials
-        #user: User = await self.retrieve_user(payload.email, None, self.config.provider, request, jwt=payload)
-        user: User = await self.retrieve_user(payload.email, None, self.config.provider, request, jwt=payload)
+        user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+
+        # User from valid JWT not found in uvicore.  Autocreate user if defined in config
+        if user is None and self.config.auto_create_user:
+            dump('AUTOCREATING User ' + jwt.email)
+            dump(user, 'xxxxxxxxxxxxxxxxx', jwt, request.__dict__)
+            jwt_mapping = self.config.auto_create_user_jwt_mapping
+            user = {}
+            for key, value in self.config.auto_create_user_jwt_mapping.items():
+                if isinstance(value, Callable):
+                    user[key] = value(jwt)
+                else:
+                    user[key] = value
+
+            # Auto create new user in user provider
+            new_db_user = await self.create_user(self.config.provider, request, **user)
+
+            # Get user and validate credentials
+            user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+
+            # Dict({
+            #     'aud': 'd709a432-5edc-44c7-8721-4cf123473c45',
+            #     'exp': 1616000280,
+            #     'iat': 1615996680,
+            #     'iss': 'https://auth-local.sunfinity.com',
+            #     'sub': '217e27b4-0e0a-464c-84a8-c40312b55801',
+            #     'authenticationType': 'PASSWORD',
+            #     'email': 'it@sunfinity.com',
+            #     'email_verified': True,
+            #     'applicationId': 'd709a432-5edc-44c7-8721-4cf123473c45',
+            #     'roles': ['Administrator'],
+            #     'name': 'Admin|Istrator'
+            # })
+
 
         # If user is none and auto_create_user is enabled, auto-create user
         # Link user up to groups table based on JWT roles
@@ -80,9 +114,9 @@ class Jwt(Authenticator):
         # Validate Permissions
         #self.validate_permissions(user, scopes.scopes)
 
-        # Authorization successful.
+        # Authentication successful.
         # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')
         #request.scope['user'] = user
 
-        # Return user.  Could be none if not authenticated or user object of authenticated
-        return user
+        # Return user.  If no user return True to denote Anonymous User and skip next authenticator
+        return user or True

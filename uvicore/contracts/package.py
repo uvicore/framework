@@ -13,6 +13,7 @@ class Package(Dict):
     # They do not restrict of define valid properties like a dataclass would.
     # This is still a fully dynamic SuperDict!
     name: str
+    short_name: str
     main: bool
     path: str
     registers: Dict

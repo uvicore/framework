@@ -108,7 +108,7 @@ class Http(Handler):
 
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
-        debug_dump = False
+        debug_dump = True
         if debug_dump:
             dump('#################################################################')
             dump("Main HTTP Server APPLICATION", uvicore.app.http.__dict__)
@@ -159,9 +159,9 @@ class Http(Handler):
         # Get name prefix from package name plus custom name prefix
         if name_prefix:
             if name_prefix[0] == '.': name_prefix = name_prefix[1:]
-            name_prefix = package.name + '.' + name_prefix
+            name_prefix = package.short_name + '.' + name_prefix
         else:
-            name_prefix = package.name
+            name_prefix = package.short_name
 
         # Import the web router and create a new instance
         from uvicore.http.routing.web_router import WebRouter  # isort:skip
@@ -203,9 +203,9 @@ class Http(Handler):
         # Get name prefix from package name plus custom name prefix
         if name_prefix:
             if name_prefix[0] == '.': name_prefix = name_prefix[1:]
-            name_prefix = package.name + '.' + name_prefix
+            name_prefix = package.short_name + '.' + name_prefix
         else:
-            name_prefix = package.name
+            name_prefix = package.short_name
 
         # Import the api router and create a new instance
         from uvicore.http.routing.api_router import ApiRouter  # isort:skip
@@ -293,7 +293,7 @@ class Http(Handler):
         """Add web routes to the web server"""
         for route in web_routes.values():
             web_server.add_api_route(
-                path=prefix + route.path,
+                path=(prefix + route.path) or '/',
                 endpoint=route.endpoint,
                 methods=route.methods,
                 name=route.name,
@@ -336,7 +336,7 @@ class Http(Handler):
 
             # Add route
             api_server.add_api_route(
-                path=prefix + route.path,
+                path=(prefix + route.path) or '/',
                 endpoint=route.endpoint,
                 methods=route.methods,
                 name=route.name,
@@ -391,7 +391,7 @@ class Http(Handler):
 
         # Mount all asset paths
         # Last directory defined WINS, which fits our last provider wins
-        asset_url = uvicore.config.app.asset.path or '/assets'
+        asset_url = uvicore.config.app.web.asset.path or '/assets'
         web_server.mount(asset_url, StaticFiles(directories=asset_paths), name='assets')
 
         # Mount all public paths (always at /)
