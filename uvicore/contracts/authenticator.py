@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from uvicore.contracts.user import User
-from uvicore.http.request import HTTPConnection
 from uvicore.typing import Optional, Tuple, Dict, List, Union
+try:
+    from starlette.requests import HTTPConnection
+except:
+    HTTPConnection = None
 
 
 class Authenticator(ABC):

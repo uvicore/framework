@@ -3,9 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List, Tuple, TypeVar, Union
 
-import sqlalchemy as sa
-from sqlalchemy.engine.result import RowProxy
-from sqlalchemy.sql.expression import BinaryExpression
+try:
+    import sqlalchemy as sa
+    from sqlalchemy.engine.result import RowProxy
+    from sqlalchemy.sql.expression import BinaryExpression
+except:
+    sa = None
+    RowProxy = None
+    BinaryExpression = None
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model

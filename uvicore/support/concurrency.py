@@ -1,6 +1,29 @@
 import uvicore
+import asyncio
+import functools
+from uvicore.typing import Callable, TypeVar, Any
 from uvicore.support.dumper import dump, dd
-from starlette.concurrency import run_in_threadpool
+
+try:
+    import contextvars  # Python 3.7+ only.
+except ImportError:  # pragma: no cover
+    contextvars = None  # type: ignore
+
+T = TypeVar("T")
+
+async def run_in_threadpool(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+    loop = asyncio.get_event_loop()
+    if contextvars is not None:  # pragma: no cover
+        # Ensure we run in the same context
+        child = functools.partial(func, *args, **kwargs)
+        context = contextvars.copy_context()
+        func = context.run
+        args = (child,)
+    elif kwargs:  # pragma: no cover
+        # loop.run_in_executor doesn't accept 'kwargs', so bind them in here
+        func = functools.partial(func, **kwargs)
+    return await loop.run_in_executor(None, func, *args)
+
 
 
 # Does not work as I need it to

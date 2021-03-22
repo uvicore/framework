@@ -1,11 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Union, Mapping, Optional
 
-import sqlalchemy as sa
-from databases import Database as EncodeDatabase
-from sqlalchemy.sql import ClauseElement
-from uvicore.contracts import DbQueryBuilder
+try:
+    from sqlalchemy.engine import Engine
+    from sqlalchemy import MetaData, Table
+    from databases import Database as EncodeDatabase
+    from sqlalchemy.sql import ClauseElement
+except:
+    sa = None
+    Engine = None
+    Table = None
+    MetaData = None
+    EncodeDatabase = None
+    ClauseElement = None
 
+from uvicore.contracts import DbQueryBuilder
 from .connection import Connection
 from .package import Package
 
@@ -27,7 +36,7 @@ class Database(ABC):
 
     @property
     @abstractmethod
-    def engines(self) -> Dict[str, sa.engine.Engine]:
+    def engines(self) -> Dict[str, Engine]:
         """All engines for all unique (by metakey) connections, keyed by metakey"""
         pass
 
@@ -39,7 +48,7 @@ class Database(ABC):
 
     @property
     @abstractmethod
-    def metadatas(self) -> Dict[str, sa.MetaData]:
+    def metadatas(self) -> Dict[str, MetaData]:
         """All SQLAlchemy Metadata for all unique (by metakey) connections, keyed by metakey"""
         pass
 
@@ -64,12 +73,12 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def metadata(self, connection: str = None, metakey: str = None) -> sa.MetaData:
+    def metadata(self, connection: str = None, metakey: str = None) -> MetaData:
         """Get one SQLAlchemy Metadata by connection str or metakey"""
         pass
 
     @abstractmethod
-    def table(self, table: str, connection: str = None) -> sa.Table:
+    def table(self, table: str, connection: str = None) -> Table:
         """Get one SQLAlchemy Table by name (without prefix) and connection str or connection.tablename dot notation"""
         pass
 
@@ -79,7 +88,7 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
+    def engine(self, connection: str = None, metakey: str = None) -> Engine:
         """Get one SQLAlchemy Engine by connection str or metakey"""
         pass
 

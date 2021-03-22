@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from uvicore.typing import Union, List, Dict
 from uvicore.contracts.user import User
-from uvicore.http.request import HTTPConnection
+#from uvicore.contracts.http_connection import HTTPConnection
+try:
+    from starlette.requests import HTTPConnection
+except:
+    HTTPConnection = None
 
 
 class UserProvider(ABC):
@@ -53,6 +57,3 @@ class UserProvider(ABC):
     # @abstractmethod
     # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, options: Dict = {}) -> User:
     #     """Retrieve the user by username from the user provider backend AND validate the password if not None"""
-
-
-

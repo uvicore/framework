@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Callable, List, Any
-from starlette.types import ASGIApp
+try:
+    from starlette.types import ASGIApp
+except:
+    ASGIApp = None
 
 
 class Server(ABC):

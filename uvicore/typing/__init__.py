@@ -1,6 +1,13 @@
 from typing import *
-from starlette.types import Scope, Message, Receive, Send, ASGIApp
 from .dictionary import Dict, OrderedDict
+try:
+    from starlette.types import Scope, Message, Receive, Send, ASGIApp
+except:
+    Scope = None
+    Message = None
+    Receive = None
+    Send = None
+    ASGIApp = None
 
 # Decorator Type Helper
 # def handle() -> Callable[[Decorator], Decorator]:
