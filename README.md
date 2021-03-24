@@ -13,7 +13,7 @@ Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullsta
 ## What is Uvicore?
 
 * A fullstack blazing fast asynchronous python Web, API and CLI framework.
-* Inspiration taken heavily from the elegance and design quality of Laravel.
+* Inspired by the elegance and design quality of Laravel.  Though it is NOT a Laravel clone by any stretch of the imagination.  If you want Laravel, go get Laravel and stop complaining about PHP :)
 * Not a mirco framework, up and running with a complete system in minutes, no boilerplate.
 * Deeply config driven with extremely deep merged and overridable package configs.
 * Package based.  Apps are packages, packages are apps.  No "shell" or "project" required.  Run it or use it in another running app, all in one.
