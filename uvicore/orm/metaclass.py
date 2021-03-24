@@ -155,6 +155,10 @@ class ModelMetaclass(PydanticMetaclass):
         to infer a list of actual SQLA columns (excluding write_only fields)
         """
         if table is None: table = entity.table
+
+        # Not all models require tables (databaseless models)
+        if table is None: return []
+
         all_columns = table.columns
         columns: List[sa.Column] = []
         for (field_name, field) in entity.modelfields.items():

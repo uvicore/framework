@@ -82,14 +82,12 @@ class Http(Handler):
 
         # Attach to Starlette events and translate into Uvicore events
         @uvicore.app.http.on_event("startup")
-        def startup():
-            #uvicore.events.dispatch('uvicore.http.events.server.Startup')
-            HttpServerEvents.Startup().dispatch()
+        async def startup():
+            await HttpServerEvents.Startup().dispatch_async()
 
         @uvicore.app.http.on_event("shutdown")
-        def shutdown():
-            #uvicore.events.dispatch('uvicore.http.events.server.Shutdown')
-            HttpServerEvents.Shutdown().dispatch()
+        async def shutdown():
+            await HttpServerEvents.Shutdown().dispatch_async()
 
 
         # # Experiment add custom exceptions

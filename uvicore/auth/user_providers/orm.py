@@ -144,12 +144,15 @@ class Orm(UserProvider):
     async def create_user(self, request: HTTPConnection, **kwargs):
         """Create new user in backend"""
 
-        # Get groups from kwargs
+        # Pop groups from kwargs
         groups = kwargs.pop('groups')
 
         # Set other kwargs values
         kwargs['disabled'] = False
         kwargs['login_at'] = datetime.now()
+
+        # Translate avatar
+        kwargs['avatar_url'] = kwargs.pop('avatar')
 
         # Build user model
         user = Model(**kwargs)
@@ -163,5 +166,36 @@ class Orm(UserProvider):
         # Link real_groups
         await user.link('groups', real_groups)
 
-        # Return new user
+        # Return new backend user (not actual Auth user class)
+        return user
+
+    async def sync_user(self, request: HTTPConnection, **kwargs):
+        dump('SYNC USER')
+        # Get username
+        username = kwargs['username']
+
+        # Get actual backend user
+        user = await Model.query().find(username=username)
+
+        # If we have successfully logged in, we are not disabled
+        user.disabled = False
+        user.login_at = datetime.now()
+
+        # Pop groups from kwargs
+        groups = kwargs.pop('groups')
+
+        # Remove other kwargs items
+        del kwargs['creator_id']
+
+        # Translate avatar
+        kwargs['avatar_url'] = kwargs.pop('avatar')
+
+        # Add all other kwargs to user
+        for key, value in kwargs.items():
+            setattr(user, key, value)
+
+        # Save user
+        await user.save()
+
+        # Return new backend user (not actual Auth user class)
         return user

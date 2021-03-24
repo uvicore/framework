@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Uvicore Installer
-# mReschke 2020-10-10
+# Uvicore New Application/Package Installer
+# mReschke 2020-10-10, updated 2021-03-22
 
 # Command line options
 path="$1"
@@ -27,24 +27,51 @@ function error() { echo -e "${LIGHTRED}ERROR: ${RED}$1${DEFAULT}"; }
 
 # Usage docs
 function usage() {
-    cat << EOF
-Uvicore Application Installer
-The Async Python Framework for Artisans.
-An Elegant Fullstack Python Web, API and CLI Framework
+    echo -e "${BROWN}Uvicore${DEFAULT}"
+    echo
+    echo -e "${PURPLE}  Uvicore Application/Package Installer${DEFAULT}"
+    #echo
+    echo -e "${WHITE}  The Async Python Framework for Artisans.${DEFAULT}"
+    echo -e "${DEFAULT}  An Elegant Fullstack Python Web, API and CLI Framework.${DEFAULT}"
+    echo
+    echo -e "${DARKGRAY}  Copyright (c) 2020 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
+    echo
+    echo -e "${BROWN}Usage: ${DEFAULT}uvicore-new-app ./path [branch] [gitrepo]"
+    echo
+    echo "The optional [branch] will install a particular version of uvicore and dependencies."
+    echo "Default is to use the latest current uvicore version."
+    echo
+    echo -e "${BROWN}Examples:${DEFAULT}"
+    echo
+    echo -e "${GREEN}  Use the latest current version of uvicore and dependencies${DEFAULT}"
+    info "    uvicore-new-app ./wiki"
+    echo
+    echo -e "${GREEN}  Use a specific version of uvicore and dependencies${DEFAULT}"
+    info "    uvicore-new-app ./wiki 1.0"
+    echo
+    echo -e "${GREEN}  Use a custom schematic branch and repository${DEFAULT}"
+    info "    uvicore-new-app ./wiki master https://github.com/your/schematic"
 
-  Usage: uvicore-new-app path [branch] [gitrepo]
 
-  You can optionally pass your own git branch and repository URL.
 
-  Examples: Use uvicore default appstub repo on master branch
-    uvicore-new-app ./wiki
+#     cat << EOF
+# Uvicore Application Installer
+# The Async Python Framework for Artisans.
+# An Elegant Fullstack Python Web, API and CLI Framework.
 
-  Example: Use uvicore default appstub repo on 3.0 branch
-    uvicore-new-app ./wiki 3.0
+#   Usage: uvicore-new-app path [branch] [gitrepo]
 
-  Example: Use your own appstub repo on master branch
-    uvicore-new-app ./wiki master https://github.com/mystuff/custom-uvicore-appstub
-EOF
+#   You can optionally pass your own git branch and repository URL.
+
+#   Examples: Use uvicore default appstub repo on master branch
+#     uvicore-new-app ./wiki
+
+#   Example: Use uvicore default appstub repo on 3.0 branch
+#     uvicore-new-app ./wiki 3.0
+
+#   Example: Use your own appstub repo on master branch
+#     uvicore-new-app ./wiki master https://github.com/mystuff/custom-uvicore-appstub
+# EOF
 }
 
 # Ensure dependencies are installed

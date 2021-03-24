@@ -71,10 +71,9 @@ class Jwt(Authenticator):
         # Get user and validate credentials
         user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
 
-        # User from valid JWT not found in uvicore.  Autocreate user if defined in config
-        if user is None and self.config.auto_create_user:
-            dump('AUTOCREATING User ' + jwt.email)
-            dump(user, 'xxxxxxxxxxxxxxxxx', jwt, request.__dict__)
+        # User from valid JWT not found in uvicore OR not synced for first time (no uuid).
+        # Auto create or update user if allowed in config
+        if self.config.auto_create_user and user is None or user.uuid is None:
             jwt_mapping = self.config.auto_create_user_jwt_mapping
             user = {}
             for key, value in self.config.auto_create_user_jwt_mapping.items():
@@ -83,11 +82,18 @@ class Jwt(Authenticator):
                 else:
                     user[key] = value
 
-            # Auto create new user in user provider
-            new_db_user = await self.create_user(self.config.provider, request, **user)
+            # User does not exist, create user
+            if user is None:
+                # Auto create new user in user provider
+                await self.create_user(self.config.provider, request, **user)
+
+            else:
+                # User exists, but needs an initial sync
+                await self.sync_user(self.config.provider, request, **user)
 
             # Get user and validate credentials
             user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+
 
             # Dict({
             #     'aud': 'd709a432-5edc-44c7-8721-4cf123473c45',

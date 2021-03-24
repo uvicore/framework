@@ -6,6 +6,7 @@ try:
     from sqlalchemy import MetaData, Table
     from databases import Database as EncodeDatabase
     from sqlalchemy.sql import ClauseElement
+    from sqlalchemy.engine.result import RowProxy
 except:
     sa = None
     Engine = None
@@ -13,6 +14,7 @@ except:
     MetaData = None
     EncodeDatabase = None
     ClauseElement = None
+    RowProxy = None
 
 from uvicore.contracts import DbQueryBuilder
 from .connection import Connection
@@ -108,12 +110,12 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[Mapping]:
+    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
         """Fetch List of records from a SQLAlchemy Core Query based on connection str or metakey"""
         pass
 
     @abstractmethod
-    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[Mapping]:
+    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[RowProxy]:
         """Fetch one record from a SQLAlchemy Core Query based on connection str or metakey"""
         pass
 

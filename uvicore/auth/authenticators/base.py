@@ -38,16 +38,22 @@ class Authenticator(AuthenticatorInterface):
         # Do not throw error if no user or not validated here.  We let the middleware handle that
         return user
 
-    async def create_user(self,
-        provider: Dict,
-        request: HTTPConnection,
-        **kwargs,
-    ):
+    async def create_user(self, provider: Dict, request: HTTPConnection, **kwargs):
         # Import user provider defined in auth config
         user_provider: UserProvider = module.load(provider.module).object()
 
         # Create user from user provider
+        # Returned user is actual backend user, NOT Auth User object
         user = await user_provider.create_user(request, **kwargs)
+        return user
+
+    async def sync_user(self, provider: Dict, request: HTTPConnection, **kwargs):
+        # Import user provider defined in auth config
+        user_provider: UserProvider = module.load(provider.module).object()
+
+        # Create user from user provider
+        # Returned user is actual backend user, NOT Auth User object
+        user = await user_provider.sync_user(request, **kwargs)
         return user
 
     def auth_header(self, request) -> Tuple[str, str, str]:

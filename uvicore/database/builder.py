@@ -129,7 +129,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
         # insert will never come into this get() or build function
 
-        if method == 'select':
+        if method == 'select' and query.table is not None:
 
             # Build .select() query from tables and joins and selectable columns
             saquery = self._build_select(query).distinct()

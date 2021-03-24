@@ -15,11 +15,12 @@ class Redis(ServiceProvider, RedisMixin):
 
 
     def boot(self) -> None:
+        pass
         # Define service provider registration control
         #self.registers(self.package.config.registers)
 
         # Define Redis Connections
-        self.redis_connections(
-            connections=self.package.config.redis.connections,
-            default=self.package.config.redis.default
-        )
+        # self.redis_connections(
+        #     connections=self.package.config.redis.connections,
+        #     default=self.package.config.redis.default
+        # )

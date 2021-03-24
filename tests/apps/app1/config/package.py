@@ -109,9 +109,6 @@ config = {
         'uvicore.foundation': {
             'provider': 'uvicore.foundation.services.Foundation',
         },
-        'uvicore.redis': {
-            'provider': 'uvicore.redis.services.Redis',
-        },
         'uvicore.database': {
             'provider': 'uvicore.database.services.Database',
         },

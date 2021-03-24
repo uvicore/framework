@@ -23,7 +23,7 @@ class Basic(Authenticator):
     # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
-        dump('BASIC Authenticator HERE')
+        #dump('BASIC Authenticator HERE')
 
         # Parse authorization header
         authorization, scheme, param = self.auth_header(request)

@@ -217,6 +217,9 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         self.log.header('Raw SQL Queries')
         self.log.info(self.sql('select', queries))
 
+        if hasattr(self.entity, 'get'):
+            return await self.entity.get(queries)
+
         # Detect caching
         cache = self.query.cache
         if cache:
@@ -287,12 +290,14 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     query.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
 
         # Build first query
-        query, saquery = self._build_query(method, query)
+        saquery = None
+        if query.table is not None:
+            query, saquery = self._build_query(method, query)
         queries.append({
             'name': 'main',
             'query': query,
             'saquery': saquery,
-            'sql': str(saquery),
+            'sql': str(saquery) if saquery is not None else '',
         })
 
         # So we have our first query perfect

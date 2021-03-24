@@ -77,21 +77,6 @@ class Db(DatabaseInterface):
             self._databases[connection.metakey] = EncodeDatabase(encode_url)
             self._metadatas[connection.metakey] = sa.MetaData()
 
-    def http_startup(self, event: OnHttpStarted):
-        # Instead of handling uvicore event here, we instead
-        # add an async listener to starlette's events since we must
-        # use await in database.connect or disconnect
-        if uvicore.app.is_http:
-            @uvicore.app.http.on_event("startup")
-            async def startup():
-                for database in self.databases.values():
-                    await database.connect()
-
-            @uvicore.app.http.on_event("shutdown")
-            async def shutdown():
-                for database in self.databases.values():
-                    await database.disconnect()
-
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         if not metakey:
             if not connection: connection = self.default
@@ -195,10 +180,21 @@ class Db(DatabaseInterface):
     #     if not database.is_connected:
     #         await database.connect()
 
-
     def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
         if not connection: connection = self.default
         return DbQueryBuilder(connection)
+
+    async def _http_startup(self, event: OnHttpStarted):
+        """HTTP Startup event handler"""
+        #if uvicore.app.is_http:
+        for database in self.databases.values():
+            await database.connect()
+
+    async def _http_shutdown(self, event: OnHttpStarted):
+        """HTTP Shutdown event handler"""
+        #if uvicore.app.is_http:
+        for database in self.databases.values():
+            await database.disconnect()
 
 
     # def table(self, table: str):

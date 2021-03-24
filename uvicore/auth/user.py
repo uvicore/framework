@@ -27,33 +27,48 @@ class User(UserInterface):
 
     @property
     def admin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
         return self.superadmin
 
     @property
     def is_admin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
         return self.superadmin
 
     @property
     def is_superadmin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
         return self.superadmin
 
     @property
+    def is_not_admin(self):
+        """Check if user is not a superadmin"""
+        return not self.superadmin
+
+    @property
     def is_authenticated(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
         return self.authenticated
 
     @property
     def loggedin(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
         return self.authenticated
 
     @property
     def is_loggedin(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
         return self.authenticated
+
+    @property
+    def is_not_loggedin(self):
+        """Check if user is not logged in"""
+        return not self.authenticated
+
+    @property
+    def is_not_authenticated(self):
+        """Check if user is not logged in"""
+        return not self.authenticated
 
     @property
     def check(self):
@@ -89,5 +104,6 @@ class User(UserInterface):
     def cannot(self, permissions: Union[str, List]) -> bool:
         """Alias to cant"""
         return not self.cant(permissions)
+
 
 

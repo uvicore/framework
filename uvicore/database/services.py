@@ -24,7 +24,8 @@ class Database(ServiceProvider, Cli):
 
         # Register event listeners
         AppEvents.Booted.listen(bootstrap.Database)
-        HttpEvents.Startup.listen(uvicore.db.http_startup)
+        HttpEvents.Startup.listen(uvicore.db._http_startup)
+        HttpEvents.Shutdown.listen(uvicore.db._http_shutdown)
 
     def boot(self) -> None:
 

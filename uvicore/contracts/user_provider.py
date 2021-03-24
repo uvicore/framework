@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from uvicore.typing import Union, List, Dict
 from uvicore.contracts.user import User
-#from uvicore.contracts.http_connection import HTTPConnection
 try:
     from starlette.requests import HTTPConnection
 except:

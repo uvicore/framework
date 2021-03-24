@@ -35,6 +35,7 @@ class Authentication:
 
         # Loop each authenticator until one is a success
         user = None
+        authenticator_name = None
         for authenticator_name, authenticator in self.config.authenticators.items():
             # Load authenticator backend
             try:

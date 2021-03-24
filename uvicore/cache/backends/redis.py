@@ -84,21 +84,31 @@ class Redis(CacheInterface):
                 # Item does not exist, set default
                 return default
 
-    async def remember(self, key: Union[str, Dict], callback: Union[Callable, Any] = None, *, seconds: int = None):
+    async def remember(self, key: Union[str, Dict], callback: Union[Callable, Any] = None, *, seconds: int = None) -> Any:
         """Get a key if exists, if not SET the key to callback value"""
         (redis, keys) = await self.prepair(key)
         if seconds is None: seconds = self.seconds
-        if type(keys) != dict: keys = {key:callback}
+        if type(key) != dict: keys = {keys:callback}
+        value = {}
         for key, callback in keys.items():
             if await self.has(key):
                 # Item exists, simply return value
-                return await redis.get(key)
+                #value[key] = await redis.get(key)
+                value[key] = await self.get(key)
             else:
                 # Item does not exist, set value based on callback return
                 if callable(callback):
-                    await self.put(key, await callback(), seconds=seconds)
+                    value[key] = await callback()
                 else:
-                    await self.put(key, callback, seconds=seconds)
+                    value[key] = callback
+                await self.put(key, value[key], seconds=seconds)
+
+        if type(key) != dict:
+            # Single key, single return
+            return value[key]
+
+        # Dict key, dict return
+        return value
 
     async def put(self, key: Union[str, Dict], value: Any = None, *, seconds: int = None) -> None:
         """Put one or more key/values in cache with optional expire in seconds (0=never expire)"""
