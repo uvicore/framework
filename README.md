@@ -3,6 +3,11 @@
 Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework.
 
 
+## Warning
+
+This project is currently under heavy **active** development.  Although I am using this framework in Production personally, I would advise you against it just yet.  It is mostly stable but not feature complete.
+
+
 ## What is Uvicore?
 
 * A fullstack blazing fast asynchronous python Web, API and CLI framework.
@@ -30,10 +35,6 @@ Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullsta
 * Event pub/sub system.  Subscribe to all Uvicore core events in the bootstrap process, ORM CRUD, authentication systems and any event fired from your packages.
 * And much more....documentation to come soon!
 
-
-## Warning
-
-This project is currently under heavy **active** development.  Although I am using this framework in Production personally, I would advise you against it just yet.  It is mostly stable but not feature complete.
 
 
 ## Feeling Dangerous?
