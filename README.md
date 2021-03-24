@@ -16,7 +16,7 @@ This project is currently under heavy **active** development.  Although I am usi
 * Deeply config driven with extremely deep merged and overridable package configs.
 * Package based.  Apps are packages, packages are apps.  No "shell" or "project" required.  Run it or use it in another running app, all in one.
 * Service Provider style package bootstrapping.
-* Full async database query builder build on encode/databases...or use the ORM!
+* Full async database query builder built on encode/databases...or use the ORM!
 * Elegant custom async ORM inspired by Eloquent (but still very different).  Not another Django ORM clone thank God!
 * Complex and complete ORM relations including polymorphism.
 * Easy redis caching system (great for optimizing API database hits).
@@ -25,8 +25,8 @@ This project is currently under heavy **active** development.  Although I am usi
 * Perfectly suited for old-school server-side traditional post-back template driven web apps.
 * Perfectly suited for API backend only, quicker and easier that Django Rest Framework, built on FastAPI but with fullstack routing, controllers, ORM, caching...no boilerplate.
 * Websockets!  Well yeah, its async!
-* ORM Models can query local database OR switch to remote API and query the data over uvicore automatic ORM crud APIs without code changing, syntax identical.  What?  This means your package IS the "server" and also the "client/sdk for API access".  Let that sink in a bit.
 * Automatic ORM Crud API's out of the box.  Never write a single controller or endpoint again.  Simply build Models. Instant API with granular roles and permission management.
+* ORM Models can query local database OR switch to remote API mode and query the data over uvicore automatic ORM crud APIs without code changing, syntax identical.  What?  This means your package IS the "server" and also the "client/sdk for API access".  Let that sink in a bit.
 * Granular groups, roles, permission management with Authentication middleware and route guards.
 * Quick and easy JWT authentication with an external IDP (FusionAuth!)
 * Multiple middleware authenticators.  APIs can autodetect and respond to Basic Auth, Digest, JWT and more.
@@ -38,6 +38,8 @@ This project is currently under heavy **active** development.  Although I am usi
 
 
 ## Feeling Dangerous?
+
+This `uvicore/framework` repo is NOT what you clone if you want to run uvicore.  This is the framework.  The pypi package your actual app will depend on.  The `uvicore-installer` will create the folder structure for your app and include `uvicore/framework` as a dependency.  If you wanted to see what an app structure looks like, see https://github.com/uvicore/app which is what the `uvicore-installer` clones and regexes to your configured needs.  Its a package schematic.  **Use the installer.**
 
 It works with a full installer, but there is little documentation yet so its up to you to deduce the system, though it's reasonably self explanatory.
 
