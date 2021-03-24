@@ -3,13 +3,6 @@
 Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework.
 
 
-
-* Asynchronous database layer for MySQL, SQLite and Postgres.
-* All new custom asynchronous ORM (NOT another django ORM clone) with support for every relationship including polymorphism.  Enjoy Laravel's Eloquent ORM?  You'll love this one.
-* Full python type hinting for IDE code intellisense across every module including ORM model fields and methods.
-
-
-
 ## What is Uvicore?
 
 * A fullstack blazing fast asynchronous python Web, API and CLI framework.
@@ -19,7 +12,7 @@ Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullsta
 * Package based.  Apps are packages, packages are apps.  No "shell" or "project" required.  Run it or use it in another running app, all in one.
 * Service Provider style package bootstrapping.
 * Full async database query builder build on encode/databases...or use the ORM!
-* Elegant custom async ORM inspired by Eloquent (but still very different).
+* Elegant custom async ORM inspired by Eloquent (but still very different).  Not another Django ORM clone thank God!
 * Complex and complete ORM relations including polymorphism.
 * Easy redis caching system (great for optimizing API database hits).
 * IoC (Inversion of Control).  Framework looks back to your app to determine import of every module.  You can override ANYTHING from core or other developers packages!
