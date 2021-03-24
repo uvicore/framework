@@ -5,7 +5,7 @@ Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullsta
 
 ## Warning
 
-This project is currently under heavy **active** development.  Although I am using this framework in Production personally, I would advise you against it just yet.  It is mostly stable but not feature complete.
+This project is currently under heavy **active** development.  Although I am using this framework in Production personally, I am constantly building out the framework as I do. I would advise you against using it just yet.  It is mostly stable but **not feature complete**.
 
 
 ## What is Uvicore?
@@ -43,6 +43,7 @@ This `uvicore/framework` repo is NOT what you clone if you want to run uvicore. 
 
 It works with a full installer, but there is little documentation yet so its up to you to deduce the system, though it's reasonably self explanatory.
 
+**Installation**
 ```bash
 wget https://raw.githubusercontent.com/uvicore/framework/master/bin/uvicore-installer
 mv uvicore-installer /usr/local/bin
