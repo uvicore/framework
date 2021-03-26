@@ -74,7 +74,6 @@ class ModelMetaclass(PydanticMetaclass):
     ############################################################################
 
 
-
     @property
     def pk(entity) -> str:
         """Get the entities primary key"""

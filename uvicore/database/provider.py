@@ -34,30 +34,38 @@ class Db:
             # Metakey cannot be the connection name.  If 2 connections share the exact
             # same database (host, port, dbname) then they need to also share the same
             # metedata for foreign keys to work properly.
-            if connection.driver == 'sqlite':
-                url = 'sqlite:///' + connection.database
-                metakey = url
+            if not connection.backend: connection.backend = 'sqlalchemy'
+            connection.backend = connection.backend.lower()
+            connection.driver = connection.driver.lower()
+            url = ''
+            if connection.backend == 'sqlalchemy':
+                if connection.driver == 'sqlite':
+                    url = 'sqlite:///' + connection.database
+                    metakey = url
+                elif connection.driver in ['mysql', 'postgresql']:
+                    url = connection.driver
+                    if connection.dialect: url += '+' + connection.dialect
+                    url += (
+                        '://' + connection.username
+                        + ':' + connection.password
+                        + '@' + connection.host
+                        + ':' + str(connection.port)
+                        + '/' + connection.database
+                    )
+                    metakey = (
+                        connection.host
+                        + ':' + str(connection.port)
+                        + '/' + connection.database
+                    )
             else:
-                url = (
-                    connection.driver
-                    + '+' + connection.dialect
-                    + '://' + connection.username
-                    + ':' + connection.password
-                    + '@' + connection.host
-                    + ':' + str(connection.port)
-                    + '/' + connection.database
-                )
-                metakey = (
-                    connection.host
-                    + ':' + str(connection.port)
-                    + '/' + connection.database
-                )
+                url = connection.url
+                metakey = url
 
             # Merge new values into connection SuperDict
             if not connection.prefix: connection.prefix = ''
             connection.merge({
                 'name': name,
-                'metakey': metakey,
+                'metakey': metakey.lower(),
                 'url': url
             })
             #connections.append(connection)

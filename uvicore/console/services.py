@@ -5,7 +5,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.console.provider import Cli
 from uvicore.support.module import load
 from uvicore.console import group as cli_group
-from uvicore.console.handlers import bootstrap
+from uvicore.console import bootstrap
 from uvicore.foundation.events import app as AppEvents
 
 

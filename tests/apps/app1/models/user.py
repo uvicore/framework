@@ -56,9 +56,7 @@ AuthOverride = uvicore.ioc.make('uvicore.auth.models.user.User_BASE')
 
 
 @uvicore.model()
-#class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
-class User(AuthOverride):
-
+class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 
 #class UserModel(Model['UserModel'], metaclass=ModelMetaclass):
 #class UserModel(Model['UserModel']):

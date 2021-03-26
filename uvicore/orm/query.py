@@ -31,8 +31,12 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
     def __init__(self, entity: E):
         self.entity = entity
         super().__init__()
-        self.query.table = entity.table
-        #self.query.joins = None
+
+        # Not all models require tables (databaseless models)
+        if entity.table is not None:
+            self.query.table = entity.table
+        else:
+            self.query.table = entity.tablename
 
     @property
     def log(self):
@@ -213,10 +217,21 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
     async def get(self) -> Union[List[E], Dict[str, E]]:
         """Execute query and return all rows found"""
+
+        # Get this models connection configuration
+        #connection = uvicore.db.connection(self._connection())
+        #backend = connection.backend
+        #if backend != 'sqlalchemy':
+            # Using a custom, non sqlalchemy backend.  Could be an API, CSV, JSON...
+            # Load up the custom backend and fire off the get() executor
+            #dump('not sqlalchemy')
+
+        # Build SQLAlchemy queries
         queries = self._build_orm_queries('select')
         self.log.header('Raw SQL Queries')
         self.log.info(self.sql('select', queries))
 
+        # Get hook?  Experimental
         if hasattr(self.entity, 'get'):
             return await self.entity.get(queries)
 
@@ -233,7 +248,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                             hash_type='sha1',
                             package='uvicore.orm',
                             entity=self.entity,
-                            connection=self.entity.connection
+                            connection=self._connection()
                         )
                         break
                 cache['key'] = prefix + query_hash

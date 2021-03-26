@@ -8,7 +8,12 @@ async def cli():
     """Play"""
 
     from app1 import models
+    from app1.models import User
 
+    user = await User.query().include('contact').find(1)
+
+
+    dump(user)
 
 
 
@@ -32,14 +37,14 @@ async def cli():
 
 
 
-    # users = await models.User.query().cache(tag='taylor').find(1)
+    #users = await models.User.query().cache(tag='taylor').find(1)
     # await uvicore.cache.flush(tags=['taylor'])
     # dump(users)
 
 
-    await uvicore.cache.put('ioc_bindings', uvicore.ioc.binding('uvicore.database.db.Db'))
+    #await uvicore.cache.put('ioc_bindings', uvicore.ioc.binding('uvicore.database.db.Db'))
 
-    dump ( await uvicore.cache.get('ioc_bindings') )
+    #dump ( await uvicore.cache.get('ioc_bindings') )
 
 
 

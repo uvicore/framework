@@ -1,3 +1,4 @@
+from uvicore.configuration import env
 from uvicore.typing import OrderedDict
 
 # This is the main auth config.  All items here can be overridden
@@ -38,14 +39,15 @@ config = {
         'default': 'auth',
         'connections': {
             'auth': {
-                'driver': 'mysql',
-                'dialect': 'pymysql',
-                'host': '127.0.0.1',
-                'port': 3306,
-                'database': 'iam',
-                'username': 'root',
-                'password': 'techie',
-                'prefix': None,
+                'backend': env('AUTH_DB_BACKEND', 'sqlalchemy'),
+                'driver': env('AUTH_DB_DRIVER', 'mysql'),
+                'dialect': env('AUTH_DB_DIALECT', 'pymysql'),
+                'host': env('AUTH_DB_HOST', '127.0.0.1'),
+                'port': env.int('AUTH_DB_PORT', 3306),
+                'database': env('AUTH_DB_DB', 'auth'),
+                'username': env('AUTH_DB_USER', 'root'),
+                'password': env('AUTH_DB_PASSWORD', 'techie'),
+                'prefix': env('AUTH_DB_PREFIX', None),
             },
         },
     },

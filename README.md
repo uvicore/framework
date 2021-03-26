@@ -56,8 +56,9 @@ uvicore-installer ./blog
 # Follow the post-installation instructions
 # Review your .env
 # Review all configs
-# Download this https://github.com/uvicore/framework code and review the guts since there are no docs yet :)  Look in the tests/apps/app1 folder for a small test app to glean how to use it.
-# Sorry, it's not done yet, but working hard on it!
+# Download this https://github.com/uvicore/framework code and review the guts since there are
+# no docs yet :)  Look in the tests/apps/app1 folder for a small test app to glean how to use
+# it. Sorry, it's not done yet, but working hard on it!
 ```
 
 

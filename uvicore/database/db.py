@@ -58,24 +58,25 @@ class Db(DatabaseInterface):
             # Check if we have already handled this unique metakey
             if connection.metakey in self.metadatas: continue
 
-            # Build encode/databases specific connection URL
-            # connection.url has a dialect in it, which we need for engines
-            # but don't need for encode/databases library
-            if connection.driver == 'sqlite':
-                encode_url = (connection.driver
-                    + ':///' + connection.database
-                )
-            else:
-                encode_url = (connection.driver
-                    + '://' + connection.username
-                    + ':' + connection.password
-                    + '@' + connection.host
-                    + ':' + str(connection.port)
-                    + '/' + connection.database
-                )
-            self._engines[connection.metakey] = sa.create_engine(connection.url)
-            self._databases[connection.metakey] = EncodeDatabase(encode_url)
-            self._metadatas[connection.metakey] = sa.MetaData()
+            if connection.backend == 'sqlalchemy':
+                # Build encode/databases specific connection URL
+                # connection.url has a dialect in it, which we need for engines
+                # but don't need for encode/databases library
+                if connection.driver == 'sqlite':
+                    encode_url = (connection.driver
+                        + ':///' + connection.database
+                    )
+                else:
+                    encode_url = (connection.driver
+                        + '://' + connection.username
+                        + ':' + connection.password
+                        + '@' + connection.host
+                        + ':' + str(connection.port)
+                        + '/' + connection.database
+                    )
+                self._engines[connection.metakey] = sa.create_engine(connection.url)
+                self._databases[connection.metakey] = EncodeDatabase(encode_url)
+                self._metadatas[connection.metakey] = sa.MetaData()
 
     def packages(self, connection: str = None, metakey: str = None) -> Connection:
         if not metakey:
@@ -97,7 +98,7 @@ class Db(DatabaseInterface):
                 metakey = self.connection(connection).metakey
             return metakey
         except Exception:
-            dump(self.connections)
+            dump("ERROR Connections:", self.connections)
             raise Exception('Metakey not found, connection={} metakey={}'.format(connection, metakey))
 
     def connection(self, connection: str = None) -> Connection:

@@ -39,6 +39,7 @@ config = {
 
             # MySQL
             'app1': {
+                'backend': 'sqlalchemy',
                 'driver': 'mysql',
                 'dialect': 'pymysql',
                 'host': '127.0.0.1',
@@ -46,6 +47,14 @@ config = {
                 'database': 'uvicore_test',
                 'username': 'root',
                 'password': 'techie',
+                'prefix': None,
+            },
+
+            'app1_remote': {
+                'backend': 'api',
+                'driver': 'uvicore.orm.drivers.api',
+                'dialect': 'uvicore',
+                'url': 'https://app1.example.com/api',
                 'prefix': None,
             },
         },

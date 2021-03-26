@@ -4,7 +4,7 @@ from uvicore.package import ServiceProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import load
 from uvicore.console.provider import Cli
-from uvicore.database.handlers import bootstrap
+from uvicore.database import bootstrap
 from uvicore.foundation.events import app as AppEvents
 from uvicore.http.events import server as HttpEvents
 

@@ -9,17 +9,18 @@ homepage = "https://github.com/uvicore/framework"
 documentation = "https://github.com/uvicore/framework"
 repository = "https://github.com/uvicore/framework"
 classifiers = [
-    "Intended Audience :: Information Technology",
-    "Intended Audience :: System Administrators",
-    "Operating System :: OS Independent",
-    "Topic :: Internet",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Typing :: Typed",
-    "Environment :: Web Environment",
-    "Framework :: AsyncIO",
-    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Environment :: Web Environment",
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+    "Typing :: Typed",
 ]
 include = ["LICENSE"]
 
