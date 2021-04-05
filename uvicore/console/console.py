@@ -1,5 +1,6 @@
 import uvicore
 from uvicore.console import click, group
+from uvicore.console.events import command as ConsoleEvents
 
 
 title_ideas = """
@@ -34,20 +35,20 @@ title_ideas = """
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')
 async def cli():
-    await before_command()
-    pass
+    await console_startup()
 
 
-async def before_command():
+async def console_startup():
     # FIXME, right here you can perform BEFORE any command code, like before_command event dispatch
     # Could also do this in the command decorator?  No because all commands are loaded up front, so all fire
     # before a single command does
     #print('before command here')
-    pass
+    #await uvicore.events.dispatch_async('cli_startup')
+    await ConsoleEvents.Startup().codispatch()
 
 
 @cli.resultcallback()
-async def after_command(result, **kwargs):
+async def console_shutdown(result, **kwargs):
     # FIXME, right here you can perform AFTER any command code, like after_command event dispatch
 
     # Disconnect database
@@ -58,5 +59,7 @@ async def after_command(result, **kwargs):
         except:
             pass
 
+    #await uvicore.events.dispatch_async('cli_shutdown')
+    await ConsoleEvents.Shutdown().codispatch()
 # IoC Class Instance
 # No because not to be used by the public

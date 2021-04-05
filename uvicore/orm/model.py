@@ -94,7 +94,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         """
 
         # Convert any type of dict or list to an actual Model or List[Model]
-        models = entity.mapper(models).model()
+        models = entity.mapper(models).model(perform_mapping=False)
 
         # There is no way to check if record already exists because these new models
         # have no primary key yet.  If you run it twice with the same data, it will just
@@ -209,7 +209,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
             # Convert model Dict into actual Model instance
             #model_instance = entity(**model)
-            model_instance = entity.mapper(model).model()
+            model_instance = entity.mapper(model).model(perform_mapping=False)
 
             # Insert the parent model and retrieve parents new PK value
             model_instance = await model_instance.save()
@@ -636,7 +636,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         """Hook fired after record is deleted"""
         event_name = 'uvicore.orm-{' + self.__class__.modelfqn + '}-AfterDelete'
         await uvicore.events.dispatch_async(event_name, {'model': self})
-
 
 
 

@@ -2,6 +2,8 @@ import uvicore
 import inspect
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Mapper as MapperInterface
+from uvicore.support.collection import haskey, getvalue
+from sqlalchemy.engine.result import RowProxy
 
 
 @uvicore.service()
@@ -40,9 +42,10 @@ class Mapper(MapperInterface):
                 return field.name
         return column
 
-    def model(self):
+    def model(self, perform_mapping: bool = True):
         """Convert a dict or List[dict] into a model or List[Model]
 
+        Only maps table->model fields if perform_mapping = True, else assume already model fields.
         Works on a single record as dict - entity.mapper(DictModel).model()
         Works on a list of dict - entity.mapper(ListOfDictModel).model()
         Passes through if already a Model or List[Model]
@@ -63,9 +66,18 @@ class Mapper(MapperInterface):
 
         models = []
         for value in values:
-            if type(value) == dict:
+            if type(value) == RowProxy:
+                # Convert SQLAlchemy row to model
+                models.append(self._row_to_model(value))
+
+            elif type(value) == dict:
                 # Convert dict to actual Model instance
-                models.append(self.entity(**value))
+                if perform_mapping:
+                    # Values table columns need mapped to model fields
+                    models.append(self._row_to_model(value))
+                else:
+                    # Assume values are already in model fields
+                    models.append(self.entity(**value))
             else:
                 # Already a model instance
                 models.append(value)
@@ -73,24 +85,8 @@ class Mapper(MapperInterface):
         if single: return models[0]
         return models
 
-    def row_to_model(self):
-        """Convert a single table row (SQLAlchemy RowProxy) into a model instance"""
-        row = self.args[0]
-        prefix = None
-        if len(self.args) == 2: prefix = self.args[1]
-        fields = {}
-
-        #dump(row.keys(), prefix)
-        for field in self.instance.__modelfields__.values():
-            if not field.column: continue
-            column = field.column
-            if prefix: column = prefix + '__' + column
-            if hasattr(row, column):
-                fields[field.name] = getattr(row, column)
-        return self.entity(**fields)
-
     def table(self):
-        """Convert an model instance into a dictionary matching the tables columns
+        """Convert an model instance into a dictionary matching the tables columns (column mapper enabled)
 
         Works on a single model - model.mapper().table() or entity.mapper(model).table()
         Or on a list of model instances - entity.mapper(ListOfModelInstances).tabel()
@@ -141,6 +137,28 @@ class Mapper(MapperInterface):
         #     if field.column and not field.read_only:
         #         columns[field.column] = value
         # return columns
+
+    def _row_to_model(self, row = None):
+        """Convert a single table row (SQLAlchemy RowProxy) or DICT of table into a model instance"""
+        if not row: row = self.args[0]
+        prefix = None
+        if len(self.args) == 2: prefix = self.args[1]
+        fields = {}
+
+        for field in self.instance.__modelfields__.values():
+            if not field.column and not field.evaluate: continue
+            if field.write_only: continue
+
+            if field.evaluate:
+                fields[field.name] = field.evaluate(row)
+            else:
+                column = field.column
+                if prefix: column = prefix + '__' + column
+                # Use haskey instead of hasattr because data could be an SQLAlchemy row (which is class notation)
+                # or a dictionary.  haskey and getvalue work the same on class models or dictionaries!
+                if haskey(row, column):
+                    fields[field.name] = getvalue(row, column)
+        return self.entity(**fields)
 
 
 

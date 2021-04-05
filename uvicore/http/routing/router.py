@@ -423,8 +423,9 @@ class Router(contracts.Router, Generic[R]):
 
         # Clean name
         name = name.replace('/', '.')
-        if name[-1] == '.': name = name[0:-1]  # Remove trailing .
-        if name[0] == '.': name = name[1:]     # Remove beginning .
+        if name and name[-1] == '.': name = name[0:-1]  # Remove trailing .
+        if name and name[0] == '.': name = name[1:]     # Remove beginning .
+        if not name: name = 'root'
 
         # Autoprefix path and name
         # Note that route "name" is for URL linking

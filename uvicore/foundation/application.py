@@ -190,6 +190,7 @@ class Application(ApplicationInterface):
             self._packages[package_name] = Package({
                 'name': package_name,
                 'short_name': package_name.split('.')[-1] if '.' in package_name else package_name,
+                'vendor': package_name.split('.')[0],  # Works fine even if no .
                 'main': True if package_name == self.main else False,
                 'path': location(package_name),
             })

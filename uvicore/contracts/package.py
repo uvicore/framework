@@ -14,6 +14,7 @@ class Package(Dict):
     # This is still a fully dynamic SuperDict!
     name: str
     short_name: str
+    vendor: str
     main: bool
     path: str
     registers: Dict

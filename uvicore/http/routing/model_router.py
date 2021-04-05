@@ -7,7 +7,6 @@ from uvicore.http.request import Request
 from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
-from uvicore.orm.fields import Relation
 from uvicore.http.exceptions import HTTPException, PermissionDenied
 #from uvicore.auth import User
 from uvicore.contracts import User

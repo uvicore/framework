@@ -175,7 +175,7 @@ class Orm(UserProvider):
         username = kwargs['username']
 
         # Get actual backend user
-        user = await Model.query().find(username=username)
+        user = await Model.query().show_writeonly(['password']).find(username=username)
 
         # If we have successfully logged in, we are not disabled
         user.disabled = False

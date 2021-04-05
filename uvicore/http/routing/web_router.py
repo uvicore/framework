@@ -29,6 +29,22 @@ class WebRouter(Router['WebRoute']):
         # Pass to generic add method
         return self.add(**params)
 
+    def post(self, path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+    ):
+        # Build parameters
+        methods = ['POST']
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
 
     def add(self,
         path: str,

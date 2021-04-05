@@ -1,9 +1,10 @@
 import uvicore
-from uvicore.console import command, argument, option
 from uvicore.support.dumper import dump, dd
+from uvicore.console import command, argument, option
 
 
 @command()
-async def command():
-    """A New CLI Command"""
-    print('New command here')
+async def cli():
+    """xx_AppName xx_name CLI command"""
+
+    print('Welcome to your new xx_AppName xx_name CLI command!')

@@ -680,11 +680,11 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
                 # Convert this one row to model (just the main fields, not relations)
                 if primary:
-                    #root_model = entity.mapper(row).model()
-                    root_model = entity.mapper(row).row_to_model()
+                    root_model = entity.mapper(row).model()
+                    #root_model = entity.mapper(row).row_to_model()
                 else:
-                    #root_model = entity.mapper(row, rel_name).model()
-                    root_model = entity.mapper(row, rel_name).row_to_model()
+                    root_model = entity.mapper(row, rel_name).model()
+                    #root_model = entity.mapper(row, rel_name).row_to_model()
 
                 # Get pk value
                 pk_value = getattr(root_model, pk)
@@ -737,13 +737,13 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     sub_model_pk = relation.name + '__' + relation.entity.mapper(entity.pk).column()
                     sub_model_pk_value = getattr(row, sub_model_pk)
                     if sub_model_pk_value is not None and sub_model_pk_value not in singles[relation.entity.tablename]:
-                        #singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).model()
-                        singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).row_to_model()
+                        singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).model()
+                        #singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).row_to_model()
 
                     # Get sub_model from singles cache
                     if sub_model_pk_value is not None:
                         sub_model = singles[relation.entity.tablename][sub_model_pk_value]
-                        #sub_model = relation.entity.mapper(row, prefix).model() # No cache version
+                        #sub_model = relation.entity.mapper(row, prefix).model(False) # No cache version
 
                         # Add this converted sub_model to the walked down parent model
                         setattr(model, fieldname, sub_model)

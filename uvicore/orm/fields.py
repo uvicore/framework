@@ -309,6 +309,7 @@ class Field(FieldInterface):
     read_only: Optional[bool] = None
     write_only: Optional[bool] = None
     callback: Optional[Any] = None
+    evaluate: Optional[Callable] = None
     relation: Optional[Relation] = None
     json: Optional[bool] = False
     properties: Optional[Dict] = None
@@ -325,6 +326,7 @@ class Field(FieldInterface):
         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         callback: Optional[Any] = None,
+        evaluate: Optional[Callable] = None,
         relation: Optional[Relation] = None,
         json: Optional[bool] = False,
         properties: Optional[Dict] = None,
@@ -341,6 +343,7 @@ class Field(FieldInterface):
         self.read_only = read_only
         self.write_only = write_only
         self.callback = callback
+        self.evaluate = evaluate
         self.relation = relation
         self.json = json
         self.properties = properties

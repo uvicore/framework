@@ -1,11 +1,20 @@
-from typing import Any, Dict
+from uvicore.typing import Any, Dict
 from collections import OrderedDict
 from collections import OrderedDict
 from uvicore.support.dictionary import deep_merge
 from uvicore.support.dumper import dump, dd
 
 
-def getvalue(object: Any, key: Any):
+def haskey(object: Any, key: Any) -> bool:
+    """Check if value exists on a dict or class instance attribute value in a unified way"""
+    if type(object) == dict or type(object) == OrderedDict:
+        # Dict or OrderedDict
+        return key in object
+    else:
+        # Class instance
+        return hasattr(object, key)
+
+def getvalue(object: Any, key: Any) -> Any:
     """Access a dict or class instance attribute value in a unified way"""
     if type(object) == dict or type(object) == OrderedDict:
         # Dict or OrderedDict
@@ -18,7 +27,7 @@ def getvalue(object: Any, key: Any):
             return None
 
 
-def setvalue(object: Any, key: Any, value: Any):
+def setvalue(object: Any, key: Any, value: Any) -> None:
     """Set a dict or class instance attribute value in a unified way"""
     if type(object) == dict or type(object) == OrderedDict:
         # Dict or OrderedDict

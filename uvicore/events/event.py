@@ -51,10 +51,15 @@ class Event:
         uvicore.events.listen(cls, handler)
 
     def dispatch(self):
-        """Dispatch this event which will call all listeners handlers"""
+        """Fire off an event and run all listener callbacks"""
         uvicore.events._dispatch(self)
 
     async def dispatch_async(self):
+        """Async fire off an event and run all async listener callbacks."""
+        await uvicore.events._dispatch_async(self)
+
+    async def codispatch(self):
+        """Async fire off an event and run all async listener callbacks.  Alias for dispatch_async()."""
         await uvicore.events._dispatch_async(self)
 
 
