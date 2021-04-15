@@ -12,21 +12,17 @@ class Schematic:
 
     def __init__(self, *, type: str, stub: str, dest: str, replace: List):
         self.type = type
-        self.package = uvicore.app.main
+        self.package = uvicore.app.package(main=True)
         self.stub = os.path.realpath(stub)
         self.dest = os.path.realpath(dest)
-
-        # Derived options
-        self.vendor = self.package.split(".")[0]
-        self.app_name = self.package.split(".")[-1]
 
         # Replacements (order is important)
         self.replacements = replace
         self.replacements.extend([
-            ("xx_vendor", self.vendor),
-            ("xx_Vendor", str.studly(self.vendor)),
-            ("xx_appname", self.app_name),
-            ("xx_AppName", str.studly(self.app_name)),
+            ("xx_vendor", self.package.vendor),
+            ("xx_Vendor", str.studly(self.package.vendor)),
+            ("xx_appname", self.package.name),
+            ("xx_AppName", str.studly(self.package.name)),
         ])
 
     def generate(self):
