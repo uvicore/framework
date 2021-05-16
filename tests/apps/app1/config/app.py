@@ -427,6 +427,31 @@ config = {
 
 
     # --------------------------------------------------------------------------
+    # Mail Configuration
+    # --------------------------------------------------------------------------
+    'mail': {
+        'default': 'mailgun',
+        'mailers': {
+            'mailgun': {
+                'driver': 'uvicore.mail.backends.Mailgun',
+                'domain': 'mailgun.mreschke.com',
+                'secret': 'key-843583a6f69b92f97875d2d87c90446e',
+            },
+            'smtp': {
+                'driver': 'uvicore.mail.backends.smtp',
+                'server': 'smtp.mailgun.org',
+                'port': 587,
+                'username': 'postmaster@mailgun.mreschke.com',
+                'password': 'ab7ea4733831a7166e449601386db487-aa4b0867-be75493f',
+                'ssl': False,
+            }
+        },
+        'from_name': 'Uvicore Test App1',
+        'from_address': 'uvicore@mreschke.com',
+    },
+
+
+    # --------------------------------------------------------------------------
     # Cache Configuration
     # --------------------------------------------------------------------------
     'cache': {

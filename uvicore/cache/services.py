@@ -27,7 +27,6 @@ class Cache(ServiceProvider):
         # Set uvicore.log global connecting to default store
         uvicore.cache = uvicore.ioc.make('uvicore.cache.manager.Manager').connect()
 
-
     def boot(self) -> None:
         # Define service provider registration control
         #self.registers(self.package.config.registers)

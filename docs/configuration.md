@@ -65,23 +65,19 @@ from uvicore import config
 config('app.name')
 ```
 
-By importing the main `uvicore.app` global variable which has a config property
-for your convenience.  Often times you will already have `app` imported for
-other needs.
-```python
-from uvicore import app
-app.config('app.name')
-
-# Of course this works too
-import uvicore
-uvicore.app.config('app.name')
-```
-
 By "making" from the Ioc container
 ```python
 import uvicore
 config = uvicore.ioc.make('config')  # Other aliases: Configuration, Config
 config('app.name')
+```
+
+By using the proper package.  Some classes have the current package as `self.package`.
+Or you can find your package from the `uvicore.app.package` method.
+```python
+import uvicore
+package = uvicore.app.package('mreschke/wiki')
+package.config('cache')
 ```
 
 
@@ -90,58 +86,84 @@ config('app.name')
 !!! info
     `config` is a class with a `__call__` method so you can use the class like a
     method `config('app.name')`.  This is provided as a convenience.
-    Under the hood the `__call__` simply calls a `get()` method.  Technically you
-    can also get config values by using this `get()` method like so
-    `config.get('app')`.
+    Under the hood the `__call__` simply calls a `dotget()` method.  Technically you
+    can also get config values by using this `dotget()` method like so
+    `config.dotget('app')`.
+
+    Config is also a uvicore SuperDict!.  This means you can use method style dot notation
+    to access the entire nested config structure like `config.app.cache`.  So use it like
+    a method `config('app')` or as method dot notation `config.app`!
 
 
 ### Getting Values
 
+!!! notice
+    The config system is a large SuperDict.  One of the main differences if a SuperDict is that keys that do not exist to not return `None`, they return an empty `SuperDict({})` which allows method style chaining to work properly.  So never check `if config.connections is None` as it will never be none.  Instead just check `if config.connection`.  This also means that `hasattr(config, 'somekey')` will ALWAYS return True even if the key does not exist because it default to `SuperDict({})`.
+
+
 Get the entire config Dictionary from all packages, completely deep merged based
 on provider order override
 ```python
+config
+# or
 config()
 ```
+
+!!! warning
+    Do not use `.get()`.  Since the config system is essentially a large uvicore SuperDict using `.get()` is actually a standard python Dictionary `.get()`.  So `.get('onelevel')` does work as it would on any dictionary, but `.get('onelevel.twolevel')` will not.  This is why the `.dotget()` method exists.  Or just use method style dot notation because its a class like SuperDict! (ex: `config.onelevel.twolevel`).
+
 
 Get the main `app config` which is defined in the main running app
 `config/app.py` file.  This main app config is not deep merged as it is the only
 running app config.
 ```python
+config.app
+# or
 config('app')
+# or
+config.dotget('app')
+# or
+config['app']
 ```
 
 Get a value from the app config
 ```python
+config.app.name
+# or
 config('app.name')
-config('app.server.port')
+# or
+config.dotget('app.name')
+# or
+config['app']['name']
 ```
 
 Get the entire config for a package named `mreschke.wiki` and get a few single
 values.  This is the main wiki config defined in `config/wiki.py` for example.
 This config is meant to be overridden as needed by other packages.
 ```python
-config('mreschke.wiki')
+config.mreschke.wiki.database.connections
+# or
 config('mreschke.wiki.database.connections')
-```
-
-All packages have a `config/package.py`.  This config is not deep merged as the
-settings here should never be overridden.  This package config is added to your
-main packages config (for example in `config/wiki.py`) under the `package` key.
-```python
-config('mreschke.wiki.package.name')
+# or
+config.dotget('mreschke.wiki.database.connections')
+# or
+config['mreschke']['wiki']['database']['connections']
 ```
 
 ### Settings Values
 
-You can set values by completely overriding the value using `set()` or by
-deep merging with existing values using `merge()`
+Generally you don't want to set config values on-the-fly, but you can because it's just a SuperDict.
 
 **Sets** the entire database connection dictionary with a new one
 ```python
-config.set('mreschke.wiki.database.connections', '{...}')
+config.app1.database.connections.app1 = Dict({'foo': 'bar'})
+# or
+config.dotset('mreschke.wiki.database.connections', {'foo': 'bar'})
 ```
 
-**Merges** this database connection dictinoary with one that already exists
+**Merges** this database connection dictionary with one that already exists
 ```python
-config.merge('mreschke.wiki.database.connections', '{...}')
+config.mreschke.wiki.database.connections.merge({'foo': 'bar'})
+# or
+config.dotget('mreschke.wiki.database.connections').merge({'foo': 'bar'})
 ```

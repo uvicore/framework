@@ -7,6 +7,8 @@ repo_name: uvicore/framework
 repo_url: https://github.com/uvicore/framework
 edit_uri: ''
 
+# Serving
+dev_addr: '127.0.0.1:8034'
 
 
 # Navigation
@@ -30,6 +32,8 @@ nav:
     - bootstrap.md
   - Digging Deeper:
     - events.md
+    - cache.md
+    - mail.md
   - Epologue:
     - release-notes.md
     - mkdocs-help.md

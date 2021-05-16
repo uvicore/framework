@@ -2,111 +2,156 @@ import uvicore
 from uvicore import log
 from uvicore.console import command
 from uvicore.support.dumper import dump, dd
+from uvicore.typing import Dict, List
 
 @command()
 async def cli():
     """Play"""
+    #await mail_play()
+    #await cache_play()
 
-    from app1 import models
-    from app1.models import User
+    #package = uvicore.app.package('app1')
+    #dump(package.config('redis'))
 
-    user = await User.query().include('contact').find(1)
+    from uvicore import config
+    #config.app1.database.connections.app1.prefix = '_asdf'
 
 
-    dump(user)
+    #config.dotset('app1.database.connections.app1', {'foo': 'bar'})
+    #config.app1.database.connections.app1 = Dict({'foo': 'bar'})
 
+    #config.app1.database.connections.app1.merge({'foo': 'bar'})
+    config.dotget('app1.database.connections.app1').merge({'foo': 'bar'})
 
+    dump(config.app1.database.connections)
 
 
-    #await uvicore.cache.put('cocknballs', 'whatever I want')
 
-    #dump( await uvicore.cache.get('cocknballs') )
+    # value = {
+    #     'one': 1,
+    #     'two': 2,
+    # }
 
+    # new = Dict()
+    # new.dotset('some.deep', value)
 
+    # #new.dotset('some.deep.one', {'again': 'here'})
+    # new.dotset('some.deep.one', 'one here')
 
+    # dump(new)
 
-    # async def get_users():
-    #     dump('QUERY DB')
-    #     return await models.User.query().find(1)
 
-    # await uvicore.cache.remember('users', get_users, seconds=10)
-    # users = await uvicore.cache.get('users')
-    # dump(users)
 
 
+async def mail_play():
 
+    from uvicore.mail import Mail
+    # await mail.to('').subject('').send()
+    # await mail.mailer('smtp').from_name('matthew').from_address('asdf').to(['']).subject('').cc([]).bcc([]).attachments([]).body('adsfasdf').send()
 
+    # # Custom options, as dict since each drive has their own
+    # await mail.mailer('smtp').options({
+    #     'server': 'smtp.asdf.com',
+    #     'port': 587,
+    #     '...'
+    # })
 
-    #users = await models.User.query().cache(tag='taylor').find(1)
-    # await uvicore.cache.flush(tags=['taylor'])
-    # dump(users)
+    # x = Mail(
+    #     #mailer='smtp',
+    #     #mailer_options={'port': 124},
+    #     to=['mreschke@sundiallabs.com'],
+    #     cc=['mreschke19@gmail.com'],
+    #     bcc=['mreschke@sunfinity.com'],
+    #     from_name='Matthew',
+    #     from_address='mail@mreschke.com',
+    #     subject='Hello1',
+    #     html='Hello1 <b>Body</b> Here',
+    #     attachments=[
+    #         '/tmp/test.txt',
+    #         '/tmp/test2.txt',
+    #         '/tmp/test3.txt',
+    #     ]
+    # )
 
+    x = (Mail()
+        #.mailer('mailgun')
+        #.mailer_options({'port': 124})
+        .to(['mreschke@sundiallabs.com'])
+        .cc(['mreschke19@gmail.com'])
+        .bcc(['mreschke@sunfinity.com'])
+        .from_name('Matthew')
+        .from_address('mail@mreschke.com')
+        .subject('Hello1')
+        .text('Hello1 <b>Body</b> Here')
+        .attachments([
+            '/tmp/test.txt',
+            '/tmp/test2.txt',
+            '/tmp/test3.txt',
+        ])
+    )
 
-    #await uvicore.cache.put('ioc_bindings', uvicore.ioc.binding('uvicore.database.db.Db'))
 
-    #dump ( await uvicore.cache.get('ioc_bindings') )
+    await x.send()
 
 
 
 
+async def cache_play():
 
+    # These options are already .connect() to the default cache store
+    #from uvicore import cache
+    #cache = uvicore.cache
 
 
+    # These options require you to run .connect().  If .connect() is empty, the default
+    # cache store is used.  You may also specify the store with .connect('redis')
+    #from uvicore.cache.manager import Manager as Cache
+    #cache = Cache.connect()
 
+    cache = uvicore.ioc.make('cache').connect()
 
-    dd('DONE PLAY')
 
+    #from uvicore.cache.manager import Manager as cache
+    #cache = uvicore.ioc.make('uvicore.cache.manager.Manager')
+    #cache = uvicore.ioc.make('cache')
+    #cache = uvicore.ioc.make('Cache')
 
+    #cache = uvicore.cache
+    #cache = uvicore.cache.connect('app1')
+    #cache = Cache.connect('app1')
 
+    dump(cache)
 
 
+    await cache.put('key1', 'value1', seconds=15)
 
-    #last_updated = keystone.get('permits_last_updated')
+    await cache.put('key2', 'value2')
 
+    await cache.put({
+        'key3': 'value 3',
+        'key4': 'value 4',
+    })
 
+    dump(await cache.store('redis').get('key1'))
 
+    dump(await cache.get(['key1', 'key2']))
 
+    dump(await cache.get(['key5', 'key2'], default='5 not found'))
 
+    dump(await cache.remember('key6', 'new key6'))
 
+    #dump(await cache.pull(['key1', 'key2']))
 
 
+    await cache.add('key1', 'value1000002')
+    dump(await cache.get(['key1', 'key2']))
 
+    await cache.increment('key10', 10, seconds=10)
+    dump(await cache.get('key10'))
 
+    #await cache.flush()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+async def other_play():
 
     user = await models.User.query().include(
         'groups.roles.permissions',
@@ -118,17 +163,7 @@ async def cli():
     ).find(2)
     dd(user)
 
-
-
-
-
-
-
-
-
     dd('doneo play')
-
-
 
 
     # Redis
@@ -141,8 +176,6 @@ async def cli():
     # dump(await cache.get('name'))
 
     # dump(await redis.keys('*'))
-
-
 
     # Cache
     #from uvicore.cache import Cache

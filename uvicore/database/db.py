@@ -136,19 +136,23 @@ class Db(DatabaseInterface):
         metakey = self.metakey(connection, metakey)
         database = self.databases.get(metakey)
         if not database.is_connected:
+            # Connect on-the-fly
             await database.connect()
-        #await self._connect(metakey=metakey)
         return self.databases.get(metakey)
 
-    async def disconnect(self, connection: str = None, metakey: str = None) -> None:
-        metakey = self.metakey(connection, metakey)
-        database = self.databases.get(metakey)
-        if database.is_connected:
-            await database.disconnect()
-
-    async def disconnect_all(self):
-        for database in self.databases.keys():
-            await self.disconnect(metakey=database)
+    async def disconnect(self, connection: str = None, metakey: str = None, from_all: bool = False) -> None:
+        if from_all:
+            # Disconnect from all connected databases
+            for database in self.databases.values():
+                # Only disconnect if connected or will throw an error
+                if database.is_connected:
+                    await database.disconnect()
+        else:
+            # Disconnect from one database by connection str or metakey
+            metakey = self.metakey(connection, metakey)
+            database = self.databases.get(metakey)
+            if database.is_connected:
+                await database.disconnect()
 
     async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
         database = await self.database(connection, metakey)
@@ -184,18 +188,6 @@ class Db(DatabaseInterface):
     def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
         if not connection: connection = self.default
         return DbQueryBuilder(connection)
-
-    async def _http_startup(self, event: OnHttpStarted):
-        """HTTP Startup event handler"""
-        #if uvicore.app.is_http:
-        for database in self.databases.values():
-            await database.connect()
-
-    async def _http_shutdown(self, event: OnHttpStarted):
-        """HTTP Shutdown event handler"""
-        #if uvicore.app.is_http:
-        for database in self.databases.values():
-            await database.disconnect()
 
 
     # def table(self, table: str):

@@ -1,6 +1,24 @@
 # Routing
 
 
+
+
+## OBSOLETE WARNING
+
+This document is obsolete now that I refactored the entire routing infrastructure.
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Routing Basics
 
 Uvicore separates web and api routes into two files located in the `http/routes` directory.  These route files are loaded from your packages `Service Provider`. Dual routers allow for separate middleware and authentication mechanisms for web and api endpoints.  Route middleware and authentication is located in your packages `config/app.py` file.

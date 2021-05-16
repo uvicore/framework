@@ -130,6 +130,9 @@ config = {
         'uvicore.http': {
             'provider': 'uvicore.http.services.Http',
         },
+        'uvicore.http_client': {
+            'provider': 'uvicore.http_client.services.HttpClient',
+        },
     }),
 
 }

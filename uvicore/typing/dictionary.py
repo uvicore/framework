@@ -259,7 +259,10 @@ class _SuperDict:
                 _recursive_config[key] = self.__class__()
             return self.dotset(rest, value, _recursive_config[key])
         else:
-            _recursive_config[dotkey] = self.__class__(value)
+            if type(value) == dict:
+                _recursive_config[dotkey] = self.__class__(value)
+            else:
+                _recursive_config[dotkey] = value
             return value
 
 

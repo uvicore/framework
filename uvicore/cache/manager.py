@@ -5,7 +5,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Cache as CacheInterface
 
 
-@uvicore.ioc.bind('uvicore.cache.manager.Manager',
+@uvicore.service('uvicore.cache.manager.Manager',
     aliases=['Cache', 'cache'],
     singleton=True,
 )

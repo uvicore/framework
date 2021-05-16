@@ -100,13 +100,8 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    async def disconnect(self, connection: str = None, metakey: str = None) -> None:
-        """Disconnect from database by connection str or metakey"""
-        pass
-
-    @abstractmethod
-    async def disconnect_all(self):
-        """Disconnect from all connected databases"""
+    async def disconnect(self, connection: str = None, metakey: str = None, from_all: bool = False) -> None:
+        """Disconnect from a database by connection str or metakey.  Of ALL databases."""
         pass
 
     @abstractmethod

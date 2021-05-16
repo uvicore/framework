@@ -34,32 +34,35 @@ title_ideas = """
     License http://mreschke.com/license/mit
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')
-async def cli():
+@click.pass_context
+async def cli(ctx):
+    # Console startup handler
+    # This runs before any command.  Even if you don't actually run a command but only display
+    # the help output using NO parameters, like ./uvicore http  It does not however run when just
+    # showing ./uvicore main help output.  Only on subcommand help output or actual command
     await console_startup()
+
+    # Console shutdown handler
+    ctx.call_on_close(console_shutdown)
+
+    # The actual command runs right here
+
+
+# Had to hack asyncclick core.py def close and __aexit__ with awaits
+# github issue open, hopefully he will fix soon
 
 
 async def console_startup():
-    # FIXME, right here you can perform BEFORE any command code, like before_command event dispatch
-    # Could also do this in the command decorator?  No because all commands are loaded up front, so all fire
-    # before a single command does
-    #print('before command here')
-    #await uvicore.events.dispatch_async('cli_startup')
+    #print('console startup')
     await ConsoleEvents.Startup().codispatch()
 
 
-@cli.resultcallback()
-async def console_shutdown(result, **kwargs):
-    # FIXME, right here you can perform AFTER any command code, like after_command event dispatch
+#@cli.resultcallback()
+#async def console_shutdown(result, **kwargs):
+#This decorator works only if you give it an actual command
+#Just showing help output from NO command does not fire this, so aiohttp still complains
+#about not being shutdown properly even if you just do ./uvicore http with no actual command to run.
 
-    # Disconnect database
-    # Will fail if uvicore.database package is not loaded, so check first
-    if 'uvicore.database' in uvicore.app.providers:
-        try:
-            await uvicore.db.disconnect_all()
-        except:
-            pass
-
-    #await uvicore.events.dispatch_async('cli_shutdown')
+async def console_shutdown():
+    #print('console shutdown')
     await ConsoleEvents.Shutdown().codispatch()
-# IoC Class Instance
-# No because not to be used by the public

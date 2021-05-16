@@ -1,16 +1,16 @@
 # Installation
 
-Download the `uvicore-new-app` bash script
+Download the `uvicore-installer` bash script
 
 ```bash
-wget uvicore.io/uvicore-new-app /usr/local/bin
-chmod a+x /usr/local/bin/uvicore-new-app
+wget uvicore.io/uvicore-installer /usr/local/bin
+chmod a+x /usr/local/bin/uvicore-installer
 ```
 
 Create your first uvicore application
 ```bash
 cd ~/Code
-uvicore-new-app ./wiki
+uvicore-installer ./wiki 0.1
 ```
 
 Once you answer all the questions, create your virtual environment of choice
@@ -35,15 +35,3 @@ Run your new application
 ./uvicore
 ```
 
-
-Install optional packages depending on your application needs (example using poetry)
-```bash
-# Optional MySQL Support
-poetry add databases[mysql]
-
-# Optional SQLite Support
-poetry add databases[sqlite]
-
-# Optional PostgreSQL Support
-poetry add databases[postgresql]
-```

@@ -6,7 +6,6 @@ from uvicore.support.module import load
 from uvicore.console.provider import Cli
 from uvicore.database import bootstrap
 from uvicore.foundation.events import app as AppEvents
-from uvicore.http.events import server as HttpEvents
 
 
 @uvicore.provider()
@@ -24,11 +23,15 @@ class Database(ServiceProvider, Cli):
 
         # Register event listeners
         AppEvents.Booted.listen(bootstrap.Database)
-        HttpEvents.Startup.listen(uvicore.db._http_startup)
-        HttpEvents.Shutdown.listen(uvicore.db._http_shutdown)
+
+        # String based events instead of class based because HTTP may not even
+        # be installed, so importing it would cause an issue.
+        @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.http.events.server.Shutdown'])
+        async def uvicore_shutdown(event):
+            # Disconnect from all connected databases
+            await uvicore.db.disconnect(from_all=True)
 
     def boot(self) -> None:
-
         # Define service provider registration control
         self.registers(self.package.config.registers)
 
