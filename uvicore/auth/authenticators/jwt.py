@@ -23,7 +23,7 @@ class Jwt(Authenticator):
     # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
-        #dump('JWT Authenticator HERE')
+        dump('JWT Authenticator HERE')
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
@@ -73,23 +73,23 @@ class Jwt(Authenticator):
 
         # User from valid JWT not found in uvicore OR not synced for first time (no uuid).
         # Auto create or update user if allowed in config
-        if self.config.auto_create_user and user is None or user.uuid is None:
+        if self.config.auto_create_user and (user is None or user.uuid is None):
             jwt_mapping = self.config.auto_create_user_jwt_mapping
-            user = {}
+            new_user = {}
             for key, value in self.config.auto_create_user_jwt_mapping.items():
                 if isinstance(value, Callable):
-                    user[key] = value(jwt)
+                    new_user[key] = value(jwt)
                 else:
-                    user[key] = value
+                    new_user[key] = value
 
             # User does not exist, create user
             if user is None:
                 # Auto create new user in user provider
-                await self.create_user(self.config.provider, request, **user)
+                await self.create_user(self.config.provider, request, **new_user)
 
             else:
                 # User exists, but needs an initial sync
-                await self.sync_user(self.config.provider, request, **user)
+                await self.sync_user(self.config.provider, request, **new_user)
 
             # Get user and validate credentials
             user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)

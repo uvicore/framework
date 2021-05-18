@@ -21,9 +21,9 @@ async def cli():
     #config.app1.database.connections.app1 = Dict({'foo': 'bar'})
 
     #config.app1.database.connections.app1.merge({'foo': 'bar'})
-    config.dotget('app1.database.connections.app1').merge({'foo': 'bar'})
+    #config.dotget('app1.database.connections.app1').merge({'foo': 'bar'})
 
-    dump(config.app1.database.connections)
+    dump(config.app)
 
 
 

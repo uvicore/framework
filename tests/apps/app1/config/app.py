@@ -430,24 +430,24 @@ config = {
     # Mail Configuration
     # --------------------------------------------------------------------------
     'mail': {
-        'default': 'mailgun',
+        'default': env('MAIL_DRIVER', 'mailgun'),
         'mailers': {
             'mailgun': {
                 'driver': 'uvicore.mail.backends.Mailgun',
-                'domain': 'mailgun.mreschke.com',
-                'secret': 'key-843583a6f69b92f97875d2d87c90446e',
+                'domain': env('MAIL_MAILGUN_DOMAIN', ''),
+                'secret': env('MAIL_MAILGUN_SECRET', ''),
             },
             'smtp': {
                 'driver': 'uvicore.mail.backends.smtp',
-                'server': 'smtp.mailgun.org',
-                'port': 587,
-                'username': 'postmaster@mailgun.mreschke.com',
-                'password': 'ab7ea4733831a7166e449601386db487-aa4b0867-be75493f',
-                'ssl': False,
+                'server': env('MAIL_SMTP_SERVER', ''),
+                'port': env.int('MAIL_SMTP_PORT', 587),
+                'username': env('MAIL_SMTP_USERNAME', ''),
+                'password': env('MAIL_SMTP_PASSWORD', ''),
+                'ssl': env.bool('MAIL_SMTP_SSL', False),
             }
         },
-        'from_name': 'Uvicore Test App1',
-        'from_address': 'uvicore@mreschke.com',
+        'from_name': env('MAIL_FROM_NAME', 'Uvicore'),
+        'from_address': env('MAIL_FROM_ADDRESS', 'uvicore@example.com'),
     },
 
 

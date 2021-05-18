@@ -143,7 +143,6 @@ class Orm(UserProvider):
 
     async def create_user(self, request: HTTPConnection, **kwargs):
         """Create new user in backend"""
-
         # Pop groups from kwargs
         groups = kwargs.pop('groups')
 
@@ -170,7 +169,6 @@ class Orm(UserProvider):
         return user
 
     async def sync_user(self, request: HTTPConnection, **kwargs):
-        dump('SYNC USER')
         # Get username
         username = kwargs['username']
 

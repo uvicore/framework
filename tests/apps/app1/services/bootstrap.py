@@ -10,10 +10,10 @@ def application(is_console: bool = False) -> None:
     ./uvicore or uvicorn/gunicorn server
     """
     # Base path
-    base_path = path.find_base(__file__) + '/testapp/app'
+    base_path = path.find_base(__file__)
 
-    # Load .env from environs - NO, not for this test environment
-    # NO - Env().read_env(base_path + '/.env')
+    # Load .env from environs
+    Env().read_env(base_path + '/../../../.env')
 
     # Import this apps config (import must be after Env())
     from ..config.app import config as app_config
