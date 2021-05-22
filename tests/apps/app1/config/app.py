@@ -97,9 +97,15 @@ config = {
         'prefix': '/api',
         'openapi': {
             'title': 'App1 API Docs',
-            'url': '/openapi.json',
-            'docs_url': '/docs',
-            'redoc_url': '/redoc',
+            'path': '/openapi.json',
+            'docs': {
+                'path': '/docs',
+                'favicon_url': 'data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=',
+                'js_url': 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.47.1/swagger-ui-bundle.js',
+                'css_url': 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.47.1/swagger-ui.min.css',
+            },
+            # If oauth2 is enabled, edit app.auth.oauth2 configuration below
+            'oauth2_enabled': True,
         },
         'middleware': OrderedDict({
             # Only allow this site to be hosted from these domains
@@ -151,6 +157,16 @@ config = {
     # Dict allows deep merging of default options to eliminate config duplication.
     # --------------------------------------------------------------------------
     'auth': {
+
+        # Oauth2 configuration
+        # Mainly used for OpenAPI doc authentication if app.api.openapi.oauth2_enabled=True
+        # but may be used elsewhere in your app if needed.
+        'oauth2': {
+            'client_id': env('AUTH_OAUTH2_CLIENT_ID', 'xyz'),
+            'base_url': env('AUTH_OAUTH2_BASE_URL', 'https://my_fusionauth_gluu_keycloke_auth0_okta.com'),
+            'authorize_path': env('AUTH_OAUTH2_AUTHORIZE_URI', '/oauth2/authorize'),
+            'token_path': env('AUTH_OAUTH2_TOKEN_URI', '/oauth2/token'),
+        },
 
         # Web route authenticators and user providers
         'web': {

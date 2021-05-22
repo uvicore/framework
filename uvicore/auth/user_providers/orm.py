@@ -58,12 +58,13 @@ class Orm(UserProvider):
         disabled = '1' if anonymous else '0'
 
         # Cache not found.  Query user, validate password and convert to user class
-        kwargs = {key_name: key_value}
+        find_kwargs = {key_name: key_value}
         db_user = await (Model.query()
             .include(*includes)
             .where('disabled', disabled)
-            .show_writeonly(['password'])
-            .find(**kwargs)
+            #.show_writeonly(['password'])
+            .show_writeonly(True)
+            .find(**find_kwargs)
         )
 
         # User not found or disabled.  Return None means not verified or found.

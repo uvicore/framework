@@ -734,7 +734,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     # Example if you do .include('creator.info', 'owner').  If owner is id=1 and id=1 was already
                     # a creator, that owner will also have the nested INFO filled out, because it pulls from the cache.
                     if relation.entity.tablename not in singles: singles[relation.entity.tablename] = {}
-                    sub_model_pk = relation.name + '__' + relation.entity.mapper(entity.pk).column()
+                    sub_model_pk = relation.name + '__' + relation.entity.mapper(relation.entity.pk).column()
                     sub_model_pk_value = getattr(row, sub_model_pk)
                     if sub_model_pk_value is not None and sub_model_pk_value not in singles[relation.entity.tablename]:
                         singles[relation.entity.tablename][sub_model_pk_value] = relation.entity.mapper(row, prefix).model()

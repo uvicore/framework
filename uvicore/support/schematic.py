@@ -21,8 +21,8 @@ class Schematic:
         self.replacements.extend([
             ("xx_vendor", self.package.vendor),
             ("xx_Vendor", str.studly(self.package.vendor)),
-            ("xx_appname", self.package.name),
-            ("xx_AppName", str.studly(self.package.name)),
+            ("xx_appname", self.package.short_name),
+            ("xx_AppName", str.studly(self.package.short_name)),
         ])
 
     def generate(self):

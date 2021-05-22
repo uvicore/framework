@@ -19,6 +19,21 @@ class Post(Controller):
 
     #scopes = ['authenticated']
 
+
+    # There are 3 ways to add middleware
+
+    # Method 1 (preferred) - this does a Guard['authenticated'] for you
+    #scopes = ['authenticated']
+
+    # Method 2 - this append shit guard to middleware[]
+    #auth = Guard(['authenticated'])
+
+    # Method 3 - manual middleware definition
+    # middleware = [
+    #     Guard(['authenticated'])
+    # ]
+
+
     def register(self, route: ApiRouter):
 
         #@route.get('/post4', middleware=[Auth('model-perms')])

@@ -20,7 +20,7 @@ class Authentication:
         assert self.route_type in ['web', 'api']
 
         # Load and merge the auth config for this route type (web or api)
-        self.config = self.load_config()
+        self.config = get_auth_config(self.route_type)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         # Middleware only for http and websocket types
@@ -113,52 +113,6 @@ class Authentication:
         # Call user provider method passing in defined kwargs
         return await provider_method(request=request, **kwargs)
 
-    def load_config(self):
-        """Get web or api auth config and merge default options and providers"""
-
-        # Load all default option configs
-        default_options = uvicore.config.app.auth.default_options
-
-        # Load all provider configs
-        providers = uvicore.config.app.auth.providers
-
-        # Merge default options and providers into each authenticator
-        config_path = 'app.auth.api'
-        if self.route_type == 'web': config_path = 'app.auth.web'
-        config = uvicore.config.dotget(config_path).clone()
-
-        # Merge provider Dict if specified as a string
-        if 'default_provider' in config and isinstance(config.default_provider, str):
-            if config.default_provider in providers:
-                config.default_provider = providers[config.default_provider].clone()
-            else:
-                raise Exception("Default options '{}' not found in auth config".format(config.default_provider))
-
-        # Merge each providers configuration
-        for authenticator in config.authenticators.values():
-
-            # Merge default_options Dict if specified as a string
-            if 'default_options' in authenticator:
-                # Deep merge default options
-                if authenticator.default_options in default_options:
-                    authenticator.defaults(default_options[authenticator.default_options])  # Defaults does a clone!
-                else:
-                    raise Exception("Default options '{}' not found in auth config".format(authenticator.default_options))
-
-            # If no provider specified, use default_provider (already a full Dict from above)
-            if 'provider' not in authenticator:
-                authenticator.provider = config.default_provider
-
-            # Merge provider Dict if specified as a string
-            if 'provider' in authenticator and isinstance(authenticator.provider, str):
-                if authenticator.provider in providers:
-                    authenticator.provider = providers[authenticator.provider].clone()
-                else:
-                    raise Exception("Provider '{}' not found in auth config".format(authenticator.provider))
-
-        # Returned merge config for all authenticators
-        return config
-
     async def error_response(self, user: User, scope: Scope, receive: Receive, send: Send):
         """Build and return error response"""
         if self.route_type == 'web':
@@ -182,7 +136,52 @@ class Authentication:
 
 
 
+# Stand-alone function because we use this elsewhere outside the Authentication class
+def get_auth_config(route_type: str = 'aip'):
+    """Get web or api auth config and merge default options and providers"""
 
+    # Load all default option configs
+    default_options = uvicore.config.app.auth.default_options
+
+    # Load all provider configs
+    providers = uvicore.config.app.auth.providers
+
+    # Merge default options and providers into each authenticator
+    config_path = 'app.auth.api'
+    if route_type == 'web': config_path = 'app.auth.web'
+    config = uvicore.config.dotget(config_path).clone()
+
+    # Merge provider Dict if specified as a string
+    if 'default_provider' in config and isinstance(config.default_provider, str):
+        if config.default_provider in providers:
+            config.default_provider = providers[config.default_provider].clone()
+        else:
+            raise Exception("Default options '{}' not found in auth config".format(config.default_provider))
+
+    # Merge each providers configuration
+    for authenticator in config.authenticators.values():
+
+        # Merge default_options Dict if specified as a string
+        if 'default_options' in authenticator:
+            # Deep merge default options
+            if authenticator.default_options in default_options:
+                authenticator.defaults(default_options[authenticator.default_options])  # Defaults does a clone!
+            else:
+                raise Exception("Default options '{}' not found in auth config".format(authenticator.default_options))
+
+        # If no provider specified, use default_provider (already a full Dict from above)
+        if 'provider' not in authenticator:
+            authenticator.provider = config.default_provider
+
+        # Merge provider Dict if specified as a string
+        if 'provider' in authenticator and isinstance(authenticator.provider, str):
+            if authenticator.provider in providers:
+                authenticator.provider = providers[authenticator.provider].clone()
+            else:
+                raise Exception("Provider '{}' not found in auth config".format(authenticator.provider))
+
+    # Returned merge config for all authenticators
+    return config
 
 
 

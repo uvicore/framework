@@ -23,7 +23,7 @@ class Jwt(Authenticator):
     # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
-        dump('JWT Authenticator HERE')
+        #dump('JWT Authenticator HERE')
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)

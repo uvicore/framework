@@ -166,11 +166,12 @@ class ModelMetaclass(PydanticMetaclass):
                 show = False
                 if not field.write_only: show = True
                 if type(show_writeonly) == bool:
-                    # show_writeonly is a bool, meaning all all writeonly fields
+                    # show_writeonly is a bool, meaning show all writeonly fields
                     if field.write_only and show_writeonly == True: show = True
                 else:
                     # show_writeonly is a list of fields to allow
                     if field.write_only and field.column in show_writeonly: show = True
+
                 if show:
                     columns.append(getattr(all_columns, field.column))
         return columns

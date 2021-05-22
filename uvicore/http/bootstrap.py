@@ -7,12 +7,14 @@ from uvicore.foundation.events.app import Booted as OnAppBooted
 from uvicore.contracts import Package as Package
 from uvicore.console import command_is
 from starlette.applications import Starlette
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from uvicore.http import response
 from uvicore.http.events import server as HttpServerEvents
 from uvicore.http.routing.router import Routes
 from functools import partial, update_wrapper
 from uvicore.http.routing import ApiRoute, WebRoute
+from uvicore.http.routing import Guard
+from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 
 
 class Http(Handler):
@@ -262,12 +264,21 @@ class Http(Handler):
         if api_routes:
             api_server = FastAPI(
                 debug=debug,
-                title=uvicore.config('app.api.openapi.title'),
+                #title=uvicore.config('app.api.openapi.title'),
                 version=uvicore.app.version,
-                openapi_url=uvicore.config('app.api.openapi.url'),
-                swagger_ui_oauth2_redirect_url=uvicore.config('app.api.openapi.docs_url') + '/oauth2-redirect',
-                docs_url=uvicore.config('app.api.openapi.docs_url'),
-                redoc_url=uvicore.config('app.api.openapi.redoc_url'),
+                #openapi_url=uvicore.config('app.api.openapi.url'),
+                #swagger_ui_oauth2_redirect_url=uvicore.config('app.api.openapi.docs_url') + '/oauth2-redirect',
+
+                # Default FastAPI docs and redoc routes
+                #docs_url=uvicore.config('app.api.openapi.docs_url'),
+                #redoc_url=uvicore.config('app.api.openapi.redoc_url'),
+
+                docs_url=None,
+                redoc_url=None,
+
+                #swagger_ui_oauth2_redirect_url=
+
+
                 #root_path='/api',  #fixme with trying out kong
             )
         return (base_server, web_server, api_server)
@@ -309,6 +320,55 @@ class Http(Handler):
 
     def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute], prefix) -> None:
         """Add api routes to the api server"""
+
+        # Get important app configs
+        api_prefix = uvicore.config.app.api.prefix  # Different that the prefix parameter
+        openapi = uvicore.config.app.api.openapi
+        oauth2 = uvicore.config.app.auth.oauth2
+
+        # Determine if OpenAPI docs oauth2 authentication is enabled
+        # If OpenAPI oauth2 is enabled, create a FastAPI OAuth2AuthorizationCodeBearer variable
+        if openapi.oauth2_enabled and oauth2:
+            from fastapi.security import OAuth2AuthorizationCodeBearer
+            oauth2_scheme = OAuth2AuthorizationCodeBearer(
+                authorizationUrl=oauth2.base_url + oauth2.authorize_path,
+                tokenUrl=oauth2.base_url + oauth2.token_path,
+            )
+
+        # Create our own custom OpenAPI docs route
+        if openapi.path and openapi.docs.path:
+
+            # Oauth2 redirect URL (without api_prefid)
+            openapi_redirect_url =  openapi.docs.path + '/login'
+
+            @api_server.get(openapi.docs.path, include_in_schema=False)
+            def openapi_docs():
+                return get_swagger_ui_html(
+                    openapi_url=api_prefix + openapi.path,
+                    title=openapi.title,
+
+                    swagger_favicon_url=openapi.docs.favicon_url,
+                    swagger_js_url=openapi.docs.js_url,
+                    swagger_css_url=openapi.docs.css_url,
+                    oauth2_redirect_url=api_prefix + openapi_redirect_url,
+                    init_oauth={
+                        'clientId': oauth2.client_id,
+                        #'clientSecret': "GaMz_F83_KB8ac6g-Eds0uoHyeoxg03X184yBqZR5Ws",
+                        #'realm': "https://auth-local.triglobal.io",
+                        'appName': uvicore.config.app.name,
+                        #'scopeSeparator': " ",
+                        'scopes': "openid profile",
+                        #'additionalQueryStringParams': {'client_id': "7cc7d2a5-cc02-43ca-93bc-8476370ebf9d"},
+                        #'usePkceWithAuthorizationCodeGrant': False
+                    },
+                )
+
+            @api_server.get(openapi_redirect_url, include_in_schema=False)
+            def openapi_redirect():
+                return get_swagger_ui_oauth2_redirect_html()
+
+
+        # Loop each uvicore route and add as FastAPI route
         for route in api_routes.values():
             endpoint_func = route.endpoint
             response_model = route.response_model
@@ -332,7 +392,20 @@ class Http(Handler):
             # Get openapi description from route param or endpoint docstring
             description = route.description or endpoint_func.__doc__
 
-            # Add route
+            # If OpenAPI oauth2 authentication is enabled, add the proper route
+            # dependency to our oauth2_schema
+            if openapi.oauth2_enabled:
+                found_guard = False
+                for middleware in route.middleware:
+                    if type(middleware) == Guard:
+                        found_guard = True
+                        break;
+
+                if found_guard:
+                    route.middleware.append(Depends(oauth2_scheme))
+
+
+            # Add uvicore route to FastAPI route
             api_server.add_api_route(
                 path=(prefix + route.path) or '/',
                 endpoint=route.endpoint,

@@ -147,7 +147,10 @@ class Mapper(MapperInterface):
 
         for field in self.instance.__modelfields__.values():
             if not field.column and not field.evaluate: continue
-            if field.write_only: continue
+
+            # NO, because we added an override of show_writeonly() on query builder
+            # So this is handled in metaclass.py selectable_columns instead
+            # NO if field.write_only: continue
 
             if field.evaluate:
                 fields[field.name] = field.evaluate(row)
