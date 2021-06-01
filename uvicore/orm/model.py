@@ -121,10 +121,11 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             result = await entity.execute(query, bulk)
         else:
             # Single, so single insert, returning PK or silently passing if error
-            try:
-                result = await entity.execute(query, bulk)
-            except:
-                pass
+            # WHY? Was I silently passing?
+            #try:
+            result = await entity.execute(query, bulk)
+            #except:
+                #pass
 
         # Loop each model and call the after_save hook
         if type(models) == list:

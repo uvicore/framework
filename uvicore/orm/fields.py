@@ -119,6 +119,16 @@ class HasOne(Relation):
 @uvicore.service()
 class HasMany(Relation):
     """One-To-Many Relationship"""
+
+    # For a HasMany the foreign_key is required
+    def __init__(self,
+        model: str,
+        *,
+        foreign_key: str,
+        local_key: str = None,
+    ) -> None:
+        super().__init__(model, foreign_key=foreign_key, local_key=local_key)
+
     def fill(self, field: Field) -> Relation:
         return self._fill_reverse(field)
 

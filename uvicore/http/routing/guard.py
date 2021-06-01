@@ -26,6 +26,7 @@ class Scopes:
     async def __call__(self, security_scopes: SecurityScopes, request: Request) -> User:
         # Get scopes List.  These are permissions/scopes defined on this route
         scopes = list(security_scopes.scopes)
+        #dump('ROUTE SCOPES:', scopes)
 
         # Get user from request.  Will always exist.  If not logged it will be
         # the anonymous user which may still have permissions/scopes to compare

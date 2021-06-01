@@ -13,6 +13,13 @@ from uvicore.contracts import User
 from uvicore.http.routing import Guard
 
 
+class NestedRoute:
+
+    def routes(self, Model, route, path, tags, scopes):
+        """Build dynamic model CRUD routes"""
+
+
+
 @uvicore.service()
 class ModelRoute:
     """Dynamic Model CRUD Routes"""
@@ -30,8 +37,7 @@ class ModelRoute:
             self.guard_include_permissions(Model, includes, user)
             return await Model.query().include(*includes).cache().get()
 
-        #@route.get('/' + path + '/{id}', response_model=Model, tags=tags)
-        @route.get('/' + path + '/{id}', tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
+        @route.get('/' + path + '/{id}', response_model=Model, tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         #async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
         async def get(request: Request, id: typing.Any, include: typing.Optional[str] = ''):
             user: User = request.user
@@ -40,6 +46,32 @@ class ModelRoute:
 
             self.guard_include_permissions(Model, includes, user)
             return await Model.query().include(*includes).cache().find(id)
+
+        @route.post('/' + path, response_model=Model, tags=tags, scopes=[Model.tablename + '.create'] if scopes is None else scopes)
+        async def post(request: Request, item: Model):
+            # NOTES
+            # How do I check each child relations permissions, there is no includes
+            # Would have to flip each item key and check if its a relation?
+            # Then check if user has access to that relation?
+
+            # Insert into storate and return primary key inserted
+            try:
+                result = await Model.insert(item)
+
+                # If primary key is read_only, assume its an auto-incrementing pk
+                # If not read_only, its a manual pk like 'key'.
+                # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
+                # a string, encode/databases does not return the new pk, just returns 1 every time.
+                if Model.modelfield(Model.pk).read_only == True:
+                    setattr(item, Model.pk, result)
+
+                # Return inserted item
+                return item
+
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+
 
     def guard_include_permissions(self, Model, includes: typing.List, user: User):
         # No includes, skip
@@ -231,6 +263,7 @@ class ModelRouter(Controller):
                 'HTTPException': HTTPException,
                 'PermissionDenied': PermissionDenied,
                 'scopes': self.scopes,
+                'dump': dump,
             })
 
         # Return router

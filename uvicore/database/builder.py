@@ -30,27 +30,38 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         """Add where statement to query"""
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
-            # .where('column', 'value')
-            # .where('column, '=', 'value')
+            # String default =
+            #   .where('column', 'value')
+            # String explicit operator:
+            #   .where('column, '=', 'value')
+            # SA Column default =
+            #   .where(table.column, 'value')
+            # SA Column explicit operator:
+            #   .where(table.column, '=', 'value')
+
             # Swap operator and value
             if not value: value = operator; operator = '='
             self.query.wheres.append((column, operator.lower(), value))
         elif type(column) == list:
             # Multiple wheres in one as a List[Tuple] or List[BinaryExpression]
-            # .where([('column', 'value'), ('column', '=', 'value')])
-            # .where([table.column == 'value', table.column >= 'value'])
             for where in column:
                 # Recursivelly add Tuple wheres
                 if type(where) == tuple:
+                    # String
+                    #   .where([('column', 'value'), ('column', '=', 'value')])
+                    # SA Column
+                    #   .where([(table.column, 'value'), (table.column, '=', 'value)])
                     if len(where) == 2:
                         self.where(where[0], '=', where[1])
                     else:
                         self.where(where[0], where[1], where[2])
                 else:
                     # SQLAlchemy Binary Expression
+                    # .where([table.column == 'value', table.column >= 'value'])
                     self.where(where)
         else:
             # Direct SQLAlchemy expression
+            # .where(table.column == 'value' and table.column >= 'value')
             self.query.wheres.append(column)
         return self
 
@@ -75,6 +86,9 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
     def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Order results by these columns ASC or DESC order"""
         if type(column) == str:
+            # A single order_by as a string or actual SQLAlchemy Column
+            # .order_by('column') or .order_by('column', 'DESC')
+            # .order_by
             self.query.order_by.append((column, order.upper()))
         elif type(column) == tuple:
             # Multiple order as a List[Tuple] (column, order)

@@ -107,28 +107,40 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         """Filter child relationship by this AND clause"""
         # Filters are for Many relations only
         if type(column) == str or type(column) == sa.Column:
-            # A single where as a string or actual SQLAlchemy Column
-            # .filter('relation.column', 'value')
-            # .filter('relation.column, '=', 'value')
-            if not value:
-                value = operator
-                operator = '='
-            #self.filters.append((column, operator.lower(), value))
+            # A single filter as a string or actual SQLAlchemy Column
+            # String default =
+            #   .filter('column', 'value')
+            # String explicit operator:
+            #   .filter('column, '=', 'value')
+            # SA Column default =
+            #   .filter(table.column, 'value')
+            # SA Column explicit operator:
+            #   .filter(table.column, '=', 'value')
+
+            # Swap operator and value
+            if not value: value = operator; operator = '='
             self.query.filters.append((column, operator.lower(), value))
-        else:
+        elif type(column) == list:
             # Multiple filters in one as a List[Tuple] or List[BinaryExpression]
-            # .filter([('column', 'value'), ('column', '=', 'value')])
-            # .filter([table.column == 'value', table.column >= 'value'])
             for filter in column:
                 # Recursivelly add Tuple filters
                 if type(filter) == tuple:
+                    # String
+                    #   .filter([('column', 'value'), ('column', '=', 'value')])
+                    # SA Column
+                    #   .filter([(table.column, 'value'), (table.column, '=', 'value)])
                     if len(filter) == 2:
                         self.filter(filter[0], '=', filter[1])
                     else:
                         self.filter(filter[0], filter[1], filter[2])
                 else:
                     # SQLAlchemy Binary Expression
+                    # .filter([table.column == 'value', table.column >= 'value'])
                     self.filter(filter)
+        else:
+            # Direct SQLAlchemy expression
+            # .filter(table.column == 'value' and table.column >= 'value')
+            self.query.filters.append(column)
         return self
 
     def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
@@ -149,26 +161,23 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         self.query.or_filters.extend(or_filters)
         return self
 
-    def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def sort(self, column: Union[str, List, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Sort Many relations only"""
-        if type(column) == str:
+        # This will not work as binary expression, becuase relation name is often
+        # different than colums tablename
+        if type(column) == str or type(column) == sa.Column:
+            # A single sort as a string
             self.query.sort.append((column, order.upper()))
-        elif type(column) == tuple:
-            # Multiple sort as a List[Tuple] (column, order)
+        else:
+            # Multiple sort in one as List or List[Tuple]
             for sort in column:
                 if type(sort) == tuple:
-                    if len(sort) == 1:
-                        column = sort[0]
-                        order = 'ASC'
-                    elif len(sort) == 2:
-                        column, order = sort
+                    if len(sort) == 2:
+                        self.sort(sort[0], sort[1])
+                    else:
+                        self.sort(sort[0], 'ASC')
                 else:
-                    column = sort
-                    order = 'ASC'
-                self.sort(column, order)
-        else:
-            # Direct SQLAlchemy expression
-            self.query.sort.append(column)
+                    self.sort(sort, 'ASC')
         return self
 
     def key_by(self, field: str) -> B[B, E]:
@@ -228,6 +237,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
         # Build SQLAlchemy queries
         queries = self._build_orm_queries('select')
+        #dump(queries)
         self.log.header('Raw SQL Queries')
         self.log.info(self.sql('select', queries))
 
@@ -322,6 +332,9 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Only handle *Many relations
             if not relation.is_many(): continue
 
+            # Relation __ name converted to dot name
+            rel_dot = relation.name.replace('__', '.')
+
             # New secondary relation query
             query2 = self.query.copy()
 
@@ -356,38 +369,24 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                 for column in columns:
                     query2.selects.append(column.label(quoted_name(sub_relation.name + '__' + column.name, True)))
 
-            # This one was an experiment to remove all wheres from all parents
-            # But I don't really want that.  Only the MAIN parent should be whered
-            # All children and sub children should show all their records
-            # ------------------------------------------------------------------------------
-            # Remove any wheres that are relation based that begin with this relation
-            # But we must take only the first relation in reverse that matches
-            # Why? Because we want the where to filter the main parent table, but NOT actually
-            # filter the children relations
-            # new_wheres = []
-            # for where in query2.wheres:
-            #     found = False
-            #     for relation_name in reversed(query2.relations):
-            #         if not query.relations.get(relation_name).is_many(): continue
-            #         rel_dot = relation_name.replace('__', '.')
-            #         if where[0][0:len(rel_dot)] == rel_dot:
-            #             # Found matching where
-            #             if relation_name == relation.name:
-            #                 found = True
-            #             break
-            #     if not found:
-            #         new_wheres.append(where)
-            # query2.wheres = new_wheres
-
+            # Remove any wheres for this relation.  Why?  Because the relation
+            # where is applied to the main query not to relations.  We still
+            # show all relations for any main query item
+            # If you want to filter relations, use .filter() instead
             new_wheres = []
             for where in query2.wheres:
-                rel_dot = relation.name.replace('__', '.')
-                if where[0][0:len(rel_dot)] == rel_dot:
-                    # Found matching where
-                    continue
+                # This also matches any sub-relations uder the where and removes those too
+                # BROKEN if using SQLAlchemy binary expressions
+                # .where(section.name, 'Production')
+                if '.' in where[0]:
+                    # Perhaps the ORM should not be "hybrid" and always use string dotnotation?
+                    where_entity = '.'.join(where[0].split('.')[0:-1]).lower()
+                    if rel_dot[0:len(where_entity)] == where_entity:
+                        # Found where for this relation or a sub-relation
+                        # Notice I continue, therefore I am removing this relations where
+                        continue
                 new_wheres.append(where)
             query2.wheres = new_wheres
-
 
             # Add .filter() as .where()
             query2.wheres.extend(query2.filters)
@@ -399,7 +398,15 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Cant use INNER JOIN instead because it would limit further sub many-to-many
             query2.wheres.append((relation.name + '.' + relation.entity.pk, '!=', None))
 
-            # Swap .sort() to .order_by
+            # Swap .sort() that apply to this relation as an order_by
+            # This WIPES out any .order_by as they do not apply to relation queries
+            new_sorts = []
+            for sort in query2.sort:
+                (sort_column, sort_order) = sort
+                if '.'.join(sort_column.split('.')[0:-1]).lower() == rel_dot.lower():
+                    # Found sort for this relation
+                    new_sorts.append(sort)
+            query2.sort = new_sorts
             query2.order_by = query2.sort
 
             # Build secondary relation query

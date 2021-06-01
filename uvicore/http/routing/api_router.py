@@ -44,6 +44,29 @@ class ApiRouter(Router['ApiRoute']):
         # Pass to generic add method
         return self.add(**params)
 
+    def post(self, path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
+        # Build parameters
+        methods = ['POST']
+        #params = {key:value for key, value in locals().items() if key != 'self'}
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
+
     def add(self,
         path: str,
         endpoint: Optional[Callable] = None,
@@ -84,7 +107,9 @@ class ApiRouter(Router['ApiRoute']):
                 'original_path': path,
                 'original_name': name,
             })
-            self.routes[full_name] = route
+            key = '-'.join(sorted(methods)) + '-' + full_name
+            #self.routes[full_name] = route
+            self.routes[key] = route
             return route
 
         # Method access

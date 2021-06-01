@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uvicore
 from typing import Optional
-from uvicore.auth.models import User
+from uvicore.auth.models.user import User
 from uvicore.support.dumper import dd, dump
 from uvicore.orm import Model, ModelMetaclass, BelongsTo, Field
 from xx_vendor.xx_appname.database.tables import xx_tablename as table
