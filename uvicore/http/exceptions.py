@@ -1,10 +1,15 @@
+import uvicore
 from uvicore.typing import Any, Dict, Optional, List
 from starlette.exceptions import HTTPException as _HTTPException
 from uvicore.http import status
 
+# This is how you could do it
+#log = lambda : uvicore.log.name('uvicore.http')
 
 class HTTPException(_HTTPException):
     def __init__(self, status_code: int, detail: Any = None, headers: Optional[Dict[str, Any]] = None) -> None:
+        # NO, don't want logging for this
+        # log().error("HTTPException {} - {}".format(status_code, detail))
         super().__init__(status_code=status_code, detail=detail)
         self.headers = headers
 

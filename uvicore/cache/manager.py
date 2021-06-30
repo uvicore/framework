@@ -28,8 +28,26 @@ class Manager:
         #self.stores = config.stores
         self._current_store = None
         self._backends = Dict()
-        self._default: str = uvicore.config.app.cache.default
-        self._stores: Dict = uvicore.config.app.cache.stores
+
+        # Cache app config is optional
+        config = uvicore.config.app.cache.defaults({
+            'default': 'array',
+            'stores': {
+                'redis': {
+                    'driver': 'uvicore.cache.backends.redis.Redis',
+                    'connection': 'cache',
+                    'prefix': 'uvicore.cache::cache/',
+                    'seconds': 600,
+                },
+                'array': {
+                    'driver': 'uvicore.cache.backends.array.Array',
+                    'prefix': 'uvicore.cache::cache/',
+                    'seconds': 60,
+                },
+            }
+        })
+        self._default: str = config.default
+        self._stores: Dict = config.stores
 
     def connect(self, store: str = None) -> CacheInterface:
         """Connect to a cache backend store"""

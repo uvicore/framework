@@ -131,6 +131,7 @@ class Router(contracts.Router, Generic[R]):
     def group(self, prefix: str = '', *,
         routes: Optional[List] = None,
         name: str = '',
+        tags: Optional[List[str]] = None,
         autoprefix: bool = True,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
@@ -194,6 +195,9 @@ class Router(contracts.Router, Generic[R]):
                 # The self.add methods will be different.  The actual route should mimic the self.add
                 # parameters, so modify the route when calculated values and pass in as
                 # self.add **kwargs
+                if tags:
+                    if route.tags is None: route.tags = []
+                    route.tags.extend(tags)
                 route.path = full_path
                 route.name = full_name
                 route.autoprefix = autoprefix,

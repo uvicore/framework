@@ -60,7 +60,17 @@ class Auth(ServiceProvider, Db, Http):
         # inside another package, you can't stop it from seeding.  Need to figure out overrideing seeders array better
         self.seeders(['uvicore.auth.database.seeders.seed'])
 
-        #dd(self.package.database.connections[0].driver)
+        # Define view and asset paths and configure the templating system
+        self.define_views()
+
+        # Define Web and API routes and prefixes
+        self.define_routes()
+
+    def define_views(self) -> None:
+        """Define view and asset paths and configure the templating system"""
+
+        # Define view paths
+        #self.views(['uvicore.auth.http.views'])
 
         # Define public paths
         self.public(['uvicore.auth.http.public'])
@@ -68,3 +78,19 @@ class Auth(ServiceProvider, Db, Http):
         # Define asset paths
         self.assets(['uvicore.auth.http.public.assets'])
 
+    def define_routes(self) -> None:
+        """Define Web and API routes and prefixes"""
+
+        # Define web routes
+        # self.web_routes(
+        #     module='uvicore.auth.http.routes.web.Web',
+        #     prefix=self.package.config.web.prefix,
+        #     #name_prefix=None,
+        # )
+
+        # Define api routes
+        self.api_routes(
+            module='uvicore.auth.http.routes.api.Api',
+            prefix=self.package.config.api.prefix,
+            #name_prefix='api',
+        )

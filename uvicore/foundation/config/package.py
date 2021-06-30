@@ -88,11 +88,6 @@ config = {
             'provider': 'uvicore.console.services.Console',
         },
 
-        # Redis is required for cache
-        'uvicore.redis': {
-            'provider': 'uvicore.redis.services.Redis',
-        },
-
         # Cache is required for every uvicore app
         'uvicore.cache': {
             'provider': 'uvicore.cache.services.Cache',

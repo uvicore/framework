@@ -469,15 +469,13 @@ config = {
 
     # --------------------------------------------------------------------------
     # Cache Configuration
+    # If no cache config defined, the default of 'array' caching will be used
     # --------------------------------------------------------------------------
     'cache': {
-        'default': 'redis',
+        'default': 'array',
         'stores': {
-            # 'array': {
-            #     'driver': 'uvicore.cache.backend.Array',
-            # }
             'redis': {
-                'driver': 'uvicore.cache.backends.Redis',
+                'driver': 'uvicore.cache.backends.redis.Redis',
                 'connection': 'cache',
                 'prefix': 'app1::cache/',
                 'seconds': 10,  # 0=forever

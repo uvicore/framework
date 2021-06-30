@@ -1,6 +1,14 @@
 import sys
-import asyncclick as click
-from asyncclick import argument, option
+
+# If using installed version of asyncclick
+#import asyncclick as click
+#from asyncclick import argument, option
+
+# If using local copy of asyncclick
+from . import asyncclick as click
+from .asyncclick import argument, option
+
+
 from .decorators import command, group
 
 # Does work without error, but never accessed by a user, so no point

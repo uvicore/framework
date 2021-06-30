@@ -2,7 +2,6 @@ import uvicore
 from uvicore.console import click, group
 from uvicore.console.events import command as ConsoleEvents
 
-
 title_ideas = """
     A Fast Async Python Framework for CLI, Web and API
 

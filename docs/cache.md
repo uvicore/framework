@@ -4,6 +4,15 @@ All values inserted to the cache store always use the config expire TTL seconds.
 This means all keys will automatically delete themselves.  You can override each insert operation using the optional `seconds=` parameter.  Using `seconds=0` means the key
 will NEVER expire.  If you want every key to persist forever, update your config seconds to 0.
 
+## Stores
+
+There are currently 2 stores.  `Redis` and `Array`
+
+The `array` store simply stores cached data in memory.  Array store does have full TTL expiry!  It should act just like redis cache except that it is in your running apps memory.  When the app does, cache does.  Only stores TTL=0 (infinite) data as long as the app lives.  Expired entries are only deleted (memory cleared) when that key is accessed somehow.  There is no expired garbage collector unless the key is accessed.
+
+
+
+## Usage
 
 You can obtain a singleton cache instance in multiple ways
 

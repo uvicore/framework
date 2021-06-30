@@ -132,8 +132,9 @@ class Http(Handler):
     def build_package_routes(self) -> None:
         """Import all packages web and api routes files and add to packages route definition"""
         for package in uvicore.app.packages.values():
-            package.web.routes = self.import_package_web_routes(package)
-            package.api.routes = self.import_package_api_routes(package)
+            if package.web.routes_module or package.api.routes_module:
+                package.web.routes = self.import_package_web_routes(package)
+                package.api.routes = self.import_package_api_routes(package)
 
     def import_package_web_routes(self, package: Package) -> Dict:
         """Import one package web routes and return routes Dict"""

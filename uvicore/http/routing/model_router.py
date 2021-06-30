@@ -1,3 +1,4 @@
+import json
 import uvicore
 import inspect
 from uvicore import typing
@@ -24,28 +25,180 @@ class NestedRoute:
 class ModelRoute:
     """Dynamic Model CRUD Routes"""
 
+    @property
+    def log(self):
+        return uvicore.log.name('uvicore.model_router')
+
     def routes(self, Model, route, path, tags, scopes):
         """Build dynamic model CRUD routes"""
 
+        # Rest Notes
+        """
+        https://www.mscharhag.com/p/rest-api-design
+        https://www.mscharhag.com/api-design/http-post-put-patch
+
+        GET
+        HEAD
+        OPTIONS
+        TRACE
+
+        POST is for new records
+            POST /spaces
+            Not idempotent as it will continue to create new resources
+            If new post, return 200
+            If endpoint has no response but created, return 204 (no content but success)
+
+        PUT is for updating existing records whos ID is in the url
+            PUT /spaces/123
+            Not for partial updates, expects the FULL object
+            Idempotent
+
+        PATCH
+            PATCH /spaces/123
+            Like PUT, but can be partial object, or could be full, either way
+            Updates only records defined in the partial object
+
+        DELETE
+        """
+
+
+
+        # URL query notes
+        """
+        Include
+        -------
+        include=sections.topics
+
+        Where AND
+        ----------
+        where={"id": 1}
+        where={"id": 1, "name": "test"}
+
+        where={"id": [">", 1]}
+
+        where={"id": ["in", ["one", "two"]]}
+        where={"id": [">", 5], "name": "asdf", "email": ["like", "asdf"]}
+
+
+        Where OR
+        --------
+        or_where=(id,1)+(id,3)
+
+        Group By
+        --------
+
+        Order By
+        --------
+        order_by=[{"id": "ASC"}, {"name": "DESC"}]
+
+        Paging
+        ------
+        page=1
+        size=10
+        translates to ORM limit and offset
+
+        Cache
+        -----
+        cache=60  in seconds
+
+
+
+
+        """
+
+
+        def build_query(Model, *,
+            include: str,
+            where: str,
+        ):
+            query = Model.query()
+
+            # Include
+            if include: query.include(*include.split(','))
+
+            # Where
+            _build_where(query, where)
+
+
+            return query
+
+        def _build_where(query, where_str: str):
+            if not where_str: return
+            try:
+                # Convert where string JSON to python object
+                wheres = json.loads(where_str)
+                #dump(where_str, wheres)
+
+                # Where must be a dict
+                if not isinstance(wheres, dict): return
+
+                # WORKS - where={"id": [">", 5]}
+                # WORKS - where={"id": ["in", [1, 2, 3]]}
+                # WORKS - where={"title": ["like", "%black%"]}
+                # WORKS - where={"id": 65, "topic_id": ["in", [1, 2, 3, 4, 5]]}
+                # WORKS - ?include=topic.section.space&where={"topic.slug": "/tools", "topic.section.slug": "/apps", "topic.section.space.slug": "/dev"}
+
+                for (key, value) in wheres.items():
+                    #dump("Key: " + str(key) + " - Value: " + str(value))
+                    if isinstance(value, typing.List):
+                        if len(value) != 2: continue  # Valid advanced value must be 2 item List
+                        operator = value[0]
+                        value = value[1]
+                        query.where(key, operator, value)
+                        #dump("advanced: ", operator, value, '-----')
+                    else:
+                        query.where(key, value)
+
+            except Exception as e:
+                self.log.error(e)
+
         @route.get('/' + path, response_model=typing.List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         #async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
-        async def list(request: Request, include: typing.Optional[str] = ''):
-            user: User = request.user
+        async def list(
+            request: Request,
+            include: typing.Optional[str] = '',
+            where: typing.Optional[str] = '',
+        ):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
+            user: User = request.user
             includes = include.split(',') if include else []
-
             self.guard_include_permissions(Model, includes, user)
-            return await Model.query().include(*includes).cache().get()
+
+            # Build ORM query from URL query strings
+            query = build_query(Model,
+                include=include,
+                where=where
+            )
+
+            # Run ORM query for results
+            try:
+                results = await query.get()
+                return results
+            except:
+                raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
         @route.get('/' + path + '/{id}', response_model=Model, tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         #async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
         async def get(request: Request, id: typing.Any, include: typing.Optional[str] = ''):
-            user: User = request.user
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
+            user: User = request.user
             includes = include.split(',') if include else []
-
             self.guard_include_permissions(Model, includes, user)
-            return await Model.query().include(*includes).cache().find(id)
+
+            # Build ORM query from URL query strings
+            query = build_query(Model,
+                include=include,
+                #where=where, NO not yet, with find
+            )
+
+            # Run ORM query for results
+            #return await Model.query().include(*includes).cache().find(id)
+            try:
+                results = await query.find(id)
+                return results
+            except:
+                raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
+
 
         @route.post('/' + path, response_model=Model, tags=tags, scopes=[Model.tablename + '.create'] if scopes is None else scopes)
         async def post(request: Request, item: Model):
@@ -264,6 +417,7 @@ class ModelRouter(Controller):
                 'PermissionDenied': PermissionDenied,
                 'scopes': self.scopes,
                 'dump': dump,
+                'json': json,
             })
 
         # Return router

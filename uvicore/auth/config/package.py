@@ -22,13 +22,23 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Route Configuration
+    # Web Configuration
+    #
+    # prefix: All web routes will be prefixed with this URI. Ex: '' or '/wiki'
+    #         This is in addition to running apps web.prefix config
     # --------------------------------------------------------------------------
-    # Or like so, no underscores, so in dot notation config('blog.route.prefix')
-    # have to do deep merges
-    'route': {
-        'web_prefix': '/auth',
-        'api_prefix': '/auth/api',
+    'web': {
+        'prefix': '/auth',
+    },
+
+    # --------------------------------------------------------------------------
+    # Api Configuration
+    #
+    # prefix: All api routes will be prefixed with this URI. Ex: '' or '/wiki'
+    #         This is in addition to running apps api.prefix config
+    # --------------------------------------------------------------------------
+    'api': {
+        'prefix': '/auth',
     },
 
 

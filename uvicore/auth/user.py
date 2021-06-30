@@ -103,7 +103,7 @@ class User(UserInterface):
 
     def cannot(self, permissions: Union[str, List]) -> bool:
         """Alias to cant"""
-        return not self.cant(permissions)
+        return self.cant(permissions)
 
 
 

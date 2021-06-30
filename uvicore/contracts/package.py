@@ -19,7 +19,6 @@ class Package(Dict):
     path: str
     registers: Dict
     database: _Database
-    #http: _Http
     web: _Web
     api: _Api
     console: _Console
