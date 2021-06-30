@@ -36,7 +36,7 @@ function usage() {
     echo
     echo -e "${DARKGRAY}  Copyright (c) 2020 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
     echo
-    echo -e "${BROWN}Usage: ${DEFAULT}uvicore-new-app ./path [branch] [gitrepo]"
+    echo -e "${BROWN}Usage: ${DEFAULT}uvicore-insitaller ./path [branch] [gitrepo]"
     echo
     echo "The optional [branch] will install a particular version of uvicore and dependencies."
     echo "Default is to use the latest current uvicore version."
@@ -44,13 +44,13 @@ function usage() {
     echo -e "${BROWN}Examples:${DEFAULT}"
     echo
     echo -e "${GREEN}  Use the latest current version of uvicore and dependencies${DEFAULT}"
-    info "    uvicore-new-app ./wiki"
+    info "    uvicore-insitaller ./wiki"
     echo
     echo -e "${GREEN}  Use a specific version of uvicore and dependencies${DEFAULT}"
-    info "    uvicore-new-app ./wiki 1.0"
+    info "    uvicore-insitaller ./wiki 1.0"
     echo
     echo -e "${GREEN}  Use a custom schematic branch and repository${DEFAULT}"
-    info "    uvicore-new-app ./wiki master https://github.com/your/schematic"
+    info "    uvicore-insitaller ./wiki master https://github.com/your/schematic"
 
 
 
@@ -59,18 +59,18 @@ function usage() {
 # The Async Python Framework for Artisans.
 # An Elegant Fullstack Python Web, API and CLI Framework.
 
-#   Usage: uvicore-new-app path [branch] [gitrepo]
+#   Usage: uvicore-insitaller path [branch] [gitrepo]
 
 #   You can optionally pass your own git branch and repository URL.
 
 #   Examples: Use uvicore default appstub repo on master branch
-#     uvicore-new-app ./wiki
+#     uvicore-insitaller ./wiki
 
 #   Example: Use uvicore default appstub repo on 3.0 branch
-#     uvicore-new-app ./wiki 3.0
+#     uvicore-insitaller ./wiki 3.0
 
 #   Example: Use your own appstub repo on master branch
-#     uvicore-new-app ./wiki master https://github.com/mystuff/custom-uvicore-appstub
+#     uvicore-insitaller ./wiki master https://github.com/mystuff/custom-uvicore-appstub
 # EOF
 }
 
