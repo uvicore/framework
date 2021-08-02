@@ -7,6 +7,7 @@ from uvicore.database.provider import Db
 #JUNK
 from uvicore.http.provider import Http
 
+
 @uvicore.provider()
 class Auth(ServiceProvider, Db, Http):
 
