@@ -27,10 +27,14 @@ include = ["LICENSE"]
 
 [tool.poetry.dependencies]
 # These packages are mandatory and form the core of the uvicore distribution
-python = ">=3.6,<4.0"
+python = ">=3.7,<4.0"
+
+# Do not use asyncclick until a new version of 7.x is released that fixes call_on_close
+# Instead, uvicore not includes the code of my patched asyncclick in console/asyncclick
 #asyncclick = "7.1.*"
 #asyncclick = {path = "../asyncclick", develop = true}
-#uvicorn installs click 7.1.2
+#uvicorn already installs click 7.1.2
+
 anyio = "3.2.*"
 colored = "1.4.*"
 prettyprinter = "0.18.*"
