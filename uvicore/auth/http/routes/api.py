@@ -19,7 +19,7 @@ class Api(Routes):
         @route.group(tags=['Auth'])
         def private_routes():
 
-            @route.get('/auth/userinfo')
+            @route.get('/userinfo')
             def userinfo():
                 return {'hi': 'there'}
 

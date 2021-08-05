@@ -228,11 +228,12 @@ class Http(Handler):
         """Merge all packages web and api routes together"""
         web_routes = Dict()
         api_routes = Dict()
+        package: Package
         for package in uvicore.app.packages.values():
             # Merging in package order ensures last package wins!
-            if package.web.routes:
+            if package.web.routes and package.registers.web_routes:
                web_routes.merge(package.web.routes)
-            if package.api.routes:
+            if package.api.routes and package.registers.api_routes:
                 api_routes.merge(package.api.routes)
         return (web_routes, api_routes)
 

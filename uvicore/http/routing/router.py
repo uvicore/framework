@@ -70,21 +70,34 @@ class Router(contracts.Router, Generic[R]):
             if name[0] == '.': name = name[1:]     # Remove beginning .
 
         # Import controller module from string
+        cls = module
         if type(module) == str:
             if self.controllers:
                 if '.' not in module:
                     # We are defining just 'home', so we add .Home class
                     module = self.controllers + '.' + module + '.' + string.studly(module)
-                elif module.count('.') == 1:
-                    # We are defining the file and the class (home.Home)
-                    module = self.controllers + '.' + module
+                elif module[0] == '.':
+                    # We are appending the path to self.controllers
+                    # Must have class too, ex: .folder.stuff.Stuff
+                    module = self.controllers + module
+                # elif module.count('.') == 1: # NO, we'll just add a . before, like .home.Home and it does the same thing
+                #     # We are defining the file and the class (home.Home)
+                #     # Only works with ONE dot.  If you want to append use .folder.stuff.Stuff
+                #     module = self.controllers + '.' + module
                 else:
                     # We are defining the FULL module path even though we have defined a self.controller path
+                    # Must have class too, ex: acme.appstub.http.api.stuff.Stuff
                     pass
-            module = load(module).object
+
+            # Dynamically import the calculated module
+            cls = load(module).object
+            if str(type(cls)) == "<class 'module'>":
+                # Trying to load a module, but we want the class inside the module, auto add
+                module = module + '.' + string.studly(module.split('.')[-1])
+                cls = load(module).object
 
         # Instantiate controller file
-        controller: Routes = module(self.package, **options)
+        controller: Routes = cls(self.package, **options)
 
         # New self (Web or Api) router instance
         router = self.__class__(self.package, self.prefix + prefix, self.name + '.' + name, self.controllers)
@@ -105,6 +118,7 @@ class Router(contracts.Router, Generic[R]):
         # Return just this controllers routes as a list
         routes = []
         for route in router.routes.keys():
+            router.routes[route].tags = tags
             routes.append(router.routes[route])
 
         return routes
