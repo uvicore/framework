@@ -118,7 +118,10 @@ class Router(contracts.Router, Generic[R]):
         # Return just this controllers routes as a list
         routes = []
         for route in router.routes.keys():
-            router.routes[route].tags = tags
+            # Append .controller(tags=[xyz]) if exists
+            if tags:
+                if router.routes[route].tags is None: router.routes[route].tags = []
+                router.routes[route].tags.extend(tags)
             routes.append(router.routes[route])
 
         return routes
