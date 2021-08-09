@@ -153,7 +153,22 @@ class Mapper(MapperInterface):
             # NO if field.write_only: continue
 
             if field.evaluate:
-                fields[field.name] = field.evaluate(row)
+                if type(field.evaluate) == dict:
+                    # Evaluate is a Dict with callback and named parameters
+                    eval_method = field.evaluate['method']
+                    del field.evaluate['method']
+                    #dump('tuple here', field.evaluate)
+                    fields[field.name] = eval_method(row, **field.evaluate)
+
+                elif type(field.evaluate) == tuple:
+                    # Evaluate is a Tuple with callback and parameters
+                    eval_method = field.evaluate[0]
+                    fields[field.name] = eval_method(row, *field.evaluate[1:])
+
+                else:
+                    # Evaluate is a callback
+                    fields[field.name] = field.evaluate(row)
+
             else:
                 column = field.column
                 if prefix: column = prefix + '__' + column
