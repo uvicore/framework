@@ -45,7 +45,6 @@ class Redis:
     def connection(self, connection: str = None):
         """Get one connection by name"""
         if not connection: connection = self.default
-        dump(self.connections)
         conn = self.connections.get(connection)
         if not conn:
             raise Exception('Redis connection {} not found'.format(connection))
