@@ -2,7 +2,7 @@ import uvicore
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
-from uvicore.contracts import User, UserProvider
+from uvicore.contracts import UserInfo, UserProvider
 from uvicore.typing import Dict, Optional, List, Tuple
 from uvicore.contracts import Authenticator as AuthenticatorInterface
 
@@ -14,7 +14,7 @@ class Authenticator(AuthenticatorInterface):
     def __init__(self, config: Dict):
         self.config = config
 
-    async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[User]:
+    async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[UserInfo]:
         """Retrieve user from User Provider backend"""
 
         # Import user provider defined in auth config

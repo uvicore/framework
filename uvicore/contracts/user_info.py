@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class User(ABC):
+class UserInfo(ABC):
     """Auth Logged in User Definition"""
 
     # These class level properties for for type annotations only.

@@ -1,6 +1,6 @@
 import uvicore
 from uvicore.typing import List, Union
-from uvicore.contracts import User as UserInterface
+from uvicore.contracts import UserInfo as UserInterface
 #from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
 #from uvicore.support.hash import sha1
@@ -8,7 +8,7 @@ from uvicore.support.dumper import dump, dd
 
 
 @uvicore.service()
-class User(UserInterface):
+class UserInfo(UserInterface):
     """Auth logged in user dataclass representation
 
     Not to be confused with the User database ORM model.  Logged in Auth User

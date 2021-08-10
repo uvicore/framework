@@ -6,7 +6,6 @@ from uvicore.support.dumper import dd, dump
 from uvicore.auth.models import Group, Role
 from uvicore.auth.database.tables import users as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
-from uvicore.auth import User as AuthUser
 from uvicore.support.hash import sha1
 from datetime import datetime
 

@@ -1,6 +1,6 @@
 import uvicore
 from base64 import b64decode
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.typing import Dict, Optional, Union
@@ -22,7 +22,7 @@ class Basic(Authenticator):
     # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
     # Return of User object means a valid user was found, skip next authenticator
 
-    async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
+    async def authenticate(self, request: HTTPConnection) -> Union[UserInfo, bool]:
         #dump('BASIC Authenticator HERE')
 
         # Parse authorization header
@@ -48,7 +48,7 @@ class Basic(Authenticator):
         if not separator: return True
 
         # Get user and validate credentials
-        user: User = await self.retrieve_user(username, password or '', self.config.provider, request)
+        user: UserInfo = await self.retrieve_user(username, password or '', self.config.provider, request)
 
         # Return user.  If no user return True to denote Anonymous User and skip next authenticator
         return user or True

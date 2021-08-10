@@ -20,7 +20,7 @@ from .router import (ApiRoute, ApiRouter, ModelRouter, Router, Routes,
                      WebRoute, WebRouter)
 from .server import Server
 from .template import Template
-from .user import User
+from .user_info import UserInfo
 from .user_provider import UserProvider
 from .authenticator import Authenticator
 from .email import Email

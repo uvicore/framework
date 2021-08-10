@@ -4,7 +4,7 @@ from uvicore.typing import Sequence
 from fastapi.params import Security
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
 from uvicore.http.exceptions import PermissionDenied, NotAuthenticated, HTTPException
 from uvicore.http.response import Redirect
 
@@ -23,14 +23,14 @@ class Guard(Security):
 
 class Scopes:
 
-    async def __call__(self, security_scopes: SecurityScopes, request: Request) -> User:
+    async def __call__(self, security_scopes: SecurityScopes, request: Request) -> UserInfo:
         # Get scopes List.  These are permissions/scopes defined on this route
         scopes = list(security_scopes.scopes)
         #dump('ROUTE SCOPES:', scopes)
 
         # Get user from request.  Will always exist.  If not logged it will be
         # the anonymous user which may still have permissions/scopes to compare
-        user: User = request.user
+        user: UserInfo = request.user
         #dump('USER PERMISSIONS', user.permissions)
 
         # If no scopes, allow access
@@ -89,7 +89,7 @@ class Scopes:
             # User is not even logged in
             raise NotAuthenticated(headers=exception_headers)
 
-    def validate_permissions(self, user: User, scopes: SecurityScopes) -> None:
+    def validate_permissions(self, user: UserInfo, scopes: SecurityScopes) -> None:
         """Validate logged in users permissions again route permissions"""
 
         # Superadmin is always allowed

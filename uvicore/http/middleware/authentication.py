@@ -5,7 +5,7 @@ from uvicore.http.request import HTTPConnection, Request
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.http.exceptions import HTTPException
-from uvicore.contracts import Authenticator, User, UserProvider
+from uvicore.contracts import Authenticator, UserInfo, UserProvider
 
 
 @uvicore.service()
@@ -56,7 +56,7 @@ class Authentication:
                 break
 
             # If User object returned, validation success, stop authenticator itteration
-            if isinstance(user, User):
+            if isinstance(user, UserInfo):
                 break
 
             # Check for exception and return
@@ -66,14 +66,14 @@ class Authentication:
                 return await self.error_response(user, scope, receive, send)
 
         # If valid user is logged in, append 'authenticated' to permissions
-        if isinstance(user, User):
+        if isinstance(user, UserInfo):
             if 'authenticated' not in user.permissions:
                 user.permissions.insert(0, 'authenticated')
 
         # Retrieve anonymous user from default_provider backend
         # If all authenticators returned no User object, user is not logged in with any method.
         # Build an anonymous user object to inject into the request scope
-        if not isinstance(user, User):
+        if not isinstance(user, UserInfo):
             user = await self.retrieve_anonymous_user(request)
 
             # Ensure authenticated is False
@@ -113,7 +113,7 @@ class Authentication:
         # Call user provider method passing in defined kwargs
         return await provider_method(request=request, **kwargs)
 
-    async def error_response(self, user: User, scope: Scope, receive: Receive, send: Send):
+    async def error_response(self, user: UserInfo, scope: Scope, receive: Receive, send: Send):
         """Build and return error response"""
         if self.route_type == 'web':
             # Fixme, how can I use the user customized 401 HTML?

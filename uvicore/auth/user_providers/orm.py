@@ -1,12 +1,12 @@
 import uvicore
-from uvicore.auth.user import User
+from uvicore.auth.user_info import UserInfo
 from uvicore.support.hash import sha1
 from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.auth.support import password as pwd
 from uvicore.http.request import HTTPConnection
 from uvicore.typing import List, Union, Any, Dict
-from uvicore.auth.models.user import User as Model
+from uvicore.auth.models.user import User as UserModel
 from uvicore.auth.models.group import Group
 from datetime import datetime
 
@@ -38,7 +38,7 @@ class Orm(UserProvider):
 
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,
-    ) -> User:
+    ) -> UserInfo:
         """Retrieve user from backend"""
 
         # Get password hash for cache key.  Password is still required to pull the right cache key
@@ -59,7 +59,7 @@ class Orm(UserProvider):
 
         # Cache not found.  Query user, validate password and convert to user class
         find_kwargs = {key_name: key_value}
-        db_user = await (Model.query()
+        db_user = await (UserModel.query()
             .include(*includes)
             .where('disabled', disabled)
             #.show_writeonly(['password'])
@@ -120,7 +120,7 @@ class Orm(UserProvider):
             superadmin = True
 
         # Build UserInfo dataclass with REQUIRED fields
-        user = User(
+        user = UserInfo(
             id=db_user.id,
             uuid=db_user.uuid,
             username=db_user.username,
@@ -155,7 +155,7 @@ class Orm(UserProvider):
         kwargs['avatar_url'] = kwargs.pop('avatar')
 
         # Build user model
-        user = Model(**kwargs)
+        user = UserModel(**kwargs)
 
         # Get actual groups in backend from groups array
         real_groups = await Group.query().where('name', 'in', groups).get()
@@ -174,7 +174,7 @@ class Orm(UserProvider):
         username = kwargs['username']
 
         # Get actual backend user
-        user = await Model.query().show_writeonly(['password']).find(username=username)
+        user = await UserModel.query().show_writeonly(['password']).find(username=username)
 
         # If we have successfully logged in, we are not disabled
         user.disabled = False

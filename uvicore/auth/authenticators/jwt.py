@@ -5,7 +5,7 @@ from uvicore.http.request import HTTPConnection
 from uvicore.typing import Dict, Optional, Union, Callable
 from uvicore.auth.authenticators.base import Authenticator
 from uvicore.http.exceptions import NotAuthenticated, InvalidCredentials, HTTPException
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
 
 @uvicore.service()
 class Jwt(Authenticator):
@@ -22,7 +22,7 @@ class Jwt(Authenticator):
     # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
     # Return of User object means a valid user was found, skip next authenticator
 
-    async def authenticate(self, request: HTTPConnection) -> Union[User, bool]:
+    async def authenticate(self, request: HTTPConnection) -> Union[UserInfo, bool]:
         #dump('JWT Authenticator HERE')
 
         # Parse authorization header
@@ -69,7 +69,7 @@ class Jwt(Authenticator):
         #dump('JWT', jwt)
 
         # Get user and validate credentials
-        user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+        user: UserInfo = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
 
         # User from valid JWT not found in uvicore OR not synced for first time (no uuid).
         # Auto create or update user if allowed in config

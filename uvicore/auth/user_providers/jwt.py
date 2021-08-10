@@ -1,6 +1,6 @@
 import jwt
 import uvicore
-from uvicore.auth.user import User
+from uvicore.auth.user_info import UserInfo
 from uvicore.support.hash import sha1
 from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
@@ -34,18 +34,18 @@ class Jwt(UserProvider):
 
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,
-    ) -> User:
+    ) -> UserInfo:
         """Retrieve user from backend"""
 
         if anonymous:
             # User is not logged in.
             # New anonymous user based on anonymous user configuration
-            user = User(**anonymous_user)
+            user = UserInfo(**anonymous_user)
             user.authenticated = False
 
         else:
             # New user based on JWT and mappings configuration
-            user = User(
+            user = UserInfo(
                 id=jwt_mapping.id(jwt) or jwt.sub or 'Unknown',
                 uuid=jwt_mapping.uuid(jwt) or jwt.sub or 'Unknown',
                 username=jwt_mapping.username(jwt) or jwt.email or 'Unknown',

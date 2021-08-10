@@ -9,8 +9,7 @@ from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
 from uvicore.http.exceptions import HTTPException, PermissionDenied
-#from uvicore.auth import User
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
 from uvicore.http.routing import Guard
 
 
@@ -153,14 +152,14 @@ class ModelRoute:
                 self.log.error(e)
 
         @route.get('/' + path, response_model=typing.List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
-        #async def list(include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        #async def list(include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
         async def list(
             request: Request,
             include: typing.Optional[str] = '',
             where: typing.Optional[str] = '',
         ):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
-            user: User = request.user
+            user: UserInfo = request.user
             includes = include.split(',') if include else []
             self.guard_include_permissions(Model, includes, user)
 
@@ -178,10 +177,10 @@ class ModelRoute:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
         @route.get('/' + path + '/{id}', response_model=Model, tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
-        #async def get(id: typing.Any, include: typing.Optional[str] = '', user: User = Guard(Model.tablename + '.read')):
+        #async def get(id: typing.Any, include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
         async def get(request: Request, id: typing.Any, include: typing.Optional[str] = ''):
             # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
-            user: User = request.user
+            user: UserInfo = request.user
             includes = include.split(',') if include else []
             self.guard_include_permissions(Model, includes, user)
 
@@ -226,7 +225,7 @@ class ModelRoute:
 
 
 
-    def guard_include_permissions(self, Model, includes: typing.List, user: User):
+    def guard_include_permissions(self, Model, includes: typing.List, user: UserInfo):
         # No includes, skip
         if not includes: return
 
@@ -410,7 +409,7 @@ class ModelRouter(Controller):
                 'tags': tags,
                 'uvicore': uvicore,
                 'typing': typing,
-                'User': User,
+                'UserInfo': UserInfo,
                 'Guard': Guard,
                 'Request': Request,
                 'HTTPException': HTTPException,

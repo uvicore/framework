@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from uvicore.typing import Union, List, Dict
-from uvicore.contracts.user import User
+from uvicore.contracts.user_info import UserInfo
 try:
     from starlette.requests import HTTPConnection
 except:
@@ -17,22 +17,22 @@ class UserProvider(ABC):
             'username': 'username',
         }
 
-    async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, **kwargs) -> User:
+    async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, **kwargs) -> UserInfo:
         """Retrieve user by primary key from the user provider backend.  No validation."""
         field = self.field_map['id']
         return await self._retrieve_user(field, id, request, **kwargs)
 
-    async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, **kwargs) -> User:
+    async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, **kwargs) -> UserInfo:
         """Retrieve the user by uuid from the user provider backend.  No validation."""
         field = self.field_map['uuid']
         return await self._retrieve_user(field, uuid, request, **kwargs)
 
-    async def retrieve_by_username(self, username: str, request: HTTPConnection, **kwargs) -> User:
+    async def retrieve_by_username(self, username: str, request: HTTPConnection, **kwargs) -> UserInfo:
         """Retrieve the user by username from the user provider backend.  No validation."""
         field = self.field_map['username']
         return await self._retrieve_user(field, username, request, **kwargs)
 
-    async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, **kwargs) -> User:
+    async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, **kwargs) -> UserInfo:
         """Retrieve the user by username from the user provider backend AND validate the password if not None"""
         field = self.field_map['username']
         return await self._retrieve_user(field, username, request, password=password, **kwargs)
@@ -42,17 +42,17 @@ class UserProvider(ABC):
 
 
     # @abstractmethod
-    # async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, options: Dict = {}) -> User:
+    # async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, options: Dict = {}) -> UserInfo:
     #     """Retrieve user by primary key from the user provider backend.  No validation."""
 
     # @abstractmethod
-    # async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, options: Dict = {}) -> User:
+    # async def retrieve_by_uuid(self, uuid: str, request: HTTPConnection, options: Dict = {}) -> UserInfo:
     #     """Retrieve the user by uuid from the user provider backend.  No validation."""
 
     # @abstractmethod
-    # async def retrieve_by_username(self, username: str, request: HTTPConnection, options: Dict = {}) -> User:
+    # async def retrieve_by_username(self, username: str, request: HTTPConnection, options: Dict = {}) -> UserInfo:
     #     """Retrieve the user by username from the user provider backend.  No validation."""
 
     # @abstractmethod
-    # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, options: Dict = {}) -> User:
+    # async def retrieve_by_credentials(self, username: str, password: str, request: HTTPConnection, options: Dict = {}) -> UserInfo:
     #     """Retrieve the user by username from the user provider backend AND validate the password if not None"""
