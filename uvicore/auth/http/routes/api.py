@@ -2,7 +2,7 @@ import uvicore
 from uvicore.http import Request
 from uvicore.http.routing import Routes, ApiRouter, ModelRouter, Guard
 from uvicore.support.dumper import dump, dd
-from uvicore.auth import UserInfo
+from uvicore.auth.user_info import UserInfo
 
 @uvicore.routes()
 class Api(Routes):
@@ -30,7 +30,7 @@ class Api(Routes):
                 # http GET 'https://wiki-api-local.triglobal.io/api/auth/userinfo' Authorization:"Bearer $TOKEN"
 
                 # Get the user from the request
-                user: User = request.scope['user']
+                user: UserInfo = request.scope['user']
                 # uvicore.auth.user_info.UserInfo(
                 #     id=2,
                 #     uuid='823003ad-6e1f-42ed-a024-f45f400c1b30',
@@ -47,7 +47,7 @@ class Api(Routes):
                 #     authenticated=True
                 # )
 
-                # Return user as json
+                # Return UserInfo
                 return user
 
         # Return router

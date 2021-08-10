@@ -1,19 +1,35 @@
 import uvicore
-from uvicore.typing import List, Union
-from uvicore.contracts import UserInfo as UserInterface
-#from uvicore.contracts import UserProvider
+from uvicore.typing import List, Union, Optional
+from uvicore.contracts import UserInfo as UserInfoInterface
 from uvicore.support.dumper import dump, dd
-#from uvicore.support.hash import sha1
-#from uvicore.auth.support import password as pwd
+from pydantic import BaseModel as PydanticModel
 
-
+# Pydantic model because we often return this class in API endpoints
+# Endpoints can return classes, but pydantic forces a __initialized__ property
+# on them which is annoying.
 @uvicore.service()
-class UserInfo(UserInterface):
+class UserInfo(PydanticModel, UserInfoInterface):
     """Auth logged in user dataclass representation
 
     Not to be confused with the User database ORM model.  Logged in Auth User
-    requires its own interface and abstraction from any model.
+    requires its own interface and abstraction from any model.  We call it UserInfo.
     """
+
+    # Required even through they are in the contract simply because
+    # this is a pydantic model
+    id: int
+    uuid: str
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    title: str
+    avatar: str
+    groups: List[str]
+    roles: List[str]
+    permissions: List[str]
+    superadmin: bool
+    authenticated: bool
 
     @property
     def name(self):

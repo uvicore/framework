@@ -121,18 +121,18 @@ class Orm(UserProvider):
 
         # Build UserInfo dataclass with REQUIRED fields
         user = UserInfo(
-            id=db_user.id,
-            uuid=db_user.uuid,
-            username=db_user.username,
-            email=db_user.email,
-            first_name=db_user.first_name,
-            last_name=db_user.last_name,
-            title=db_user.title,
-            avatar=db_user.avatar_url,
-            groups=groups,
-            roles=roles,
-            permissions=permissions,
-            superadmin=superadmin,
+            id=db_user.id or '',
+            uuid=db_user.uuid or '',
+            username=db_user.username or '',
+            email=db_user.email or '',
+            first_name=db_user.first_name or '',
+            last_name=db_user.last_name or '',
+            title=db_user.title or '',
+            avatar=db_user.avatar_url or '',
+            groups=groups or [],
+            roles=roles or [],
+            permissions=permissions or [],
+            superadmin=superadmin or False,
             authenticated=not anonymous,
         )
 
