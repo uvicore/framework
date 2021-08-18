@@ -10,7 +10,7 @@ from uvicore.support.schematic import Schematic
 @command()
 @argument('name')
 async def command(name: str):
-    """Generate a new CLI Command"""
+    """Generate a new CLI command"""
 
     stub = os.path.dirname(__file__) + '/stubs/command.py'
     dest = uvicore.config('app.paths.commands') + '/' + name + '.py'

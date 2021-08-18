@@ -10,6 +10,7 @@ from dataclasses import dataclass
 # required in order to instantiate.  This is inherently a good contract.
 
 
+
 @dataclass
 class UserInfo(ABC):
     """Auth Logged in User Definition"""

@@ -242,6 +242,7 @@ async def seed():
         body='This is the body for test post2.  My favorite frameworks are Laravel and Uvicore!',
         other=None, creator_id=1, owner_id=2
     ).save()
+
     # Create AND Link if nto exist Many-To-Many tags
     await post.link('tags', [
         tags['linux'],

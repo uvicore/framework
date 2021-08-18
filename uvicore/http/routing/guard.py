@@ -47,9 +47,9 @@ class Scopes:
                 authorized = False
                 missing_scopes.append(scope)
 
-        #dump('-----------------------------------------------------------------')
-        #dump('Auth Route Guard HERE:', scopes, user)
-        #dump('-----------------------------------------------------------------')
+        # dump('-----------------------------------------------------------------')
+        # dump('Auth Route Guard HERE:', scopes, user)
+        # dump('-----------------------------------------------------------------')
 
         # Hack logout of basic auth
         #raise NotAuthenticated(headers={'WWW-Authenticate': 'Basic realm="App1 Web Realm"'})

@@ -11,3 +11,6 @@ class SmartException(BaseException):
         if has_http:
             super().__init__(status_code=status_code, detail=detail)
             self.headers = headers
+        else:
+            self.status_code = status_code
+            self.detail = detail

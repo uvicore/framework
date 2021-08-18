@@ -122,6 +122,14 @@ class Http(ServiceProvider, Cli, Http):
                 'commands': {
                     'serve': 'uvicore.http.commands.serve.cli',
                 },
+            },
+
+            # Extend schematic generator commands
+            'gen': {
+                'commands': {
+                    'controller': 'uvicore.http.commands.generators.controller',
+                    'api-controller': 'uvicore.http.commands.generators.api_controller',
+                },
             }
         })
 

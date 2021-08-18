@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uvicore
 import sqlalchemy as sa
 from uvicore.orm.mapper import Mapper
@@ -335,7 +336,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         await self.create(relation_name, models)
 
 
-    async def save(self) -> None:
+    async def save(self) -> self:
         """Save this model to the database (insert or update)"""
 
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)

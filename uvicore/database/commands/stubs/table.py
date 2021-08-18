@@ -3,6 +3,7 @@ import sqlalchemy as sa
 from uvicore.database import Table
 from uvicore.support.dumper import dump, dd
 
+
 # Get related tablenames with proper prefixes
 users = uvicore.db.tablename('auth.users')
 formats = uvicore.db.tablename('xx_appname.formats')

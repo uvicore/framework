@@ -1,9 +1,10 @@
+import json
+from fastapi.params import Security
 from uvicore.typing import Sequence, List
 from fastapi.security import SecurityScopes
+from uvicore.support.dumper import dump, dd
 from starlette.requests import Request, HTTPConnection
 from fastapi.params import Path, Query, Header, Cookie, Body, Form, File, Depends, Security
-from uvicore.support.dumper import dump, dd
-import json
 
 class Parameter(Security):
     """Base class for user defined request parameters with infinite kwargs!"""
