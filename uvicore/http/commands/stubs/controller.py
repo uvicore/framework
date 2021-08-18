@@ -3,10 +3,11 @@ from uvicore.http import Request, response
 from uvicore.http.routing import WebRouter, Controller
 
 # Extra
-#from uvicore.auth import UserInfo
-#from uvicore.http.routing import Guard
-#from uvicore.http.exceptions import HTTPException
-#from uvicore.http.params import Path, Query, Header, Cookie, Body, Form, File, Depends, Security
+# from uvicore.auth import UserInfo
+# from uvicore.http.routing import Guard
+# from uvicore.typing import Dict, List, Optional
+# from uvicore.http.exceptions import HTTPException
+# from uvicore.http.params import Path, Query, Header, Cookie, Body, Form, File, Depends, Security
 
 
 # ------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ class xx_ControllerName(Controller):
     # auth guards with scoped permissions to this entire controller.
     # Tip: Your routes/api.py and routes/web.py are actually the same
     # as controllers.  In fact controllers are just nested routers.  So all
-    # notes here also apply to your routes/* files.
+    # notes here also apply to your routes/* files and controllers.
     # --------------------------------------------------------------------------
     # Apply scopes to all routes and children controllers - simple and preferred
     #scopes = ['authenticated', 'employee']
@@ -42,7 +43,6 @@ class xx_ControllerName(Controller):
     # user: UserInfo = Guard(['authenticated'])
     #   Then in your routes, inject the user with
     #   async def welcome(request: Request, user: UserInfo = self.user):
-
 
     def register(self, route: WebRouter):
 
@@ -259,8 +259,7 @@ class xx_ControllerName(Controller):
         # regardless if route.controllers is defined or not.
 
 
+        # Return router
         # Must always return the router at the end of every controller and routes file
         # as this is one infinitely recursive nested router configuration.
-
-        # Return router
         return route
