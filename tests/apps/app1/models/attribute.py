@@ -2,11 +2,8 @@ from __future__ import annotations
 import uvicore
 from typing import Optional, Any
 from app1.database.tables import attributes as table
-#from uvicore.orm.fields import Field
-#from uvicore.orm.model import Model, ModelMetaclass
 from uvicore.orm import Model, ModelMetaclass, Field
 
-#@uvicore.ioc.bind('app1.models.attribute.Attribute')
 
 @uvicore.model()
 class Attribute(Model['Attribute'], metaclass=ModelMetaclass):
@@ -41,12 +38,3 @@ class Attribute(Model['Attribute'], metaclass=ModelMetaclass):
         description="Attribute Value",
         required=True,
     )
-
-
-# IoC Class Instance
-#Attribute: AttributeModel = uvicore.ioc.make('app1.models.attribute.Attribute', AttributeModel)
-
-# Update forwrad refs (a work around to circular dependencies)
-#from app1.models.post import Post  # isort:skip
-#from app1.models.user import User  # isort:skip
-#Image.update_forward_refs()
