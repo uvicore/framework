@@ -32,9 +32,10 @@ class xx_ControllerName(Controller):
     # Scopes is a shortcut to
     #auth = Guard(['authenticated'])
 
-    # scopes and auth are shortcuts to the full middleware stack
+    # Scopes and auth are shortcuts to the full middleware stack
     # middleware = [
-    #     Guard(['authenticated'])
+    #     Guard(['authenticated']),
+    #     Any other route based middleware here
     # ]
 
     # Optionally, apply scopes and also grab the current user
@@ -46,7 +47,7 @@ class xx_ControllerName(Controller):
     def register(self, route: WebRouter):
 
         # ----------------------------------------------------------------------
-        # Example: Basic controller responding with a view template
+        # Example: Basic route responding with a view template
         # ----------------------------------------------------------------------
         @route.get('/example1/{id}')
         async def example1(request: Request, id: int):
