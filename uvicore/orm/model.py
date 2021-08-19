@@ -390,7 +390,12 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
             query = table.insert().values(**values)
             new_pk = await entity.execute(query)
-            setattr(self, entity.pk, new_pk)
+
+            # Only set the new_pk back to the entity if the entities PK is null
+            # If not null, means its probably a string based pre-inserted PK like a 'key' field
+            if getattr(self, entity.pk) is None:
+                setattr(self, entity.pk, new_pk)
+
             await self._after_insert()
             await self._after_save()
 

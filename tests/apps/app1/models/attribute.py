@@ -7,7 +7,7 @@ from uvicore.orm import Model, ModelMetaclass, Field
 
 @uvicore.model()
 class Attribute(Model['Attribute'], metaclass=ModelMetaclass):
-    """App1 Polymorphic One-To-Many Attributes"""
+    """Polymorphic One-To-Many Attributes"""
 
     # Database table definition
     __tableclass__ = table.Attributes

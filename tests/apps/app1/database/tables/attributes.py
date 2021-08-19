@@ -47,7 +47,3 @@ class Attributes(Table):
     schema_kwargs = {
         #'sqlite_autoincrement': True,
     }
-
-
-# IoC Class Instance
-#Attributes: _Attributes = uvicore.ioc.make('app1.database.tables.attributes.Attributes', _Attributes, singleton=True)

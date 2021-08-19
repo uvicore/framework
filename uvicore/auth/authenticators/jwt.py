@@ -45,28 +45,104 @@ class Jwt(Authenticator):
             # Anonymous header found, return True to denote Anonymous user and skip next authenticator
             return True
 
+        #dump(request.headers)
+
         # Decode JWT with or without verification
         jwt = None
-        try:
-            if self.config.verify_signature:
-                # With secret algorithm validation
-                #dump('WITH Validation')
-                jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
+
+        # Verify JWT internally with uvicore
+        if self.config.verify_signature:
+
+            dump('VALIDATE JWT INTERNALLY')
+
+            # Get all allowed consumer audiences
+            audiences = [v['aud'] for (k,v) in self.config.consumers.items()]
+
+            # Verification method
+            if self.config.verify_signature_method.lower() == 'jwks':
+                # Verify JWT using JWKS and KIDS
+                dump('VALIDATE JWT USING JWKS/KIDS')
+                pass
+
             else:
-                # Without validation
-                #dump('WITHOUT Validation')
-                jwt = Dict(decode(token, options={"verify_signature": False}))
+                # Verify JWT using pub key secrets
+                dump('VALIDATE JWT USING PUBKEY SECRETS')
+                #jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
+                for (consumer_name, consumer) in self.config.consumers.items():
+                    try:
+                        jwt = Dict(decode(token, consumer.secret, audience=consumer.aud, algorithms=consumer.algorithms))
+                        dump("FOUND CONSUMER: ", consumer_name)
+                        break
+                    except:
+                        dump('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
 
-                # Validate aud claim
-                # jwt.decode also validates the aud claim.  Since we are skipping validation, we'll still validate aud claim here.
-                if jwt.aud != self.config.audience:
-                    # Audience mismatch, return True to denote Anonymous user and skip next authenticator
-                    return True
-        except Exception as e:
-            # Issue with validating JWT, return True to denote Anonymous user and skip next authenticator
-            return True
 
-        #dump('JWT', jwt)
+
+
+            # With secret algorithm validation
+
+            # from jwt import PyJWKClient
+            # kid = 'z135JtxIQ-81kU8SfCCK2gnpGeM'
+            # url = 'https://auth-local.triglobal.io/.well-known/jwks.json'
+            # jwks_client = PyJWKClient(url)
+            # dump(jwks_client)
+            # signing_key = jwks_client.get_signing_key_from_jwt(token)
+            # dump(signing_key)
+            # dump(signing_key.__dict__)
+            # dump(signing_key.key)
+
+            # jwt = Dict(decode(
+            #     token,
+            #     signing_key.key,
+            #     audience=['afc1cae9-004e-4ec4-8bef-b63f0456b36d'],
+            #     algorithms=['RS256']
+            # ))
+
+
+
+            #jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
+
+
+
+
+
+            # consumers = self.config.consumers
+            # for consumer in self.config.consumers:
+            #     try:
+            #         jwt = Dict(decode(token, consumer.secret, audience=consumer.aud, algorithms=consumer.algorithms))
+            #         dump("FOUND CONSUMER: ", consumer_name)
+            #         break
+            #     except:
+            #         pass
+
+            #     dump(consumer_name, consumer_config)
+
+        else:
+            # Without validation
+            dump('VALIDATE JWT EXTERNALLY')
+            #dump('WITHOUT Validation')
+            jwt = Dict(decode(token, options={"verify_signature": False}))
+
+            # Validate aud claim
+            # WELL???  Multi API access does not work.
+            # Example, login as portal-vue-app, hit iam-uvicore-api, passthru to tools-uvicore-api
+            # We only have the self.config.audience as one key, the tools-vue-app key, but we are passing
+            # the portal-vue-app key, so aud verification fails.  Could make it an array?  Or skip completely?
+
+
+            dump('AUD in config', self.config.audience)
+
+
+            # jwt.decode also validates the aud claim.  Since we are skipping validation, we'll still validate aud claim here.
+            if jwt.aud != self.config.audience:
+                # Audience mismatch, return True to denote Anonymous user and skip next authenticator
+                return True
+        # except Exception as e:
+        #     # Issue with validating JWT, return True to denote Anonymous user and skip next authenticator
+        #     dump(e)
+        #     return True
+
+        dump('JWT', jwt)
 
         # Get user and validate credentials
         user: UserInfo = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
