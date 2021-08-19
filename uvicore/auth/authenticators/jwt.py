@@ -1,5 +1,5 @@
 import uvicore
-from jwt import decode
+from jwt import PyJWKClient, decode
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.typing import Dict, Optional, Union, Callable
@@ -23,7 +23,7 @@ class Jwt(Authenticator):
     # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[UserInfo, bool]:
-        #dump('JWT Authenticator HERE')
+        self.log.debug('JWT Authenticator')
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
@@ -32,6 +32,7 @@ class Jwt(Authenticator):
         if not authorization or scheme != "bearer":
             # Return of False means this authentication method is not being attempted
             # goto next authenticator in stack
+            self.log.debug('No Bearer found in Authorization Header, goto next authenticator in stack')
             return False
 
         # Detect anonymous API access.
@@ -43,6 +44,7 @@ class Jwt(Authenticator):
         #dump(request.headers)
         if (self.config.anonymous_header and self.config.anonymous_header in request.headers):
             # Anonymous header found, return True to denote Anonymous user and skip next authenticator
+            self.log.debug('Anonymous header found, this is an Anonymous request')
             return True
 
         #dump(request.headers)
@@ -52,97 +54,79 @@ class Jwt(Authenticator):
 
         # Verify JWT internally with uvicore
         if self.config.verify_signature:
+            #dump('VALIDATE JWT INTERNALLY')
 
-            dump('VALIDATE JWT INTERNALLY')
-
-            # Get all allowed consumer audiences
-            audiences = [v['aud'] for (k,v) in self.config.consumers.items()]
-
-            # Verification method
+            # Verify JWT using JWKS
             if self.config.verify_signature_method.lower() == 'jwks':
-                # Verify JWT using JWKS and KIDS
-                dump('VALIDATE JWT USING JWKS/KIDS')
-                pass
-
-            else:
-                # Verify JWT using pub key secrets
-                dump('VALIDATE JWT USING PUBKEY SECRETS')
-                #jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
+                default_jwks_url = uvicore.config.app.auth.oauth2.base_url + uvicore.config.app.auth.oauth2.jwks_path
                 for (consumer_name, consumer) in self.config.consumers.items():
                     try:
-                        jwt = Dict(decode(token, consumer.secret, audience=consumer.aud, algorithms=consumer.algorithms))
-                        dump("FOUND CONSUMER: ", consumer_name)
+                        # Cache decoded JWT to prevent hitting JWKS url often
+                        async def query_jwks():
+                            #dump('NO CACHE, TRY CONSUMER: ' + consumer_name)
+
+                            # Get default or overridden jwks_url
+                            jwks_url = consumer.jwks_url or default_jwks_url
+                            self.log.debug('Verifying JWT via JWKS URL {}'.format(jwks_url))
+
+                            # Get signing_key from jwks
+                            jwks_client = PyJWKClient(jwks_url)
+                            signing_key = jwks_client.get_signing_key_from_jwt(token)
+                            return Dict(decode(
+                                jwt=token,
+                                key=signing_key.key,
+                                audience=consumer.aud,
+                                algorithms=consumer.algorithms
+                            ))
+
+                        # Get decoded JWT from cache or decode from JWKS URL signing_key
+                        jwt = await uvicore.cache.remember(token, query_jwks, seconds=self.config.jwks_query_cache_ttl or 300)
+                        self.log.debug('Found consumer via JWKS, name: {}, aud: {}'.format(consumer_name, consumer.aud))
                         break
-                    except:
-                        dump('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                    except Exception as e:
+                        self.log.debug('Issue validating JWT via JWKS.  Return True to denote Anonymous user and skip next authenticator')
+                        self.log.debug(e)
+                        return True
 
+            # Verify JWT using pub key secrets
+            else:
+                self.log.debug('Verifying JWT via SECRET')
+                for (consumer_name, consumer) in self.config.consumers.items():
+                    try:
+                        jwt = Dict(decode(
+                            jwt=token,
+                            key=consumer.secret,
+                            audience=consumer.aud,
+                            algorithms=consumer.algorithms
+                        ))
+                        self.log.debug('Found consumer via SECRET, name: {}, aud: {}'.format(consumer_name, consumer.aud))
+                        break
+                    except Exception as e:
+                        self.log.debug('Issue validating JWT via SECRETS.  No valid secrets or audiences found.  Return True to denote Anonymous user and skip next authenticator')
+                        self.log.debug(e)
+                        return True
 
-
-
-            # With secret algorithm validation
-
-            # from jwt import PyJWKClient
-            # kid = 'z135JtxIQ-81kU8SfCCK2gnpGeM'
-            # url = 'https://auth-local.triglobal.io/.well-known/jwks.json'
-            # jwks_client = PyJWKClient(url)
-            # dump(jwks_client)
-            # signing_key = jwks_client.get_signing_key_from_jwt(token)
-            # dump(signing_key)
-            # dump(signing_key.__dict__)
-            # dump(signing_key.key)
-
-            # jwt = Dict(decode(
-            #     token,
-            #     signing_key.key,
-            #     audience=['afc1cae9-004e-4ec4-8bef-b63f0456b36d'],
-            #     algorithms=['RS256']
-            # ))
-
-
-
-            #jwt = Dict(decode(token, self.config.secret, audience=self.config.audience, algorithms=self.config.algorithms))
-
-
-
-
-
-            # consumers = self.config.consumers
-            # for consumer in self.config.consumers:
-            #     try:
-            #         jwt = Dict(decode(token, consumer.secret, audience=consumer.aud, algorithms=consumer.algorithms))
-            #         dump("FOUND CONSUMER: ", consumer_name)
-            #         break
-            #     except:
-            #         pass
-
-            #     dump(consumer_name, consumer_config)
-
+        # No JWT validation (should be pre-validated by external API Gateway like Kong)
         else:
-            # Without validation
-            dump('VALIDATE JWT EXTERNALLY')
-            #dump('WITHOUT Validation')
-            jwt = Dict(decode(token, options={"verify_signature": False}))
+            self.log.debug('External JWT verification via API Gateway is being used.  Uvicore will not validate JWT but may verify aud claims.')
+            try:
+                # Decode JWT without signature verification
+                jwt = Dict(decode(token, options={"verify_signature": False}))
 
-            # Validate aud claim
-            # WELL???  Multi API access does not work.
-            # Example, login as portal-vue-app, hit iam-uvicore-api, passthru to tools-uvicore-api
-            # We only have the self.config.audience as one key, the tools-vue-app key, but we are passing
-            # the portal-vue-app key, so aud verification fails.  Could make it an array?  Or skip completely?
-
-
-            dump('AUD in config', self.config.audience)
-
-
-            # jwt.decode also validates the aud claim.  Since we are skipping validation, we'll still validate aud claim here.
-            if jwt.aud != self.config.audience:
-                # Audience mismatch, return True to denote Anonymous user and skip next authenticator
+                # Validate aud claims if enabled
+                if self.config.verify_audience:
+                    # Get all allowed consumer audiences
+                    audiences = [v['aud'] for (k,v) in self.config.consumers.items()]
+                    if jwt.aud not in audiences:
+                        # Audience mismatch, return True to denote Anonymous user and skip next authenticator
+                        self.log.debug('No audience found in allowed consumers')
+                        return True
+            except Exception as e:
+                self.log.debug('Issue decoding JWT without signature verification Ruturn True to denote Anonymous user and skip next authenticator')
+                self.log.debug(e)
                 return True
-        # except Exception as e:
-        #     # Issue with validating JWT, return True to denote Anonymous user and skip next authenticator
-        #     dump(e)
-        #     return True
 
-        dump('JWT', jwt)
+        #dump('JWT', jwt)
 
         # Get user and validate credentials
         user: UserInfo = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)

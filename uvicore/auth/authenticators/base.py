@@ -14,6 +14,10 @@ class Authenticator(AuthenticatorInterface):
     def __init__(self, config: Dict):
         self.config = config
 
+    @property
+    def log(self):
+        return uvicore.log.name('uvicore.http')
+
     async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[UserInfo]:
         """Retrieve user from User Provider backend"""
 
