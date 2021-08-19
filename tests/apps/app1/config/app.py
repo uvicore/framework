@@ -166,6 +166,7 @@ config = {
             'base_url': env('AUTH_OAUTH2_BASE_URL', 'https://my_fusionauth_gluu_keycloke_auth0_okta.com'),
             'authorize_path': env('AUTH_OAUTH2_AUTHORIZE_URI', '/oauth2/authorize'),
             'token_path': env('AUTH_OAUTH2_TOKEN_URI', '/oauth2/token'),
+            'jwks_path': env('AUTH_OAUTH2_JWKS_PATH', '/.well-known/jwks.json'),
         },
 
         # Web route authenticators and user providers
@@ -307,7 +308,8 @@ config = {
                 'anonymous_header': 'x-anonymous-consumer',  # Set to None to skip header checks
 
                 # Settings used when the user auth and JWT did not originate from this app itself
-                # but from an external Identity Provider
+                # but from an external Identity Provider. We want to create and sync the external IDP
+                # user to uvicore's internal user/group/roles tables.
                 'auto_create_user': True,
                 'auto_create_user_jwt_mapping': {
                     # FusionAuth JWT Mappings
@@ -321,20 +323,36 @@ config = {
                     'creator_id': 1,
                     'groups': lambda jwt: jwt['roles'],
                 },
-                # Sync users scopes (rules/groups) form JWT with user provider
-                # Does not sync on every request but is buffered with the default cache TTL seconds.
-                'sync_scopes': True,
 
-                # JWT Validation
-                'verify_signature': False,  # False only if a local upstream API gateway has already pre-validated
-                'audience': 'd709a432-5edc-44c7-8721-4cf123473c45',  # FusionAuth App ID
-                'algorithms': ['RS256'],
+                # Periodically sync user info, roles and groups from the JWT
+                # Does not sync on every request but is buffered with the TTL seconds.
+                'sync_user': True,
+                'sync_user_ttl': env.int('API_JWT_SYNC_USER_TTL', 600),
 
-                # Secret for sunjaro
-                'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkz3donSSkj3tcFh//cB/\nGes4H9muNlkfB93BYV3kv1p17u/18qLyeNO9dCjr+KChSr9OwqwCkSW+jqck2pvC\n2sgFQ1zg9M+eqUT9lToltbHYMs0m1vsHzDLOqiCnRUwiWeiaUfzoscz26isOR8GH\nII8TQJ+3cHPC0mGs0uBlGHxgT7bigmmKS+otFxRnYffRA+6kkp4jtkYx25tD/vDY\nSOCF3vszcnfng0w661nzCOYTqBNiw9GyIW1i2mrXAQe+pxczRWvIO1D6i0wvWEKQ\n8Dz1goA+anK7TD21g4bgXZFcw30eNezA5vHeDXemzOKEJAIv7jP6D6P/aSIdbpQo\n3QIDAQAB\n-----END PUBLIC KEY-----',
+                # Validate JWT Signature
+                # Set to False only if an upstream API gateway (like Kong) has already pre-validated the JWT
+                'verify_signature': env.bool('API_JWT_VERIFY_SIGNATURE', True),
+                'verify_signature_method': env('API_JWT_VERIFY_SIGNATURE_METHOD', 'secret'),  # secret, jwks
+                'jwks_query_cache_ttl': env.int('API_JWT_JWKS_QUERY_CACHE_TTL', 300),
 
-                # Secret for p53
-                #'secret': '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1ohyYNWDXOA6follmvIX\n034k5IWFLlgpwq7CA+IxFSGpnzRpOlL/22oQ/SbH4PmofWKs9qPYeRl8md5XRZus\nO+Ed8tHi7Ltz7Cjl42xX27bTLN1dqVgbecbfcUiWKlYQt1CrbNda6rCXBOx3whYQ\nfZz8G1yn7I4x55lIa14ojzRdXW7oMcJeKGdS7BPeqQ3rsreLYyk3OMwZEzq7JPXa\nxl9NuSCVEhcDgW+nHua4AauKG/JnkXRExiR65g6hINQyVYk7I6HOLTNVYZQcg/Rf\nQ84HuW6N8bgsrULkm7+KVvACsZRgdrO2ewr7ZMXpW2tbaq2GqgUNNeoZCP7EQgQZ\nEwIDAQAB\n-----END PUBLIC KEY-----',
+                # Validate JWT audience (aud) claim
+                # Set to False only if an upstream API gateway (like Kong) has already pre-validated the JWT
+                # Only applies if verify_signature is False, uvicore may still verify audience.
+                'verify_audience': env.bool('API_JWT_VERIFY_AUDIENCE', True),
+
+                # Allowed consumers
+                # List of all oauth2 consumers allowed to access this API.  Verification only performed
+                # by uvicore if 'verify_signature' is True.  Verification method can be direct secret or
+                # jwks lookups.  If 'verify_signature' if False, but 'verify_audience' is true
+                # this dictionary only needs the 'aud' keys defined.
+                'consumers': {
+                    # 'web-app1': {
+                    #     'aud': 'appId, clientId, aud claim',
+                    #     #'jwks_url': 'optional override per consumer from default in oauth2 config above',
+                    #     'algorithms': ['RS256'],
+                    #     'secret': env('API_JWT_CONSUMER_WEB_APP1_SECRET', 'begin public key...used if method is secret'),
+                    # },
+                },
             },
         },
 
