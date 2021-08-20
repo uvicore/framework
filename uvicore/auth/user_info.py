@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.typing import List, Union, Optional
+from uvicore.typing import List, Union
 from uvicore.contracts import UserInfo as UserInfoInterface
 from uvicore.support.dumper import dump, dd
 from pydantic import BaseModel as PydanticModel
@@ -19,6 +19,7 @@ class UserInfo(PydanticModel, UserInfoInterface):
     # this is a pydantic model
     id: int
     uuid: str
+    sub: str
     username: str
     email: str
     first_name: str

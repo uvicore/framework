@@ -104,8 +104,7 @@ class Http(Handler):
         #     return response.HTML(content='custom 404 not found', status_code=505)
         # uvicore.app.http.server.add_exception_handler(500, internal_server_error_500)
         # uvicore.app.http.server.add_exception_handler(404, not_found_404)
-        # #dump('xxxxxx', uvicore.app.http.server.exception_handlers)
-
+        #dump('xxxxxx', uvicore.app.http.exception_handlers)
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
         debug_dump = False

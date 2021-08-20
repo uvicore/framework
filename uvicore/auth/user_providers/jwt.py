@@ -48,6 +48,7 @@ class Jwt(UserProvider):
             user = UserInfo(
                 id=jwt_mapping.id(jwt) or jwt.sub or 'Unknown',
                 uuid=jwt_mapping.uuid(jwt) or jwt.sub or 'Unknown',
+                sub=jwt_mapping.uuid(jwt) or jwt.sub or 'Unknown',
                 username=jwt_mapping.username(jwt) or jwt.email or 'Unknown',
                 email=jwt_mapping.email(jwt) or jwt.email or 'Unknown',
                 first_name=jwt_mapping.first_name(jwt) or jwt.first_name or '',

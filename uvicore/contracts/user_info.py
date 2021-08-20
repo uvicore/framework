@@ -20,6 +20,7 @@ class UserInfo(ABC):
     # This is still a fully dynamic SuperDict!
     id: int
     uuid: str
+    sub: str
     username: str
     email: str
     first_name: str

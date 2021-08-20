@@ -59,6 +59,7 @@ class Jwt(Authenticator):
             # Verify JWT using JWKS
             if self.config.verify_signature_method.lower() == 'jwks':
                 default_jwks_url = uvicore.config.app.auth.oauth2.base_url + uvicore.config.app.auth.oauth2.jwks_path
+                found_consumer = False
                 for (consumer_name, consumer) in self.config.consumers.items():
                     try:
                         # Cache decoded JWT to prevent hitting JWKS url often
@@ -81,12 +82,16 @@ class Jwt(Authenticator):
 
                         # Get decoded JWT from cache or decode from JWKS URL signing_key
                         jwt = await uvicore.cache.remember(token, query_jwks, seconds=self.config.jwks_query_cache_ttl or 300)
+                        found_consumer = True
                         self.log.debug('Found consumer via JWKS, name: {}, aud: {}'.format(consumer_name, consumer.aud))
                         break
                     except Exception as e:
-                        self.log.debug('Issue validating JWT via JWKS.  Return True to denote Anonymous user and skip next authenticator')
-                        self.log.debug(e)
-                        return True
+                        # Means this one consumer loop JWK or secret not verified, OK, continue gracefully to next consumer
+                        pass
+
+                if not found_consumer:
+                    self.log.debug('Could not validate JWT against any consumers vai JWKS.  Return True to denote Anonymous user and skip next authenticator')
+                    return True
 
             # Verify JWT using pub key secrets
             else:

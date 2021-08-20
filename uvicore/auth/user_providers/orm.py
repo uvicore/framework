@@ -123,6 +123,7 @@ class Orm(UserProvider):
         user = UserInfo(
             id=db_user.id or '',
             uuid=db_user.uuid or '',
+            sub=db_user.uuid or '',
             username=db_user.username or '',
             email=db_user.email or '',
             first_name=db_user.first_name or '',
