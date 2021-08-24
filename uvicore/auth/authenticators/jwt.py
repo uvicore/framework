@@ -131,7 +131,8 @@ class Jwt(Authenticator):
                 self.log.debug(e)
                 return True
 
-        #dump('JWT', jwt)
+        self.log.debug('JWT: ' + str(jwt))
+        #self.log.debug(jwt)
 
         # Get user and validate credentials
         user: UserInfo = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)

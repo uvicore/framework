@@ -23,15 +23,19 @@ class Guard(Security):
 
 class Scopes:
 
+    @property
+    def log(self):
+        return uvicore.log.name('uvicore.http')
+
     async def __call__(self, security_scopes: SecurityScopes, request: Request) -> UserInfo:
         # Get scopes List.  These are permissions/scopes defined on this route
         scopes = list(security_scopes.scopes)
-        #dump('ROUTE SCOPES:', scopes)
+        self.log.debug('Auth guard scopes required for {}: {}'.format(request.scope['path'], str(scopes)))
 
         # Get user from request.  Will always exist.  If not logged it will be
         # the anonymous user which may still have permissions/scopes to compare
         user: UserInfo = request.user
-        #dump('USER PERMISSIONS', user.permissions)
+        self.log.debug('Auth guard user: {}'.format(str(user)))
 
         # If no scopes, allow access
         if not scopes: return user
@@ -47,9 +51,9 @@ class Scopes:
                 authorized = False
                 missing_scopes.append(scope)
 
-        dump('-----------------------------------------------------------------')
-        dump('Auth Route Guard HERE:', scopes, user)
-        dump('-----------------------------------------------------------------')
+        # dump('-----------------------------------------------------------------')
+        # dump('Auth Route Guard HERE:', scopes, user)
+        # dump('-----------------------------------------------------------------')
 
         # Hack logout of basic auth
         #raise NotAuthenticated(headers={'WWW-Authenticate': 'Basic realm="App1 Web Realm"'})
