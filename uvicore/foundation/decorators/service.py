@@ -1,5 +1,6 @@
 import uvicore
 from uvicore.typing import Callable, Decorator, Any, Dict, List
+from uvicore.support.dumper import dump, dd
 
 
 def service(name: str = None, *, factory: Any = None, kwargs: Dict = None, singleton: bool = False, aliases: List = []) -> Callable[[Decorator], Decorator]:

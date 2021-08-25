@@ -10,7 +10,19 @@ from uvicore.support.schematic import Schematic
 @command()
 @argument('name')
 async def command(name: str):
-    """Generate a new CLI command"""
+    """
+    \b
+    Generate a new CLI command...
+    \b
+    USAGE:
+        Commands should be lower_underscore and SINGULAR (plural is OK)
+        Remember to manually add the command to your service provider!
+        From there you can keep the actual command key as understore or use dashes.
+    \b
+        ./uvicore gen command welcome
+        ./uvicore gen command process
+        ./uvicore gen command scan_files
+    """
 
     stub = os.path.dirname(__file__) + '/stubs/command.py'
     dest = uvicore.config('app.paths.commands') + '/' + name + '.py'

@@ -9,7 +9,19 @@ from uvicore.console import command, argument, option
 @command()
 @argument('name')
 async def table(name: str):
-    """Generate a new Database table schematic"""
+    """
+    \b
+    Generate a new Database table schematic...
+    \b
+    USAGE:
+        Tables should be lower_underscore and PLURAL
+        If a table is awkward as plural, ok to make a few singluar (user_info)
+    \b
+        ./uvicore gen table users
+        ./uvicore gen table user_details
+        ./uvicore gen table posts
+        ./uvicore gen table post_tags
+    """
     stub = os.path.dirname(__file__) + '/stubs/table.py'
     dest = uvicore.config('app.paths.tables') + '/' + name + '.py'
 
@@ -27,7 +39,18 @@ async def table(name: str):
 @command()
 @argument('name')
 async def seeder(name: str):
-    """Generate a new Database table seeder schematic"""
+    """
+    \b
+    Generate a new Database table seeder schematic...
+    \b
+    USAGE:
+        Seeder should match the lower_underscore PLURAL tablenames
+    \b
+        ./uvicore gen seeder users
+        ./uvicore gen seeder user_details
+        ./uvicore gen seeder posts
+        ./uvicore gen seeder post_tags
+    """
     stub = os.path.dirname(__file__) + '/stubs/seeder.py'
     dest = uvicore.config('app.paths.seeders') + '/' + name + '.py'
 

@@ -10,7 +10,19 @@ from uvicore.console import command, argument, option
 @argument('name')
 @argument('table')
 async def model(name: str, table: str):
-    """Generate a new ORM model schematic"""
+    """
+    \b
+    Generate a new ORM model schematic...
+    \b
+    USAGE:
+        Models should be lower_understore and SINGULAR
+        While their table should be lower_understore and PLURAL
+    \b
+        ./uvicore gen model user users
+        ./uvicore gen model user_detail user_details
+        ./uvicore gen model post posts
+        ./uvicore gen model post_tag post_tags
+    """
 
     stub = os.path.dirname(__file__) + '/stubs/model.py'
     dest = uvicore.config('app.paths.models') + '/' + name + '.py'

@@ -22,12 +22,15 @@ class Table:
         prefix = uvicore.db.connection(self.connection).prefix
         if prefix is not None:
             self.name = str(prefix) + self.name
-        self.schema = sa.Table(
-            self.name,
-            self.metadata,
-            *self.schema,
-            **self.schema_kwargs
-        )
+
+        # Only enhance schema if connection string backend is 'sqlalchemy'
+        if uvicore.db.connection(self.connection).backend == 'sqlalchemy':
+            self.schema = sa.Table(
+                self.name,
+                self.metadata,
+                *self.schema,
+                **self.schema_kwargs
+            )
 
 
 # class SchemaOLD(ABCMeta):

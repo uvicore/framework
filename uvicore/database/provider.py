@@ -58,8 +58,10 @@ class Db:
                         + '/' + connection.database
                     )
             else:
+                # Any opther backend type (like api), should have at minimum a url defined
                 url = connection.url
                 metakey = url
+
 
             # Merge new values into connection SuperDict
             if not connection.prefix: connection.prefix = ''
@@ -68,7 +70,7 @@ class Db:
                 'metakey': metakey.lower(),
                 'url': url
             })
-            #connections.append(connection)
+
         self.package.database.connections = connections
         self.package.database.connection_default = default
 
