@@ -5,8 +5,8 @@ from uvicore.support.dumper import dump, dd
 
 
 # Get related tablenames with proper prefixes
-users = uvicore.db.tablename('auth.users')
-formats = uvicore.db.tablename('xx_appname.formats')
+# users = uvicore.db.tablename('auth.users')
+# formats = uvicore.db.tablename('xx_appname.formats')
 
 
 @uvicore.table()
@@ -27,18 +27,18 @@ class xx_TableName(Table):
         # Defaults: nullable=False, index=False, unique=False, primary_key=False
 
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('slug', sa.String(length=100), unique=True),
-        sa.Column('title', sa.String(length=100)),
-        sa.Column('body', sa.Text()),
-        sa.Column('format', sa.Integer, sa.ForeignKey(f"{formats}.id"), nullable=False),
-        sa.Column('view_count', sa.Integer),
-        sa.Column('is_deleted', sa.Boolean(), default=False),
-        sa.Column('is_hidden', sa.Boolean(), default=False),
-        sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
-        sa.Column('updator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
-        sa.Column('created_at', sa.DateTime()),
-        sa.Column('updated_at', sa.DateTime()),
-        sa.Column('indexed_at', sa.DateTime()),
+        # sa.Column('slug', sa.String(length=100), unique=True),
+        # sa.Column('title', sa.String(length=100)),
+        # sa.Column('body', sa.Text()),
+        # sa.Column('format', sa.Integer, sa.ForeignKey(f"{formats}.id"), nullable=False),
+        # sa.Column('view_count', sa.Integer),
+        # sa.Column('is_deleted', sa.Boolean(), default=False),
+        # sa.Column('is_hidden', sa.Boolean(), default=False),
+        # sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
+        # sa.Column('updator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
+        # sa.Column('created_at', sa.DateTime()),
+        # sa.Column('updated_at', sa.DateTime()),
+        # sa.Column('indexed_at', sa.DateTime()),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

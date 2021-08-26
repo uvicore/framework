@@ -34,6 +34,7 @@ nav:
     - events.md
     - cache.md
     - mail.md
+    - auto-api.md
   - Epologue:
     - release-notes.md
     - mkdocs-help.md

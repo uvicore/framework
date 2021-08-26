@@ -17,7 +17,6 @@ async def command(name: str):
     USAGE:
         Commands should be lower_underscore and SINGULAR (plural is OK)
         Remember to manually add the command to your service provider!
-        From there you can keep the actual command key as understore or use dashes.
     \b
         ./uvicore gen command welcome
         ./uvicore gen command process
@@ -41,7 +40,7 @@ async def command(name: str):
 
     log.nl()
     log.header('Add this to your Service Provider commands List')
-    print("'{}': '{}.commands.{}.cli',".format(name, package.name, name))
+    print("'{}': '{}.commands.{}.cli',".format(str.kebab(name), package.name, name))
 
     log.nl()
     log.notice('IF you do NOT have a self.commands() already in your Service Provider, add this')
@@ -54,7 +53,7 @@ async def command(name: str):
 )""".format(
         package.short_name,
         str.studly(package.short_name),
-        name,
+        str.kebab(name),
         package.name,
         name,
     ))

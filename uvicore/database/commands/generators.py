@@ -35,6 +35,9 @@ async def table(name: str):
         ]
     ).generate()
 
+    uvicore.log.nl()
+    uvicore.log.notice('Be sure to add this table to your ./database/tables/__init__.py')
+
 
 @command()
 @argument('name')
@@ -63,3 +66,7 @@ async def seeder(name: str):
             ('xx_ModelName', str.studly(name)),
         ]
     ).generate()
+
+    uvicore.log.nl()
+    uvicore.log.notice('Be sure to add this seeder to your ./database/seeders/__init__.py')
+

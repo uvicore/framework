@@ -13,7 +13,7 @@ main `uvicore.app` global for use in two different ways.
 ## Registering Configs
 
 All packages can register their own configs using a unique `key`.  This
-registraion is done inside the packages service provider `register()` method.
+registration is done inside the packages service provider `register()` method.
 If a config is already registered with the same `key` then the Dictionary value
 will be "deep merged".  This allows packages to override other package configs
 at a granular level.  The last provider defined wins in an override battle.

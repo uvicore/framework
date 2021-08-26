@@ -38,3 +38,6 @@ async def model(name: str, table: str):
             ('xx_TableName', str.studly(table)),
         ]
     ).generate()
+
+    uvicore.log.nl()
+    uvicore.log.notice('Be sure to add this model to your ./models/__init__.py')

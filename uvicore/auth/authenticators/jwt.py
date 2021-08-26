@@ -32,7 +32,7 @@ class Jwt(Authenticator):
         if not authorization or scheme != "bearer":
             # Return of False means this authentication method is not being attempted
             # goto next authenticator in stack
-            self.log.debug('No Bearer found in Authorization Header, goto next authenticator in stack')
+            self.log.debug('No Bearer found in Authorization header, goto next authenticator in stack')
             return False
 
         # Detect anonymous API access.

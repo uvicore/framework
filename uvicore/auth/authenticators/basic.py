@@ -23,7 +23,7 @@ class Basic(Authenticator):
     # Return of User object means a valid user was found, skip next authenticator
 
     async def authenticate(self, request: HTTPConnection) -> Union[UserInfo, bool]:
-        #dump('BASIC Authenticator HERE')
+        self.log.debug('BASIC Authenticator')
 
         # Parse authorization header
         authorization, scheme, param = self.auth_header(request)
@@ -32,6 +32,7 @@ class Basic(Authenticator):
         if not authorization or scheme != "basic":
             # Return of False means this authentication method is not being attempted
             # goto next authenticator in stack
+            self.log.debug('No Basic Auth header, goto next authenticator in stack')
             return False
 
         # Try to get the Basic Auth credentials
@@ -39,6 +40,7 @@ class Basic(Authenticator):
             data = b64decode(param).decode("ascii")
         except Exception:
             # No credentials defined from basic auth header, return True to denote Anonymous user and skip next authenticator
+            self.log.debug('No credentials found in Basic Auth Header, seen as anonymous')
             return True
 
         # Get username and password from basic auth header
