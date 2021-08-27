@@ -107,8 +107,8 @@ class ModelRoute:
 
 
         def build_query(Model, *,
-            include: str,
-            where: str,
+            include: typing.Optional[str] = None,
+            where: typing.Optional[str] = None,
         ):
             query = Model.query()
 
