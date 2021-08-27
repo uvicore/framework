@@ -104,11 +104,11 @@ def test_load_object():
     #     file='/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/'
     #         'container/ioc.py'
     # )
-    x = module.load('uvicore.container.ioc._Ioc')
-    assert "<class 'uvicore.container.ioc._Ioc'>" in str(x.object)
-    assert x.name == '_Ioc'
+    x = module.load('uvicore.container.ioc.Ioc')
+    assert "<class 'uvicore.container.ioc.Ioc'>" in str(x.object)
+    assert x.name == 'Ioc'
     assert x.path == 'uvicore.container.ioc'
-    assert x.fullpath == 'uvicore.container.ioc._Ioc'
+    assert x.fullpath == 'uvicore.container.ioc.Ioc'
     assert x.package == 'uvicore.container'
     assert 'uvicore/container/ioc.py' in x.file
 
