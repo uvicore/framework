@@ -169,7 +169,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             # Check each field for relations and rename them before inserting parent
             relations = {}
             skip_children = False
+            dump('MODEL:', model, '---------------------------------------------')
             for (fieldname, value) in model.items():
+                dump('FIELD:', fieldname)
+                dump('VALUE:', value, '---------------------------------------------')
                 field = entity.modelfields.get(fieldname)  # Using direct dictionary to skip bad values in dict
                 if not field: continue
                 if not field.relation: continue
@@ -189,6 +192,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     'data': value
                 }
 
+            dump('RELATIONS: ', relations, '---------------------------------------------')
+
             # Delete relations from parent model as they cannot be inserted
             for relation in relations.keys():
                 del model[relation]
@@ -201,10 +206,17 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 if type(relation) == BelongsTo:
                     # Because we insert the children first, skip inserting
                     # children later down the method
+                    dump('555', relation, data)
                     skip_children = True
 
-                    # Recursively insert child and get PK
-                    child_pk = await relation.entity.insert_with_relations([data])
+                    # Check if one ONE relation is already a fully inserted object (presense of pk)
+                    # If NOT, it needs to be inserted, if so, just grab its existing PK as the child_pk
+                    if getvalue(data, relation.foreign_key):
+                        # Already inserted realtion, use its existing PK
+                        child_pk = getvalue(data, relation.foreign_key)
+                    else:
+                        # Recursively insert child and get PK
+                        child_pk = await relation.entity.insert_with_relations([data])
 
                     # Replace parent foreignKey with child_pk
                     model[relation.local_key] = child_pk
