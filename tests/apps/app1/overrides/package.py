@@ -1,9 +1,9 @@
+from __future__ import annotations
 import uvicore
-from dataclasses import dataclass
+from uvicore.typing import Dict
 
 # Pull original from Ioc
 Base = uvicore.ioc.make('uvicore.package.package.Package_BASE')
 
-@dataclass
 class Package(Base):
     custom1: str

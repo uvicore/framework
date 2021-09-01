@@ -9,18 +9,20 @@ config = {
     # Web Configuration
     #
     # prefix: All web routes will be prefixed with this URI. Ex: '' or '/wiki'
+    #         This is in addition to running apps web.prefix config
     # --------------------------------------------------------------------------
     'web': {
-        'prefix': '/wiki',
+        'prefix': '',
     },
 
     # --------------------------------------------------------------------------
     # Api Configuration
     #
-    # prefix: All web routes will be prefixed with this URI. Ex: '' or '/wiki'
+    # prefix: All api routes will be prefixed with this URI. Ex: '' or '/wiki'
+    #         This is in addition to running apps api.prefix config
     # --------------------------------------------------------------------------
     'api': {
-        'prefix': '/wiki',
+        'prefix': '',
     },
 
 

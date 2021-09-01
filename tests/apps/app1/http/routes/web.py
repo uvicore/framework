@@ -43,7 +43,6 @@ class Web(Routes):
 
 
 
-
         # async def get_method(request: Request):
         #     return response.Text('Get Method Here!')
 

@@ -5,6 +5,7 @@ from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
+from merge_args import _merge as merge_args
 
 
 from uvicore.http.routing.guard import Guard
@@ -34,6 +35,7 @@ class ApiRouter(Router['ApiRoute']):
         scopes: Optional[List] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
+        inherits: Optional[Callable] = None,
     ):
         # Build parameters
         methods = ['GET']
@@ -81,6 +83,7 @@ class ApiRouter(Router['ApiRoute']):
         scopes: Optional[List] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
+        inherits: Optional[Callable] = None,
     ) -> Callable[[Decorator], Decorator]:
         """Generic add method and decorator"""
 
@@ -93,6 +96,9 @@ class ApiRouter(Router['ApiRoute']):
         (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)
 
         def handle(endpoint):
+            if inherits:
+                endpoint = merge_args(inherits, endpoint)
+
             # Create route SuperDict
             route = ApiRoute({
                 'path': full_path or '/',

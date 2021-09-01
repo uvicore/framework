@@ -3,7 +3,9 @@ import uvicore
 import inspect
 from copy import copy
 from functools import partial
-from uvicore import contracts
+from uvicore.contracts import Router as RouterInterface
+from uvicore.contracts import Package as PackageInterface
+from uvicore.contracts import Routes as RoutesInterface
 from uvicore.support.module import load
 from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
@@ -16,18 +18,18 @@ R = TypeVar('R')
 
 
 @uvicore.service()
-class Router(contracts.Router, Generic[R]):
+class Router(Generic[R], RouterInterface[R]):
     """Abstract base router class for Web and Api Router Implimentations"""
 
     @property
-    def package(self) -> contracts.Package:
+    def package(self) -> PackageInterface:
         return self._package
 
     @property
     def routes(self) -> Dict[str, R]:
         return self._routes
 
-    def __init__(self, package: contracts.Package, prefix: str, name: str = '', controllers: str = None):
+    def __init__(self, package: PackageInterface, prefix: str, name: str = '', controllers: str = None):
         # Instance variables
         self._package = package
         self._routes = Dict()
@@ -56,6 +58,7 @@ class Router(contracts.Router, Generic[R]):
         tags: Optional[List[str]] = None,
         options: Dict = {}
     ) -> List:
+        """Include a Route Controller"""
         if prefix:
             if prefix[-1] == '/': prefix = prefix[0:-1]  # Remove trailing /
             if prefix[0] != '/': prefix = '/' + prefix   # Add beginning /
@@ -461,17 +464,17 @@ class Router(contracts.Router, Generic[R]):
 
 
 @uvicore.service()
-class Routes(contracts.Routes):
+class Routes(RoutesInterface):
     """Routes and Controller Class"""
     # middleware = None
     # auth = None
     # scopes = None
 
     @property
-    def package(self) -> contracts.Package:
+    def package(self) -> PackageInterface:
         return self._package
 
-    def __init__(self, package: contracts.Package):
+    def __init__(self, package: PackageInterface):
         self._package = package
 
     def _middleware(self):

@@ -1,9 +1,10 @@
 import uvicore
 from uvicore.support.dumper import dd, dump
-from uvicore.auth import User
+from uvicore.contracts import UserInfo
 from uvicore.http import Request, response
 from uvicore.http.routing import WebRouter, Controller, Guard
 from fastapi import Depends
+
 
 @uvicore.controller()
 class Admin(Controller):
@@ -20,7 +21,7 @@ class Admin(Controller):
         #@route.get('/admin', name='admin', scopes=['authenticated'])
         @route.get('/admin', name='admin')
         #def home(request: Request, user: User = Guard()):
-        async def home(request: Request, user: User = Guard()):
+        async def home(request: Request, user: UserInfo = Guard()):
             #from uvicore.http.response import Redirect
             #return Redirect('/wiki')
 

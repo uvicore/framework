@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, abstractproperty
-from uvicore.typing import List, Dict, Callable, TypeVar, Generic
+from uvicore.typing import List, Dict, Callable, TypeVar, Generic, Decorator
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -61,6 +61,39 @@ class Router(Generic[R], ABC):
     @abstractproperty
     def routes(self) -> Dict[str, R]: pass
 
+    @abstractmethod
+    def controller(self,
+        module: Union[str, Callable],
+        *,
+        prefix: str = '',
+        name: str = '',
+        tags: Optional[List[str]] = None,
+        options: Dict = {}
+    ) -> List:
+        """Include a Route Controller"""
+
+    @abstractmethod
+    def include(self,
+        module: Union[str, Callable],
+        *,
+        prefix: str = '',
+        name: str = '',
+        tags: Optional[List[str]] = None,
+        options: Dict = {}
+    ) -> List:
+        """Alias to controller"""
+
+    @abstractmethod
+    def group(self, prefix: str = '', *,
+        routes: Optional[List] = None,
+        name: str = '',
+        tags: Optional[List[str]] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+    ) -> Callable[[Decorator], Decorator]:
+        """Route groups method and decorator"""
 
 class WebRouter(ABC):
     # Fixme, add get, post, put...

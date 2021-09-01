@@ -302,6 +302,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         table = query.table
         tablename = str(table.name)
         conn = self._connection()
+        dotname = dotname.replace('__', '.')
         if '.' in dotname:
             parts = dotname.split('.')
             if len(parts) == 2:

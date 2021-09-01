@@ -9,8 +9,7 @@ from app1.models.post import Post
 from uvicore.http.routing import Guard
 
 from uvicore.auth.models import User
-#from uvicore.auth import User
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
 
 from app1.http.api.post import Post as PostController
 from datetime import datetime
@@ -41,9 +40,21 @@ class Api(Routes):
         def autoapi():
             # I should add a flag to NOT auto add Guard() to each model endpoint
             # If I wanted a fully public model router
-            #route.include(ModelRouter, options={'scopes': ['authenticated']})
-            route.include(ModelRouter)
+            route.include(ModelRouter, options={
+                'scopes': []
+                # 'scopes': {
+                #     'create': 'autoapi.create',
+                #     'read': 'autoapi.read',
+                #     'update': 'autoapi.update',
+                #     'delete': 'autoapi.delete'
+                # }
+            })
+            #route.include(ModelRouter)
             pass
+
+        # Rapidoc experiment
+        route.controller('rapidoc')
+
 
         async def get_method() -> Post:
             #return response.Text('Get API Method Here!')
@@ -64,7 +75,7 @@ class Api(Routes):
             @route.get('/ping')
             #@route.get('/ping', scopes=['posts.create'])
             #def ping(request: Request, user: User = Guard(['scope4'])):
-            def ping(request: Request, user: User = Guard(['posts.read'])):
+            def ping(request: Request, user: UserInfo = Guard(['posts.read'])):
             #def ping(request: Request, user: User):  # If I hacked FastAPI dep code
             #def ping(request: Request, user: User = User()):  # If I made a depends Class like my old Guard()
                 #user: User = request.user

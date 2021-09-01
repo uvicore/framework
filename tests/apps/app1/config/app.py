@@ -59,7 +59,8 @@ config = {
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.com'],
+                    # Host testserver is for automated unit tests
+                    'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.sunfinity.com'],
                     'www_redirect': True,
                 }
             },
@@ -112,7 +113,8 @@ config = {
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
                 'options': {
-                    'allowed_hosts': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
+                    # Host testserver is for automated unit tests
+                    'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
                     'www_redirect': True,
                 }
             },
@@ -121,7 +123,8 @@ config = {
             'CORS': {
                 'module': 'uvicore.http.middleware.CORS',
                 'options': {
-                    'allow_origins': ['127.0.0.1', 'localhost', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
+                    'allow_origins': ['http://127.0.0.1:5000', 'http://0.0.0.0:5000', 'http://localhost:5000', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
+                    #'allow_origins': ['*'],
                     'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
                     'allow_headers': [],
                     'allow_credentials': False,
@@ -420,16 +423,16 @@ config = {
     # --------------------------------------------------------------------------
     'bindings': {
         # Testing, override Users table and model
-        #'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users.Users',
-        #'uvicore.auth.models.user.User': 'app1.models.user.User',
-        #'uvicore.auth.database.seeders.seeders.seed': 'app1.database.seeders.seeders.seed',
+        # You can either define here, or define in service provider boot() like so:
+            #self.bind_override('uvicore.auth.database.tables.users.Users', 'app1.database.tables.users.Users')
+            #self.bind_override('uvicore.auth.models.user.User', 'app1.models.user.User')
+        'uvicore.auth.database.tables.users.Users': 'app1.database.tables.users.Users',
+        'uvicore.auth.models.user.User': 'app1.models.user.User',
 
         # Low level core uvicore libraries (too early to override in a service provider, must be done here)
-
-        # FIXME, broken with new SuperDict
-        #'uvicore.foundation.application.Application': 'app1.overrides.application.Application',
-        #'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
-        #'uvicore.package.package.Package': 'app1.overrides.package.Package',
+        'uvicore.foundation.application.Application': 'app1.overrides.application.Application',
+        'uvicore.package.provider.ServiceProvider': 'app1.overrides.provider.ServiceProvider',
+        'uvicore.package.package.Package': 'app1.overrides.package.Package',
 
         # This is the only class that must be complete re-implimented, extension is NOT allowed.
         #'uvicore.http.routing.model_router.ModelRoute': 'app1.overrides.http.model_router.ModelRoute',
@@ -514,7 +517,7 @@ config = {
     'logger': {
         'console': {
             'enabled': True,
-            'level': 'INFO',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+            'level': 'DEBUG',  # DEBUG, INFO, WARNING, ERROR, CRITICAL
             'colors': True,
             'filters': [],
             #'filters': ['root', 'uvicore'],

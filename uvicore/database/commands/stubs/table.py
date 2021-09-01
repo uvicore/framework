@@ -27,8 +27,8 @@ class xx_TableName(Table):
         # Defaults: nullable=False, index=False, unique=False, primary_key=False
 
         sa.Column('id', sa.Integer, primary_key=True),
-        # sa.Column('slug', sa.String(length=100), unique=True),
-        # sa.Column('title', sa.String(length=100)),
+        sa.Column('slug', sa.String(length=100), unique=True),
+        sa.Column('title', sa.String(length=100)),
         # sa.Column('body', sa.Text()),
         # sa.Column('format', sa.Integer, sa.ForeignKey(f"{formats}.id"), nullable=False),
         # sa.Column('view_count', sa.Integer),

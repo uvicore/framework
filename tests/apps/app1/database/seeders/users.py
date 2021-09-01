@@ -3,6 +3,7 @@ from app1.models.contact import Contact
 from uvicore.auth.models.user import User
 from uvicore.auth.models.group import Group
 from uvicore.auth.models.role import Role
+from uvicore.support.dumper import dump, dd
 
 
 @uvicore.seeder()
@@ -19,19 +20,24 @@ async def seed():
     # You can insert parent records with relations as Dict
     # Though its not BULK, its a loop in the ORM
     # This inserts user first, then contact with link back to new user
-    # await User.insert_with_relations([
-    #     {
-    #         'email': 'administrator@example.com',
-    #         'app1_extra': 'hi',
-    #         'contact': {
-    #             'name': 'Administrator',
-    #             'title': 'God',
-    #             'address': '777 Heaven Ln',
-    #             'phone': '777-777-7777',
-    #             # NO, user_id=1
-    #         }
-    #     }
-    # ])
+    await User.insert_with_relations([
+        {
+            'username': 'administrator@example.com',
+            'email': 'administrator@example.com',
+            'first_name': 'Admin',
+            'last_name': 'Istrator',
+            'creator_id': 1,
+            'password': 'techie',
+            'app1_extra': 'hi',
+            'contact': {
+                'name': 'Administrator',
+                'title': 'God',
+                'address': '777 Heaven Ln',
+                'phone': '777-777-7777',
+                # NO, user_id=1
+            }
+        }
+    ])
 
     # Example of deleteing a HasOne child
     #user = await User.query().find(1)

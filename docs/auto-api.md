@@ -84,7 +84,29 @@ def register(self, route: ApiRouter):
 ```
 User must be authenticated and have the `autoapi_user` permission.  They can hit ALL auto API endpoints with all HTTP verbs.
 
-This is only handy if you want to give out ALL functionality to a set of users.  This is not a granular per HTTP verb approach.  Using the automatic CRUD scopes best serves that purpose.
+This is only handy if you want to give out ALL functionality to a set of users.  This is not a granular per HTTP verb approach.  To define a custom set of permissions for each HTTP verb use a scopes dictionary instead.
+
+
+```python
+# http/routes/api.py
+def register(self, route: ApiRouter):
+    # ...
+
+    # Include dynamic model CRUD API endpoints (the "auto API")!
+    # These routes are automatically protected by model.crud style permissions.
+    route.include(ModelRouter, options={
+        'scopes': {
+            'create': ['autoapi.create'],
+            'read': ['autoapi.read'],
+            'update': ['autoapi.update'],
+            'delete': ['autoapi.delete'],
+        }
+    })
+
+    # ...
+```
+
+
 
 !!! tip
     Any higher order `scopes` defined in top level routes or controllers are also obeyed
@@ -101,14 +123,116 @@ def register(self, route: ApiRouter):
 
     # Include dynamic model CRUD API endpoints (the "auto API")!
     # These routes are automatically protected by model.crud style permissions.
-    @route.group(scopes=['autoapi_user']):
+    @route.group(scopes=['authenticated', 'autoapi_user']):
     def autoapi():
         route.include(ModelRouter)
 
     # ...
 ```
-Now a user must have the actual CRUD scope (ex: `users.read`) and also the `autoapi_user` scope.
+Now a user must have the actual CRUD scope (ex: `users.read`) and also the `authenticated` and `autoapi_user` scope.
 
 !!! tip
     Any higher order `scopes` defined in top level routes or controllers are also obeyed
 
+
+
+
+
+## Notes
+
+Notes from within the model_router.py, moved here
+
+
+**REST Notes**
+```
+https://www.mscharhag.com/p/rest-api-design
+https://www.mscharhag.com/api-design/http-post-put-patch
+
+GET
+HEAD
+OPTIONS
+TRACE
+
+
+POST is for new records
+    POST /spaces
+    Not idempotent as it will continue to create new resources
+    If new post, return 200
+    If endpoint has no response but created, return 204 (no content but success)
+
+PUT is for updating existing records whos ID is in the url
+    PUT /spaces/123
+    Not for partial updates, expects the FULL object
+    Idempotent
+
+PATCH
+    PATCH /spaces/123
+    Like PUT, but can be partial object, or could be full, either way
+    Updates only records defined in the partial object
+    {
+        'creator': 4
+    }
+
+    BULK updates?
+    PATCH /spaces?where={"something": "other"}
+    Takes a partial JSON blob, with the data you want to update in BULK
+    {
+        'something': 'new',
+        'title': 'all get the same title'
+    }
+
+DELETE
+    DELETE /spaces/123
+    Deletes one space by ID
+    maybe a new permission string spaces.update_bulk?
+
+    BULK?
+    DELETE /spaces?where={"creator_id": 1}
+    maybe a body with confirm code?
+    {
+        env API_BULK_DELETE_CODE: 1234123412341234123412341234
+        confirm: yes sir code 123423412341234
+    }
+    or maybe a new permission string, spaces.delete_bulk?
+
+```
+
+
+**URL query notes**
+```
+Include
+-------
+include=sections.topics
+
+Where AND
+----------
+where={"id": 1}
+where={"id": 1, "name": "test"}
+
+where={"id": [">", 1]}
+
+where={"id": ["in", ["one", "two"]]}
+where={"id": [">", 5], "name": "asdf", "email": ["like", "asdf"]}
+
+
+Where OR
+--------
+or_where=(id,1)+(id,3)
+
+Group By
+--------
+
+Order By
+--------
+order_by=[{"id": "ASC"}, {"name": "DESC"}]
+
+Paging
+------
+page=1
+size=10
+translates to ORM limit and offset
+
+Cache
+-----
+cache=60  in seconds
+```

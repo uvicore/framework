@@ -7,7 +7,7 @@ from uvicore.support.dumper import dump
 
 
 @pytest.mark.asyncio
-async def XXXXXXXXXXXXXXXtest_package(app1):
+async def test_package(app1):
     from uvicore.package.package import Package
     assert Package.__module__ + '.' + Package.__name__ == 'app1.overrides.package.Package'
     assert Package.__annotations__.get('custom1') is not None
@@ -18,7 +18,7 @@ async def XXXXXXXXXXXXXXXtest_package(app1):
 
 
 @pytest.mark.asyncio
-async def XXXXXXXXXXXXxtest_provider(app1):
+async def test_provider(app1):
     from uvicore.package.provider import ServiceProvider
     assert ServiceProvider.__module__ + '.' + ServiceProvider.__name__ == 'app1.overrides.provider.ServiceProvider'
     assert ServiceProvider.__annotations__.get('custom1') is not None
@@ -29,13 +29,13 @@ async def XXXXXXXXXXXXxtest_provider(app1):
 
 
 @pytest.mark.asyncio
-async def XXXXXXXXXXXXXXXtest_application(app1):
+async def test_application(app1):
     package = uvicore.app.package('uvicore.configuration')
-    assert hasattr(package, 'custom1')
+    assert package.custom1 == 'custom1 override here!!!'
 
     # Should be able to pull the original via _BASE
-    original = uvicore.ioc.make('uvicore.foundation.application._Application_BASE')
-    assert original.__module__ + '.' + original.__name__ == 'uvicore.foundation.application._Application'
+    original = uvicore.ioc.make('uvicore.foundation.application.Application_BASE')
+    assert original.__module__ + '.' + original.__name__ == 'uvicore.foundation.application.Application'
 
 
 @pytest.mark.asyncio

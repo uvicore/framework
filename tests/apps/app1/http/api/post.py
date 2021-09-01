@@ -1,12 +1,16 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.http import Request, response
-from uvicore.http.routing import Controller, ApiRouter, Guard
+from uvicore.http.routing import Controller, ApiRouter, AutoApi, Guard
+from uvicore.typing import Optional, List
 
 from app1 import models
+from functools import partial
+from uvicore.http import params
 
 #from uvicore.auth import User
-from uvicore.contracts import User
+from uvicore.contracts import UserInfo
+
 
 
 @uvicore.controller()
@@ -41,7 +45,7 @@ class Post(Controller):
         #@route.get('/post4', scopes=['posts.read'])
         @route.get('/post4')
         #async def post4(id: str, user: User = Guard()) -> models.Post:
-        async def post4(request: Request, user: User = Guard(['posts.read'])) -> models.Post:
+        async def post4(request: Request, user: UserInfo = Guard(['posts.read'])) -> models.Post:
             """This docstring shows up in OpenAPI Docs"""
             #dump('=============================================================')
             #dump('REQUEST __dict__ FROM /post4 CONTROLLER:')
@@ -49,6 +53,36 @@ class Post(Controller):
             #dump(request.__dict__)
             dump('POST4 User:', user)
             return await models.Post.query().find(4)
+
+
+
+
+        async def autoapi_list(
+            request: Request,
+            include: Optional[List[str]] = params.Query([]),
+            where: Optional[str] = ''
+        ):
+            pass
+
+        # @route.get('/post6')
+        # @merge_args(default_get)
+        # async def pp(more: str, **kwargs):
+        #     dump(kwargs)
+        #     include = kwargs.pop('include')
+        #     dump(include)
+        #     pass
+
+        #from uvicore.http.routing.auto_api import autoapi_list2
+
+        #@route.get('/post5', inherits=autoapi_list)
+        @route.get('/post5', inherits=AutoApi.listsig)
+        #@route.get('/post5', response_model=models.Post, inherits=autoapi_list2)
+        #@route.get('/post5', inherits=autoapi_list2)
+        #async def post5(more: str, **kwargs) -> models.Post:
+        async def post5(more: str, **kwargs):
+            api = AutoApi[models.Post](models.Post, **kwargs).guard_relations()
+            result = await api.orm_query().find(1)
+            return result
 
         # Return router
         return route

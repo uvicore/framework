@@ -1,173 +1,36 @@
-import json
 import uvicore
 import inspect
-from uvicore import typing
+from uvicore.typing import Optional, List, Tuple, Dict, Any, OrderedDict, Union
 from uvicore.http.routing.api_router import ApiRouter
 from uvicore.http.routing.router import Routes as Controller
 from uvicore.http.request import Request
 from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
-from uvicore.http.exceptions import HTTPException, PermissionDenied
+from uvicore.http.exceptions import HTTPException
 from uvicore.contracts import UserInfo
 from uvicore.http.routing import Guard
-
-
-class NestedRoute:
-
-    def routes(self, Model, route, path, tags, scopes):
-        """Build dynamic model CRUD routes"""
-
+from uvicore.orm import Model as OrmModel
+from uvicore.http.routing.auto_api import AutoApi
 
 
 @uvicore.service()
-class ModelRoute:
+class ModelRoutes:
     """Dynamic Model CRUD Routes"""
 
     @property
     def log(self):
         return uvicore.log.name('uvicore.model_router')
 
-    def routes(self, Model, route, path, tags, scopes):
+    def register(self, Model: OrmModel, route: ApiRouter, path: str, tags: List, scopes: List):
         """Build dynamic model CRUD routes"""
 
-        # Rest Notes
-        """
-        https://www.mscharhag.com/p/rest-api-design
-        https://www.mscharhag.com/api-design/http-post-put-patch
-
-        GET
-        HEAD
-        OPTIONS
-        TRACE
-
-        POST is for new records
-            POST /spaces
-            Not idempotent as it will continue to create new resources
-            If new post, return 200
-            If endpoint has no response but created, return 204 (no content but success)
-
-        PUT is for updating existing records whos ID is in the url
-            PUT /spaces/123
-            Not for partial updates, expects the FULL object
-            Idempotent
-
-        PATCH
-            PATCH /spaces/123
-            Like PUT, but can be partial object, or could be full, either way
-            Updates only records defined in the partial object
-
-        DELETE
-        """
-
-
-
-        # URL query notes
-        """
-        Include
-        -------
-        include=sections.topics
-
-        Where AND
-        ----------
-        where={"id": 1}
-        where={"id": 1, "name": "test"}
-
-        where={"id": [">", 1]}
-
-        where={"id": ["in", ["one", "two"]]}
-        where={"id": [">", 5], "name": "asdf", "email": ["like", "asdf"]}
-
-
-        Where OR
-        --------
-        or_where=(id,1)+(id,3)
-
-        Group By
-        --------
-
-        Order By
-        --------
-        order_by=[{"id": "ASC"}, {"name": "DESC"}]
-
-        Paging
-        ------
-        page=1
-        size=10
-        translates to ORM limit and offset
-
-        Cache
-        -----
-        cache=60  in seconds
-
-
-
-
-        """
-
-
-        def build_query(Model, *,
-            include: typing.Optional[str] = None,
-            where: typing.Optional[str] = None,
-        ):
-            query = Model.query()
-
-            # Include
-            if include: query.include(*include.split(','))
-
-            # Where
-            _build_where(query, where)
-
-
-            return query
-
-        def _build_where(query, where_str: str):
-            if not where_str: return
-            try:
-                # Convert where string JSON to python object
-                wheres = json.loads(where_str)
-                #dump(where_str, wheres)
-
-                # Where must be a dict
-                if not isinstance(wheres, dict): return
-
-                # WORKS - where={"id": [">", 5]}
-                # WORKS - where={"id": ["in", [1, 2, 3]]}
-                # WORKS - where={"title": ["like", "%black%"]}
-                # WORKS - where={"id": 65, "topic_id": ["in", [1, 2, 3, 4, 5]]}
-                # WORKS - ?include=topic.section.space&where={"topic.slug": "/tools", "topic.section.slug": "/apps", "topic.section.space.slug": "/dev"}
-
-                for (key, value) in wheres.items():
-                    #dump("Key: " + str(key) + " - Value: " + str(value))
-                    if isinstance(value, typing.List):
-                        if len(value) != 2: continue  # Valid advanced value must be 2 item List
-                        operator = value[0]
-                        value = value[1]
-                        query.where(key, operator, value)
-                        #dump("advanced: ", operator, value, '-----')
-                    else:
-                        query.where(key, value)
-
-            except Exception as e:
-                self.log.error(e)
-
-        @route.get('/' + path, response_model=typing.List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
-        #async def list(include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
-        async def list(
-            request: Request,
-            include: typing.Optional[str] = '',
-            where: typing.Optional[str] = '',
-        ):
-            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
-            user: UserInfo = request.user
-            includes = include.split(',') if include else []
-            self.guard_include_permissions(Model, includes, user)
-
-            # Build ORM query from URL query strings
-            query = build_query(Model,
-                include=include,
-                where=where
-            )
+        #@route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
+        @route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=scopes['read'])
+        async def list(**kwargs):
+            api = AutoApi(Model, scopes, **kwargs)
+            api.guard_relations()
+            query = api.orm_query()
 
             # Run ORM query for results
             try:
@@ -176,22 +39,12 @@ class ModelRoute:
             except:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
-        @route.get('/' + path + '/{id}', response_model=Model, tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
-        #async def get(id: typing.Any, include: typing.Optional[str] = '', user: UserInfo = Guard(Model.tablename + '.read')):
-        async def get(request: Request, id: typing.Any, include: typing.Optional[str] = ''):
-            # The auth guard will not allow this method, but we do have to check any INCLUDES against that models permissions
-            user: UserInfo = request.user
-            includes = include.split(',') if include else []
-            self.guard_include_permissions(Model, includes, user)
-
-            # Build ORM query from URL query strings
-            query = build_query(Model,
-                include=include,
-                #where=where, NO not yet, with find
-            )
+        @route.get('/' + path + '/{id}', inherits=AutoApi.getsig, response_model=Model, tags=tags, scopes=scopes['read'])
+        async def get(id: Union[str,int], **kwargs):
+            api = AutoApi(Model, scopes, **kwargs).guard_relations()
+            query = api.orm_query()
 
             # Run ORM query for results
-            #return await Model.query().include(*includes).cache().find(id)
             try:
                 results = await query.find(id)
                 return results
@@ -199,14 +52,14 @@ class ModelRoute:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
 
-        @route.post('/' + path, response_model=Model, tags=tags, scopes=[Model.tablename + '.create'] if scopes is None else scopes)
+        @route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
         async def post(request: Request, item: Model):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
             # Then check if user has access to that relation?
 
-            # Insert into storate and return primary key inserted
+            # Insert into storage and return primary key inserted
             try:
                 result = await Model.insert(item)
 
@@ -224,165 +77,35 @@ class ModelRoute:
                 raise HTTPException(500, str(e))
 
 
-
-    def guard_include_permissions(self, Model, includes: typing.List, user: UserInfo):
-        # No includes, skip
-        if not includes: return
-
-        # User is superadmin, allow
-        if user.superadmin: return
-
-        # Loop each include and parts
-        for include in includes:
-
-            # Includes are split into dotnotation "parts".  We have to walk down each parts relations
-            parts = [include]
-            if '.' in include: parts = include.split('.')
-
-            entity = Model
-            for part in parts:
-
-                # Get field for this "include part".  Remember entity here is not only Model, but a walkdown
-                # based on each part (separated by dotnotation)
-                field = entity.modelfields.get(part)  # Don't use modelfield() as it throws exception
-
-                # Field not found, include string was a typo
-                if not field: continue
-
-                # Field has a column entry, which means its NOT a relation
-                if field.column: continue
-
-                # Field is not an actual relation
-                if not field.relation: continue
-
-                # Get actual relation object
-                relation = field.relation.fill(field)
-
-                # Get model permission string for this relation
-                model_permissions = [relation.entity.tablename + '.read'] if scopes is None else scopes
-
-                # User must have ALL scopes defined on the route (an AND statement)
-                authorized = True
-                missing_scopes = []
-                for scope in model_permissions:
-                    if scope not in user.permissions:
-                        authorized = False
-                        missing_scopes.append(scope)
-
-                # # Check if user has permissino to child relatoin (or superadmin)
-                # if model_permission not in user.permissions:
-                #     # I convert model_permissins to a list for consistency with other permission denied errors
-                #     # although there will always be just one model_permission in this function
-                #     # raise HTTPException(
-                #     #     status_code=401,
-                #     #     detail="Permission denied to {}".format(str([model_permission]))
-                #     # )
-                #     print('be')
-                #     raise PermissionDenied(model_permission)
-
-                if not authorized:
-                    raise PermissionDenied(missing_scopes)
-
-                # Walk down each "include parts" entities
-                entity = relation.entity
-
-
-
-            # if not field: continue
-            # if not field.relation: continue
-            # relation: Relation = field.relation.fill(field)
-            # tablename = relation.entity.tablename
-            # permission = tablename + '.read'
-
-            # # Check if user has permissino to child relatoin (or superadmin)
-            # if user.superadmin == False and permission not in user.permissions:
-            #     raise HTTPException(
-            #         status_code=401,
-            #         detail="Access denied to {}".format(tablename)
-            #     )
-
-
-
-
-        # @route.post('/' + path, response_model=Model, tags=tags)
-        # async def post(entity: Model):
-        #     return entity
-
-
-        # # GET List
-        # router.add_api_route(
-        #     path='/' + path,
-        #     methods=['GET'],
-        #     tags=tags,
-        #     endpoint=self.list,
-        #     response_model=List[Model],
-        #     name='Get all {}'.format(path),
-        #     #name=path,
-        #     #   name='',
-        # )
-
-        # # GET
-        # router.add_api_route(
-        #     path='/' + path + '/{id}',
-        #     methods=['GET'],
-        #     tags=tags,
-        #     endpoint=self.get,
-        #     response_model=Model,
-        #     name='Get {} by ID'.format(path),
-        #     #name=path,
-        #     #name='',
-        # )
-
-        # # POST
-        # router.add_api_route(
-        #     path='/' + path,
-        #     methods=['POST'],
-        #     tags=tags,
-        #     endpoint=self.post,
-        #     response_model=Model,
-        #     name='Create {}'.format(path),
-        #     #name=path,
-        #     #name='',
-        # )
-
-    # async def list(self, include: str = ''):
-    #     return await Model.query().include(*include.split(',')).get()
-
-    # async def get(self, id: Any, include: str = ''):
-    #     return await Model.query().include(*include.split(',')).find(id)
-
-    # async def post(self, entity: Model):
-    #     #dump(request.__dict__)
-    #     return entity
-    #     #return {'name': 'hi'}
-    #     #return await Model.query().include(*include.split(',')).find(id)
-
-
 @uvicore.controller()
 class ModelRouter(Controller):
+    """Automatic CRUD Model Router"""
 
-    def __init__(self, package, scopes: typing.List = None):
-        """Init override to add custom guards parameter"""
+    # Notice.  This is actually must a regular uvicore route controller!
+    # Just like any of your other controllers.  The only difference
+    # is the register() is dynamically registering CRUD endpoints
+    # for a dynamic list of all your models!
+
+    def __init__(self, package, scopes: List = None):
+        """Init override to add custom parameter"""
+
+        # To add options from your routes/api.py use
+        # route.include(ModelRouter, options={'scopes': []})
         super().__init__(package)
         self.scopes = scopes
 
     def register(self, route: ApiRouter):
+        """Register API Route Endpoints"""
 
         # Get all models in tablename sorted order from Ioc bindings
-        models = self.models()
+        models = self._get_all_ioc_models()
 
         # Get source code for ModelRouter
-        modelroute = inspect.getsource(ModelRoute)
-        modelroute += "ModelRoute().routes(Model, route, path, tags, scopes)"
-
-        #from uvicore.auth.middleware import Guard
-        #from uvicore.auth.models import User
-
+        #modelroute = inspect.getsource(ModelRoute)
+        #modelroute += "ModelRoute().routes(Model, route, path, tags, scopes)"
 
         # Loop each sorted model and dynamically add a ModelRouter
         for key, binding in models.items():
-            # Temp, only hashtag
-            #if binding.object.tablename != 'hashtags': continue
 
             # Get model information from Ioc binding
             Model = binding.object
@@ -392,6 +115,18 @@ class ModelRouter(Controller):
             tags = [string.ucbreakup(path)]
             permissions = Model.tablename
 
+            # Get CRUD scopes plus any custom scopes
+            scopes = self._get_scopes(tablename)
+            #dump("FULL SCOPES: ", scopes)
+
+            # Instantiate our ModelRouter class with this one Uvicore model
+            ModelRoutes().register(Model, route, path, tags, scopes)
+
+
+            # OLD - This was when I was using FastAPIs route directly instead
+            # of my new uvicore router abstraction.  Now with uvicore router
+            # all of this dynamic inspect exec() is not needed!!!
+            # ------------------------------------------------------------------
             # Dynamically instantiate ModelRouter from source code and exec
             # passing in the proper globals.  Why?  Why not just instantiate
             # the class and be done?  Becuase pydantic doesn't understand
@@ -402,29 +137,31 @@ class ModelRouter(Controller):
             # One caveat to this is you cannot override and EXTEND the ModelRoute
             # class.  You can override, but you must re-impliment the entire class
             # and not just extend it.
-            exec(modelroute, {
-                'Model': Model,
-                'route': route,
-                'path': path,
-                'tags': tags,
-                'uvicore': uvicore,
-                'typing': typing,
-                'UserInfo': UserInfo,
-                'Guard': Guard,
-                'Request': Request,
-                'HTTPException': HTTPException,
-                'PermissionDenied': PermissionDenied,
-                'scopes': self.scopes,
-                'dump': dump,
-                'json': json,
-            })
+            # exec(modelroute, {
+            #     'Model': Model,
+            #     'route': route,
+            #     'path': path,
+            #     'tags': tags,
+            #     'uvicore': uvicore,
+            #     'typing': typing,
+            #     'UserInfo': UserInfo,
+            #     'Guard': Guard,
+            #     'Request': Request,
+            #     'HTTPException': HTTPException,
+            #     'PermissionDenied': PermissionDenied,
+            #     'scopes': self.scopes,
+            #     'dump': dump,
+            #     'json': json,
+            #     'params': params,
+            # })
 
         # Return router
         return route
 
-    def models(self) -> typing.OrderedDict:
+    def _get_all_ioc_models(self) -> OrderedDict:
         """Get all models in tablename sorted order from Ioc bindings"""
-        models = typing.OrderedDict()
+
+        models = OrderedDict()
         unsorted_models = {}
         model_bindings = uvicore.ioc.binding(type='model', include_overrides=False)
         for key, binding in model_bindings.items():
@@ -433,56 +170,50 @@ class ModelRouter(Controller):
                 unsorted_models[tablename] = binding
 
         # Sort the OrderedDict
-        #import operator
-        #x = sorted(models.items(), key=lambda x: x[1])
-        #x = sorted((value, key) for (key,value) in models.items())
         keys = sorted(unsorted_models.keys())
         for key in keys:
             models[key] = unsorted_models[key]
         return models
 
+    def _get_scopes(self, tablename) -> Dict:
+        """Get scopes from options override or default automatic model CRUD scopes"""
 
+        # If custom scopes are passed, add those to every CRUD scope
+        # Custom scopes are defined in self.scopes as either a List or Dict
+        # If list, apply entire list to all CRUD.  If Dict, only apply to proper CRUD key
+        # If scopes is None, no custom scopes are used, so we apply our default model CRUD scopes
 
+        scopes = {}
+        scopes['create'] = []
+        scopes['read'] = []
+        scopes['update'] = []
+        scopes['delete'] = []
+        scopes['overridden'] = False
 
+        # Note: If you want to ADD other scopes to the automatic model CRUD scopes
+        # use a @route.group(scopes=['additional']) instead of the router
+        # .include() or .controller() options dict.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#             list_method = """
-# @router.get('/' + path, response_model=List[Model], tags=tags)
-# async def list(include: str = ''):
-#     return await Model.query().include(*include.split(',')).get()
-# """
-
-#             get_method = """
-# @router.get('/' + path + '/{id}', response_model=Model, tags=tags)
-# async def get(id: Any, include: str = ''):
-#     return await Model.query().include(*include.split(',')).find(id)
-# """
-
-#             post_method = """
-# @router.post('/' + path, response_model=Model, tags=tags)
-# async def post(entity: Model):
-#     return entity
-# """
-
-#             # Add dynamic methods
-#             exec(list_method, exec_globals)
-#             exec(get_method, exec_globals)
-#             exec(post_method, exec_globals)
+        if self.scopes is None:
+            # No custom scopes defined, add automatic model CRUD scopes
+            scopes['create'].append(tablename + '.create')
+            scopes['read'].append(tablename + '.read')
+            scopes['update'].append(tablename + '.update')
+            scopes['delete'].append(tablename + '.delete')
+        else:
+            # Custom scopes defined, use these scopes insetead of automatic model CRUD scopes
+            scopes['overridden'] = True
+            if type(self.scopes) == list:
+                # Custom scopes is a list, so apply entire list to each CRUD section
+                # Must copy() each list or all will be references to same list
+                scopes['create'] = self.scopes.copy()
+                scopes['read'] = self.scopes.copy()
+                scopes['update'] = self.scopes.copy()
+                scopes['delete'] = self.scopes.copy()
+            else:
+                # Must copy() each list or all will be references to same list
+                scopes['create'] = self.scopes.copy().get('create') or []
+                scopes['read'] = self.scopes.copy().get('read') or []
+                scopes['update'] = self.scopes.copy().get('update') or []
+                scopes['delete'] = self.scopes.copy().get('delete') or []
+        return scopes
