@@ -169,10 +169,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             # Check each field for relations and rename them before inserting parent
             relations = {}
             skip_children = False
-            dump('MODEL:', model, '---------------------------------------------')
             for (fieldname, value) in model.items():
-                dump('FIELD:', fieldname)
-                dump('VALUE:', value, '---------------------------------------------')
                 field = entity.modelfields.get(fieldname)  # Using direct dictionary to skip bad values in dict
                 if not field: continue
                 if not field.relation: continue
@@ -192,8 +189,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     'data': value
                 }
 
-            dump('RELATIONS: ', relations, '---------------------------------------------')
-
             # Delete relations from parent model as they cannot be inserted
             for relation in relations.keys():
                 del model[relation]
@@ -206,7 +201,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 if type(relation) == BelongsTo:
                     # Because we insert the children first, skip inserting
                     # children later down the method
-                    dump('555', relation, data)
                     skip_children = True
 
                     # Check if one ONE relation is already a fully inserted object (presense of pk)
