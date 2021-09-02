@@ -6,14 +6,14 @@ from starlette.testclient import TestClient
 from uvicore.support.dumper import dump
 
 
-def Xtest_get(app1):
+def Xtest_list(app1):
     client = TestClient(uvicore.app.http)
     res = client.get("/api/posts")
     assert res.status_code == 200, res.text
-    data = res.json()
-    dump(data)
-    assert len(data) == 7
-    assert data[0] == {
+    posts = res.json()
+    dump(posts)
+    assert len(posts) == 7
+    assert posts[0] == {
         'id': 1,
         'slug': 'test-post1',
         'title': 'Test Post1',
@@ -32,26 +32,26 @@ def Xtest_get(app1):
     }
 
 
-def Xtest_get_include_one_to_one(app1):
+def Xtest_list_include_one_to_one(app1):
     client = TestClient(uvicore.app.http)
 
     #res = client.get("/api/posts?include=creator.info,creator.contact,comments.creator.info,comments.contact,tags.creator,image,attributes,hashtags")
     res = client.get("/api/posts?include=creator.info")
     assert res.status_code == 200, res.text
-    data = res.json()
+    posts = res.json()
 
     # Total of 7 posts
-    assert len(data) == 7
+    assert len(posts) == 7
 
     # Test one post
     # Remove fields that change per seed/test run
-    results = data[0]
-    del results['creator']['created_at']
-    del results['creator']['updated_at']
-    del results['creator']['uuid']
-    dump(results)
+    post = posts[0]
+    del post['creator']['created_at']
+    del post['creator']['updated_at']
+    del post['creator']['uuid']
+    dump(post)
 
-    assert results == {
+    assert post == {
         'id': 1,
         'slug': 'test-post1',
         'title': 'Test Post1',
@@ -98,6 +98,7 @@ def Xtest_get_include_one_to_one(app1):
     }
     #assert False
 
+
 def test_get_include_one_to_many(app1):
     client = TestClient(uvicore.app.http)
 
@@ -108,19 +109,83 @@ def test_get_include_one_to_many(app1):
     dump(user)
 
     assert user['email'] == 'anonymous@example.com'
-    #assert len(user['posts'] == 2)
-    #assert len(user['posts'][0]['comments'] == 2)
-    #assert len(user['posts'][1]['comments'] == 0)
+    assert len(user['posts']) == 2
+    assert len(user['posts'][0]['comments']) == 2
+    assert len(user['posts'][1]['comments']) == 0
 
-    # # Total of 7 posts
-    # assert len(data) == 7
 
-    # Test one post
-    # Remove fields that change per seed/test run
-    #results = data[0]
-    #del results['creator']['created_at']
-    #del results['creator']['updated_at']
-    #del results['creator']['uuid']
+def test_list_where(app1):
+    client = TestClient(uvicore.app.http)
 
+    # Where with include
+    res = client.get('/api/posts?include=creator.info,owner.info&where={"creator_id":1}')
+    assert res.status_code == 200, res.text
+    posts = res.json()
+    dump(posts)
+
+    assert len(posts) == 2
+    assert posts[0]['slug'] == 'test-post1'
+    assert posts[0]['creator']['email'] == 'anonymous@example.com'
+    assert posts[0]['creator']['info']['extra1'] == 'user1 extra'
+    assert posts[0]['owner']['email'] == 'administrator@example.com'
+    assert posts[0]['owner']['info']['extra1'] == 'user2 extra'
+
+    assert posts[1]['slug'] == 'test-post2'
+    assert posts[0]['creator']['email'] == 'anonymous@example.com'
+    assert posts[0]['creator']['info']['extra1'] == 'user1 extra'
+    assert posts[0]['owner']['email'] == 'administrator@example.com'
+    assert posts[0]['owner']['info']['extra1'] == 'user2 extra'
+    # assert False
+
+
+def test_list_where_ge_null(app1):
+    client = TestClient(uvicore.app.http)
+
+    # Where AND with a >= and null
+    res = client.get('/api/posts?where={"creator_id":[">=", 2], "other": "null"}')
+    assert res.status_code == 200, res.text
+    posts = res.json()
+    dump(posts)
+
+    assert len(posts) == 3
+    assert [
+        'test-post4',
+        'test-post5',
+        'test-post7',
+    ] == [x['slug'] for x in posts]
     #assert False
 
+
+def test_list_where_like(app1):
+    client = TestClient(uvicore.app.http)
+
+    # Where LIKE
+    res = client.get('/api/posts?where={"body": ["like", "%favorite%"]}')
+    assert res.status_code == 200, res.text
+    posts = res.json()
+    dump(posts)
+
+    assert len(posts) == 2
+    assert [
+        'test-post2',
+        'test-post4',
+    ] == [x['slug'] for x in posts]
+    #assert False
+
+
+def test_list_where_in(app1):
+    client = TestClient(uvicore.app.http)
+
+    # Where IN
+    res = client.get('/api/posts?where={"creator_id": ["in", [1,5]]}')
+    assert res.status_code == 200, res.text
+    posts = res.json()
+    dump(posts)
+
+    assert len(posts) == 3
+    assert [
+        'test-post1',
+        'test-post2',
+        'test-post7',
+    ] == [x['slug'] for x in posts]
+    #assert False

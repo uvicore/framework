@@ -329,6 +329,8 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             '!=': operators.ne,
             '>': operators.gt,
             '<': operators.lt,
+            '>=': operators.ge,
+            '<=': operators.le,
         }
         return ops[operator]
 

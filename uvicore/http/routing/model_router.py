@@ -31,12 +31,14 @@ class ModelRoutes:
             api = AutoApi(Model, scopes, **kwargs)
             api.guard_relations()
             query = api.orm_query()
+            dump(query.query)
 
             # Run ORM query for results
             try:
                 results = await query.get()
                 return results
-            except:
+            except Exception as ex:
+                dump(ex)
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
         @route.get('/' + path + '/{id}', inherits=AutoApi.getsig, response_model=Model, tags=tags, scopes=scopes['read'])

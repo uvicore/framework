@@ -10,6 +10,9 @@ async def cli():
     #await mail_play()
     #await cache_play()
 
+    from app1.models import Post
+    dd(await Post.query().where('creator_id', 'in', [1,5]).get())
+
     #package = uvicore.app.package('app1')
     #dump(package.config('redis'))
 
