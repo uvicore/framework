@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import uvicore
-from typing import Optional
+from typing import Dict, List, Optional
 #from uvicore.auth.models.user import User
 from uvicore.support.dumper import dd, dump
 from uvicore.orm import Model, ModelMetaclass, Field
 from xx_vendor.xx_appname.database.tables import xx_tablename as table
-from uvicore.orm import BelongsTo, BelongsToMany, HasMany, HasOne, MorphOne, MorphMany, MorphToMany
+from uvicore.orm.fields import BelongsTo, BelongsToMany, HasMany, HasOne, MorphOne, MorphMany, MorphToMany
 
 
 # ------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
 
 
     # --------------------------------------------------------------------------
-    # Example: Polymorphic One-To-One attributes
+    # Example: Polymorphic One-To-Many attributes
     # --------------------------------------------------------------------------
     # attributes: Optional[List[Attribute]] = Field(None,
     # #attributes: Optional[Dict] = Field(None,  # As plain dict with dict_key and dict_value
@@ -177,7 +177,7 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
 
 
     # --------------------------------------------------------------------------
-    # Example: Callback which is run AFTER model has been instantiated
+    # Example: Callback which is run AFTER the model has been instantiated
     # so it has access to self.  Think if this like a computed property.
     # --------------------------------------------------------------------------
     # cb: str = Field(None,
@@ -185,6 +185,23 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
     # )
     # def cb_results(self):
     #     return str(self.slug) + ' callback'
+
+
+
+    # --------------------------------------------------------------------------
+    # Example: Evaluation logic which is run BEFORE the model has been instantiated.
+    # so it has access to the incomming data (row), but not to self.
+    # --------------------------------------------------------------------------
+    # name: str = Field(None,
+    #     # Using a inline lambda
+    #     evaluate=lambda row: row['data']['name'] if 'data' in row else row['name']
+
+    #     # Using a separate function
+    #     evaluate=set_name
+
+    #     # Using a separate function with parameters
+    #     evaluate=(set_name, 'Data')
+    # )
 
 
 

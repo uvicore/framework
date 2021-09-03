@@ -9,40 +9,118 @@ async def cli():
     """Play"""
     #await mail_play()
     #await cache_play()
+    #await orm_insert_play()
+    await poly_play()
 
+async def poly_play():
     from app1.models import Post
-    dd(await Post.query().where('creator_id', 'in', [1,5]).get())
-
-    #package = uvicore.app.package('app1')
-    #dump(package.config('redis'))
-
-    from uvicore import config
-    #config.app1.database.connections.app1.prefix = '_asdf'
+    posts = await Post.query().include('attributes').get()
+    dd(posts)
 
 
-    #config.dotset('app1.database.connections.app1', {'foo': 'bar'})
-    #config.app1.database.connections.app1 = Dict({'foo': 'bar'})
+async def orm_insert_play():
 
-    #config.app1.database.connections.app1.merge({'foo': 'bar'})
-    #config.dotget('app1.database.connections.app1').merge({'foo': 'bar'})
+    from app1.models import Post, Tag, Hashtag, Comment
 
-    dump(config.app)
+    post = Post(
+        id=None,
+        slug='test-post8',
+        title='Test Post8',
+        body='This is the body for test post8.  I like the taste of water.',
+        other=None,
+        cb='test-post8 callback',
+        creator_id=1,
+        creator=None,
+        owner_id=2,
+        owner=None,
+        #comments=None,
+        comments=[
+            Comment(
+                id=None,
+                title='Post1 Comment1',
+                body='Body for post1 comment1',
+                post_id=None,
+                post=None,
+                creator_id=1,
+                creator=None
+            )
+        ],
+        tags=None,
+        image=None,
+        attributes=None,
+        hashtags=None
+    )
+    #dump(post)
+    #await Post.insert_with_relations2(post)
+
+    # Get all tags keyed by name
+    tags = await Tag.query().key_by('name').get()
+
+    # Get all hastags keyed by name
+    hashtags = await Hashtag.query().key_by('name').get()
+
+    postX = [
+        {
+            'slug': 'test-post1',
+            'title': 'Test Post1',
+            'body': 'This is the body for test post1.  I like the color red and green.',
+            'other': 'other stuff1',
+            'creator_id': 1,
+            'owner_id': 2,
+            'comments': [
+                {
+                    'title': 'Post1 Comment1',
+                    'body': 'Body for post1 comment1',
+                    #'post_id': 1,  # No id needed, thats what post.create() does
+                    'creator_id': 1,
+                }
+            ],
+
+            # Many-To-Many tags works with existing Model, new Model or new Dict
+            'tags': [
+               # Existing Tag
+               tags['linux'],
+               tags['mac'],
+               tags['bsd'],
+               tags['bsd'],  # Yes its a duplicate, testing that it doesn't fail
+
+               # New Tag as Model (tag created and linked)
+               Tag(name='test1', creator_id=4),
+
+               # New Tag as Dict (tag created and linked)
+               {'name': 'test2', 'creator_id': 4},
+            ],
+
+            # Polymorphic One-To-One
+            'image': {
+                'filename': 'post1-image.png',
+                'size': 1234932,
+            },
+
+            # Polymorphic One-To-Many Attributes
+            'attributes': [
+                {'key': 'post1-test1', 'value': 'value for post1-test1'},
+                {'key': 'post1-test2', 'value': 'value for post1-test2'},
+                {'key': 'badge', 'value': 'IT'},
+            ],
+
+            # Polymorphic Many-To-Many Hashtags
+            'hashtags': [
+                hashtags['important'],
+                hashtags['outdated'],
+                hashtags['outdated'],  # Yes its a duplicate, testing that it doesn't fail
+
+                # New hashtag by model
+                Hashtag(name='test1'),
+
+                # New hashtag by dict
+                {'name': 'test2'},
+            ],
+        },
+    ]
 
 
-
-    # value = {
-    #     'one': 1,
-    #     'two': 2,
-    # }
-
-    # new = Dict()
-    # new.dotset('some.deep', value)
-
-    # #new.dotset('some.deep.one', {'again': 'here'})
-    # new.dotset('some.deep.one', 'one here')
-
-    # dump(new)
-
+    await Post.insert_with_relations2(post)
 
 
 

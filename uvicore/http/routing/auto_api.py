@@ -85,7 +85,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         if not self.includes: return self
 
         # User is superadmin, allow
-        #if self.user.superadmin: return self
+        if self.user.superadmin: return self
 
         # Loop each include and parts
         for include in self.includes:

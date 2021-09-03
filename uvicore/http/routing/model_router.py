@@ -12,6 +12,7 @@ from uvicore.contracts import UserInfo
 from uvicore.http.routing import Guard
 from uvicore.orm import Model as OrmModel
 from uvicore.http.routing.auto_api import AutoApi
+from uvicore.support.collection import setvalue
 
 
 @uvicore.service()
@@ -54,6 +55,7 @@ class ModelRoutes:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
 
+        #@route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
         @route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
         async def post(request: Request, item: Model):
             # NOTES
@@ -63,20 +65,51 @@ class ModelRoutes:
 
             # Insert into storage and return primary key inserted
             try:
-                result = await Model.insert(item)
+                pk = await Model.insert(item)
 
                 # If primary key is read_only, assume its an auto-incrementing pk
                 # If not read_only, its a manual pk like 'key'.
                 # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
                 # a string, encode/databases does not return the new pk, just returns 1 every time.
                 if Model.modelfield(Model.pk).read_only == True:
-                    setattr(item, Model.pk, result)
+                    setvalue(item, Model.pk, pk)
 
                 # Return inserted item
+                #dump(item)
                 return item
 
             except Exception as e:
                 raise HTTPException(500, str(e))
+
+
+        # #@route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
+        # @route.post('/' + path + '/with_relations', response_model=Model, tags=tags, scopes=scopes['create'])
+        # async def post(request: Request, item: Dict):
+        #     # NOTES
+        #     # How do I check each child relations permissions, there is no includes
+        #     # Would have to flip each item key and check if its a relation?
+        #     # Then check if user has access to that relation?
+
+        #     # Insert into storage and return primary key inserted
+        #     try:
+        #         pk = await Model.insert_with_relations([item])
+        #         #pk= await Model.insert(item)
+
+        #         # If primary key is read_only, assume its an auto-incrementing pk
+        #         # If not read_only, its a manual pk like 'key'.
+        #         # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
+        #         # a string, encode/databases does not return the new pk, just returns 1 every time.
+        #         if Model.modelfield(Model.pk).read_only == True:
+        #             setvalue(item, Model.pk, pk)
+
+        #         # Return inserted item
+        #         #dump(item)
+        #         return item
+
+        #     except Exception as e:
+        #         raise HTTPException(500, str(e))
+
+
 
 
 @uvicore.controller()

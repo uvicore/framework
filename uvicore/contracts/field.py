@@ -15,6 +15,7 @@ class Field:
     read_only: Optional[bool]
     write_only: Optional[bool]
     callback: Optional[Any]
+    evaluate: Optional[Any]
     relation: Optional[Relation]
     json: Optional[bool]
     properties: Optional[Dict]

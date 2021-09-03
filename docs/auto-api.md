@@ -43,6 +43,12 @@ Each auto API endpoint is limited by the proper scope.
 - `HTTP DELETE` requires the `users.delete` scope.
 
 
+### Making Some Endpoints Public
+
+If you want some auto API endpoints public and some private, even down to public GET vs POST you should keep the automatic CRUD scopes enabled and instead link UserID 1 (the anonymous user) to a role and link up the proper permissions for that role.  Public users are actually assigned a real uvicore user called anonymous, so user groups, roles and permissions apply to that public anonymous user just like any other user.
+
+
+
 ### Make it all Public
 
 If you wanted ALL auto API endpoints to be wide open to the public, with no limiting scopes (permissions) at all, use the `options` parameter and set the `scopes` key to a blank List.
@@ -65,6 +71,7 @@ def register(self, route: ApiRouter):
     Although the auto API endpoints now have no scopes themselves, they still obey any higher order `scopes` you may have defined in your top level router or controller files.
 
 
+
 ### Custom scopes without CRUD scopes
 
 If you wanted to remove the automatic CRUD scopes (permissions) from all auto API endpoints and instead define your own List of scopes for all endpoints.
@@ -82,9 +89,10 @@ def register(self, route: ApiRouter):
 
     # ...
 ```
-User must be authenticated and have the `autoapi_user` permission.  They can hit ALL auto API endpoints with all HTTP verbs.
 
-This is only handy if you want to give out ALL functionality to a set of users.  This is not a granular per HTTP verb approach.  To define a custom set of permissions for each HTTP verb use a scopes dictionary instead.
+Notice these scopes apply to every single endpoint. User must be authenticated and have the `autoapi_user` permission.  They can hit ALL auto API endpoints with all HTTP verbs.
+
+This is only handy if you want to give out ALL functionality to a set of users.  This is not a granular per HTTP verb approach.  To define a custom set of permissions for each HTTP verb use a scopes dictionary instead.  Like so
 
 
 ```python
@@ -106,7 +114,7 @@ def register(self, route: ApiRouter):
     # ...
 ```
 
-
+Although this is granular from an HTTP verb standpoint, it still applies to every single endpoint.
 
 !!! tip
     Any higher order `scopes` defined in top level routes or controllers are also obeyed

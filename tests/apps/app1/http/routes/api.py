@@ -41,12 +41,13 @@ class Api(Routes):
             # I should add a flag to NOT auto add Guard() to each model endpoint
             # If I wanted a fully public model router
             route.include(ModelRouter, options={
+                # This app1 is used in unit tests, and those require autoapi to be WIDE OPEN
                 'scopes': []
                 # 'scopes': {
                 #     'create': 'autoapi.create',
                 #     'read': 'autoapi.read',
                 #     'update': 'autoapi.update',
-                #     'delete': 'autoapi.delete'
+                #     'delete': 'autoapi.delete',
                 # }
             })
             #route.include(ModelRouter)

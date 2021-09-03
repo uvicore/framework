@@ -31,13 +31,13 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
         description='Comment Body',
     )
 
-    post_id: int = Field('post_id',
+    post_id: Optional[int] = Field('post_id',
         description="Comment PostID",
-        required=True,
+        #required=True,
     )
 
     # One-To-Many Inverse (One Comment has One Post)
-    post: 'Optional[Post]' = Field(None,
+    post: Optional[Post] = Field(None,
         description="Comment Post Model",
 
         #belongs_to=('app1.models.post.Post', 'id', 'post_id'),

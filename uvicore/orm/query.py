@@ -238,6 +238,10 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         # Build SQLAlchemy queries
         queries = self._build_orm_queries('select')
         #dump(queries)
+
+        self.log.nl().header('Queries')
+        self.log.dump(queries)
+
         self.log.header('Raw SQL Queries')
         self.log.info(self.sql('select', queries))
 
@@ -271,7 +275,6 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             #dump('ORM FROM CACHE')
             entities = await uvicore.cache.get(cache.get('key'))
         else:
-            #dump('ORM FROM DB')
             # Execute each query
             results = None
             main_query = None
@@ -282,7 +285,6 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     results = await self.entity.fetchall(query.get('saquery'))
                 else:
                     has_many[query.get('name')] = await self.entity.fetchall(query.get('saquery'))
-
             # Convert results to List of entities
             entities = self._build_orm_results(main_query, results, has_many)
 
@@ -447,7 +449,6 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             parts = [include]
             if '.' in include: parts = include.split('.')
 
-
             # Each separate include (including all parts in that include) walk down in entities
             # starting with the main model entity (self.entity).  So for each include, start at the main entity.
             entity = self.entity
@@ -563,7 +564,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         if type(relation) == MorphOne or type(relation) == MorphMany:
                             # In polymorphic, add the entity type to the onclause using and_
                             poly_type = self._column(getattr(join_table.c, relation.foreign_type))
-                            onclause = sa.and_(poly_type.sacol == 'posts', left.sacol == right.sacol)
+                            onclause = sa.and_(poly_type.sacol == left.tablename, left.sacol == right.sacol)
 
                         # Append new Join
                         join = Join(

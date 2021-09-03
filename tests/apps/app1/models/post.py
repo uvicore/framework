@@ -109,11 +109,11 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic One-To-Many Attributes
-    #attributes: Optional[List[Attribute]] = Field(None,
-    attributes: Optional[Dict] = Field(None,
+    attributes: Optional[List[Attribute]] = Field(None,
+    #attributes: Optional[Dict] = Field(None,
         description="Post Attributes",
-        relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable', dict_key='key', dict_value='value')
-        #relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable')
+        #relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable', dict_key='key', dict_value='value')
+        relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable')
     )
 
     # Polymorphic Many-To-Many Hashtags

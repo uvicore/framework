@@ -13,6 +13,10 @@ from uvicore.support import module
 from uvicore.support.dumper import dd, dump
 
 
+# NOTE dataclass required on each on THAT HAS PROPERTIES event hough they all
+# impliment Relation.  If a class does not have property overrides, then do NOT add @dataclass
+
+
 @dataclass
 @uvicore.service()
 class Relation(RelationInterface):
@@ -112,6 +116,19 @@ class Relation(RelationInterface):
 @uvicore.service()
 class HasOne(Relation):
     """One-To-One Relationship"""
+
+    # In a HasOne, the foreign_key is required since I don't know
+    # the name of the current model, so this __init__ override simply
+    # makes foreign_key required
+    def __init__(self,
+        model: str,
+        *,
+        foreign_key: str,
+        local_key: str = None,
+    ) -> None:
+        super().__init__(model, foreign_key=foreign_key, local_key=local_key)
+
+    # HasOne is also reversed in how it deduces the optional local_key, its just id
     def fill(self, field: Field) -> Relation:
         return self._fill_reverse(field)
 
@@ -246,11 +263,13 @@ class MorphMany(Morph):
     pass
 
 
+@dataclass
+@uvicore.service()
 class MorphToMany(Morph):
     model: str
-    join_tablename: str
-    polyfix: str
-    right_key: str
+    join_tablename: str = None
+    polyfix: str = None
+    right_key: str = None
     left_type: Optional[str] = None
     left_key: Optional[str] = None
     dict_key: Optional[str] = None
@@ -300,6 +319,23 @@ class MorphToMany(Morph):
         self.join_table = uvicore.db.table(self.join_tablename, self.entity.connection)
         return self
 
+
+
+# Relationship Aliases
+# At one point I thought I would make aliases to help other write as OneToOne...
+# But this will complicate things and doesn't actually make things any easier
+# to read or understand.  Especially because BelongsTo works for ManyToOne and
+# also for the inverse side of a OneToOne which I don't have a name for, maybe
+# OneToOneInverse = BelongsTo?
+
+# OneToOne        = HasOne
+# OneToOneInverse = BelongsTo
+# OneToMany       = HasMany
+# ManyToOne       = BelongsTo
+# ManyToMany      = BelongsToMany
+# OneToOneMorph   = MorphOne
+# OneToManyMorph  = MorphMany
+# ManyToManyMorph = MorphToMany
 
 
 
