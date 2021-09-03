@@ -13,9 +13,17 @@ async def cli():
     await poly_play()
 
 async def poly_play():
-    from app1.models import Post
-    posts = await Post.query().include('attributes').get()
-    dd(posts)
+    from app1.models import User, Post, Comment
+    # posts = await Post.query().include('attributes').get()
+    # dd(posts)
+
+    # user = await User.query().include('posts.attributes').find(1)
+    # dd(user)
+
+    comment = await Comment.query().include('post.attributes').find(1)
+    dd(comment)
+
+
 
 
 async def orm_insert_play():

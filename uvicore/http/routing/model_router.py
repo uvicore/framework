@@ -29,10 +29,8 @@ class ModelRoutes:
         #@route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         @route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=scopes['read'])
         async def list(**kwargs):
-            api = AutoApi(Model, scopes, **kwargs)
-            api.guard_relations()
+            api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
-            dump(query.query)
 
             # Run ORM query for results
             try:

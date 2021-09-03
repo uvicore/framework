@@ -8,6 +8,7 @@ from uvicore.support.dumper import dump
 async def test_orm(app1):
     from app1.models.post import Post
     from app1.models.user import User
+    from app1.models.comment import Comment
 
     # Get all
     query = Post.query().include('attributes')
@@ -47,12 +48,20 @@ async def test_orm(app1):
     assert len(posts) == 1
     assert posts[0].id == 1
 
-
     # Test poly one-to-many through a one-to-many
+    # A user has many posts, a post has many attributes
     users = await User.query().include('posts', 'posts.attributes').get()
-    assert len(users) == 5
-    assert len(users[4].posts) == 2
-    assert len(users[4].posts[0].attributes) == 4
+    assert len(users) == 6
+    assert len(users[0].posts) == 2
+    assert len(users[0].posts[0].attributes) == 3
+    assert len(users[0].posts[1].attributes) == 3
+
+    # Test poly one-to-many through a one-to-many inverse
+    # A comment has ONE post, a post has many attributes
+    comments = await Comment.query().include('post.attributes').where('post_id', '<=', 2).get()
+    assert len(comments) == 2
+    assert comments[0].post.id == 1
+    assert len(comments[0].post.attributes) == 3
 
 
 @pytest.mark.asyncio

@@ -563,8 +563,20 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         onclause = left.sacol == right.sacol
                         if type(relation) == MorphOne or type(relation) == MorphMany:
                             # In polymorphic, add the entity type to the onclause using and_
+                            # Purpose is to get this JOIN ON AND CLAUSE
+                            # ...JOIN attributes ON attributable_type = 'posts' AND id = attributable_id
+
+                            # Get the ploy_type column (ex: attributable_type)
                             poly_type = self._column(getattr(join_table.c, relation.foreign_type))
-                            onclause = sa.and_(poly_type.sacol == left.tablename, left.sacol == right.sacol)
+
+                            # That 'posts' is the actual posts table.  But sometimes the table is an Alias
+                            # like 'post' (singular).  So we need to use _get_tablename to get the REAL tablename even an Alias
+
+                            # poly_type.sacol is 'attributable_type'
+                            # self.get_tablename(left.table) is 'posts'
+                            # left.sacol is 'id'
+                            # right.sacol is 'attributable_id'
+                            onclause = sa.and_(poly_type.sacol == self._get_tablename(left.table), left.sacol == right.sacol)
 
                         # Append new Join
                         join = Join(
@@ -986,6 +998,12 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         #         if join.alias == tablename:
         #             return join.table
 
+    def _get_tablename(self, table: Union[sa.Table, sa.sql.selectable.Alias]):
+        """Get the REAL tablename even if the table is an Alias"""
+        if type(table) == sa.sql.selectable.Alias:
+            return table.original.name
+        else:
+            return table.name
 
 # IoC Class Instance
 #_OrmQueryBuilderIoc: _OrmQueryBuilder = uvicore.ioc.make('OrmQueryBuilder', _OrmQueryBuilder)
