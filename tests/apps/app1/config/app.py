@@ -142,8 +142,49 @@ config = {
                     'route_type': 'api',  # web or api only
                 }
             },
-
         }),
+
+        # Automatic Model CRUD Api Configuration
+        'auto_api': {
+            # This app1 is used in unit tests, and those require autoapi to be WIDE OPEN
+
+            # Set List of scopes for all endpoints and verbs
+            'scopes': [],
+
+            # Set Dict of scopes for all endpints, but different for each verb
+            # 'scopes': {
+            #     'create': 'autoapi.create',
+            #     'read': 'autoapi.read',
+            #     'update': 'autoapi.update',
+            #     'delete': 'autoapi.delete',
+            # },
+
+            # Include only these models
+            # Accepts wildcards, *.models.user.User because if a model is
+            # overridden in another package, we still want to find that model.
+            'include': [
+                #'app1.models.hashtag.Hashtag'
+                #'app1.models.*'
+                #'*.models.hashtag.*',
+                #'*.models.attribute.*',
+                #'*.models.tag.*',
+                #'app1.models.tag.Tag',
+            ],
+
+            # Exclude these models
+            # Accepts wildcards, *.models.user.User because if a model is
+            # overridden in another package, we still want to find that model.
+            'exclude': [
+                #'app1.models.attribute.Attribute',
+                #'*.models.attribute.Attribute',
+                #'uvicore.auth.models.group.Group'
+                #'*.models.tag.*',
+                'uvicore.auth.*',
+                '*.models.user_info.*',
+                '*.models.user.*',
+            ],
+        },
+
     },
 
 

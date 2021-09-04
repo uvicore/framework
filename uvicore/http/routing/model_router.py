@@ -1,5 +1,6 @@
 import uvicore
 import inspect
+import fnmatch
 from uvicore.typing import Optional, List, Tuple, Dict, Any, OrderedDict, Union
 from uvicore.http.routing.api_router import ApiRouter
 from uvicore.http.routing.router import Routes as Controller
@@ -119,18 +120,21 @@ class ModelRouter(Controller):
     # is the register() is dynamically registering CRUD endpoints
     # for a dynamic list of all your models!
 
-    def __init__(self, package, scopes: List = None):
+    def __init__(self, package, scopes: List = None, include: List = None, exclude: List = None):
         """Init override to add custom parameter"""
 
         # To add options from your routes/api.py use
         # route.include(ModelRouter, options={'scopes': []})
         super().__init__(package)
         self.scopes = scopes
+        self.include = include
+        self.exclude = exclude
 
     def register(self, route: ApiRouter):
         """Register API Route Endpoints"""
 
         # Get all models in tablename sorted order from Ioc bindings
+        # This obeys self.include and self.exclude
         models = self._get_all_ioc_models()
 
         # Get source code for ModelRouter
@@ -193,19 +197,43 @@ class ModelRouter(Controller):
 
     def _get_all_ioc_models(self) -> OrderedDict:
         """Get all models in tablename sorted order from Ioc bindings"""
-
         models = OrderedDict()
         unsorted_models = {}
         model_bindings = uvicore.ioc.binding(type='model', include_overrides=False)
-        for key, binding in model_bindings.items():
-            tablename = binding.object.tablename
-            if tablename not in models:
-                unsorted_models[tablename] = binding
 
-        # Sort the OrderedDict
-        keys = sorted(unsorted_models.keys())
-        for key in keys:
-            models[key] = unsorted_models[key]
+        all_model_keys = set(model_bindings.keys())
+        model_keys = []
+
+        # If include, only include these models (wildcards accepted)
+        if self.include:
+            for include in self.include:
+                model_keys.extend(fnmatch.filter(all_model_keys, include))
+
+            # Ensure unique List in case of double include entries matching double
+            model_keys = list(set(model_keys))
+        else:
+            # No includes, use all models
+            model_keys = all_model_keys
+
+        # If exclude, remove them from the list (wildcards accepted)
+        if self.exclude:
+            for exclude in self.exclude:
+                model_keys = [x for x in model_keys if x not in fnmatch.filter(model_keys, exclude)]
+
+        # Now we have our exact models as list of python module paths from the IOC
+        # Now we get actual IOC bindings except our Dict Key is the TABLENAME, not module path
+        for model in model_keys:
+            tablename = model_bindings[model].object.tablename
+            if tablename not in models:
+                unsorted_models[tablename] = model_bindings[model]
+
+        # Now we can sort our unsorted_model keys (which are tablenames)
+        tablenames = sorted(unsorted_models.keys())
+
+        # Add all sorted models to our final models OrderedDict
+        for tablename in tablenames:
+            models[tablename] = unsorted_models[tablename]
+
         return models
 
     def _get_scopes(self, tablename) -> Dict:

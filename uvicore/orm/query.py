@@ -515,13 +515,13 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         # No need to alias *Many joins like we do *One joins because it will never be done twice
 
                         # Get our pivot (middle) join table
+                        # Needs to be an auto incremented ALIAS in case we join the same table twice (user creator and owner...)
                         pivot_join_table = sa.alias(relation.join_table) # Notice no name=alias, just let it append _1, _2... for pivot
 
                         # Join the *Many Pivot Table
                         left = self._column(getattr(left_table.c, entity.pk))
                         right = self._column(getattr(pivot_join_table.c, relation.left_key))
                         join = Join(
-                            #table=relation.join_table,
                             table=pivot_join_table,
                             tablename=relation.join_tablename,
                             left=left,
@@ -559,8 +559,10 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         left = self._column(getattr(left_table.c, relation.local_key))
                         right = self._column(getattr(join_table.c, relation.foreign_key))
 
-                        # Onclause
+                        # Onclause, default for most relations
                         onclause = left.sacol == right.sacol
+
+                        # Onclause override for Polymorphic relations
                         if type(relation) == MorphOne or type(relation) == MorphMany:
                             # In polymorphic, add the entity type to the onclause using and_
                             # Purpose is to get this JOIN ON AND CLAUSE
