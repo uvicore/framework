@@ -164,8 +164,14 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # encode/databases does not impliment this.  Instead their insert_many
         # uses a cursor where each row is added as a query, then the cursor is committed.
         # This is bulk insert, but no way to retrieve each PK from it.
-
+        parent_pk = None
         for model in models:
+            # Skip empty models
+            if model is None: continue
+
+            # If model is not a dict, its probably a real pydantic model instance, convert it to a dict
+            if type(model) != dict: model = model.dict()
+
             # Check each field for relations and rename them before inserting parent
             relations = {}
             skip_children = False
@@ -174,13 +180,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 if not field: continue
                 if not field.relation: continue
                 relation = field.relation.fill(field)
-                # if (
-                #     type(relation) == HasMany or
-                #     type(relation) == HasOne or
-                #     type(relation) == BelongsTo or
-                #     type(relation) == BelongsToMany or
-                #     type(relation) == MorphOne
-                # ):
+
                 # Cannot change a dict in place or you get error
                 # RuntimeError: dictionary keys changed during iteration
                 # Se we'll add to a list and delete it outside the loop
@@ -252,6 +252,12 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 elif type(relation) == BelongsToMany or type(relation) == MorphToMany:
                     # By using .create, we are both linking the records in the pivot/relation table
                     # and also createing the actual record if it does not exist
+
+                    # Recursively insert all child models of this many-to-many
+                    # in case it has more nested relations
+                    await relation.entity.insert_with_relations(childmodels)
+
+                    # Then finally, insert the parent many-to-many that started it all
                     await model_instance.create(relation.name, data)
 
         # Return parent_pk for recursion only
@@ -269,6 +275,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
     async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Create related child records and link them to this parent (self) model"""
 
+        # Ignore empty models
+        if models is None: return
+
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
 
@@ -283,7 +292,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         if type(relation) == HasOne or type(relation) == HasMany or type(relation) == MorphOne or type(relation) == MorphMany:
             # Fill in relation foreign key vlaue
             for model in models:
-                # Set new relation value (works of model is a dict or a model class instance!)
+                # Set new relation value (works if model is a dict or a model class instance!)
                 setvalue(model, relation.foreign_key, getattr(self, relation.local_key))
 
                 if type(relation) == MorphOne or type(relation) == MorphMany:
@@ -340,7 +349,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             # Delete works for these relations
             await self.delete(relation_name)
         await self.create(relation_name, models)
-
 
     async def save(self) -> self:
         """Save this model to the database (insert or update)"""

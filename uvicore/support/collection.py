@@ -1,4 +1,4 @@
-from uvicore.typing import Any, Dict
+from uvicore.typing import Any, Dict, Tuple, List
 from collections import OrderedDict
 from collections import OrderedDict
 from uvicore.support.dictionary import deep_merge
@@ -14,6 +14,7 @@ def haskey(object: Any, key: Any) -> bool:
         # Class instance
         return hasattr(object, key)
 
+
 def getvalue(object: Any, key: Any) -> Any:
     """Access a dict or class instance attribute value in a unified way"""
     if type(object) == dict or type(object) == OrderedDict:
@@ -25,6 +26,27 @@ def getvalue(object: Any, key: Any) -> Any:
             return getattr(object, key)
         else:
             return None
+
+
+def getitems(object: Any) -> List[Tuple]:
+    """Get all key/value from a dict or class instance for consistent .items() iteration"""
+    # With a dict you can itterate key/value with for (key,value) in dict.items()
+    # but with a class you cannot.  This standardizes the items() for Dict or class.
+    if type(object) == dict:
+        # Dict or OrderedDict
+        return object.items()
+    else:
+        # Class instance
+        fields = []
+        if getattr(object, '__fields__'):
+            # Pydantic model
+            fields = object.__fields__
+        else:
+            # Python class
+            # vars(object) is the same as object.__dict__
+            fields = [x for x in vars(object) if not x.startswith('__') and not callable(getattr(object, x))]
+        # Return as List[Tuple] [(key, value)]
+        return [(field, getattr(object, field)) for field in fields]
 
 
 def setvalue(object: Any, key: Any, value: Any) -> None:
