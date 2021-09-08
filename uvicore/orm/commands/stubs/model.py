@@ -243,6 +243,7 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
 # Example: If models relate to each other, solve circular dependencies
 # by importing some at the bottom and using update_forward_refs()
 # ------------------------------------------------------------------------------
+# Update forward refs to circumvent circular dependencies
 # from uvicore.auth.models.user import User  # isort:skip
 # from xx_vendor.xx_appname.models.post_info import PostInfo  # isort:skip
 # from xx_vendor.xx_appname.models.tags import Tags  # isort:skip

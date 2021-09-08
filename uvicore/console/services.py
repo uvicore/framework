@@ -26,7 +26,13 @@ class Console(ServiceProvider, Cli):
         # )
 
         # Register event listeners
-        AppEvents.Booted.listen(bootstrap.Console)
+        # Priority is 90 because we want the console to be bootstrapped after most
+        # other uvicore services like Database.  If database is not initialized, and you import
+        # a DB model/table from a command, it will error because the connection strings have not yet
+        # been initialized.
+        AppEvents.Booted.listen(bootstrap.Console, priority=60)
+        #uvicore.events.listen('uvicore.foundation.events.app.Booted', bootstrap.Console, priority=60)
+        #uvicore.events.listen('uvicore.foundation.events.app.*', bootstrap.Console, priority=60)
 
     def boot(self) -> None:
 

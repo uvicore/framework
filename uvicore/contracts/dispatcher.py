@@ -26,7 +26,7 @@ class Dispatcher(ABC):
 
     @abstractmethod
     def event_listeners(self, event: str) -> List:
-        """Get all listeners for an event including wildcard"""
+        """Get all listeners for an event including wildcard, sorted by priority ASC"""
         pass
 
     # @abstractmethod
@@ -35,11 +35,11 @@ class Dispatcher(ABC):
     #     pass
 
     @abstractmethod
-    def listen(self, events: Union[str, List], listener: Union[str, Callable]) -> None:
+    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Append a listener (string or method) callback to one or more events"""
         pass
 
-    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None) -> None:
+    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Alias to listen"""
         pass
 
@@ -59,6 +59,6 @@ class Dispatcher(ABC):
         pass
 
     async def codispatch(self, event: Any, payload: Dict = {}) -> None:
-        """Alias for dispatch_async"""
+        """Alias for dispatch_async()"""
         pass
 

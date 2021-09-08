@@ -24,6 +24,8 @@ config = {
     # },
 
 
+    # Just experimenting when commands being pulled from a config, probably
+    # no need to do this
     'commands': {
         # Register Ioc commands
         'ioc': {
@@ -53,6 +55,7 @@ config = {
             'commands': {
                 'list': 'uvicore.events.commands.event.list',
                 'get': 'uvicore.events.commands.event.get',
+                'listeners': 'uvicore.events.commands.event.listeners',
             },
         },
     },

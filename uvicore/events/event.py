@@ -26,29 +26,29 @@ class Event:
         return cls.__doc__
 
     @classmethod
-    def listen(cls, handler: Union[str, Callable]):
+    def listen(cls, handler: Union[str, Callable], *, priority: int = 50):
         """Listen to to this event using this handler"""
-        uvicore.events.listen(cls, handler)
+        uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def listener(cls, handler: Union[str, Callable]):
+    def listener(cls, handler: Union[str, Callable], *, priority: int = 50):
         """Alias to Listen"""
-        uvicore.events.listen(cls, handler)
+        uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def handle(cls, handler: Union[str, Callable]):
+    def handle(cls, handler: Union[str, Callable], *, priority: int = 50):
         """Alias to Listen"""
-        uvicore.events.listen(cls, handler)
+        uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def handler(cls, handler: Union[str, Callable]):
+    def handler(cls, handler: Union[str, Callable], *, priority: int = 50):
         """Alias to Listen"""
-        uvicore.events.listen(cls, handler)
+        uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def call(cls, handler: Union[str, Callable]):
+    def call(cls, handler: Union[str, Callable], *, priority: int = 50):
         """Alias to Listen"""
-        uvicore.events.listen(cls, handler)
+        uvicore.events.listen(cls, handler, priority=priority)
 
     def dispatch(self):
         """Fire off an event and run all listener callbacks"""

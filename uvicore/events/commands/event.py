@@ -25,7 +25,6 @@ def list():
     dump(events)
 
 
-
 @command()
 @argument('event')
 def get(event: str):
@@ -46,3 +45,13 @@ def get(event: str):
         dump(events)
     else:
         print("Event {} not found".format(event))
+
+
+@command()
+def listeners():
+    """Show all event listeners/handlers"""
+    log.header("Event listeners/handlers")
+    log.line()
+
+    #dump(uvicore.events.expanded_sorted_listeners)
+    dump(uvicore.events.listeners)

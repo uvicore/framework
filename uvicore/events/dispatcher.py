@@ -64,6 +64,21 @@ class Dispatcher(DispatcherInterface):
         self._listeners: Dict[str, List] = Dict()
         self._wildcards: List = []
 
+    @property
+    def registered_events(self) -> List:
+        """Get all registered events from IOC bindings and manual registrations"""
+        # FIXME, need to merge in manual registrations, which I don't have yet
+        event_bindings = uvicore.ioc.binding(type='event')
+        events = []
+        for binding in event_bindings.values():
+            events.append({
+                'name': binding.path,
+                'description': binding.object.__doc__,
+                'is_async': binding.object.is_async,
+            })
+        return events
+
+
     # def event(self, event: Union[str, Callable]) -> EventInfo:
     #     """Get one known (pre-registered) EventInfo by str name or class"""
     #     if type(event) == str:
@@ -83,60 +98,70 @@ class Dispatcher(DispatcherInterface):
     #             'name': name
     #         })
 
-    def event_listeners(self, event: str) -> List:
-        """Get all listeners for an event including wildcard"""
-        listeners = []
-        if event in self.listeners:
-            listeners += self.listeners[event]
+    @property
+    def expanded_sorted_listeners(self) -> List:
+        """Get all listeners with expanded wildcards, sorted by priority ASC"""
 
-        for wildcard in self.wildcards:
-            regex = wildcard
-            #regex = wildcard.replace('*', '.*')
-            #dump(regex)
-            if re.search(regex, event):
-                listeners += self.listeners[wildcard]
+        # WELL, this doesn't really work because it only merged wildcards into
+        # events that are already explicitly listened too
+        # like uvicore.foundation.events.app.* only shows up under Booted
+        # not Registered because no other event has explicitly listened to
+        # Registered.  I could look up self.registered_events as well
+        # but this is really only for the CLI event listeners, so maybe Ill skip
+
+        listeners = {}
+        for event, listener in self.listeners.items():
+            if '*' not in event:
+                listeners[event] = listener
+
+                for wildcard in self.wildcards:
+                    if re.search(wildcard, event):
+                        if event not in listeners:
+                            listeners[event] = []
+                        listeners[event].extend(self.listeners[wildcard])
+                        break
 
         return listeners
 
-    # def register(self, events: Dict[str, Dict] = None, *, name: str = None, description: str = None, dynamic: bool = False, is_async: bool = False, options: Dict = {}):
-    #     """Register an event with the system.  Retrieve with .events property"""
+    def event_listeners(self, event: str) -> List:
+        """Get all listeners for an event including wildcard, sorted by priority ASC"""
 
-    #     event = EventInfo({
-    #         'name': name,
-    #         'description': description,
-    #         'is_async': is_async,
-    #         'dynamic': dynamic,
-    #         'options': options,
-    #     })
+        # Get all listeners for this particular event
+        listeners = [x for x in self.listeners.get(event) or []]
 
-    #     if events:
-    #         # Register events as a dictionary
-    #         for (key, value) in events.items():
-    #             if 'name' not in value: value['name'] = key
+        # Add in wildcard events
+        for wildcard in self.wildcards:
+            regex = wildcard
+            if re.search(regex, event):
+                listeners.extend(self.listeners[wildcard])
 
-    #             # Overwrite existing event, last one wins
-    #             self._events[key] = EventInfo(value).defaults(event)
-    #     else:
-    #         # Register single event as method params
-    #         self._events[name] = event
+        # Sort listeners by priority
+        listeners = sorted(listeners, key = lambda i: i['priority'])
 
-    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None) -> None:
+        # Get just the listener handler strings/methods as List
+        handlers = [x['listener'] for x in listeners]
+
+        # Return these event handlers
+        return handlers
+
+    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events."""
         def handle(events, listener):
             if type(events) != list: events = [events]
 
-            # Do NOT check self.events for listener verification becuase self.events
-            # is probably empty at this stage.  All registrations and listeners are
-            # applied in service provider register() methods so cannot rely on
-            # self.events being full and complete.  This means we cannot properly
-            # match wildcard events to actual events.
-
             # Expand all wildcards
             for event in events:
+                # Get the string name of this event
                 if type(event) != str: event = event.name
+
+                # If event not registered yet, ensure empty []
                 if event not in self.listeners:
                     self._listeners[event] = []
-                self._listeners[event].append(listener)
+
+                # Append new listener to event
+                self._listeners[event].append({'listener': listener, 'priority': priority})
+
+                # If event contains a *, add it to our wildcard list for use later
                 if '*' in event:
                     self._wildcards.append(event)
 
@@ -149,7 +174,7 @@ class Dispatcher(DispatcherInterface):
             return func
         return decorator
 
-    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None) -> None:
+    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
 
@@ -167,22 +192,22 @@ class Dispatcher(DispatcherInterface):
         """Fire off an event and run all listener callbacks"""
 
         # Get dispatcher method for this event
-        dispatch, params = self._get_dispatcher(event, payload, is_async=False)
+        dispatch_method, params = self._get_dispatcher(event, payload, is_async=False)
 
         # Dispatch this event
-        dispatch(*params)
+        dispatch_method(*params)
 
     async def dispatch_async(self, event: Union[str, Callable], payload: Dict = {}) -> None:
         """Async fire off an event and run all async listener callbacks"""
 
         # Get dispatcher method for this event
-        dispatch, params = self._get_dispatcher(event, payload, is_async=True)
+        dispatch_method, params = self._get_dispatcher(event, payload, is_async=True)
 
         # Dispatch this event
-        await dispatch(*params)
+        await dispatch_method(*params)
 
     async def codispatch(self, event: Union[str, Callable], payload: Dict = {}) -> None:
-        """Async fire off an event and run all async listener callbacks.  Alias for dispatch_async()."""
+        """Alias for dispatch_async()."""
         return await self.dispatch_async(event, payload)
 
     def _dispatch(self, event: Union[str, Callable], payload: Dict = {}) -> None:

@@ -19,7 +19,8 @@ class Http(ServiceProvider, Cli, Http):
         instantiated yet.
         """
 
-        # # Register events used in this package
+        # Register events used in this package
+        # NO, moved to events/server.py using @uvicore.event() to auto-register event list.
         # self.events.register(
         #     name='uvicore.http.events.server.Startup',
         #     description='HTTP Server has been started.  This is the Starlette startup event.',
@@ -30,21 +31,6 @@ class Http(ServiceProvider, Cli, Http):
         #     description='HTTP Server has been shutdown.  This is the Starlette shutdown event.',
         #     is_async=False,
         # )
-
-        # Register events used in this package
-        # self.events.register({
-        #     # This is a Starlette to Uvicore event
-        #     'uvicore.http.events.server.Startup': {
-        #         'description': 'HTTP Server has been started.  This is the Starlette startup event.',
-        #         'type': 'string',
-        #     },
-        #     # This is a Starlette to Uvicore event
-        #     'uvicore.http.events.server.Shutdown': {
-        #         'description': 'HTTP Server has been shutdown.  This is the Starlette shutdown event.',
-        #         'type': 'string',
-        #     },
-
-        # })
 
 
         #     @uvicore.app.http.on_event("shutdown")
