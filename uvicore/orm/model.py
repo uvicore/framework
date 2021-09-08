@@ -141,7 +141,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         return result
 
     @classmethod
-    async def insert_with_relations(entity, models: List[Dict], _skip_save: bool = False) -> None:
+    async def insert_with_relations(entity, models: List[Dict], *, parent_pk = None, skip_save: bool = False) -> None:
         """Insert one or more entities as List of Dict that DO have relations included
 
         Because relations are included, this insert is NOT bulk and must
@@ -164,7 +164,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # encode/databases does not impliment this.  Instead their insert_many
         # uses a cursor where each row is added as a query, then the cursor is committed.
         # This is bulk insert, but no way to retrieve each PK from it.
-        parent_pk = None
+        #parent_pk = None
         for model in models:
 
             # Skip empty models (None or [])
@@ -206,7 +206,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     skip_children = True
 
                     # Ignore empty relation (None or []), AFTER skip_children is set
-                    if not data : continue
+                    if not data: continue
 
                     # Check if one ONE relation is already a fully inserted object (presense of pk)
                     # If NOT, it needs to be inserted, if so, just grab its existing PK as the child_pk
@@ -225,7 +225,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             model_instance = entity.mapper(model).model(perform_mapping=False)
 
             # Insert the parent model and retrieve parents new PK value
-            if not _skip_save:
+            # Unless we are told to skip, as is the case with ManyToMany where we
+            # use .create() instead of .save()
+            if not skip_save:
                 model_instance = await model_instance.save()
                 parent_pk = getattr(model_instance, entity.pk)
 
@@ -233,6 +235,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             for relation in relations.values():
                 data = relation['data']
                 relation = relation['relation']
+
+                # Ignore empty relation (None or [])
+                if not data: continue
+
                 childmodels = data
                 if type(childmodels) != list: childmodels = [childmodels]
 
@@ -254,19 +260,21 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                         childmodel[relation.foreign_key] = parent_pk
                     await relation.entity.insert_with_relations(childmodels)
 
-                # Insert Many-To-Many
+                # Insert ManyToMany or Polymorphic MorphToMany
                 elif type(relation) == BelongsToMany or type(relation) == MorphToMany:
+                    # Insert this parent ManyToMany to get the parents PK
                     # By using .create, we are both linking the records in the pivot/relation table
-                    # and also createing the actual record if it does not exist
-
-                    # Recursively insert all child models of this many-to-many
-                    # in case it has more nested relations
-                    # Skip save means the model_instance.save() will not run and instead
-                    # let the model_instance.create() handle it instead.
-                    await relation.entity.insert_with_relations(childmodels, _skip_save=True)
-
-                    # Then finally, insert the parent many-to-many that started it all
+                    # and also creating the actual record if it does not exist
                     await model_instance.create(relation.name, data)
+
+                    # The data variable is byRef and is modified with the new inserted PK
+                    # It will be the same for all children, so grab[0]
+                    parent_pk = getvalue(data[0], relation.entity.pk)
+
+                    # Now insert any children using this parents PK, so not let it .save() so we
+                    # can instead use the .create() for proper linkage
+                    await relation.entity.insert_with_relations(childmodels, skip_save=True, parent_pk=parent_pk)
+
 
         # Return parent_pk for recursion only
         # This method not meant to return anything valuable to the user
@@ -325,6 +333,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         elif type(relation) == BelongsToMany or type(relation) == MorphToMany:
             for model in models:
                 # If its PK is set, it already exists
+                pk_value = None
                 create = getvalue(model, relation.entity.pk) == None
                 if create:
                     pk_value = await relation.entity.insert(model)
