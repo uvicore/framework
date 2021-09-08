@@ -141,7 +141,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         return result
 
     @classmethod
-    async def insert_with_relations(entity, models: List[Dict]) -> None:
+    async def insert_with_relations(entity, models: List[Dict], _skip_save: bool = False) -> None:
         """Insert one or more entities as List of Dict that DO have relations included
 
         Because relations are included, this insert is NOT bulk and must
@@ -166,8 +166,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # This is bulk insert, but no way to retrieve each PK from it.
         parent_pk = None
         for model in models:
-            # Skip empty models
-            if model is None: continue
+
+            # Skip empty models (None or [])
+            if not model: continue
 
             # If model is not a dict, its probably a real pydantic model instance, convert it to a dict
             if type(model) != dict: model = model.dict()
@@ -198,10 +199,14 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             for relation in relations.values():
                 data = relation['data']
                 relation = relation['relation']
+
                 if type(relation) == BelongsTo:
                     # Because we insert the children first, skip inserting
                     # children later down the method
                     skip_children = True
+
+                    # Ignore empty relation (None or []), AFTER skip_children is set
+                    if not data : continue
 
                     # Check if one ONE relation is already a fully inserted object (presense of pk)
                     # If NOT, it needs to be inserted, if so, just grab its existing PK as the child_pk
@@ -220,8 +225,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             model_instance = entity.mapper(model).model(perform_mapping=False)
 
             # Insert the parent model and retrieve parents new PK value
-            model_instance = await model_instance.save()
-            parent_pk = getattr(model_instance, entity.pk)
+            if not _skip_save:
+                model_instance = await model_instance.save()
+                parent_pk = getattr(model_instance, entity.pk)
 
             # Now insert each child relation
             for relation in relations.values():
@@ -255,7 +261,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
                     # Recursively insert all child models of this many-to-many
                     # in case it has more nested relations
-                    await relation.entity.insert_with_relations(childmodels)
+                    # Skip save means the model_instance.save() will not run and instead
+                    # let the model_instance.create() handle it instead.
+                    await relation.entity.insert_with_relations(childmodels, _skip_save=True)
 
                     # Then finally, insert the parent many-to-many that started it all
                     await model_instance.create(relation.name, data)
@@ -275,8 +283,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
     async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Create related child records and link them to this parent (self) model"""
 
-        # Ignore empty models
-        if models is None: return
+        # Ignore empty models (None or [])
+        if not models: return
 
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
@@ -491,12 +499,15 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
     async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
         """Link records to relation using the Many-To-Many pivot table"""
 
-        # NOTICE hooks:  We do NOT actuall need to fire hooks on relation tables!
+        # NOTICE hooks:  We do NOT actually need to fire hooks on relation tables!
         # Because there are no relation table models to listen for those hooks!
 
         # NOTICE models:  Models can be single model, single dict, List[Model], List[Dict]
         # and I do NOT have to convert them to actual models.  Because I am using my custom getvalue
         # the pk is pulled regardless of model or dict!
+
+        # Ignore empty models (None or [])
+        if not models: return
 
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
         entity = self.__class__
