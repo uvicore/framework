@@ -164,7 +164,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # encode/databases does not impliment this.  Instead their insert_many
         # uses a cursor where each row is added as a query, then the cursor is committed.
         # This is bulk insert, but no way to retrieve each PK from it.
-        #parent_pk = None
+
+        # Ensure models is a list
+        if type(models) != list: models = [models]
+
         for model in models:
 
             # Skip empty models (None or [])
@@ -221,7 +224,6 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                     model[relation.local_key] = child_pk
 
             # Convert model Dict into actual Model instance
-            #model_instance = entity(**model)
             model_instance = entity.mapper(model).model(perform_mapping=False)
 
             # Insert the parent model and retrieve parents new PK value
@@ -269,15 +271,15 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
 
                     # The data variable is byRef and is modified with the new inserted PK
                     # It will be the same for all children, so grab[0]
-                    parent_pk = getvalue(data[0], relation.entity.pk)
+                    poly_parent_pk = getvalue(data[0], relation.entity.pk)
 
                     # Now insert any children using this parents PK, so not let it .save() so we
                     # can instead use the .create() for proper linkage
-                    await relation.entity.insert_with_relations(childmodels, skip_save=True, parent_pk=parent_pk)
-
+                    await relation.entity.insert_with_relations(childmodels, skip_save=True, parent_pk=poly_parent_pk)
 
         # Return parent_pk for recursion only
-        # This method not meant to return anything valuable to the user
+        # This method not meant to return anything valuable to the user, which
+        # is why the method itself is -> None
         return parent_pk
 
     @hybridmethod

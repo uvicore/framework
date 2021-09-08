@@ -13,16 +13,41 @@ async def cli():
     await poly_play()
 
 async def poly_play():
-    from app1.models import User, Post, Comment
-    # posts = await Post.query().include('attributes').get()
-    # dd(posts)
+    from app1.models import User, Post, Comment, Tag
+    # # posts = await Post.query().include('attributes').get()
+    # # dd(posts)
 
-    # user = await User.query().include('posts.attributes').find(1)
-    # dd(user)
+    # # user = await User.query().include('posts.attributes').find(1)
+    # # dd(user)
 
-    comment = await Comment.query().include('post.attributes').find(1)
-    dd(comment)
+    # comment = await Comment.query().include('post.attributes').find(1)
+    # dd(comment)
 
+    tags = await Tag.query().key_by('name').get()
+
+    post = {
+        'slug': 'test-post11',
+        'title': 'Test Post11',
+        'body': 'This is the body for test post11.  I like the taste of water.',
+        'creator_id': 1,
+        'owner_id': 2,
+        'tags': [
+            #{'id': 1, 'name': 'linux', 'creator_id': 1},
+            #{'id': 3, 'name': 'bsd', 'creator_id': 2},
+            tags['linux'],
+            tags['bsd'],
+        ],
+        # 'comments': [
+        #     {
+        #         'title': 'Post11 Comment1',
+        #         'body': 'Body for post11 comment1',
+        #         #'post_id': 1,  # No id needed, thats what post.create() does
+        #         'creator_id': 1,
+        #     }
+        # ],
+    }
+    x = await Post.insert_with_relations(post)
+    dd(x)
 
 
 

@@ -29,7 +29,7 @@ class ModelRoutes:
 
         #@route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         @route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=scopes['read'])
-        async def list(**kwargs):
+        async def get_all(**kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
 
@@ -42,7 +42,7 @@ class ModelRoutes:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
         @route.get('/' + path + '/{id}', inherits=AutoApi.getsig, response_model=Model, tags=tags, scopes=scopes['read'])
-        async def get(id: Union[str,int], **kwargs):
+        async def get_one(id: Union[str,int], **kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
 
@@ -54,9 +54,9 @@ class ModelRoutes:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
 
-        #@route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
-        @route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
-        async def post(request: Request, item: Model):
+        @route.post('/' + path, response_model=Union[Model, List[Model]], tags=tags, scopes=scopes['create'])
+        #async def post(request: Request, item: Model):
+        async def post(request: Request, items: Union[Model, List[Model]]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -64,49 +64,66 @@ class ModelRoutes:
 
             # Insert into storage and return primary key inserted
             try:
-                pk = await Model.insert(item)
+                # Ensure list
+                is_single = False
+                if type(items) != list:
+                    items = [items]
+                    is_single = True
 
-                # If primary key is read_only, assume its an auto-incrementing pk
-                # If not read_only, its a manual pk like 'key'.
-                # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
-                # a string, encode/databases does not return the new pk, just returns 1 every time.
-                if Model.modelfield(Model.pk).read_only == True:
-                    setvalue(item, Model.pk, pk)
+                for item in items:
+                    pk = await Model.insert(item)
+
+                    # If primary key is read_only, assume its an auto-incrementing pk
+                    # If not read_only, its a manual pk like 'key'.
+                    # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
+                    # a string, encode/databases does not return the new pk, just returns 1 every time.
+                    if Model.modelfield(Model.pk).read_only == True:
+                        setvalue(item, Model.pk, pk)
 
                 # Return inserted item
-                #dump(item)
-                return item
+                if is_single:
+                    return items[0]
+                else:
+                    return items
 
             except Exception as e:
                 raise HTTPException(500, str(e))
 
 
-        # #@route.post('/' + path, response_model=Model, tags=tags, scopes=scopes['create'])
-        # @route.post('/' + path + '/with_relations', response_model=Model, tags=tags, scopes=scopes['create'])
-        # async def post(request: Request, item: Dict):
-        #     # NOTES
-        #     # How do I check each child relations permissions, there is no includes
-        #     # Would have to flip each item key and check if its a relation?
-        #     # Then check if user has access to that relation?
+        @route.post('/' + path + '/with_relations', response_model=Union[Dict, List[Dict]], tags=tags, scopes=scopes['create'])
+        async def post(request: Request, items: Union[Dict, List[Dict]]):
+            # NOTES
+            # How do I check each child relations permissions, there is no includes
+            # Would have to flip each item key and check if its a relation?
+            # Then check if user has access to that relation?
 
-        #     # Insert into storage and return primary key inserted
-        #     try:
-        #         pk = await Model.insert_with_relations([item])
-        #         #pk= await Model.insert(item)
+            # Insert into storage and return primary key inserted
+            try:
+                # Ensure list
+                is_single = False
+                if type(items) != list:
+                    items = [items]
+                    is_single = True
 
-        #         # If primary key is read_only, assume its an auto-incrementing pk
-        #         # If not read_only, its a manual pk like 'key'.
-        #         # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
-        #         # a string, encode/databases does not return the new pk, just returns 1 every time.
-        #         if Model.modelfield(Model.pk).read_only == True:
-        #             setvalue(item, Model.pk, pk)
+                for item in items:
+                    pk = await Model.insert_with_relations(item.copy())
 
-        #         # Return inserted item
-        #         #dump(item)
-        #         return item
+                    # If primary key is read_only, assume its an auto-incrementing pk
+                    # If not read_only, its a manual pk like 'key'.
+                    # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
+                    # a string, encode/databases does not return the new pk, just returns 1 every time.
+                    if Model.modelfield(Model.pk).read_only == True:
+                        setvalue(item, Model.pk, pk)
 
-        #     except Exception as e:
-        #         raise HTTPException(500, str(e))
+                # Return inserted items
+                #dump(item)
+                if is_single:
+                    return items[0]
+                else:
+                    return items
+
+            except Exception as e:
+                raise HTTPException(500, str(e))
 
 
 
