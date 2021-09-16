@@ -75,14 +75,55 @@ class Post(Controller):
         #from uvicore.http.routing.auto_api import autoapi_list2
 
         #@route.get('/post5', inherits=autoapi_list)
-        @route.get('/post5', inherits=AutoApi.listsig)
+        @route.get('/post5/', inherits=AutoApi.listsig)
         #@route.get('/post5', response_model=models.Post, inherits=autoapi_list2)
         #@route.get('/post5', inherits=autoapi_list2)
         #async def post5(more: str, **kwargs) -> models.Post:
         async def post5(more: str, **kwargs):
             api = AutoApi[models.Post](models.Post, **kwargs).guard_relations()
-            result = await api.orm_query().find(1)
+            result = await api.orm_query().find(5)
             return result
+
+        @route.post('/post5')
+        async def post5_create():
+            pass
+
+        @route.put('/post5')
+        async def post5_put():
+            pass
+
+        @route.patch('/post5')
+        async def post5_patch():
+            pass
+
+        @route.delete('/post5')
+        async def post5_delete():
+            pass
+
+
+
+        @route.add('/post6', methods=['PATCH', 'POST'])
+        async def post6():
+            pass
+
+        @route.add('/post6', methods=['PUT', 'DELETE'], name='post6-PD')
+        async def post6():
+            pass
+
+                # path='/post5',
+                # name='app1.api.post5',
+                # endpoint=app1.http.api.post.Post.register.<locals>.post5,  # function
+                # methods=['GET'],
+                # response_model=None,
+                # tags=None,
+                # middleware=[],
+                # summary='summary-asdfasdf',
+                # description='desc-asdfasdf',
+                # original_path='/post5',
+                # original_name='post5'
+
+
+
 
         # Return router
         return route

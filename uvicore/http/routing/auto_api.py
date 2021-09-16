@@ -11,6 +11,7 @@ from uvicore.orm.query import OrmQueryBuilder
 from uvicore.contracts import AutoApi as AutoApiInterface
 from uvicore.support.dumper import dump, dd
 from uvicore.http.exceptions import PermissionDenied
+from uvicore.contracts import UserInfo
 
 E = TypeVar("E")
 

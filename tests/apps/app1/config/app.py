@@ -101,6 +101,7 @@ config = {
             'path': '/openapi.json',
             'docs': {
                 'path': '/docs',
+                'expansion': 'none',  # list none full
                 'favicon_url': 'data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=',
                 'js_url': 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.47.1/swagger-ui-bundle.js',
                 'css_url': 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.47.1/swagger-ui.min.css',
@@ -179,9 +180,9 @@ config = {
                 #'*.models.attribute.Attribute',
                 #'uvicore.auth.models.group.Group'
                 #'*.models.tag.*',
-                'uvicore.auth.*',
-                '*.models.user_info.*',
-                '*.models.user.*',
+                #'uvicore.auth.*',
+                #'*.models.user_info.*',
+                #'*.models.user.*',
             ],
         },
 

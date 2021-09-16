@@ -36,11 +36,7 @@ class Api(Routes):
         #@route.group(auth=Guard(['scope-AUTO'], guard='api'))
         #@route.group(scopes=['authenticated', 'api.access'])
         #@route.group(scopes=['authenticated'])
-        @route.group()
-        def autoapi():
-            # I should add a flag to NOT auto add Guard() to each model endpoint
-            # If I wanted a fully public model router
-            route.include(ModelRouter, options=uvicore.config.app.api.auto_api)
+        route.include(ModelRouter, options=uvicore.config.app.api.auto_api)
 
         # Rapidoc experiment
         route.controller('rapidoc')
@@ -105,6 +101,8 @@ class Api(Routes):
                     'message': 'public endpoint here',
                     'user': user
                 }
+
+
 
 
 

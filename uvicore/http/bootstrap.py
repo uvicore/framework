@@ -14,7 +14,7 @@ from uvicore.http.routing.router import Routes
 from functools import partial, update_wrapper
 from uvicore.http.routing import ApiRoute, WebRoute
 from uvicore.http.routing import Guard
-from fastapi.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
+from uvicore.http.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 
 
 class Http(Handler):
@@ -362,6 +362,7 @@ class Http(Handler):
                         #'additionalQueryStringParams': {'client_id': "7cc7d2a5-cc02-43ca-93bc-8476370ebf9d"},
                         #'usePkceWithAuthorizationCodeGrant': False
                     },
+                    doc_expansion=openapi.docs.expansion.lower() or 'list'
                 )
 
             @api_server.get(openapi_redirect_url, include_in_schema=False)
@@ -371,27 +372,31 @@ class Http(Handler):
 
         # Loop each uvicore route and add as FastAPI route
         for route in api_routes.values():
-            endpoint_func = route.endpoint
-            response_model = route.response_model
+            # ----------------------------------------------------------------------------------
+            # NO, all of this moved into api_router.py so I can see it at the package definition (./uvicore package list) level
+            # ----------------------------------------------------------------------------------
+            # endpoint_func = route.endpoint
+            # response_model = route.response_model
 
-            # If endpoint is partial, grab inside func for type hindint and docstrings
-            if isinstance(route.endpoint, partial):
-                # Endpoint is a partial (was overwritten to default some higher order middleware)
-                # A partial overwrites the original docstring.  Functools update_wrapper will copy it back
-                # as well as handle merging of other important properties
-                #update_wrapper(route.endpoint, route.endpoint.func)
-                endpoint_func = route.endpoint.func
+            # # If endpoint is partial, grab inside func for type hindint and docstrings
+            # if isinstance(route.endpoint, partial):
+            #     # Endpoint is a partial (was overwritten to default some higher order middleware)
+            #     # A partial overwrites the original docstring.  Functools update_wrapper will copy it back
+            #     # as well as handle merging of other important properties
+            #     #update_wrapper(route.endpoint, route.endpoint.func)
+            #     endpoint_func = route.endpoint.func
 
-                # Blank out the __doc__ on actual Partial itself, not actual endpoint inside partial.
-                # If not, OpenAPI doc description will be partial(func, *args, **keywords) - new function with partial application etc...
-                route.endpoint.__doc__ = None
+            #     # Blank out the __doc__ on actual Partial itself, not actual endpoint inside partial.
+            #     # If not, OpenAPI doc description will be partial(func, *args, **keywords) - new function with partial application etc...
+            #     route.endpoint.__doc__ = None
 
-            # Get response model from parameter or infer from endpoint return type hint
-            #response_model = route.response_model if route.response_model else get_type_hints(endpoint_func).get('return')
-            response_model = route.response_model or get_type_hints(endpoint_func).get('return')
+            # # Get response model from parameter or infer from endpoint return type hint
+            # #response_model = route.response_model if route.response_model else get_type_hints(endpoint_func).get('return')
+            # response_model = route.response_model or get_type_hints(endpoint_func).get('return')
 
-            # Get openapi description from route param or endpoint docstring
-            description = route.description or endpoint_func.__doc__
+            # # Get openapi description from route param or endpoint docstring
+            # description = route.description or endpoint_func.__doc__
+            # ----------------------------------------------------------------------------------
 
             # If OpenAPI oauth2 authentication is enabled, add the proper route
             # dependency to our oauth2_schema
@@ -405,18 +410,17 @@ class Http(Handler):
                 if found_guard:
                     route.middleware.append(Depends(oauth2_scheme))
 
-
             # Add uvicore route to FastAPI route
             api_server.add_api_route(
                 path=(prefix + route.path) or '/',
                 endpoint=route.endpoint,
                 methods=route.methods,
                 name=route.name,
-                response_model=response_model,
+                response_model=route.response_model,
                 tags=route.tags,
                 dependencies=route.middleware,
                 summary=route.summary,
-                description=description,
+                description=route.description,
             )
 
     def configure_webserver(self, web_server) -> None:

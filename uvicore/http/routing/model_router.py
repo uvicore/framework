@@ -28,7 +28,15 @@ class ModelRoutes:
         """Build dynamic model CRUD routes"""
 
         #@route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
-        @route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=scopes['read'])
+        @route.get(
+            path='/' + path,
+            inherits=AutoApi.listsig,
+            response_model=List[Model],
+            tags=tags,
+            scopes=scopes['read'],
+            summary="List multiple {}".format(Model.tablename),
+            description="List one or more {} ({}) using the optional filtering parameters.".format(Model.tablename, Model.modelfqn),
+        )
         async def get_all(**kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
@@ -41,7 +49,16 @@ class ModelRoutes:
                 dump(ex)
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
-        @route.get('/' + path + '/{id}', inherits=AutoApi.getsig, response_model=Model, tags=tags, scopes=scopes['read'])
+
+        @route.get(
+            path='/' + path + '/{id}',
+            inherits=AutoApi.getsig,
+            response_model=Model,
+            tags=tags,
+            scopes=scopes['read'],
+            summary="Get one {} by primary key".format(Model.tablename),
+            description="Get a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
+        )
         async def get_one(id: Union[str,int], **kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
@@ -54,9 +71,16 @@ class ModelRoutes:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
 
-        @route.post('/' + path, response_model=Union[Model, List[Model]], tags=tags, scopes=scopes['create'])
+        @route.post(
+            path='/' + path,
+            response_model=Union[Model, List[Model]],
+            tags=tags,
+            scopes=scopes['create'],
+            summary="Create new {}".format(Model.tablename),
+            description="Create one or more {} ({}) without nested relations by POSTING a valid and complete Model.".format(Model.tablename, Model.modelfqn),
+        )
         #async def post(request: Request, item: Model):
-        async def post(request: Request, items: Union[Model, List[Model]]):
+        async def create(request: Request, items: Union[Model, List[Model]]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -90,8 +114,15 @@ class ModelRoutes:
                 raise HTTPException(500, str(e))
 
 
-        @route.post('/' + path + '/with_relations', response_model=Union[Dict, List[Dict]], tags=tags, scopes=scopes['create'])
-        async def post(request: Request, items: Union[Dict, List[Dict]]):
+        @route.post(
+            path='/' + path + '/with_relations',
+            response_model=Union[Dict, List[Dict]],
+            tags=tags,
+            scopes=scopes['create'],
+            summary="Create new {} with relations".format(Model.tablename),
+            description="Create one or more {} ({}) with nested relations by POSTING an object.  Uvicore must disable model validation when passing a complex nested relational object.  It is therefore up to you to ensure an accurate object is passed.".format(Model.tablename, Model.modelfqn),
+        )
+        async def create_with_relations(request: Request, items: Union[Dict, List[Dict]]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -126,6 +157,49 @@ class ModelRoutes:
                 raise HTTPException(500, str(e))
 
 
+        @route.put(
+            path='/' + path + '/{id}',
+            response_model=Model,
+            tags=tags,
+            scopes=scopes['update'],
+            summary="Update one complete {} by primary key".format(Model.tablename),
+            description="Update a single {} ({}) by primary key by PUTTING a valid and complete Model.".format(Model.tablename, Model.modelfqn),
+        )
+        async def update(request: Request, item: Model):
+            # PUT is used to UPDATE an EXISTNIG record.
+            # The PUT object must be a complete object. This is why 'item' is a Model, not a Dict
+            pass
+
+        @route.patch(
+            path='/' + path + '/{id}',
+            response_model=Model,
+            tags=tags,
+            scopes=scopes['update'],
+            summary="Update one partial {} by primary key".format(Model.tablename),
+            description="Update a single {} ({}) by primary key by PATCHING a partial object.  All fields in the object are optional.".format(Model.tablename, Model.modelfqn),
+        )
+        async def update_partial(request: Request, item: Dict):
+            # PATCH is used to UPDATE an EXISTNIG record.
+            # The PATCH may be a partial object as it is merged with the existing object before being saved.
+            # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
+            # All fields in a PATCH are optional.
+            pass
+
+
+        @route.delete(
+            path='/' + path + '/{id}',
+            response_model=Model,
+            tags=tags,
+            scopes=scopes['delete'],
+            summary="Delete one {} by primary key".format(Model.tablename),
+            description="Delete a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
+        )
+        async def update_partial(request: Request, item: Dict):
+            # PATCH is used to UPDATE an EXISTNIG record.
+            # The PATCH may be a partial object as it is merged with the existing object before being saved.
+            # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
+            # All fields in a PATCH are optional.
+            pass
 
 
 @uvicore.controller()
@@ -163,7 +237,6 @@ class ModelRouter(Controller):
 
             # Get model information from Ioc binding
             Model = binding.object
-            modelname = binding.path.split('.')[-1]
             tablename = Model.tablename
             path = tablename
             tags = [string.ucbreakup(path)]

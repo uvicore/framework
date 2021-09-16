@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod, abstractproperty
-from uvicore.typing import List, Dict, Callable, TypeVar, Generic, Decorator
+from uvicore.typing import List, Dict, Callable, TypeVar, Generic, Decorator, Optional, Any, Union
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -30,6 +30,7 @@ class ApiRoute(Dict):
     # This is still a fully dynamic SuperDict!
     path: str
     name: str
+    prefix: bool
     endpoint: Callable
     methods: List[str]
     response_model: Optional[Any]
@@ -90,7 +91,7 @@ class Router(Generic[R], ABC):
         tags: Optional[List[str]] = None,
         autoprefix: bool = True,
         middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
+        auth: Optional[Any] = None,
         scopes: Optional[List] = None,
     ) -> Callable[[Decorator], Decorator]:
         """Route groups method and decorator"""

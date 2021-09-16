@@ -1,11 +1,12 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator
+from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator, get_type_hints
 from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
 from merge_args import _merge as merge_args
+from functools import partial
 
 
 from uvicore.http.routing.guard import Guard
@@ -23,20 +24,39 @@ from uvicore.http.routing.guard import Guard
 @uvicore.service()
 class ApiRouter(Router['ApiRoute']):
 
-    def get(self, path: str,
+    def get(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
         autoprefix: bool = True,
-        response_model: Optional[Any] = None,
-        tags: Optional[List[str]] = None,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
         inherits: Optional[Callable] = None,
-    ):
+    ) -> None:
+        """Add a new HTTP GET route to the ApiRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
         # Build parameters
         methods = ['GET']
         #params = {key:value for key, value in locals().items() if key != 'self'}
@@ -46,19 +66,39 @@ class ApiRouter(Router['ApiRoute']):
         # Pass to generic add method
         return self.add(**params)
 
-    def post(self, path: str,
+    def post(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
         autoprefix: bool = True,
-        response_model: Optional[Any] = None,
-        tags: Optional[List[str]] = None,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
     ):
+        """Add a new HTTP POST route to the ApiRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
         # Build parameters
         methods = ['POST']
         #params = {key:value for key, value in locals().items() if key != 'self'}
@@ -68,54 +108,220 @@ class ApiRouter(Router['ApiRoute']):
         # Pass to generic add method
         return self.add(**params)
 
+    def put(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
+        """Add a new HTTP PUT route to the ApiRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
+        # Build parameters
+        methods = ['PUT']
+        #params = {key:value for key, value in locals().items() if key != 'self'}
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
+    def patch(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
+        """Add a new HTTP PATCH route to the ApiRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
+        # Build parameters
+        methods = ['PATCH']
+        #params = {key:value for key, value in locals().items() if key != 'self'}
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
+    def delete(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
+        summary: Optional[str] = None,
+        description: Optional[str] = None,
+    ):
+        """Add a new HTTP DELETE route to the ApiRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
+        # Build parameters
+        methods = ['DELETE']
+        #params = {key:value for key, value in locals().items() if key != 'self'}
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
 
     def add(self,
+        # Common to both ApiRouter and WebRouter
         path: str,
         endpoint: Optional[Callable] = None,
         methods: List[str] = ['GET'],
         *,
         name: Optional[str] = None,
         autoprefix: bool = True,
-        response_model: Optional[Any] = None,
-        tags: Optional[List[str]] = None,
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+
+        # ApiRouter specific
+        response_model: Optional[Any] = None,
+        tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
-        inherits: Optional[Callable] = None,
     ) -> Callable[[Decorator], Decorator]:
-        """Generic add method and decorator"""
+        """Add a new HTTP method route to the ApiRouter
 
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        :param response_model: Response ORM Model.  Can also use -> Model on function return type.
+        :param tags: List of tags to group the endpoint in the OpenAPI docs.
+        :param summary: Summary of this endpoint for OpenAPI docs.
+        :param description: Description of this endpoint for OpenAPI docs.
+        :param inherits: Endpoint function can inhert the parameters of another function.  Useful if you have tons of parameters you want shared on multiple endpoints. Usage inherits=AuthApi.getsig.
+        """
         # Convert auth and scope helper param to middleware
         if middleware is None: middleware = []
         if auth: middleware.append(auth)
         if scopes: middleware.append(Guard(scopes))
 
         # Clean path and name
-        (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)
+        (path, full_path, name, full_name) = self._format_path_name(path, name, autoprefix, methods)
 
         def handle(endpoint):
-            if inherits:
-                endpoint = merge_args(inherits, endpoint)
+            nonlocal response_model
+            nonlocal description
+
+            # Merge function arguments if inheriting
+            if inherits: endpoint = merge_args(inherits, endpoint)
+
+            # If endpoint is partial, grab inside func for type hindint and docstrings
+            endpoint_func = endpoint
+            if isinstance(endpoint, partial):
+                # Endpoint is a partial (was overwritten to default some higher order middleware)
+                # A partial overwrites the original docstring.  Functools update_wrapper will copy it back
+                # as well as handle merging of other important properties
+                #update_wrapper(route.endpoint, route.endpoint.func)
+                endpoint_func = endpoint.func
+
+                # Blank out the __doc__ on actual Partial itself, not actual endpoint inside partial.
+                # If not, OpenAPI doc description will be partial(func, *args, **keywords) - new function with partial application etc...
+                endpoint.__doc__ = None
+
+            # Get response_model from typehint if not explicitly defined as a parameter
+            response_model = response_model or get_type_hints(endpoint_func).get('return')
+
+            # Get openapi description from route param or endpoint docstring
+            description = description or endpoint_func.__doc__
 
             # Create route SuperDict
             route = ApiRoute({
-                'path': full_path or '/',
+                # Common to both ApiRouter and WebRouter
+                'path': full_path,
                 'name': full_name,
-                'endpoint': endpoint,
                 'methods': methods,
-                'response_model': response_model,
-                'tags': tags,
+                'endpoint': endpoint,
                 'middleware': middleware,
-                'summary': summary,
-                'description': description,
+                'autoprefix': autoprefix,
                 'original_path': path,
                 'original_name': name,
+
+                # ApiRouter specific
+                'response_model': response_model,
+                'tags': tags,
+                'summary': summary,
+                'description': description,
             })
-            key = '-'.join(sorted(methods)) + '-' + full_name
-            #self.routes[full_name] = route
-            self.routes[key] = route
+            # Full name already contains -POST, -PUT...for uniqueness across methods
+            self.routes[full_name] = route
             return route
 
         # Method access

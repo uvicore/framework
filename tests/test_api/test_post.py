@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from uvicore.support.dumper import dump
 
 
-def test_single(app1):
+def Xtest_single(app1):
     client = TestClient(uvicore.app.http)
 
     res = client.post("/api/posts", json={
@@ -29,7 +29,7 @@ def test_single(app1):
     #assert False
 
 
-def test_bulk(app1):
+def Xtest_bulk(app1):
     client = TestClient(uvicore.app.http)
 
     res = client.post("/api/posts", json=[
@@ -54,7 +54,7 @@ def test_bulk(app1):
     #assert False
 
 
-def test_single_relations_many_to_many(app1):
+def Xtest_single_relations_many_to_many(app1):
     client = TestClient(uvicore.app.http)
 
     # Cannot use await with TestClient for some reason, loop already started
@@ -89,7 +89,7 @@ def test_single_relations_many_to_many(app1):
     #assert False
 
 
-def test_bulk_relations_many_to_many(app1):
+def Xtest_bulk_relations_many_to_many(app1):
     client = TestClient(uvicore.app.http)
 
     # Cannot use await with TestClient for some reason, loop already started

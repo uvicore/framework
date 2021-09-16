@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 from uvicore.support.dumper import dump
 
 
-def Xtest_list(app1):
+def test_list(app1):
     client = TestClient(uvicore.app.http)
     res = client.get("/api/posts")
     assert res.status_code == 200, res.text
@@ -32,7 +32,7 @@ def Xtest_list(app1):
     }
 
 
-def Xtest_list_include_one_to_one(app1):
+def test_list_include_one_to_one(app1):
     client = TestClient(uvicore.app.http)
 
     #res = client.get("/api/posts?include=creator.info,creator.contact,comments.creator.info,comments.contact,tags.creator,image,attributes,hashtags")

@@ -6,12 +6,15 @@ from uvicore.support.dumper import dump, dd
 from uvicore.contracts import WebRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.http.routing.guard import Guard
+from merge_args import _merge as merge_args
 
 
 @uvicore.service()
 class WebRouter(Router['WebRoute']):
 
-    def get(self, path: str,
+    def get(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
@@ -19,7 +22,18 @@ class WebRouter(Router['WebRoute']):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
     ):
+        """Add a new HTTP GET route to the WebRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
         # Build parameters
         methods = ['GET']
         #params = {key:value for key, value in locals().items() if key != 'self'}
@@ -29,7 +43,9 @@ class WebRouter(Router['WebRoute']):
         # Pass to generic add method
         return self.add(**params)
 
-    def post(self, path: str,
+    def post(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
         endpoint: Optional[Callable] = None,
         *,
         name: Optional[str] = None,
@@ -37,7 +53,18 @@ class WebRouter(Router['WebRoute']):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
     ):
+        """Add a new HTTP POST route to the WebRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
         # Build parameters
         methods = ['POST']
         params = locals()
@@ -46,7 +73,98 @@ class WebRouter(Router['WebRoute']):
         # Pass to generic add method
         return self.add(**params)
 
+    def put(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+    ):
+        """Add a new HTTP PUT route to the WebRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
+        # Build parameters
+        methods = ['PUT']
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
+    def patch(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+    ):
+        """Add a new HTTP PATCH route to the WebRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
+        # Build parameters
+        methods = ['PATCH']
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
+    def delete(self,
+        # Common to both ApiRouter and WebRouter
+        path: str,
+        endpoint: Optional[Callable] = None,
+        *,
+        name: Optional[str] = None,
+        autoprefix: bool = True,
+        middleware: Optional[List] = None,
+        auth: Optional[Guard] = None,
+        scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
+    ):
+        """Add a new HTTP DELETE route to the WebRouter
+
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
+        # Build parameters
+        methods = ['DELETE']
+        params = locals()
+        params.pop('self')
+
+        # Pass to generic add method
+        return self.add(**params)
+
     def add(self,
+        # Common to both ApiRouter and WebRouter
         path: str,
         endpoint: Optional[Callable] = None,
         methods: List[str] = ['GET'],
@@ -56,28 +174,43 @@ class WebRouter(Router['WebRoute']):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
     ) -> Callable[[Decorator], Decorator]:
-        """Generic add method and decorator"""
+        """Add a new HTTP method route to the WebRouter
 
+        :param path: URL path, beginning with /
+        :param endpoint: None if decorator, else method to call when route is fired.
+        :param name: Name of this route to consistently access with url('name') helper.
+        :param autoprefix: Disable the name autoprefixer (autoprefix adds the appname. prefix).  Useful when overriding another packages route.
+        :param middleware: List of route level middleware.
+        :param auth: Shorthand for the middleware=[Guard(['scope'])].  Usage auth=Guard(['scope']).
+        :param scopes: Shorthand for middleware=[Guard(['scope'])].  Usage scopes=['scope1', 'scope1'].
+        """
         # Convert auth and scope helper param to middleware
         if middleware is None: middleware = []
         if auth: middleware.append(auth)
         if scopes: middleware.append(Guard(scopes))
 
         # Clean path and name
-        (name, full_path, name, full_name) = self._clean_add(path, name, autoprefix)
+        (path, full_path, name, full_name) = self._format_path_name(path, name, autoprefix, methods)
 
         def handle(endpoint):
+            # Merge function arguments if inheriting
+            if inherits: endpoint = merge_args(inherits, endpoint)
+
             # Create route SuperDict
             route = WebRoute({
+                # Common to both ApiRouter and WebRouter
                 'path': full_path,
                 'name': full_name,
-                'endpoint': endpoint,
                 'methods': methods,
+                'endpoint': endpoint,
                 'middleware': middleware,
+                'autoprefix': autoprefix,
                 'original_path': path,
                 'original_name': name,
             })
+            # Full name already contains -POST, -PUT...for uniqueness across methods
             self.routes[full_name] = route
             return route
 

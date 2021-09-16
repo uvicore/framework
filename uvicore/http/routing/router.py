@@ -11,7 +11,7 @@ from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.http.routing.guard import Guard
 from uvicore.support.dictionary import deep_merge
-from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator, Optional
+from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator, Optional, Union
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -140,14 +140,6 @@ class Router(Generic[R], RouterInterface[R]):
         """Alias to controller"""
         self.controller(module=module, prefix=prefix, name=name, tags=tags, options=options)
 
-    def override(self, package_name: str, route_name: str, endpoint: Callable):
-        # We have a package_name like mreschke.wiki
-        # A route name like wiki.search
-        # and a new endpoint callable
-        # Find actual package, get that route, add to this packages routes but swap the callable
-        # then when server is build, the MERGE of routes will take this one FIRST by name, so it overrides!
-        pass
-
     def group(self, prefix: str = '', *,
         routes: Optional[List] = None,
         name: str = '',
@@ -190,6 +182,7 @@ class Router(Generic[R], RouterInterface[R]):
 
             # Loop group routes and update prefixes
             for route in all_routes:
+
                 # Remove old route from self.routes
                 if route.name in self.routes:
                     self.routes.pop(route.name)
@@ -220,7 +213,8 @@ class Router(Generic[R], RouterInterface[R]):
                     route.tags.extend(tags)
                 route.path = full_path
                 route.name = full_name
-                route.autoprefix = autoprefix,
+                # Override group level autoprefix only if False to disable all, else use what the inside route used
+                if autoprefix == False: route.autoprefix = autoprefix
                 route.middleware = route_middleware
                 del route.original_path
                 del route.original_name
@@ -437,13 +431,16 @@ class Router(Generic[R], RouterInterface[R]):
 
         return middlewares
 
-    def _clean_add(self, path: str, name: str, autoprefix: bool):
+    def _format_path_name(self, path: str, name: str, autoprefix: bool, methods: List):
         # Clean path
         if path and path[-1] == '/': path = path[0:-1]  # Remove trailing /
         if path and path[0] != '/': path = '/' + path   # Add beginning /
 
         # Get name
-        if not name: name = path
+        no_name = False
+        if not name:
+            no_name = True
+            name = path
 
         # Clean name
         name = name.replace('/', '.')
@@ -460,6 +457,20 @@ class Router(Generic[R], RouterInterface[R]):
         if autoprefix:
             full_path = self.prefix + full_path
             full_name = self.name + '.' + full_name
+        if not full_path: full_path = '/'
+
+        # To prevent duplicates of same route for GET, POST, PUT, PATCH, DELETE
+        # suffix the name with -POST, -PUT...  But do not suffix for GET
+        # If this is a multi method function, only add POST-PUT combination of no name is forced
+        methods = methods.copy()
+        if 'GET' in methods: methods.remove('GET')
+        if methods:
+            if no_name or (no_name == False and len(methods) == 1):
+                methods = sorted(methods)
+                method_suffix = '-' + '-'.join(methods)
+                if full_name[-len(method_suffix):] != method_suffix: full_name = full_name + method_suffix
+
+        # Return newly formatted values
         return (path, full_path, name, full_name)
 
 
