@@ -162,6 +162,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         return self
 
     def _build_include(self, includes: List):
+        if not includes: return
         results = []
         for include in includes:
             if ',' in include:
@@ -171,6 +172,9 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         return results
 
     def _build_where(self, where_str: str) -> List[Tuple]:
+        # If where_str is already a Dict (from a JSON blog) convert to str first
+        if type(where_str) == dict: where_str = json.dumps(where_str)
+        dump('where_str', where_str)
         wheres = []
         if not where_str: return wheres
         try:

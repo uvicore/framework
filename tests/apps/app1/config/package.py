@@ -111,7 +111,7 @@ config = {
     #
     # Define all the packages that this package depends on.  At a minimum, only
     # the uvicore.foundation package is required.  The foundation is very
-    # minimal and only depends on configuratino, logging and console itself.
+    # minimal and only depends on configuration, logging and console itself.
     # You must add other core services built into uvicore only if your package
     # requires them.  Services like uvicore.database, uvicore.orm, uvicore.auth
     # uvicore.http, etc...

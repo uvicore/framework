@@ -14,7 +14,22 @@ from uvicore.http.routing import Guard
 from uvicore.orm import Model as OrmModel
 from uvicore.http.routing.auto_api import AutoApi
 from uvicore.support.collection import setvalue
+from pydantic import BaseModel as PydanticModel
 
+
+class DeleteQuery(PydanticModel):
+    where: Optional[dict[str, Union[str, List]]]
+    unlink: Optional[List]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "where": {
+                    "name": "Foo",
+                },
+                "unlink": ['tags', 'hashtags'],
+            }
+        }
 
 @uvicore.service()
 class ModelRoutes:
@@ -165,7 +180,7 @@ class ModelRoutes:
             summary="Update one complete {} by primary key".format(Model.tablename),
             description="Update a single {} ({}) by primary key by PUTTING a valid and complete Model.".format(Model.tablename, Model.modelfqn),
         )
-        async def update(request: Request, item: Model):
+        async def update_one(request: Request, id: Union[str,int], item: Model):
             # PUT is used to UPDATE an EXISTNIG record.
             # The PUT object must be a complete object. This is why 'item' is a Model, not a Dict
             pass
@@ -178,7 +193,7 @@ class ModelRoutes:
             summary="Update one partial {} by primary key".format(Model.tablename),
             description="Update a single {} ({}) by primary key by PATCHING a partial object.  All fields in the object are optional.".format(Model.tablename, Model.modelfqn),
         )
-        async def update_partial(request: Request, item: Dict):
+        async def update_one_partial(request: Request, id: Union[str,int], item: Dict):
             # PATCH is used to UPDATE an EXISTNIG record.
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
@@ -194,12 +209,49 @@ class ModelRoutes:
             summary="Delete one {} by primary key".format(Model.tablename),
             description="Delete a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
         )
-        async def update_partial(request: Request, item: Dict):
+        async def delete_one(request: Request, id: Union[str,int]):
             # PATCH is used to UPDATE an EXISTNIG record.
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
             # All fields in a PATCH are optional.
-            pass
+            try:
+                result = await Model.query().find(id)
+                await result.unlink('tags')
+                await result.delete()
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+        @route.delete(
+            path='/' + path,
+            response_model=Model,
+            tags=tags,
+            scopes=scopes['delete'],
+            summary="Delete {} using a query".format(Model.tablename),
+            description="Delete one or more {} ({}) using a query.".format(Model.tablename, Model.modelfqn),
+        )
+        async def delete_one(request: Request, query: DeleteQuery):
+            # PATCH is used to UPDATE an EXISTNIG record.
+            # The PATCH may be a partial object as it is merged with the existing object before being saved.
+            # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
+            # All fields in a PATCH are optional.
+            try:
+                dump(query, query['where'])
+                api = AutoApi(Model, scopes, request=request, where=query['where'])
+                q = api.orm_query()
+
+                dump(q.query)
+
+                results = await q.get()
+                dump(results)
+                #return results
+
+
+                #result = await Model.query().find(id)
+                #await result.unlink('tags')
+                #await result.delete()
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
 
 
 @uvicore.controller()

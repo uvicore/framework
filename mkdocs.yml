@@ -23,8 +23,12 @@ nav:
     - routing.md
     - views.md
     - controllers.md
-  - Database:
+  - Db/Orm:
+    - db-config.md
+    - db-tables.md
     - orm-basics.md
+    - orm-model.md
+    - orm-pydantic.md
   - Architecture:
     - service-providers.md
     - ioc-container.md
@@ -35,6 +39,7 @@ nav:
     - cache.md
     - mail.md
     - auto-api.md
+    - superdict.md
   - Epologue:
     - release-notes.md
     - mkdocs-help.md

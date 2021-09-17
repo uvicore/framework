@@ -283,7 +283,7 @@ class ApiRouter(Router['ApiRoute']):
             # Merge function arguments if inheriting
             if inherits: endpoint = merge_args(inherits, endpoint)
 
-            # If endpoint is partial, grab inside func for type hindint and docstrings
+            # If endpoint is partial, grab inside func for type hint and docstrings
             endpoint_func = endpoint
             if isinstance(endpoint, partial):
                 # Endpoint is a partial (was overwritten to default some higher order middleware)

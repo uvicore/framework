@@ -11,8 +11,34 @@ from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
 class Comment(Model['Comment'], metaclass=ModelMetaclass):
     """App1 Post Comments"""
 
+    class Config:
+        #title = 'nballs1'
+        schema_extra = {
+            "example": {
+                "where": {
+                    "name": "Foo2",
+                },
+                "unlink": ['tags2', 'hashtags2'],
+            },
+        }
+
     # Database table definition
     __tableclass__ = table.Comments
+
+    # Possible are
+    # __tableclass__
+    # __connection__ if null then derived from __tableclass__.connection
+    # __tablename__ if null then derived from __tableclass__.name
+    # __table__ if null then derived from __tableclass__.schema
+
+    # Technically you could manually define __callbacks__ = {field: callback_method} but no point
+
+    # __example__ = {
+    #     "where": {
+    #         "name": "Foo",
+    #     },
+    #     "unlink": ['tags', 'hashtags'],
+    # }
 
     id: Optional[int] = Field('id',
         primary=True,

@@ -1,19 +1,10 @@
 # Configuration
 
-Configuration is a Service Provider that adds config and settings capability
-to uvicore packages.
-
-This services is fired up as a dependency in `foundation/config/package.py`.
-
-The Ioc binding `Configuration` is a Singleton bound from the service provider
-`register()` method.  The singleton is saved to `uvicore.config` and also in the
-main `uvicore.app` global for use in two different ways.
-
 
 ## Registering Configs
 
-All packages can register their own configs using a unique `key`.  This
-registration is done inside the packages service provider `register()` method.
+All packages register their own configs using a unique `key`, generally your apps name.  This
+registration is done inside the packages [Service Provider](/service-providers/) `register()` method.
 If a config is already registered with the same `key` then the Dictionary value
 will be "deep merged".  This allows packages to override other package configs
 at a granular level.  The last provider defined wins in an override battle.
@@ -90,7 +81,7 @@ package.config('cache')
     can also get config values by using this `dotget()` method like so
     `config.dotget('app')`.
 
-    Config is also a uvicore SuperDict!.  This means you can use method style dot notation
+    Config is also a uvicore [SuperDict](/superdict/)!.  This means you can use method style dot notation
     to access the entire nested config structure like `config.app.cache`.  So use it like
     a method `config('app')` or as method dot notation `config.app`!
 
@@ -98,7 +89,7 @@ package.config('cache')
 ### Getting Values
 
 !!! notice
-    The config system is a large SuperDict.  One of the main differences if a SuperDict is that keys that do not exist to not return `None`, they return an empty `SuperDict({})` which allows method style chaining to work properly.  So never check `if config.connections is None` as it will never be none.  Instead just check `if config.connection`.  This also means that `hasattr(config, 'somekey')` will ALWAYS return True even if the key does not exist because it default to `SuperDict({})`.
+    The config system is a large [SuperDict](/superdict/).  One of the main differences if a [SuperDict](/superdict/) is that keys that do not exist to not return `None`, they return an empty `SuperDict({})` which allows method style chaining to work properly.  So never check `if config.connections is None` as it will never be none.  Instead just check `if config.connection`.  This also means that `hasattr(config, 'somekey')` will ALWAYS return True even if the key does not exist because it default to `SuperDict({})`.
 
 
 Get the entire config Dictionary from all packages, completely deep merged based
@@ -110,7 +101,7 @@ config()
 ```
 
 !!! warning
-    Do not use `.get()`.  Since the config system is essentially a large uvicore SuperDict using `.get()` is actually a standard python Dictionary `.get()`.  So `.get('onelevel')` does work as it would on any dictionary, but `.get('onelevel.twolevel')` will not.  This is why the `.dotget()` method exists.  Or just use method style dot notation because its a class like SuperDict! (ex: `config.onelevel.twolevel`).
+    Do not use `.get()`.  Since the config system is essentially a large uvicore [SuperDict](/superdict/) using `.get()` is actually a standard python Dictionary `.get()`.  So `.get('onelevel')` does work as it would on any dictionary, but `.get('onelevel.twolevel')` will not.  This is why the `.dotget()` method exists.  Or just use method style dot notation because its a class like SuperDict! (ex: `config.onelevel.twolevel`).
 
 
 Get the main `app config` which is defined in the main running app
@@ -166,4 +157,23 @@ config.dotset('mreschke.wiki.database.connections', {'foo': 'bar'})
 config.mreschke.wiki.database.connections.merge({'foo': 'bar'})
 # or
 config.dotget('mreschke.wiki.database.connections').merge({'foo': 'bar'})
+```
+
+
+## Digging Deeper
+
+The Uvicore framework as a whole is really composed from a series of smaller Uvicore packages.  Just like a personal package you would create using the `uvicore-installer`.  The configuration system of uvicore is no exception.  The `uvicore.configuration` package is made up of a standard `Service Provider` that is bootstrapped as part of a core non-optional dependency automatically added from `uvicore.foundation`.  This `uvicore.configuration` package is bootstrapped first thing, high up in the stack and is therefore available to the framework almost immediately.
+
+The `Configuration` class in `uvicore/configuration/configuration.py` is bound to the `IoC` as a `singleton`.  This singleton is deeply merged and overridden by any package further down the bootstrapping chain.  This is what allows packages to override other packages configurations to eventually provide the perfect and complete config.
+
+The object inside the config `singleton` is actually a Uvicore `SuperDict` which, among many other features, is basically a python `Dict` on steroids that allows you to access all items using class like dot.notation.
+
+You can view all `IoC` binding by running:
+```bash
+./uvicore ioc bindings
+```
+
+Or view only the actual config singleton class by running:
+```bash
+./tests/apps/app1/uvicore ioc get uvicore.configuration.configuration.Configuration
 ```

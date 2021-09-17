@@ -1,6 +1,58 @@
 # Mkdocs and Material
 
 
+## Common Links
+
+[Service Provider](/service-providers/)
+[Pydantic](/orm-pydantic/)
+[Uvicore CLI](/cli/)
+[SuperDict](/superdict/)
+
+
+[encode/databases](https://github.com/encode/databases)
+
+[SQLAlchemy Core](https://docs.sqlalchemy.org/en/13/core/tutorial.html)
+
+
+## Common names
+
+yourname.yourapp
+
+
+
+## Common paragraphs
+
+
+In order to use the database layer with Uvicore you must first ensure you have installed the `database` extras from the framework.  This is by default already included in the `uvicore-installer`.
+```
+# Poetry pyproject.toml
+uvicore = {version = "0.1.*", extras = ["database", "redis", "web"]}
+
+# Pipenv Pipfile
+uvicore = {version = "==0.1.*", extras = ["database", "redis", "web"]}
+
+# requirements.txt
+uvicore[database,redis,web] == 0.1.*
+```
+
+
+
+After the database extras have been installed you must update your `config.package.py` `dependencies` OrderedDict in `config/package.py`
+```python
+    'dependencies': OrderedDict({
+        'uvicore.foundation': {
+            'provider': 'uvicore.foundation.services.Foundation',
+        },
+        # ...
+        'uvicore.database': {
+            'provider': 'uvicore.database.services.Database',
+        },
+        # ...
+    }),
+```
+
+
+
 
 ## Admonitions
 

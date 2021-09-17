@@ -25,6 +25,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     # Database table definition
     __tableclass__ = table.Posts
 
+
     id: Optional[int] = Field('id',
         primary=True,
         description='Post ID',
@@ -140,6 +141,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 
     def cb_results(self):
         return str(self.slug) + ' callback'
+
 
     async def _before_save(self):
         await super()._before_save()
