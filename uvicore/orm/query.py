@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import operator as operators
 import os
+
 from collections import OrderedDict as ODict
 from copy import deepcopy
-from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Union, Callable
 from uvicore.support.hash import sha1
 
 import sqlalchemy as sa
@@ -225,7 +226,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         return None
 
     async def get(self) -> Union[List[E], Dict[str, E]]:
-        """Execute query and return all rows found"""
+        """Execute a select query and return all rows found"""
 
         # Get this models connection configuration
         #connection = uvicore.db.connection(self._connection())
@@ -235,7 +236,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Load up the custom backend and fire off the get() executor
             #dump('not sqlalchemy')
 
-        # Build SQLAlchemy queries
+        # Build SQLAlchemy select queries
         queries = self._build_orm_queries('select')
         #dump(queries)
 
@@ -285,6 +286,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     results = await self.entity.fetchall(query.get('saquery'))
                 else:
                     has_many[query.get('name')] = await self.entity.fetchall(query.get('saquery'))
+
             # Convert results to List of entities
             entities = self._build_orm_results(main_query, results, has_many)
 
@@ -294,6 +296,27 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         # Return List of Entities
         return entities
 
+    async def delete(self) -> None:
+        """Execute delete query"""
+
+        # Build SQLAlchemy delete query
+        query, saquery = self._build_query('delete', self.query.copy())
+
+        # Execute query
+        await self.entity.execute(saquery)
+
+    async def update(self, **kwargs) -> None:
+        """Execute update query"""
+
+        # Build SQLAlchemy delete query
+        query, saquery = self._build_query('update', self.query.copy())
+
+        # Add in values
+        saquery = saquery.values(**kwargs)
+
+        # Execute query
+        await self.entity.execute(saquery)
+
     def _build_orm_queries(self, method: str) -> List:
         # Different than the single _build_query in the DB Builder
         # This one is for ORM only and build multiple DB queries from one ORM query.
@@ -301,13 +324,15 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
         # First query
         query = self.query.copy()
+
+        # Build relation (join) queries
         self._build_orm_relations(query)
 
         # Add all columns from main model
         query.selects = self.entity.selectable_columns(show_writeonly=self.query.show_writeonly)
 
         # Add all selects where any nested relation is NOT a *Many
-        relation: _Relation
+        relation: Relation
         for relation in query.relations.values():
             if not relation.contains_many(query.relations):
                 # Don't use the relation.entity table to get columns, use the join aliased table
@@ -326,6 +351,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             'saquery': saquery,
             'sql': str(saquery) if saquery is not None else '',
         })
+
 
         # So we have our first query perfect
         # Now we need to build a second or more queries for all *Many relations

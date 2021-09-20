@@ -73,8 +73,11 @@ class DbQueryBuilder(QueryBuilder[B, E], ABC):
 
     @abstractmethod
     async def get(self) -> List[RowProxy]:
-        """Execute query and return all rows found"""
+        """Execute select query and return all rows found"""
 
+    @abstractmethod
+    async def delete(self) -> None:
+        """Execute delete query"""
 
 class OrmQueryBuilder(QueryBuilder[B, E], ABC):
     @abstractmethod
@@ -109,6 +112,9 @@ class OrmQueryBuilder(QueryBuilder[B, E], ABC):
 
     @abstractmethod
     async def get(self) -> Union[List[E], Dict[str, E]]:
-        """Execute query and return all rows found"""
+        """Execute a select query and return all rows found"""
         pass
 
+    @abstractmethod
+    async def delete(self) -> None:
+        """Execute delete query"""

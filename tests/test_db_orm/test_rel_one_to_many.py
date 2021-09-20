@@ -27,13 +27,13 @@ async def test_one_to_many_inverse(app1):
     posts = await Post.query().include('creator').get()
     dump(posts)
     assert [
+        'anonymous@example.com',
+        'anonymous@example.com',
         'administrator@example.com',
         'administrator@example.com',
-        'manager1@example.com',
-        'manager1@example.com',
-        'manager1@example.com',
+        'administrator@example.com',
         'user2@example.com',
-        'user2@example.com',
+        'user1@example.com',
     ] == [x.creator.email for x in posts]
 
     # Many Posts have One Comment (Inverse of One-To-Many)

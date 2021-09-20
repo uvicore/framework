@@ -46,4 +46,3 @@ async def app1(event_loop):
     # Tear down tests
     ############################################################################
     #metadata.drop_all(engine)
-

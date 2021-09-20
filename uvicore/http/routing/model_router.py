@@ -19,15 +19,15 @@ from pydantic import BaseModel as PydanticModel
 
 class DeleteQuery(PydanticModel):
     where: Optional[dict[str, Union[str, List]]]
-    unlink: Optional[List]
 
     class Config:
         schema_extra = {
             "example": {
                 "where": {
-                    "name": "Foo",
+                    "creator_id": 1,
+                    "title": ["in", ["title1", "title2"]],
+                    "body": ["like", "%delete me%"],
                 },
-                "unlink": ['tags', 'hashtags'],
             }
         }
 
@@ -200,7 +200,6 @@ class ModelRoutes:
             # All fields in a PATCH are optional.
             pass
 
-
         @route.delete(
             path='/' + path + '/{id}',
             response_model=Model,
@@ -216,7 +215,7 @@ class ModelRoutes:
             # All fields in a PATCH are optional.
             try:
                 result = await Model.query().find(id)
-                await result.unlink('tags')
+                #await result.unlink('tags')
                 await result.delete()
             except Exception as e:
                 raise HTTPException(500, str(e))
@@ -229,19 +228,18 @@ class ModelRoutes:
             summary="Delete {} using a query".format(Model.tablename),
             description="Delete one or more {} ({}) using a query.".format(Model.tablename, Model.modelfqn),
         )
-        async def delete_one(request: Request, query: DeleteQuery):
+        async def delete_many(request: Request, query: DeleteQuery):
             # PATCH is used to UPDATE an EXISTNIG record.
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
             # All fields in a PATCH are optional.
             try:
-                dump(query, query['where'])
-                api = AutoApi(Model, scopes, request=request, where=query['where'])
+                dump(query, query.where)
+                api = AutoApi(Model, scopes, request=request, where=query.where)
                 q = api.orm_query()
+                #dump(q.query)
 
-                dump(q.query)
-
-                results = await q.get()
+                results = await q.delete()
                 dump(results)
                 #return results
 

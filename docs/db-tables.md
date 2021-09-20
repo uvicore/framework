@@ -27,7 +27,7 @@ import sqlalchemy as sa
 from uvicore.database import Table
 from uvicore.support.dumper import dump
 
-# Get related tablenames with proper prefixes
+# Get related table names with proper prefixes
 users = uvicore.db.tablename('auth.users')
 
 @uvicore.table()
@@ -89,6 +89,9 @@ If you are using the Uvicore ORM (optional as the database stands alone as a que
 ```python
 # ...
 from yourname.yourapp.database.tables import posts as table
+
+# Get related table names with proper prefixes
+users = uvicore.db.tablename('auth.users')
 
 @uvicore.model()
 class Post(Model['Post'], metaclass=ModelMetaclass):

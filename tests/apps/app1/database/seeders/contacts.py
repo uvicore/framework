@@ -7,6 +7,7 @@ async def seed():
     log.item('Seeding table contacts')
 
     contacts = [
+        Contact(name='Anonymous User', title='Anonymous', address='999 Anonymous Dr.', phone='999-999-9999', user_id=1),
         #Contact(name='Administrator', title='God', address='777 Heaven Ln', phone='777-777-7777', user_id=1),
         #NO - done in user.py seeder - Contact(name='Manager One', title='Manager1', address='111 Manager Way', phone='111-111-1111', user_id=2),
         Contact(name='Manager Two', title='Manager2', address='222 Manager Way', phone='222-222-2222', user_id=4),

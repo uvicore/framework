@@ -144,8 +144,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         # insert will never come into this get() or build function
 
         if method == 'select' and query.table is not None:
-
-            # Build .select() query from tables and joins and selectable columns
+            # Build .select() query from tables, joins and selectable columns
             saquery = self._build_select(query).distinct()
 
             # Build .select_from() query from tables and joins
@@ -153,6 +152,23 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
             # Build .order_by() query
             saquery = self._build_order_by(query, saquery)
+
+            # Build .group_by() queries
+            saquery = self._build_group_by(query, saquery)
+
+            # Build .limit() query
+            if query.limit: saquery = saquery.limit(query.limit)
+
+            # Build .offset query
+            if query.offset: saquery = saquery.offset(query.offset)
+
+        elif method == 'delete' and query.table is not None:
+            # Build .delete() query from table
+            saquery = sa.delete(query.table)
+
+        elif method == 'update' and query.table is not None:
+            # Build .update() query from table
+            saquery = sa.update(query.table)
 
         # Build WHERE AND queries
         if query.wheres:
@@ -164,14 +180,6 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             where_ors = self._build_where(query, query.or_wheres)
             saquery = saquery.where(sa.or_(*where_ors))
 
-        # Build .group_by() queries
-        saquery = self._build_group_by(query, saquery)
-
-        # Build .limit() query
-        if query.limit: saquery = saquery.limit(query.limit)
-
-        # Build .offset query
-        if query.offset: saquery = saquery.offset(query.offset)
 
         # Return query and SQLAlchemy query
         return (query, saquery)

@@ -9,7 +9,7 @@ async def test_select_single(app1):
     # One User has One Contact (contact table has user_id as UNIQUE)
     # Fetch One
     user = await User.query().include('contact').find(3)
-    assert user.contact.name == 'Manager Two'
+    assert user.contact.name == 'Manager One'
 
 
 @pytest.mark.asyncio
@@ -29,9 +29,9 @@ async def test_select_all(app1):
     # One User has One Contact (contact table has user_id as UNIQUE)
     # Fetch multiple
     users = await User.query().include('contact').get()
-    #for u in users: u.
     dump(users)
     assert [
+        'Anonymous User',
         'Administrator',
         'Manager One',
         'Manager Two',
@@ -48,7 +48,7 @@ async def test_select_inverse_single(app1):
     # Fetch one
     contact: ContactModel = await Contact.query().include('user').find(3)
     dump(contact)
-    assert contact.user.email == 'manager2@example.com'
+    assert contact.user.email == 'anonymous@example.com'
 
 
 @pytest.mark.asyncio
@@ -58,11 +58,11 @@ async def test_select_inverse_multiple(app1):
     # One Contact has One User (contact table has user_id as UNIQUE)
     # Fetch multiple
     contacts = await Contact.query().include('user').get()
-
     dump(contacts)
     assert [
         'administrator@example.com',
         'manager1@example.com',
+        'anonymous@example.com',
         'manager2@example.com',
         'user1@example.com',
         'user2@example.com',
@@ -78,9 +78,8 @@ async def test_select_inverse_through_single(app1):
     # Fetch one
     contact = await Contact.query().include('user', 'user.info').find(3)
     dump(contact)
-    assert contact.user.email == 'manager2@example.com'
-    assert contact.user.info.extra1 == 'user3 extra'
-
+    assert contact.user.email == 'anonymous@example.com'
+    assert contact.user.info.extra1 == 'user1 extra'
 
 
 @pytest.mark.asyncio
@@ -98,15 +97,15 @@ async def test_select_single_through_one_to_many(app1):
     dump(post)
 
     assert [
+        'manager1@example.com',
         'manager2@example.com',
-        'user1@example.com',
-        'administrator@example.com',
+        'anonymous@example.com',
     ] == [x.creator.email for x in post.comments]
 
     assert [
+        'Manager1',
         'Manager2',
-        'User1',
-        'God',
+        'Anonymous',
     ] == [x.creator.contact.title for x in post.comments]
 
 
@@ -122,22 +121,22 @@ async def test_select_single_through_many_to_many(app1):
         'tags.creator' # This is the One through the Many
         'tags.creator.contact',  # This is the One through the Many second level
     ).find(1)
-    #dump(post)
+    dump(post)
 
     assert [
+        'anonymous@example.com',
+        'anonymous@example.com',
         'administrator@example.com',
-        'administrator@example.com',
-        'manager1@example.com',
-        'user1@example.com',
-        'user1@example.com',
+        'manager2@example.com',
+        'manager2@example.com',
     ] == ([x.creator.email for x in post.tags])
 
     assert [
+        'Anonymous',
+        'Anonymous',
         'God',
-        'God',
-        'Manager1',
-        'User1',
-        'User1',
+        'Manager2',
+        'Manager2',
     ] == [x.creator.contact.title for x in post.tags]
 
 
@@ -159,8 +158,8 @@ async def test_select_single_from_one_through_one_to_many(app1):
             for comment in post.comments:
                 comments.append(comment)
     assert [
+        'anonymous@example.com',
         'administrator@example.com',
-        'manager1@example.com',
     ] == [x.creator.email for x in comments]
 
 
@@ -175,7 +174,7 @@ async def test_where(app1):
     assert ['Manager1'] == [x.contact.title for x in users]
 
     # Test muli-level where
-    posts = await Post.query().include('creator.contact').where('creator.contact.name', 'Manager One').get()
+    posts = await Post.query().include('creator.contact').where('creator.contact.name', 'Administrator').get()
     dump(posts)
     assert [
         'test-post3',
@@ -187,7 +186,7 @@ async def test_where(app1):
     # Slug is also a column mapper, database colun is called `unique_slug`, we get that test too!
     posts = (await Post.query()
         .include('creator.contact')
-        .where('creator.contact.name', 'Manager One')
+        .where('creator.contact.name', 'Administrator')
         .or_where([
             ('slug', 'test-post3'),
             ('slug', 'test-post5')
@@ -211,64 +210,19 @@ async def test_where_through_one_to_many(app1):
         'posts',
         'posts.comments',
         'posts.comments.creator'
-    ).where('posts.comments.creator.email', 'user1@example.com').get()
+    ).where('posts.comments.creator.email', 'anonymous@example.com').get()
     dump(users)
 
     # Where should filter only the parent record
-    assert len(users) == 1
+    assert len(users) == 2
 
     # But should not filter any children, not posts, not posts.comments
-    assert len(users[0].posts) == 3
-    assert users[0].email == 'manager1@example.com'
-    assert len(users[0].posts[0].comments) == 3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    assert users[0].email == 'anonymous@example.com'
+    assert users[1].email == 'administrator@example.com'
+    assert len(users[0].posts) == 1
+    assert len(users[1].posts) == 1
+    assert len(users[0].posts[0].comments) == 1
+    assert len(users[1].posts[0].comments) == 1
 
 
 @pytest.mark.asyncio

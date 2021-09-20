@@ -5,6 +5,8 @@ from uvicore.support.dumper import dump
 # Hybrid is where I use my Database Query Builder but with SQLAlchemy
 # table.c columns operations, aggregate functions and Binary Expressions
 
+# These will also move into test_* as they each have _builder, _encoed, _hybrid inside them
+
 @pytest.mark.asyncio
 async def test_select_count(app1):
     import sqlalchemy as sa

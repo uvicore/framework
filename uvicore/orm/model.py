@@ -369,7 +369,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             await self.delete(relation_name)
         await self.create(relation_name, models)
 
-    async def save(self) -> self:
+    async def save(self) -> Model:
         """Save this model to the database (insert or update)"""
 
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
@@ -462,10 +462,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # to delete the record and it could be used by many other records through the pivot, so we use unlink() instead
         # and we can also manually delete it if we watned (tags.where(post=1).delete() etc...)
         # So not sure I want a delete() to handle children?  If so maybe just HasOne and MorphOne?  Because with HasMany
-        # you would also have to speicy WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
+        # you would also have to specify WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
         # With a HasOne/MorphOne you could at least do post.delete('image') and thats quicker than image.find(post=1).delete() manually?
 
-        # Notice I have not yet added delete for HasMany (likd post comments).  May be a bit dangerous maybe?
+        # Notice I have not yet added delete for HasMany (like post comments).  May be a bit dangerous maybe?
 
         if relation_name is not None:
             # Deleting children, do NOT delete the parent after the children, this is children only

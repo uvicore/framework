@@ -2,9 +2,7 @@ import pytest
 import uvicore
 from uvicore.support.dumper import dump
 
-
-# Builder is a pure STRING based builder.  Don't mix in any SQLAlchemy columns
-# of functions.  I test all those in test_hybrid.py
+# Need to move into test_db_* properly
 
 @pytest.mark.asyncio
 async def test_select_all(app1):

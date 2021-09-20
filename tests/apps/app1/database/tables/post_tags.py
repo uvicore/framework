@@ -25,8 +25,8 @@ class PostTags(Table):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id"), nullable=False),
-        sa.Column('tag_id', sa.Integer, sa.ForeignKey(f"{tags}.id"), nullable=False),
+        sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id", ondelete='cascade'), nullable=False),
+        sa.Column('tag_id', sa.Integer, sa.ForeignKey(f"{tags}.id", ondelete='cascade'), nullable=False),
         sa.PrimaryKeyConstraint('post_id', 'tag_id')
     ]
 

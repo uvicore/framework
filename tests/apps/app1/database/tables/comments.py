@@ -28,7 +28,7 @@ class Comments(Table):
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('title', sa.String(length=100)),
         sa.Column('body', sa.Text()),
-        sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id"), nullable=False),
+        sa.Column('post_id', sa.Integer, sa.ForeignKey(f"{posts}.id", ondelete='cascade'), nullable=False),
         sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False),
     ]
 

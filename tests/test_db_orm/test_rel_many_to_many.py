@@ -77,15 +77,16 @@ async def test_where_through_one_to_many(app1):
 
     # Should limit by just 2 users
     assert [
-        'administrator@example.com',
-        'user2@example.com',
+        'anonymous@example.com',
+        'user1@example.com',
     ] == [x.email for x in users]
 
     # But should not filter any children
+    assert len(users[0].posts) == 2
+    assert len(users[1].posts) == 1
     assert len(users[0].posts[0].tags) == 5
     assert len(users[0].posts[1].tags) == 2
-    assert users[1].posts[0].tags == None
-    assert len(users[1].posts[1].tags) == 3
+    assert len(users[1].posts[0].tags) == 3
 
 
 @pytest.mark.asyncio

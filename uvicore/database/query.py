@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import operator as operators
-from copy import copy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 from uvicore.support.hash import sha1
 
@@ -96,9 +95,10 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         return None
 
     async def get(self) -> List[RowProxy]:
-        """Execute query and return all rows found"""
-        # Build query
-        query, saquery = self._build_query('select', copy(self.query))
+        """Execute select query and return all rows found"""
+
+        # Build select query
+        query, saquery = self._build_query('select', self.query.copy())
 
         # Detect caching
         cache = self.query.cache
@@ -128,9 +128,23 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
 
         return results
 
-# IoC Class Instance
-#_DbQueryBuilderIoc: _DbQueryBuilder = uvicore.ioc.make('DbQueryBuilder', _DbQueryBuilder)
+    async def delete(self) -> None:
+        """Execute delete query"""
 
-# Actual Usable Model Class Derived from IoC Inheritence
-#class DbQueryBuilder(Generic[B, E], _DbQueryBuilderIoc[B, E], BuilderInterface[B, E]):
-    #pass
+        # Build SQLAlchemy delete query
+        query, saquery = self._build_query('delete', self.query.copy())
+
+        # Execute query
+        await uvicore.db.execute(saquery, connection=self._connection())
+
+    async def update(self, **kwargs) -> None:
+        """Execute update query"""
+
+        # Build SQLAlchemy delete query
+        query, saquery = self._build_query('update', self.query.copy())
+
+        # Add in values
+        saquery = saquery.values(**kwargs)
+
+        # Execute query
+        await uvicore.db.execute(saquery, connection=self._connection())

@@ -1,28 +1,5 @@
-# Database Tests
+test_database is going to be deleted
 
-In the end, all database test for ORM, Builder, Hybrid and SQLAlchemy will live here.
-So all the test_orm will move into here eventually.
+move each item to test_db_*
 
-
-
-
-
-We have to test the same queries from all of these separate use cases
-
-* ORM
-* Query Builder
-* Hybrid Query Builder
-* Encode Databases
-
-
-# Queries to Test
-
-select
-where
-or where
-
-
-ORM Only
-include
-filter
-or filter
+see test_where_equal.py for a reference on how it will look
