@@ -18,39 +18,39 @@ def post(Posts):
 
 @pytest.mark.asyncio
 async def test_single(app1, Posts, post):
-    # Single where
-    query = post.select().where(post.c.creator_id == 2)
+    # Single NOT where
+    query = post.select().where(post.c.creator_id != 2)
     posts = await uvicore.db.fetchall(query, connection='app1')
-    assert [3, 4, 5] == [x.id for x in posts]
+    assert [1, 2, 6, 7] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_and(app1, Posts, post):
-    # Multiple where AND
-    query = post.select().where(post.c.creator_id == 2).where(post.c.owner_id == 1)
+    # Multiple where NOT AND
+    query = post.select().where(post.c.creator_id != 2).where(post.c.owner_id != 2)
     posts = await uvicore.db.fetchall(query)
-    assert [3, 4] == [x.id for x in posts]
+    assert [6, 7] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_and2(app1, Posts, post):
-    # Multiple where AND using multiple parameters on and_
-    query = post.select().where(sa.and_(post.c.creator_id == 2, post.c.owner_id == 1))
+    # Multiple where NOT AND using multiple parameters on and_
+    query = post.select().where(sa.and_(post.c.creator_id != 2, post.c.owner_id != 2))
     posts = await uvicore.db.fetchall(query)
-    assert [3, 4] == [x.id for x in posts]
+    assert [6, 7] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_or(app1, Posts, post):
-    # Where OR
-    query = post.select().where(sa.or_(post.c.unique_slug == 'test-post3', post.c.unique_slug == 'test-post4'))
+    # Where NOT OR
+    query = post.select().where(sa.or_(post.c.creator_id != 1, post.c.owner_id != 2))
     posts = await uvicore.db.fetchall(query)
-    assert [3, 4] == [x.id for x in posts]
+    assert [3, 4, 5, 6, 7] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_and_or(app1, Posts, post):
-    # Where AND with where OR
-    query = post.select().where(post.c.creator_id == 2).where(sa.or_(post.c.unique_slug == 'test-post3', post.c.unique_slug == 'test-post4'))
+    # Where NOT AND with where OR
+    query = post.select().where(post.c.unique_slug != 'test-post5').where(sa.or_(post.c.creator_id != 1, post.c.owner_id != 2))
     posts = await uvicore.db.fetchall(query)
-    assert [3, 4] == [x.id for x in posts]
+    assert [3, 4, 6, 7] == [x.id for x in posts]

@@ -19,6 +19,9 @@ async def test_and(app1):
     posts = await Post.query().where('creator_id', 'in', [1, 2]).where('owner_id', 'in', [1, 99]).get()
     assert [3, 4] == [x.id for x in posts]
 
+
+@pytest.mark.asyncio
+async def test_and2(app1):
     # Where IN with AND
     from app1.models.post import Post
     posts = await Post.query().where('other', 'null').where('owner_id', 'in', [1, 4]).get()

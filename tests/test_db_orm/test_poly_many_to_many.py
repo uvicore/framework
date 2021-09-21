@@ -5,7 +5,7 @@ from uvicore.support.dumper import dump
 
 
 @pytest.mark.asyncio
-async def test_orm(app1):
+async def XXXXXXXXXXXXXXXXXXXXXtest_get(app1):
     # The only example of a Polymorphic Many-To-Many is the hashtag table
 
     # FIXME, never done
@@ -22,22 +22,3 @@ async def test_orm(app1):
     dump(posts)
 
     assert False
-
-
-
-@pytest.mark.asyncio
-async def Xtest_builder(app1):
-    # FIXME, make it look exactly like the ORM version above
-    pass
-
-
-@pytest.mark.asyncio
-async def Xtest_hybrid(app1):
-    # FIXME, make it look exactly like the ORM version above
-    pass
-
-
-@pytest.mark.asyncio
-async def Xtest_sqlalchemy(app1):
-    # FIXME, make it look exactly like the ORM version above
-    pass

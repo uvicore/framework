@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import operator as operators
+from copy import copy
 from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
 from uvicore.support.hash import sha1
 
@@ -98,7 +99,9 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         """Execute select query and return all rows found"""
 
         # Build select query
-        query, saquery = self._build_query('select', self.query.copy())
+        # Use copy() insteadd of .copy() or nested tables tables get deepcopied and SA sees
+        # them as multiple tables thworing a 1066, "Not unique table/alias: 'posts'"
+        query, saquery = self._build_query('select', copy(self.query))  # do NOT use .copy()
 
         # Detect caching
         cache = self.query.cache
@@ -132,7 +135,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         """Execute delete query"""
 
         # Build SQLAlchemy delete query
-        query, saquery = self._build_query('delete', self.query.copy())
+        query, saquery = self._build_query('delete', copy(self.query))
 
         # Execute query
         await uvicore.db.execute(saquery, connection=self._connection())
@@ -141,7 +144,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         """Execute update query"""
 
         # Build SQLAlchemy delete query
-        query, saquery = self._build_query('update', self.query.copy())
+        query, saquery = self._build_query('update', copy(self.query))
 
         # Add in values
         saquery = saquery.values(**kwargs)
