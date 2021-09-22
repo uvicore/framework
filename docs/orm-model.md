@@ -8,6 +8,27 @@ About ORM models
 
 
 
+## OpenDocs Example Override
+
+The OpenAPI docs will provide an automatic example for request and response results based on your model schema.  You can override this default example by leveraging the [Pydantic](/orm-pydantic/) inheritance of your ORM models.  Pydantic provides a `Config` class with a `schema_extra.example` section.
+
+```python
+@uvicore.model()
+class Post(Model['Post'], metaclass=ModelMetaclass):
+    """Yourapp Posts"""
+
+    # Pydantic configuration override
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 1,
+                "slug": "title-as-a-slug",
+                #...
+            },
+        }
+    #...
+```
+
 
 
 

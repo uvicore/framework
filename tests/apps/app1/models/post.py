@@ -4,8 +4,6 @@ from typing import List, Optional, Dict
 
 import uvicore
 from app1.database.tables import posts as table
-#from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, MorphOne, MorphMany
-#from uvicore.orm.model import Model, ModelMetaclass
 from app1.models.image import Image
 from app1.models.attribute import Attribute
 from uvicore.support.dumper import dump, dd
@@ -32,9 +30,9 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         sortable=False,
         searchable=True,
         read_only=True,
-        # properties={
-        #     'test': 'hi'
-        # }
+        properties={
+            'test': 'hi'
+        }
     )
 
     slug: str = Field('unique_slug',

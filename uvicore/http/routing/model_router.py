@@ -5,16 +5,27 @@ from uvicore.typing import Optional, List, Tuple, Dict, Any, OrderedDict, Union
 from uvicore.http.routing.api_router import ApiRouter
 from uvicore.http.routing.router import Routes as Controller
 from uvicore.http.request import Request
+from uvicore.http.response import JSON
 from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.support import module
-from uvicore.http.exceptions import HTTPException
+from uvicore.http.exceptions import HTTPException, NotFound
 from uvicore.contracts import UserInfo
 from uvicore.http.routing import Guard
 from uvicore.orm import Model as OrmModel
 from uvicore.http.routing.auto_api import AutoApi
 from uvicore.support.collection import setvalue
 from pydantic import BaseModel as PydanticModel
+from pydantic import BaseModel
+
+from starlette.responses import JSONResponse
+
+
+class HTTPMessage(BaseModel):
+  #status_code: int
+  message: str
+  #detail: Optional[str]
+  #extra: Optional[Dict]
 
 
 class DeleteQuery(PydanticModel):
@@ -68,6 +79,13 @@ class ModelRoutes:
         @route.get(
             path='/' + path + '/{id}',
             inherits=AutoApi.getsig,
+            responses={
+                404: {
+                    'model': HTTPMessage,
+                    'description': 'xyz here',
+                    #'content': {"application/json": HTTPMessage},
+                },
+            },
             response_model=Model,
             tags=tags,
             scopes=scopes['read'],
@@ -81,7 +99,10 @@ class ModelRoutes:
             # Run ORM query for results
             try:
                 results = await query.find(id)
-                return results
+                if results:
+                    return results
+                else:
+                    return JSONResponse(status_code=404, content={"message": "Item not found"})
             except:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
 
@@ -200,8 +221,17 @@ class ModelRoutes:
             # All fields in a PATCH are optional.
             pass
 
+
+
+
         @route.delete(
             path='/' + path + '/{id}',
+            # responses={
+            #     404: {
+            #         'model': HTTPMessage,
+            #         'description': 'xyz here'
+            #     },
+            # },
             response_model=Model,
             tags=tags,
             scopes=scopes['delete'],
@@ -209,46 +239,53 @@ class ModelRoutes:
             description="Delete a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
         )
         async def delete_one(request: Request, id: Union[str,int]):
-            # PATCH is used to UPDATE an EXISTNIG record.
-            # The PATCH may be a partial object as it is merged with the existing object before being saved.
-            # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
-            # All fields in a PATCH are optional.
+            # DELETE must act on a single resource ONLY /{id}.  It does NOT take a body/paylad at all.
+            # If you want to BULK delete using a body/payload with a JSON query, use POST instead with
+            # a new custom endpoint like POST /users/delete payload={"where": ...}
             try:
                 result = await Model.query().find(id)
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+            if result:
                 #await result.unlink('tags')
                 await result.delete()
-            except Exception as e:
-                raise HTTPException(500, str(e))
+                return result
+            else:
+                raise NotFound('asdf')
+                #return JSON(status_code=404, content={"message": "asdf"})
 
-        @route.delete(
-            path='/' + path,
-            response_model=Model,
-            tags=tags,
-            scopes=scopes['delete'],
-            summary="Delete {} using a query".format(Model.tablename),
-            description="Delete one or more {} ({}) using a query.".format(Model.tablename, Model.modelfqn),
-        )
-        async def delete_many(request: Request, query: DeleteQuery):
-            # PATCH is used to UPDATE an EXISTNIG record.
-            # The PATCH may be a partial object as it is merged with the existing object before being saved.
-            # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
-            # All fields in a PATCH are optional.
-            try:
-                dump(query, query.where)
-                api = AutoApi(Model, scopes, request=request, where=query.where)
-                q = api.orm_query()
-                #dump(q.query)
+        # NO, not RESTful.  DELETE does NOT take a body/payload
+        # Instead, if you want bulk deletes, create a POST /users/delete with a payload query
+        # @route.delete(
+        #     path='/' + path,
+        #     response_model=Model,
+        #     tags=tags,
+        #     scopes=scopes['delete'],
+        #     summary="Delete {} using a query".format(Model.tablename),
+        #     description="Delete one or more {} ({}) using a query.".format(Model.tablename, Model.modelfqn),
+        # )
+        # async def delete_many(request: Request, query: DeleteQuery):
+        #     # PATCH is used to UPDATE an EXISTNIG record.
+        #     # The PATCH may be a partial object as it is merged with the existing object before being saved.
+        #     # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
+        #     # All fields in a PATCH are optional.
+        #     try:
+        #         dump(query, query.where)
+        #         api = AutoApi(Model, scopes, request=request, where=query.where)
+        #         q = api.orm_query()
+        #         dump(q.query)
 
-                results = await q.delete()
-                dump(results)
-                #return results
+        #         results = await q.delete()
+        #         dump(results)
+        #         #return results
 
 
-                #result = await Model.query().find(id)
-                #await result.unlink('tags')
-                #await result.delete()
-            except Exception as e:
-                raise HTTPException(500, str(e))
+        #         #result = await Model.query().find(id)
+        #         #await result.unlink('tags')
+        #         #await result.delete()
+        #     except Exception as e:
+        #         raise HTTPException(500, str(e))
 
 
 

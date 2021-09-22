@@ -11,16 +11,16 @@ from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
 class Comment(Model['Comment'], metaclass=ModelMetaclass):
     """App1 Post Comments"""
 
-    class Config:
-        #title = 'nballs1'
-        schema_extra = {
-            "example": {
-                "where": {
-                    "name": "Foo2",
-                },
-                "unlink": ['tags2', 'hashtags2'],
-            },
-        }
+    # class Config:
+    #     #title = 'nballs1'
+    #     schema_extra = {
+    #         "example": {
+    #             "where": {
+    #                 "name": "Foo2",
+    #             },
+    #             "unlink": ['tags2', 'hashtags2'],
+    #         },
+    #     }
 
     # Database table definition
     __tableclass__ = table.Comments
@@ -43,8 +43,8 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
     id: Optional[int] = Field('id',
         primary=True,
         description='Comment ID',
-        sortable=True,
-        searchable=True,
+        #sortable=True,
+        #searchable=True,
         read_only=True,
     )
 

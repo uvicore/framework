@@ -34,13 +34,14 @@ class ApiRouter(Router['ApiRoute']):
         middleware: Optional[List] = None,
         auth: Optional[Guard] = None,
         scopes: Optional[List] = None,
+        inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
-        inherits: Optional[Callable] = None,
     ) -> None:
         """Add a new HTTP GET route to the ApiRouter
 
@@ -79,6 +80,7 @@ class ApiRouter(Router['ApiRoute']):
         inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
@@ -121,6 +123,7 @@ class ApiRouter(Router['ApiRoute']):
         inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
@@ -163,6 +166,7 @@ class ApiRouter(Router['ApiRoute']):
         inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
@@ -205,6 +209,7 @@ class ApiRouter(Router['ApiRoute']):
         inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
@@ -248,6 +253,7 @@ class ApiRouter(Router['ApiRoute']):
         inherits: Optional[Callable] = None,
 
         # ApiRouter specific
+        responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
@@ -313,6 +319,7 @@ class ApiRouter(Router['ApiRoute']):
                 'autoprefix': autoprefix,
                 'original_path': path,
                 'original_name': name,
+                'responses': responses,
 
                 # ApiRouter specific
                 'response_model': response_model,

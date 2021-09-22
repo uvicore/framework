@@ -12,7 +12,6 @@ async def cli():
     #await orm_insert_play()
     #await poly_play()
 
-
     from app1.models import Post
     post = await Post.query().find(1)
     dd(post)

@@ -21,8 +21,8 @@ class User(Model['User'], metaclass=ModelMetaclass):
         primary=True,
         required=False,
         description='User Primary ID',
-        sortable=True,
-        searchable=True,
+        #sortable=True,
+        #searchable=True,
     )
 
     uuid: Optional[str] = Field('uuid',

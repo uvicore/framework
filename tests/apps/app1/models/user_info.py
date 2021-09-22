@@ -19,8 +19,8 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
     id: Optional[int] = Field('id',
         primary=True,
         description='User Primary ID',
-        sortable=True,
-        searchable=True,
+        #sortable=True,
+        #searchable=True,
     )
 
     extra1: str = Field('extra1',

@@ -23,6 +23,7 @@ nav:
     - routing.md
     - views.md
     - controllers.md
+    - exceptions.md
   - Db/Orm:
     - db-config.md
     - db-tables.md

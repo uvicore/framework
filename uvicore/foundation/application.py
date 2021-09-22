@@ -1,8 +1,7 @@
 import os
 import sys
-
 import uvicore
-from uvicore.typing import Any, List, NamedTuple, Tuple, Dict, OrderedDict
+from uvicore.typing import Any, List, NamedTuple, Tuple, Dict, OrderedDict, Union
 from uvicore.package import Package
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
@@ -17,6 +16,17 @@ from uvicore.console import command_is
 
 #import uvicore.foundation.events.app
 from uvicore.foundation.events import app as events
+
+try:
+    from starlette.applications import Starlette
+except ImportError:  # pragma: nocover
+    Starlette = None  # type: ignore
+
+try:
+    from fastapi import FastAPI
+except ImportError:  # pragma: nocover
+    FastAPI = None  # type: ignore
+
 
 @uvicore.service('uvicore.foundation.application.Application',
     aliases=['Application', 'application', 'App', 'app'],
@@ -42,7 +52,7 @@ class Application(ApplicationInterface):
         return self._perfs
 
     @property
-    def http(self) -> ServerInterface:
+    def http(self) -> Union[Starlette, FastAPI]:
         return self._http
 
     # No, don't want duplicate entrypoints
@@ -150,6 +160,21 @@ class Application(ApplicationInterface):
 
         # Return application
         return self
+
+    def package(self, package: str = None, *, main: bool = False, hint: str = None) -> PackageInterface:
+        if package:
+            return self.packages.get(package)
+            #return self.packages.dotget(package)
+        elif main:
+            return next(package for package in self.packages.values() if package.main == True)
+        elif hint:
+            return self.package('app1')
+            #return self.packages.dotget(self.main)
+
+    def perf(self, item) -> None:
+        if self.debug:
+            self.perfs.append(item)
+            print(item)
 
     def _build_provider_graph(self, app_config: Dict) -> None:
         """Build recursive dependency graph of all packages"""
@@ -279,21 +304,6 @@ class Application(ApplicationInterface):
             # Often we won't have any config for a package, if so return empty Dict
             pass
         return config
-
-    def package(self, package: str = None, *, main: bool = False, hint: str = None) -> PackageInterface:
-        if package:
-            return self.packages.get(package)
-            #return self.packages.dotget(package)
-        elif main:
-            return next(package for package in self.packages.values() if package.main == True)
-        elif hint:
-            return self.package('app1')
-            #return self.packages.dotget(self.main)
-
-    def perf(self, item) -> None:
-        if self.debug:
-            self.perfs.append(item)
-            print(item)
 
     # NO, don't want duplicates of everything everywhere, just import dumper
     # def dump(self, *args) -> None:

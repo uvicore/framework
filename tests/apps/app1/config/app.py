@@ -55,6 +55,17 @@ config = {
             'path': env('ASSET_PATH', '/assets'),
         },
 
+        # Web exception handlers
+        'exception': {
+            'handler': 'uvicore.http.exceptions.handlers.web'
+        },
+        # 'exceptions': {
+        #     'main': 'uvicore.http.exceptions.handlers.web',
+        #     #404: 'uvicore.http.exceptions.handlers.handle_404',
+        # },
+
+
+        # Web middleware
         'middleware': OrderedDict({
             'TrustedHost': {
                 'module': 'uvicore.http.middleware.TrustedHost',
@@ -109,6 +120,18 @@ config = {
             # If oauth2 is enabled, edit app.auth.oauth2 configuration below
             'oauth2_enabled': True,
         },
+
+        # API exception handlers
+        'exception': {
+            'handler': 'uvicore.http.exceptions.handlers.api',
+        },
+        #'exceptions': {
+        # 'exceptions': {
+        #     'main': 'uvicore.http.exceptions.handlers.api',
+        #     404: 'uvicore.http.exceptions.handlers.handle_404',
+        # },
+
+        # API middleware
         'middleware': OrderedDict({
             # Only allow this site to be hosted from these domains
             'TrustedHost': {

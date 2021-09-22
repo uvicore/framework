@@ -153,6 +153,40 @@ Notes from within the model_router.py, moved here
 
 **REST Notes**
 ```
+
+There are certain verbs which must NOT carry a body/payload.  Instead they act on a single resource defined in the URL.  These verbs are GET/HEAD/DELETE/OPTIONS.  Which means you can only DELETE a /{id} resource, never bulk with some sort of DELETE body payload.  Body in DELETE is technically allowed, but is generally ignored by clients, proxies and should not be used.  Get obviously has no body whatsoever, only URL and possibly queryParameters.
+
+encode/httpx for example does not allow body data on GET/HEAD/DELETE/OPTIONS as expected.
+
+Further, some verbs that do except body payload should still only ever act on a single resource defined in the url /{id}.  Like PUT.  PUT should never do bulk inserts.  PUT acts on a single resource to UPDATE that resource using the URL /{id}.  PUT can have a body/payload, which is the FULL resource to UPDATE.
+
+At first I created my DELETE to accept
+
+https://www.restapitutorial.com/lessons/httpmethods.html
+PUT should be idempotent always, if it increments a counter, its NOT idempotent and POST should be used
+
+GET
+Has NO body/payload
+/user       To get entire collection
+/user/{id}  to get a single item
+queryParams are OK on either / or /{id}
+
+POST - creating, but also a catch-all verb
+Has body/payload
+/user           To create a new user (not idempotent), body can be one or many items
+/user/delete    Custom, can have a body payload with complex query of WHAT to delete
+
+
+
+
+
+https://stackoverflow.com/questions/299628/is-an-entity-body-allowed-for-an-http-delete-request
+https://lists.w3.org/Archives/Public/ietf-http-wg/2020JanMar/0123.html
+https://stackoverflow.com/questions/21863326/delete-multiple-records-using-rest
+
+
+
+
 https://www.mscharhag.com/p/rest-api-design
 https://www.mscharhag.com/api-design/http-post-put-patch
 

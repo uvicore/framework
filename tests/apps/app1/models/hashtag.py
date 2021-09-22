@@ -15,8 +15,8 @@ class Hashtag(Model['Hashtag'], metaclass=ModelMetaclass):
     id: Optional[int] = Field('id',
         primary=True,
         description='Hashtag ID',
-        sortable=False,
-        searchable=True,
+        #sortable=False,
+        #searchable=True,
         read_only=True,
     )
 

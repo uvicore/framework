@@ -49,6 +49,9 @@ class Http(Handler):
         # Add global web and api specific middleware
         self.add_middleware(web_server, api_server)
 
+        # Add global web and api specific exception handlers
+        self.add_exception_handlers(web_server, api_server)
+
         # Get configured web and api prefixes
         web_prefix = self.get_prefix('app.web.prefix')
         api_prefix = self.get_prefix('app.api.prefix')
@@ -91,21 +94,6 @@ class Http(Handler):
         async def shutdown():
             await HttpServerEvents.Shutdown().dispatch_async()
 
-
-        # # Experiment add custom exceptions
-        # When you do, see if you can get JSON responses to api_server and HTML responses to web_server
-        # And adjust the JSON from fastapi exception_handler.py to {message} not {detail} to look more like kongs return
-        # async def internal_server_error_500(request, exc):
-        #     print(exc)
-        #     return response.HTML(content='custom 500 internal server error', status_code=500)
-
-        # async def not_found_404(request, exc):
-        #     print(exc)
-        #     return response.HTML(content='custom 404 not found', status_code=505)
-        # uvicore.app.http.server.add_exception_handler(500, internal_server_error_500)
-        # uvicore.app.http.server.add_exception_handler(404, not_found_404)
-        #dump('xxxxxx', uvicore.app.http.exception_handlers)
-
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
         debug_dump = False
         if debug_dump:
@@ -143,10 +131,10 @@ class Http(Handler):
 
         # Allow only if running as HTTP or from certain CLI commands like package list/show...
         if package.registers.web_routes and (
-            uvicore.app.is_http or
-            command_is('http') or
-            command_is('package') or
-            command_is('ioc')
+            uvicore.app.is_http #or
+            #command_is('http') or
+            #command_is('package') or
+            #command_is('ioc')
         ) == False: return
 
         routes_module = package.web.routes_module
@@ -299,8 +287,38 @@ class Http(Handler):
                 cls = module.load(middleware.module).object
                 api_server.add_middleware(cls, **middleware.options)
 
+    def add_exception_handlers(self, web_server: FastAPI, api_server: FastAPI) -> None:
+        """Add global web and api exception handlers to their respective servers"""
+        from starlette.exceptions import HTTPException
+
+        # Add global web exception handlers
+        if web_server and uvicore.config.app.web.exception.handler:
+            cls = module.load(uvicore.config.app.web.exception.handler).object
+            web_server.add_exception_handler(HTTPException, cls)
+            # for name, handler in uvicore.config.app.web.exceptions.items():
+            #     if str(name).lower() == 'main':
+            #         cls = module.load(handler).object
+            #         web_server.add_exception_handler(HTTPException, cls)
+
+        # Add global api exception handlers
+        if api_server and uvicore.config.app.api.exception.handler:
+            cls = module.load(uvicore.config.app.api.exception.handler).object
+            api_server.add_exception_handler(HTTPException, cls)
+
+            # for name, handler in uvicore.config.app.api.exceptions.items():
+            #     if str(name).lower() == 'main':
+            #         cls = module.load(handler).object
+            #         api_server.add_exception_handler(HTTPException, cls)
+
+        #dump(api_server.__dict__)
+        #dump(web_server.__dict__)
+
     def add_web_routes(self, web_server, web_routes: Dict[str, WebRoute], prefix) -> None:
         """Add web routes to the web server"""
+
+        # Do nothing if no api_routes are defined
+        if not web_routes: return
+
         for route in web_routes.values():
             web_server.add_api_route(
                 path=(prefix + route.path) or '/',
@@ -321,6 +339,9 @@ class Http(Handler):
 
     def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute], prefix) -> None:
         """Add api routes to the api server"""
+
+        # Do nothing if no api_routes are defined
+        if not api_routes: return
 
         # Get important app configs
         api_prefix = uvicore.config.app.api.prefix  # Different that the prefix parameter
@@ -417,6 +438,7 @@ class Http(Handler):
                 methods=route.methods,
                 name=route.name,
                 response_model=route.response_model,
+                responses=route.responses,
                 tags=route.tags,
                 dependencies=route.middleware,
                 summary=route.summary,

@@ -259,6 +259,7 @@ class ModelMetaclass(PydanticMetaclass):
         # begin with a _ and convert them into ModelField classes
         # This is why I keep the originals in my new __modelfields__ attribute
         cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
+        #dump(name, cls, cls.__dict__, '-----------------------------')
 
         # Meta is fired up more than once, sometimes pydantic has NOT
         # actually populated all fields.  If no fields, ignore rest of this custom __new__

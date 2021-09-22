@@ -17,8 +17,8 @@ class Tag(Model['Tag'], metaclass=ModelMetaclass):
     id: Optional[int] = Field('id',
         primary=True,
         description='Post ID',
-        sortable=False,
-        searchable=True,
+        #sortable=False,
+        #searchable=True,
         read_only=True,
     )
 
