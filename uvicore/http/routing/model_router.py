@@ -237,7 +237,23 @@ class ModelRoutes:
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
             # All fields in a PATCH are optional.
-            pass
+            try:
+                result = await Model.query().find(id)
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+            if result:
+                # PUT requires a complete item.  It is not partial, it is not merged like a PATCH
+                # So we take the entire "item" and simply use the PK from results to update the right record
+                for (key, value) in item.items():
+                    setattr(result, key, value)
+                try:
+                    await result.save()
+                    return result
+                except Exception as e:
+                    raise HTTPException(500, str(e))
+            else:
+                raise NotFound('{} {} not found'.format(Model.modelname, id))
 
 
 
