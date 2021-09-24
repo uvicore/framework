@@ -14,6 +14,5 @@ pytest \
     --color=yes \
     --log-level=WARNING \
     -W ignore::DeprecationWarning \
-    --ignore=tests/test_api \
     --ignore=tests/test_database \
     ${@}

@@ -5,7 +5,7 @@ from tests.seeders import seed_post8
 
 
 @pytest.mark.asyncio
-async def Xtest_single(app1, client):
+async def test_single(app1, client):
     # Delete single item by /{id} in url
     from app1.models import Post
 
@@ -25,8 +25,10 @@ async def Xtest_single(app1, client):
     assert(seeded_posts == [x.slug for x in posts])
 
 
+# This needs to be changed to a POST on /entity/delete
+# Because DELETE cannot take a body with a query
 @pytest.mark.asyncio
-async def test_where_query(app1, client):
+async def Xtest_where_query(app1, client):
     # Delete using a where query
     from app1.models import Post
 

@@ -20,21 +20,17 @@ class Attribute(Model['Attribute'], metaclass=ModelMetaclass):
 
     attributable_type: str = Field('attributable_type',
         description='Polymorphic Attribute Type',
-        required=True,
     )
 
     attributable_id: int = Field('attributable_id',
         description="Polymorphic Attribute Types ID",
-        required=True,
     )
 
     key: str = Field('key',
         description='Attribute Key',
-        required=True,
         json=True,
     )
 
     value: Any = Field('value',
         description="Attribute Value",
-        required=True,
     )

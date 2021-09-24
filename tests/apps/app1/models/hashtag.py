@@ -22,7 +22,6 @@ class Hashtag(Model['Hashtag'], metaclass=ModelMetaclass):
 
     name: str = Field('name',
         description='Hashtag Name',
-        required=True,
     )
 
     @staticmethod

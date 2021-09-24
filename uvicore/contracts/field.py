@@ -9,7 +9,7 @@ class Field:
     title: Optional[str]
     description: Optional[str]
     default: Optional[Any]
-    required: Optional[bool]
+    #required: Optional[bool]
     sortable: Optional[bool]
     searchable: Optional[bool]
     read_only: Optional[bool]
@@ -20,6 +20,9 @@ class Field:
     json: Optional[bool]
     properties: Optional[Dict]
 
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    example: Optional[Any] = None
 
 # At bottom due to circular issues between these two contracts
 from .relation import Relation  # isort:skip

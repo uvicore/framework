@@ -62,7 +62,7 @@ aioredis = {version = "1.3.*", optional = true}
 #fastapi = {version = "0.64.*", optional = true}  # starlette 0.13.6
 
 # This one bumps to starlette 0.14.2 and seems to work perfectly
-fastapi = {version = "0.65.*", optional = true}  # fastapi 0.65.3 starlette 0.14.2
+#fastapi = {version = "0.65.*", optional = true}  # fastapi 0.65.3 starlette 0.14.2
 
 # This one is broken with ModelField object is not iterable
 # All because on openapi/models.py they set class Config extra to 'allow' by default
@@ -70,7 +70,7 @@ fastapi = {version = "0.65.*", optional = true}  # fastapi 0.65.3 starlette 0.14
 
 # Latest version, broken even more than 0.66.1, not just because of extra='allow'
 # but also sortable, searchable and properties in Field() are broken
-#fastapi = {version = "0.68.*", optional = true}  # fastapi 0.66.1 starlette 0.14.2
+fastapi = {version = "0.68.*", optional = true}  # fastapi 0.66.1 starlette 0.14.2
 
 
 uvicorn = {version = "0.13.*", optional = true}

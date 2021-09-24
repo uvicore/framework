@@ -24,22 +24,18 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
 
     imageable_type: str = Field('imageable_type',
         description='Polymorphic Image Type',
-        required=True,
     )
 
     imageable_id: int = Field('imageable_id',
         description="Polymorphic Image Type ID",
-        required=True,
     )
 
     filename: str = Field('filename',
         description='Image filename (no path)',
-        required=True,
     )
 
     size: int = Field('size',
         description="Image size (in bytes)",
-        required=True,
     )
 
     # Polymorphic One-To-One dynamic model based on imageable_type and imageable_id
@@ -63,7 +59,6 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
 
     # creator_id: int = Field('creator_id',
     #     description="Comment Creator UserID",
-    #     required=True,
     # )
 
     # # One-To-Many Inverse (One Post has One Creator)

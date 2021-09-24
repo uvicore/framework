@@ -4,35 +4,51 @@ from fastapi.testclient import TestClient
 from uvicore.support.dumper import dump
 
 
-def Xtest_single(app1):
-    client = TestClient(uvicore.app.http)
+seeded_posts = ['test-post1', 'test-post2', 'test-post3', 'test-post4', 'test-post5', 'test-post6', 'test-post7'];
 
-    res = client.post("/api/posts", json={
+@pytest.mark.asyncio
+async def Xtest_single(app1, client):
+    # Create a single item, NO relations
+    from app1.models import Post
+
+    res = await client.post("/api/posts", json={
+        # Minimum required fields for a post
         'slug': 'test-post8',
         'title': 'Test Post8',
         'body': 'This is the body for test post8.  I like the taste of water.',
-        #'other': 'other stuff1',
-        #'cb': 'test-post1 callback',
         'creator_id': 1,
-        #'creator': None,
         'owner_id': 2,
-        #'owner': None,
-        #'comments': None,
-        #'tags': None,
-        #'image': None,
-        #'attributes': None,
-        #'hashtags': None
     })
     assert res.status_code == 200, res.text
-    post = res.json()
+
+    # Convert post JSON Dict into actual Model to see if pydantic validation passes
+    result = res.json()
+    assert type(result) == dict
+    post = Post.mapper(result).model(perform_mapping=False)
+    assert type(post) == Post
     dump(post)
-    #assert False
+
+    # Check if new posts exists in all posts
+    posts = await Post.query().get()
+    new_posts = seeded_posts.copy()
+    new_posts.extend(['test-post8'])
+    assert(new_posts == [x.slug for x in posts])
+
+    # Delete test post using API
+    res = await client.delete('/api/posts/' + str(post.id))
+    assert res.status_code == 200, res.text
+
+    # Check normal seeded posts
+    posts = await Post.query().get()
+    assert(seeded_posts == [x.slug for x in posts])
 
 
-def Xtest_bulk(app1):
-    client = TestClient(uvicore.app.http)
+@pytest.mark.asyncio
+async def Xtest_bulk(app1, client):
+    # Create multiple bulk items, NO relations
+    from app1.models import Post
 
-    res = client.post("/api/posts", json=[
+    res = await client.post("/api/posts", json=[
         {
             'slug': 'test-post9',
             'title': 'Test Post9',
@@ -49,31 +65,90 @@ def Xtest_bulk(app1):
         },
     ])
     assert res.status_code == 200, res.text
-    post = res.json()
-    dump(post)
-    #assert False
+
+    # Convert each post JSON Dict into actual Model to see if pydantic validation passes
+    results = res.json()
+    assert type(results) == list
+    created_posts = []
+    for result in results:
+        post = Post.mapper(result).model(perform_mapping=False)
+        assert type(post) == Post
+        created_posts.append(post)
+    dump(created_posts)
+
+    # Check if new posts exists in all posts
+    posts = await Post.query().get()
+    new_posts = seeded_posts.copy()
+    new_posts.extend(['test-post9', 'test-post10'])
+    assert(new_posts == [x.slug for x in posts])
+
+    # Delete test posts using API
+    for post in created_posts:
+        res = await client.delete('/api/posts/' + str(post.id))
+        assert res.status_code == 200, res.text
+
+    # Check normal seeded posts
+    posts = await Post.query().get()
+    assert(seeded_posts == [x.slug for x in posts])
 
 
-def Xtest_single_relations_many_to_many(app1):
-    client = TestClient(uvicore.app.http)
+@pytest.mark.asyncio
+async def test_single_relations(app1, client):
+    # Create a single item, with multiple types of relations
+    from app1.models import Post, Tag, Hashtag
 
-    # Cannot use await with TestClient for some reason, loop already started
-    # So use API go get tags
-    res = client.get("/api/tags")
-    tags = {x['name']:x for x in res.json()}
+    # Get all tags keyed by name
+    tags = await Tag.query().key_by('name').get()
 
-    res = client.post("/api/posts/with_relations", json={
+    # Get all hastags keyed by name
+    hashtags = await Hashtag.query().key_by('name').get()
+
+    res = await client.post("/api/posts/with_relations", json={
         'slug': 'test-post11',
         'title': 'Test Post11',
         'body': 'This is the body for test post11.  I like the taste of water.',
         'creator_id': 1,
         'owner_id': 2,
+
+        # Many-To-Many tags
         'tags': [
-            #{'id': 1, 'name': 'linux', 'creator_id': 1},
-            #{'id': 3, 'name': 'bsd', 'creator_id': 2},
-            tags['linux'],
-            tags['bsd'],
+            tags['linux'].dict(),
+            tags['bsd'].dict(),
+
+            # New Tag as Model (tag created and linked)
+            Tag(name='test11', creator_id=4).dict(),
+
+            # New Tag as Dict (tag created and linked)
+            {'name': 'test11-2', 'creator_id': 4},
         ],
+
+        # Polymorphic Many-To-Many Hashtags
+        'hashtags': [
+            hashtags['important'].dict(),
+            hashtags['outdated'].dict(),
+            hashtags['outdated'].dict(),  # Yes its a duplicate, testing that it doesn't fail
+
+            # New hashtag by model
+            Hashtag(name='test11').dict(),
+
+            # New hashtag by dict
+            {'name': 'test11-2'},
+        ],
+
+        # Polymorphic One-To-Many Attributes
+        'attributes': [
+            {'key': 'post11-test1', 'value': 'value for post11-test1'},
+            {'key': 'post11-test2', 'value': 'value for post11-test2'},
+            {'key': 'badge', 'value': 'IT'},
+        ],
+
+        # Polymorphic One-To-One
+        'image': {
+            'filename': 'post11-image.png',
+            'size': 1234932,
+        },
+
+        # One-To-Many comments
         'comments': [
             {
                 'title': 'Post11 Comment1',
@@ -86,7 +161,8 @@ def Xtest_single_relations_many_to_many(app1):
     assert res.status_code == 200, res.text
     post = res.json()
     dump(post)
-    #assert False
+
+    assert False
 
 
 def Xtest_bulk_relations_many_to_many(app1):

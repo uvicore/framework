@@ -20,6 +20,17 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 #class PostModel(Model['PostModel']):
     """App1 Posts"""
 
+    #class Config:
+        #title: str = "Post Moddddd"
+        #extra: str = "allow"
+        # schema_extra = {
+        #     "example": {
+        #         "id": 1,
+        #         'slug': 'slug-here',
+        #     },
+        # }
+
+
     # Database table definition
     __tableclass__ = table.Posts
 
@@ -32,38 +43,38 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         read_only=True,
         properties={
             'test': 'hi'
-        }
+        },
+        example=1,
     )
 
     slug: str = Field('unique_slug',
         description='URL Friendly Post Title Slug',
-        required=True,
         # properties={
         #     'stuff': 'hi',
         #     'stuff2': 'hi2',
         # }
+        max_length=255,
+        example='post-one',
     )
 
     title: str = Field('title',
         description='Post Title',
-        required=True,
     )
 
     body: str = Field('body',
         description='Post Body',
     )
 
-    other: str = Field('other',
+    other: Optional[str] = Field('other',
         description='Post Other',
     )
 
-    cb: str = Field(None,
+    cb: Optional[str] = Field(None,
         callback='cb_results'
     )
 
     creator_id: int = Field('creator_id',
         description="Post Creator UserID",
-        required=True,
     )
 
     # One-To-Many Inverse (One Post has One Creator)
@@ -75,7 +86,6 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 
     owner_id: int = Field('owner_id',
         description="Post Owner UserID",
-        required=True,
     )
 
     # One-To-Many Inverse (One Post has One Owner)

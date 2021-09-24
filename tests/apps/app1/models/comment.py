@@ -50,7 +50,6 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
 
     title: str = Field('title',
         description='Comment Title',
-        required=True,
     )
 
     body: str = Field('body',
@@ -59,7 +58,6 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
 
     post_id: Optional[int] = Field('post_id',
         description="Comment PostID",
-        #required=True,
     )
 
     # One-To-Many Inverse (One Comment has One Post)
@@ -73,7 +71,6 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
 
     creator_id: int = Field('creator_id',
         description="Comment Creator UserID",
-        required=True,
     )
 
     # One-To-Many Inverse (One Post has One Creator)

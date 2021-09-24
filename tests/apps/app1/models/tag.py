@@ -24,12 +24,10 @@ class Tag(Model['Tag'], metaclass=ModelMetaclass):
 
     name: str = Field('name',
         description='Tag Name',
-        required=True,
     )
 
     creator_id: int = Field('creator_id',
         description="Tag Creator UserID",
-        required=True,
     )
 
     # One-To-Many Inverse (One Post has One User)

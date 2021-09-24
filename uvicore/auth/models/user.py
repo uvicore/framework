@@ -19,7 +19,6 @@ class User(Model['User'], metaclass=ModelMetaclass):
 
     id: Optional[int] = Field('id',
         primary=True,
-        required=False,
         description='User Primary ID',
         #sortable=True,
         #searchable=True,
@@ -27,55 +26,45 @@ class User(Model['User'], metaclass=ModelMetaclass):
 
     uuid: Optional[str] = Field('uuid',
         description='Custom Alternate UUID',
-        required=False,
     )
 
     username: str = Field('username',
         description='User Login Username',
-        required=True,
     )
 
     email: str = Field('email',
         description='User Email',
-        required=True,
     )
 
     first_name: str = Field('first_name',
         description='User First Name',
-        required=True,
     )
 
     last_name: str = Field('last_name',
         description='User Last Name',
-        required=True,
     )
 
     title: Optional[str] = Field('title',
         description='User Title',
-        required=False,
     )
 
     avatar_url: Optional[str] = Field('avatar_url',
         description='User Avatar URL',
-        required=False,
     )
 
     password: Optional[str] = Field('password',
         description='User Last Name',
-        required=False,
         read_only=False,
         write_only=True,
     )
 
     disabled: Optional[bool] = Field('disabled',
         description='User Disabled',
-        required=False,
         default=False,
     )
 
     creator_id: int = Field('creator_id',
         description="User Creator UserID",
-        required=True,
     )
 
     # One-To-Many Inverse (One Post has One Creator)
@@ -87,19 +76,16 @@ class User(Model['User'], metaclass=ModelMetaclass):
 
     created_at: Optional[datetime] = Field('created_at',
         description='Created at Datetime',
-        required=False,
         read_only=True,
     )
 
     updated_at: Optional[datetime] = Field('updated_at',
         description='Updated at Datetime',
-        required=False,
         read_only=True,
     )
 
     login_at: Optional[datetime] = Field('login_at',
         description='Last Login Datetime',
-        required=False,
     )
 
     # Many-To-Many via user_groups pivot table

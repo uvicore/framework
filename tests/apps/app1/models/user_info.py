@@ -29,7 +29,6 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
 
     user_id: int = Field('user_id',
         description="Contacts User ID",
-        required=True,
     )
 
     # One-To-One Inverse - Contact has ONE User

@@ -342,14 +342,15 @@ class MorphToMany(Morph):
 
 @dataclass
 @uvicore.service()
-class Field(FieldInterface):
+#class Field(FieldInterface):
+class Field:
     column: str
     name: Optional[str] = None
     primary: Optional[bool] = False
     title: Optional[str] = None
     description: Optional[str] = None
     default: Optional[Any] = None
-    required: Optional[bool] = False
+    #required: Optional[bool] = False  # Removed as Optional typhint does the same thing
     sortable: Optional[bool] = None
     searchable: Optional[bool] = None
     read_only: Optional[bool] = None
@@ -360,13 +361,47 @@ class Field(FieldInterface):
     json: Optional[bool] = False
     properties: Optional[Dict] = None
 
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
+    example: Optional[Any] = None
+
+
+    # Of all the uvicore Field() arguments, these are VALID OpenAPI fields and handled properly by Pydantic FieldInfo()
+    # See pydantic/fields.py def field() or class FieldInfo() for their params.
+    # Note that 'required' is not part of FieldInfo but part of pydantics ModelInfo which is automatically
+    # handled by the Optional typehinting on the field type.
+    # See https://swagger.io/docs/specification/data-models/keywords/ for all valid schema keywords
+    # Run your final .json schema through https://apitools.dev/swagger-parser/online/ to validate
+    __valid_oepnapi_keywords__ = [
+        'title',
+        'description',
+        'default',
+        #'required',
+        'example',
+
+        # These get converted to camelCase in metaclass.py for OpenAPI compatibility
+        'read_only',
+        'write_only',
+        'min_length',
+        'max_length',
+    ]
+
+    # These uvicore Field() arguments will be converted to the x-tra Dict "specification extensions".
+    # See https://swagger.io/specification/#specification-extensions
+    __convert_to_extensions__ = [
+        #'column',
+        'sortable',
+        'searchable',
+        'properties',
+    ]
+
     def __init__(self, column: str = None, *,
         name: Optional[str] = None,
         primary: Optional[bool] = False,
         title: Optional[str] = None,
         description: Optional[str] = None,
         default: Optional[Any] = None,
-        required: Optional[bool] = False,
+        #required: Optional[bool] = False,
         sortable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         searchable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
@@ -376,6 +411,9 @@ class Field(FieldInterface):
         relation: Optional[Relation] = None,
         json: Optional[bool] = False,
         properties: Optional[Dict] = None,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
+        example: Optional[Any] = None,
     ):
         self.column = column
         self.name = name
@@ -383,7 +421,7 @@ class Field(FieldInterface):
         self.title = title
         self.description = description
         self.default = default
-        self.required = required
+        #self.required = required
         self.sortable = sortable
         self.searchable = searchable
         self.read_only = read_only
@@ -393,113 +431,6 @@ class Field(FieldInterface):
         self.relation = relation
         self.json = json
         self.properties = properties
-
-
-
-
-
-# @uvicore.service()
-# class Field(FieldInterface, Representation):
-
-#     # Required for pretty Representaion
-#     __slots__ = (
-#         'column',
-#         'name',
-#         'primary',
-#         'title',
-#         'description',
-#         'default',
-#         'required',
-#         'sortable',
-#         'searchable',
-#         'read_only',
-#         'write_only',
-#         'callback',
-#         'relation',
-#         'json',
-#         'properties'
-#     )
-
-#     def __init__(self, column: str = None, *,
-#         name: Optional[str] = None,
-#         primary: Optional[bool] = False,
-#         title: Optional[str] = None,
-#         description: Optional[str] = None,
-#         default: Optional[Any] = None,
-#         required: Optional[bool] = False,
-#         sortable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-#         searchable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-#         read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-#         write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-#         callback: Optional[Any] = None,
-#         relation: Optional[Relation] = None,
-#         json: Optional[bool] = False,
-#         properties: Optional[Dict] = None,
-#     ):
-#         self.column = column
-#         self.name = name
-#         self.primary = primary
-#         self.title = title
-#         self.description = description
-#         self.default = default
-#         self.required = required
-#         self.sortable = sortable
-#         self.searchable = searchable
-#         self.read_only = read_only
-#         self.write_only = write_only
-#         self.callback = callback
-#         self.relation = relation
-#         self.json = json
-#         self.properties = properties
-
-
-# class PydanticField(FieldInfo):
-
-#     def __init__(self, column: str = None, *,
-#         primary: Optional[bool] = False,
-#         title: Optional[str] = None,
-#         description: Optional[str] = None,
-#         default: Optional[Any] = None,
-#         required: bool = False,
-#         sortable: bool = False,
-#         searchable: bool = False,
-#         read_only: Optional[bool] = None,
-#         write_only: Optional[bool] = None,
-#         callback: Optional[Any] = None,
-#         has_one: Optional[Tuple] = None,
-#         has_many: Optional[Tuple] = None,
-#         belongs_to: Optional[Tuple] = None,
-#         properties: Optional[Dict] = None,
-#     ):
-#         self.column = column
-#         self.primary = primary
-#         self.title = title
-#         self.description = description
-#         self.default = default
-#         self.required = required
-#         self.sortable = sortable
-#         self.searchable = searchable
-#         self.read_only = read_only
-#         self.write_only = write_only
-#         self.callback = callback
-#         self.has_one = has_one
-#         self.has_many = has_many
-#         self.belongs_to = belongs_to
-#         self.properties = properties
-#         super().__init__(
-#             default=default,
-#             column=column,
-#             primary=primary,
-#             title=title,
-#             description=description,
-#             required=required,
-#             sortable=sortable,
-#             searchable=searchable,
-#             readOnly=read_only,
-#             writeOnly=write_only,
-#             callback=callback,
-#             has_one=has_one,
-#             has_many=has_many,
-#             belongs_to=belongs_to,
-#             properties=properties,
-#         )
+        self.min_length = min_length
+        self.max_length = max_length
+        self.example = example

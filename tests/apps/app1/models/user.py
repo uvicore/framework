@@ -76,7 +76,6 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 
     # email: str = Field('email',
     #     description='User Email and Username',
-    #     required=True,
     # )
 
     # # One-To-One - User has ONE Contact
@@ -90,7 +89,6 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 
     app1_extra: Optional[str] = Field('app1_extra',
         description='Extra column on auth.users by app1',
-        required=False,
     )
 
     # One-To-One - User has ONE Contact

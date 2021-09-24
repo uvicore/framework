@@ -25,7 +25,6 @@ class Group(Model['Group'], metaclass=ModelMetaclass):
 
     name: str = Field('name',
         description='Group Name',
-        required=True,
     )
 
     # Many-To-Many via group_roles pivot table

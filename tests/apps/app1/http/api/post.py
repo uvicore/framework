@@ -12,6 +12,14 @@ from uvicore.http import params
 from uvicore.contracts import UserInfo
 
 
+from pydantic import BaseModel
+class HTTPMessage(BaseModel):
+  #status_code: int
+  message: str
+  #detail: Optional[str]
+  #extra: Optional[Dict]
+
+
 
 @uvicore.controller()
 class Post(Controller):
@@ -43,7 +51,15 @@ class Post(Controller):
         #@route.get('/post4', middleware=[Auth('model-perms')])
         #@route.get('/post4', auth=Guard('model-perms'))
         #@route.get('/post4', scopes=['posts.read'])
-        @route.get('/post4')
+        @route.get('/post4',
+            # responses={
+            #     404: {
+            #         'model': HTTPMessage,
+            #         #'description': 'xyz here',
+            #         #'content': {"application/json": HTTPMessage},
+            #     },
+            # },
+        )
         #async def post4(id: str, user: User = Guard()) -> models.Post:
         async def post4(request: Request, user: UserInfo = Guard(['posts.read'])) -> models.Post:
             """This docstring shows up in OpenAPI Docs"""

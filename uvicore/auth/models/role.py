@@ -20,7 +20,6 @@ class Role(Model['Role'], metaclass=ModelMetaclass):
 
     name: str = Field('name',
         description='Role Name',
-        required=True,
     )
 
     # superadmin: bool = Field('superadmin',

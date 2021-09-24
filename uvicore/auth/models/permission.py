@@ -17,12 +17,10 @@ class Permission(Model['Permission'], metaclass=ModelMetaclass):
         description='Permission ID',
     )
 
-    entity: str = Field('entity',
+    entity: Optional[str] = Field('entity',
         description='Permission Entity',
-        required=True,
     )
 
     name: str = Field('name',
         description='Permission Name',
-        required=True,
     )

@@ -79,13 +79,13 @@ class ModelRoutes:
         @route.get(
             path='/' + path + '/{id}',
             inherits=AutoApi.getsig,
-            responses={
-                404: {
-                    'model': HTTPMessage,
-                    'description': 'xyz here',
-                    #'content': {"application/json": HTTPMessage},
-                },
-            },
+            # responses={
+            #     404: {
+            #         'model': HTTPMessage,
+            #         #'description': 'xyz here',
+            #         #'content': {"application/json": HTTPMessage},
+            #     },
+            # },
             response_model=Model,
             tags=tags,
             scopes=scopes['read'],
@@ -99,12 +99,14 @@ class ModelRoutes:
             # Run ORM query for results
             try:
                 results = await query.find(id)
-                if results:
-                    return results
-                else:
-                    return JSONResponse(status_code=404, content={"message": "Item not found"})
             except:
                 raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
+
+            if results:
+                return results
+            else:
+                #raise NotFound()
+                return JSONResponse(status_code=404, content={"message": "Item not found"})
 
 
         @route.post(
@@ -155,8 +157,8 @@ class ModelRoutes:
             response_model=Union[Dict, List[Dict]],
             tags=tags,
             scopes=scopes['create'],
-            summary="Create new {} with relations".format(Model.tablename),
-            description="Create one or more {} ({}) with nested relations by POSTING an object.  Uvicore must disable model validation when passing a complex nested relational object.  It is therefore up to you to ensure an accurate object is passed.".format(Model.tablename, Model.modelfqn),
+            summary="Create new {} with nested relations".format(Model.tablename),
+            description="Create one or more {} ({}) with deeply nested relations by POSTING an object/array.  Uvicore must disable model validation when passing a complex nested relational object.  It is therefore up to you to ensure an accurate object is passed.".format(Model.tablename, Model.modelfqn),
         )
         async def create_with_relations(request: Request, items: Union[Dict, List[Dict]]):
             # NOTES
@@ -204,7 +206,23 @@ class ModelRoutes:
         async def update_one(request: Request, id: Union[str,int], item: Model):
             # PUT is used to UPDATE an EXISTNIG record.
             # The PUT object must be a complete object. This is why 'item' is a Model, not a Dict
-            pass
+            try:
+                result = await Model.query().find(id)
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+            if result:
+                # PUT requires a complete item.  It is not partial, it is not merged like a PATCH
+                # So we take the entire "item" and simply use the PK from results to update the right record
+                setattr(item, Model.pk, getattr(result, Model.pk))
+                try:
+                    await item.save()
+                    return item
+                except Exception as e:
+                    raise HTTPException(500, str(e))
+            else:
+                raise NotFound('{} {} not found'.format(Model.modelname, id))
+
 
         @route.patch(
             path='/' + path + '/{id}',
@@ -252,7 +270,7 @@ class ModelRoutes:
                 await result.delete()
                 return result
             else:
-                raise NotFound('asdf')
+                raise NotFound('{} {} not found'.format(Model.modelname, id))
                 #return JSON(status_code=404, content={"message": "asdf"})
 
         # NO, not RESTful.  DELETE does NOT take a body/payload

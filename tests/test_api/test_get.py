@@ -5,10 +5,9 @@ from starlette.testclient import TestClient
 
 from uvicore.support.dumper import dump
 
-
-def test_list(app1):
-    client = TestClient(uvicore.app.http)
-    res = client.get("/api/posts")
+@pytest.mark.asyncio
+async def test_list(app1, client):
+    res = await client.get("/api/posts")
     assert res.status_code == 200, res.text
     posts = res.json()
     dump(posts)
@@ -32,11 +31,10 @@ def test_list(app1):
     }
 
 
-def test_list_include_one_to_one(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_list_include_one_to_one(app1, client):
     #res = client.get("/api/posts?include=creator.info,creator.contact,comments.creator.info,comments.contact,tags.creator,image,attributes,hashtags")
-    res = client.get("/api/posts?include=creator.info")
+    res = await client.get("/api/posts?include=creator.info")
     assert res.status_code == 200, res.text
     posts = res.json()
 
@@ -99,11 +97,10 @@ def test_list_include_one_to_one(app1):
     #assert False
 
 
-def test_get_include_one_to_many(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_get_include_one_to_many(app1, client):
     #res = client.get("/api/posts?include=creator.info,creator.contact,comments.creator.info,comments.contact,tags.creator,image,attributes,hashtags")
-    res = client.get("/api/auth_users/1?include=posts.comments")
+    res = await client.get("/api/auth_users/1?include=posts.comments")
     assert res.status_code == 200, res.text
     user = res.json()
     dump(user)
@@ -114,11 +111,10 @@ def test_get_include_one_to_many(app1):
     assert len(user['posts'][1]['comments']) == 0
 
 
-def test_list_where(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_list_where(app1, client):
     # Where with include
-    res = client.get('/api/posts?include=creator.info,owner.info&where={"creator_id":1}')
+    res = await client.get('/api/posts?include=creator.info,owner.info&where={"creator_id":1}')
     assert res.status_code == 200, res.text
     posts = res.json()
     dump(posts)
@@ -138,11 +134,10 @@ def test_list_where(app1):
     # assert False
 
 
-def test_list_where_ge_null(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_list_where_ge_null(app1, client):
     # Where AND with a >= and null
-    res = client.get('/api/posts?where={"creator_id":[">=", 2], "other": "null"}')
+    res = await client.get('/api/posts?where={"creator_id":[">=", 2], "other": "null"}')
     assert res.status_code == 200, res.text
     posts = res.json()
     dump(posts)
@@ -156,11 +151,10 @@ def test_list_where_ge_null(app1):
     #assert False
 
 
-def test_list_where_like(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_list_where_like(app1, client):
     # Where LIKE
-    res = client.get('/api/posts?where={"body": ["like", "%favorite%"]}')
+    res = await client.get('/api/posts?where={"body": ["like", "%favorite%"]}')
     assert res.status_code == 200, res.text
     posts = res.json()
     dump(posts)
@@ -173,11 +167,10 @@ def test_list_where_like(app1):
     #assert False
 
 
-def test_list_where_in(app1):
-    client = TestClient(uvicore.app.http)
-
+@pytest.mark.asyncio
+async def test_list_where_in(app1, client):
     # Where IN
-    res = client.get('/api/posts?where={"creator_id": ["in", [1,5]]}')
+    res = await client.get('/api/posts?where={"creator_id": ["in", [1,5]]}')
     assert res.status_code == 200, res.text
     posts = res.json()
     dump(posts)

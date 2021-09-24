@@ -44,7 +44,6 @@ class Contact(Model['Contact'], metaclass=ModelMetaclass):
 
     name: str = Field('name',
         description='Contact Name (First and Last or Company)',
-        required=True,
     )
 
     title: str = Field('title',
@@ -61,7 +60,6 @@ class Contact(Model['Contact'], metaclass=ModelMetaclass):
 
     user_id: int = Field('user_id',
         description="Contacts User ID",
-        required=True,
     )
 
     # One-To-One Inverse - Contact has ONE User

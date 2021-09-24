@@ -200,25 +200,69 @@ class ModelMetaclass(PydanticMetaclass):
         __tableclass__ = None
         __callbacks__ = {}
 
-        # Pull out all properties of type Field and store in _fields property
-        # And SWAP my Field for pydantics FieldInfo so pydantic knows how to handle each field
-        # Do not confuse my custom __modelfields__ with pydantics __fields__
+        # Pull out all model properties of type Field() and store in __modelfields__ property
+        # Then replace the original properties from Field() to Pydantics FieldInfo(), converting some Field() arguments
+        # into 'x-tra' arguments for FieldInfo()
+        # In the end, __modelfields__ are the original uvicore Field() that you defined in the model
+        # and the original model fields are replaced with pydantics FieldInfo().  Later when I call super().__new__
+        # pydantic further converts by MOVING the actual class properties into __fields__ and changing from FieldInfo to ModelField
         __modelfields__: Dict[str, Field] = {}
         for field_name, field in namespace.items():
             if field_name[0] != '_' and type(field) == Field:
-                # Pull out uvicore model field into own __modelfields__ dict
+                # Pull out uvicore model Field() into own __modelfields__ dict
                 field.name = field_name
                 __modelfields__[field_name] = field
 
+                # Derive extra field information for pydantics FieldInfo OpenAPI schema generation
+                #dump(getattr(namespace, field_name))
+
                 # Convert uvicore model field into pydantic FieldInfo
+                # Be careful what you pipe into PydanticFieldInfo() as these show up in the OpenAPI schema
+                # from FastAPI 0.65.0+ because in their openapi/models.py they set class Config extra='allow'
+                # by default.  Which means any item you put in PydanticFieldInfo that is not a keyword on that class
+                # goes into extra *kwargs and extra now shows up in openapi.json.  The problem with that is valid
+                # OpenAPI only allows certain keywords, see https://swagger.io/docs/specification/data-models/keywords/
+                # In fact, the 'properties' I was using for a catch-all JSON blog is totally invalid.  Its not a ignored blog
+                # its a nested schame field properties.  The only valid way to add extra ignored fields to a schema is to
+                # prefix them with x-  see https://swagger.io/specification/#specification-extensions
+
+                # For some dumb reason I was also piping EVERY thing into PydanticFieldInfo, even callback, evaluate
+                # and relation.  Which now that extra=allow those were all trying to be parsed by FastAPI json_encoder
+                # which totally broke everything.  So I need to be more strategic which uvicore Field() items I pump into
+                # Pydantic FieldInfo().  I added a fields_passed_to_pydantic_FieldInfo in my Field class that contains a
+                # List of valid properties to pass into PydanticFieldInfo()
+
                 field_info_kwargs = {}
+                #dump(field.__annotations__)
                 for slot in field.__annotations__.keys():
-                #for slot in field.__slots__: # When using Field as Representation with slots
-                    arg = slot
-                    if slot == 'read_only': arg = 'readOnly'
-                    if slot == 'write_only': arg = 'writeOnly'
-                    field_info_kwargs[arg] = getattr(field, slot)
+                    value = getattr(field, slot)
+                    if value is None: continue;
+
+                    # Only pipe certain uvicore Field properties into pydantics FieldInfo or you get invalid OpenAPI spec
+                    if slot in Field.__valid_oepnapi_keywords__:
+                        arg = slot
+
+                        # Convert some understores to camelCase for OpenAPI keyword compatibility
+                        if slot == 'read_only': arg = 'readOnly'
+                        if slot == 'write_only': arg = 'writeOnly'
+                        if slot == 'min_length': arg = 'minLength'
+                        if slot == 'max_length': arg = 'maxLength'
+                        field_info_kwargs[arg] = value
+
+                    elif slot in Field.__convert_to_extensions__:
+                        # Convert these Field() arguments to the x-tra Dict
+                        # See https://swagger.io/specification/#specification-extensions
+                        if 'x-tra' not in field_info_kwargs: field_info_kwargs['x-tra'] = {}
+                        if slot == 'properties':
+                            field_info_kwargs['x-tra'] = {**field_info_kwargs['x-tra'], **getattr(field, slot)}
+                        else:
+                            field_info_kwargs['x-tra'][slot] = getattr(field, slot)
+
+                #dump(field_info_kwargs)
                 namespace[field_name] = PydanticFieldInfo(**field_info_kwargs)
+                #dump(namespace[field_name])
+
+        #dump(namespace)
 
         # If we extend and overwrite our own models, then some information
         # will be buried in the bases tuple.  Loop each base and
@@ -253,6 +297,8 @@ class ModelMetaclass(PydanticMetaclass):
             #'_test1': 'hi',
             **{n: v for n, v in namespace.items()},
         }
+
+        #dd(new_namespace)
 
         # Call pydantic ModelMetaClass
         # Amoung other things, pydantic will take all model attributes that do not
@@ -307,42 +353,13 @@ class ModelMetaclass(PydanticMetaclass):
             #     *columns
             # )
 
-        # Loop each field and perform manipulations
-        for (key, field) in cls.__fields__.items():
-            if field.field_info is not None:
-                extra = field.field_info.extra
-                properties = extra.get('properties') or {}
-
-                # Convert required from extra to proper ModelField override
-                if 'required' in extra:
-                    field.required = extra['required']
-                    # Remove requires as it messes up FastAPI when passed on
-                    del extra['required']
-
-                # Add these keys into the properties dictionary to show in OpenAPI schema
-                if 'sortable' in extra:
-                    # Nullable boolean.  If None is omitted from OpenAPI
-                    # If explicitely set to True or False, it will show in OpenAPI
-                    if extra['sortable'] is not None:
-                        properties['sortable'] = extra['sortable']
-
-                if 'searchable' in extra:
-                    # Nullable boolean.  If None is omitted from OpenAPI
-                    # If explicitely set to True or False, it will show in OpenAPI
-                    if extra['searchable'] is not None:
-                        properties['searchable'] = extra['searchable']
-
-                # Add in properties to extra
-                if properties:
-                    extra['properties'] = properties
-
-                # Track properties with callbacks
-                if 'callback' in extra and extra['callback'] is not None:
-                    callback = field.field_info.extra['callback']
-                    # If callback is a string, assume a local method
-                    if type(callback) == str:
-                        callback = getattr(cls, callback)
-                    cls.__callbacks__[key] = callback
+        # Pull out all callbacks from __modelfields__ and store in cls.__callbacks__ for future processing
+        for (key, field) in cls.__modelfields__.items():
+            if field.callback:
+                callback = field.callback
+                if type(callback) == str:
+                    callback = getattr(cls, field.callback)
+                cls.__callbacks__[key] = callback
 
         #dump(cls.__dict__)
         return cls
