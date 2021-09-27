@@ -9,7 +9,6 @@ class Field:
     title: Optional[str]
     description: Optional[str]
     default: Optional[Any]
-    #required: Optional[bool]
     sortable: Optional[bool]
     searchable: Optional[bool]
     read_only: Optional[bool]

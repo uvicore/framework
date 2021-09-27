@@ -62,7 +62,7 @@ class Http(Handler):
         # Add api routes to the api server
         self.add_api_routes(api_server, api_routes, api_prefix if not base_server else '')
 
-        # Add web paths (public, asset, view) and configure templates
+        # Add web paths (public, asset, view), configure templates and view composers
         self.configure_webserver(web_server)
 
         # Fire up the proper servers and set our global app.http instance
@@ -95,7 +95,7 @@ class Http(Handler):
             await HttpServerEvents.Shutdown().dispatch_async()
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
-        debug_dump = False
+        debug_dump = True
         if debug_dump:
             dump('#################################################################')
             dump("Main HTTP Server APPLICATION", uvicore.app.http.__dict__)
@@ -131,10 +131,10 @@ class Http(Handler):
 
         # Allow only if running as HTTP or from certain CLI commands like package list/show...
         if package.registers.web_routes and (
-            uvicore.app.is_http #or
-            #command_is('http') or
-            #command_is('package') or
-            #command_is('ioc')
+            uvicore.app.is_http or
+            command_is('http') or
+            command_is('package') or
+            command_is('ioc')
         ) == False: return
 
         routes_module = package.web.routes_module
@@ -253,8 +253,15 @@ class Http(Handler):
         if api_routes:
             api_server = FastAPI(
                 debug=debug,
-                #title=uvicore.config('app.api.openapi.title'),
-                version=uvicore.app.version,
+
+                # This title is what shows up in OpenAPI <h1>, not the HTML <title>, which is defined in add_api_routes def openapi_docs()
+                title=uvicore.config('app.api.openapi.title'),
+
+                # Get version from main running apps package.version
+                version=uvicore.app.package(main=True).version,
+
+                # NOTE: Most other info is provided in my add_api_routes def openapi_docs() override
+
                 #openapi_url=uvicore.config('app.api.openapi.url'),
                 #swagger_ui_oauth2_redirect_url=uvicore.config('app.api.openapi.docs_url') + '/oauth2-redirect',
 
@@ -266,7 +273,6 @@ class Http(Handler):
                 redoc_url=None,
 
                 #swagger_ui_oauth2_redirect_url=
-
 
                 #root_path='/api',  #fixme with trying out kong
             )
@@ -367,6 +373,8 @@ class Http(Handler):
             def openapi_docs():
                 return get_swagger_ui_html(
                     openapi_url=api_prefix + openapi.path,
+
+                    # This title is html <title> while the title in app_server = FastAPI is what shows up in OpenAPI <h1> title, I make them the same
                     title=openapi.title,
 
                     swagger_favicon_url=openapi.docs.favicon_url,
@@ -446,7 +454,7 @@ class Http(Handler):
             )
 
     def configure_webserver(self, web_server) -> None:
-        """Configure the webserver with public, asset and view paths and template options"""
+        """Configure the webserver with public, assets, views, composers and template options"""
 
         # Ignore if web_server was never fired up
         if not web_server: return
@@ -455,6 +463,7 @@ class Http(Handler):
         public_paths = []
         asset_paths = []
         view_paths = []
+        view_composers = Dict()
         template_options = Dict()
         for package in uvicore.app.packages.values():
             #if not 'http' in package: continue
@@ -474,8 +483,14 @@ class Http(Handler):
             for path in package.web.view_paths or []:
                 view_paths.append(path)
 
+            # Deep merge view composers
+            view_composers.merge(package.web.view_composers or {})
+
             # Deep merge template options
             template_options.merge(package.web.template_options or {})
+
+        # Save merged view composers into our config for use later (its a great singleton for data!)
+        uvicore.config.uvicore.http.view_composers = view_composers
 
         # Mount all static paths
         self.mount_static(web_server, public_paths, asset_paths)
@@ -502,6 +517,9 @@ class Http(Handler):
         templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
 
         # Add all packages view paths
+        # First path wins, so we must REVERSE the package order
+        # This will set the main running app FIRST as we always want the app to win
+        paths.reverse()
         for path in paths:
             templates.include_path(module.location(path))
 

@@ -11,6 +11,7 @@ def url(context: dict, name: str, **path_params: Any) -> str:
     request = context["request"]
 
     # Get full URL from starlette's request url_for() method
+    dump(name)
     url = request.url_for(name, **path_params)
 
     # Ensure url contains proper x-forwarded-proto protocol

@@ -1,3 +1,4 @@
+# type: ignore
 from .event import Event
 from .dispatcher import Dispatcher
 from .handler import Handler

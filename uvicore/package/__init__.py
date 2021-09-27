@@ -1,3 +1,4 @@
+# type: ignore
 from .provider import ServiceProvider
 #from uvicore.package.package import Package as _Package
 

@@ -1,11 +1,8 @@
 import uvicore
-from uvicore.package import ServiceProvider
-from uvicore.support.dumper import dump, dd
-
-from uvicore.database.provider import Db
-
-#JUNK
 from uvicore.http.provider import Http
+from uvicore.database.provider import Db
+from uvicore.package import ServiceProvider
+from uvicore.support.dumper import dump, dd  # type: ignore
 
 
 @uvicore.provider()

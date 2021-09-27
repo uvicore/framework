@@ -18,14 +18,11 @@ from uvicore.console import command_is
 from uvicore.foundation.events import app as events
 
 try:
+    from fastapi import FastAPI
     from starlette.applications import Starlette
 except ImportError:  # pragma: nocover
-    Starlette = None  # type: ignore
-
-try:
-    from fastapi import FastAPI
-except ImportError:  # pragma: nocover
     FastAPI = None  # type: ignore
+    Starlette = None  # type: ignore
 
 
 @uvicore.service('uvicore.foundation.application.Application',
@@ -209,6 +206,9 @@ class Application(ApplicationInterface):
             # package_name = uvicore.configuration
             # service = {'provider': 'uvicore.configuration.services.Configuration'}
 
+            # Get package config
+            package_config = self._get_package_config(package_name, service)
+
             # Start a new package definition
             #x = OrderedDict()
             #x.dotset(package_name, package.Definition({
@@ -216,6 +216,7 @@ class Application(ApplicationInterface):
                 'name': package_name,
                 'short_name': package_name.split('.')[-1] if '.' in package_name else package_name,
                 'vendor': package_name.split('.')[0],  # Works fine even if no .
+                'version': package_config.version or '0.1.0',
                 'main': True if package_name == self.main else False,
                 'path': location(package_name),
             })
@@ -229,7 +230,7 @@ class Application(ApplicationInterface):
                 name=package_name,
                 package=None,  # Not available in register()
                 app_config=app_config,
-                package_config=self._get_package_config(package_name, service),
+                package_config=package_config,
             )
             provider.register()
 

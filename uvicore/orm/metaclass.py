@@ -1,14 +1,20 @@
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
-
-import sqlalchemy as sa
-from prettyprinter import pretty_call, register_pretty
-from pydantic.fields import FieldInfo as PydanticFieldInfo
-from pydantic.main import ModelMetaclass as PydanticMetaclass
-from sqlalchemy.sql import ClauseElement
-
 import uvicore
 from uvicore.orm.fields import Field
 from uvicore.support.dumper import dd, dump
+from prettyprinter import pretty_call, register_pretty
+from pydantic.fields import FieldInfo as PydanticFieldInfo
+from pydantic.main import ModelMetaclass as PydanticMetaclass
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+
+import sqlalchemy as sa
+from sqlalchemy.sql import ClauseElement
+
+# try:
+# except ImportError:  # pragma: nocover
+#     pass
+#     #sa = None  # type: ignore
+#     #ClauseElement = None  # type: ignore
+
 
 # Think of this metaclass as all the STATIC methods similar to @classmethod
 # but different in that they become INVISIBLE to the instance of the class

@@ -1,3 +1,5 @@
+# type: ignore
+from .composer import composer
 from .controller import controller
 from .event import event
 from .model import model

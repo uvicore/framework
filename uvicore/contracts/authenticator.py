@@ -3,8 +3,8 @@ from uvicore.contracts.user_info import UserInfo
 from uvicore.typing import Optional, Tuple, Dict, List, Union
 try:
     from starlette.requests import HTTPConnection
-except:
-    HTTPConnection = None
+except ImportError:  # pragma: nocover
+    HTTPConnection = None  # type: ignore
 
 
 class Authenticator(ABC):

@@ -1,17 +1,12 @@
 from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional, OrderedDict, Tuple
-
-from pydantic.fields import FieldInfo
-
-import sqlalchemy as sa
 import uvicore
-from uvicore.contracts import Field as FieldInterface
-from uvicore.contracts import Relation as RelationInterface
+import sqlalchemy as sa
+from dataclasses import dataclass
 from uvicore.support import module
 from uvicore.support.dumper import dd, dump
-
+from uvicore.contracts import Field as FieldInterface
+from uvicore.contracts import Relation as RelationInterface
+from typing import Any, Callable, Dict, Optional, OrderedDict
 
 # NOTE dataclass required on each on THAT HAS PROPERTIES event hough they all
 # impliment Relation.  If a class does not have property overrides, then do NOT add @dataclass
@@ -342,15 +337,13 @@ class MorphToMany(Morph):
 
 @dataclass
 @uvicore.service()
-#class Field(FieldInterface):
-class Field:
+class Field(FieldInterface):
     column: str
     name: Optional[str] = None
     primary: Optional[bool] = False
     title: Optional[str] = None
     description: Optional[str] = None
     default: Optional[Any] = None
-    #required: Optional[bool] = False  # Removed as Optional typhint does the same thing
     sortable: Optional[bool] = None
     searchable: Optional[bool] = None
     read_only: Optional[bool] = None

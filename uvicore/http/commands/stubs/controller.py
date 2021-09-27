@@ -49,37 +49,38 @@ class xx_ControllerName(Controller):
         # ----------------------------------------------------------------------
         # Example: Basic route responding with a view template
         # ----------------------------------------------------------------------
-        @route.get('/example1/{id}')
-        async def example1(request: Request, id: int):
-            # Template should be in http/views/xx_appname/template.j2
-            # All web routes require request: Request
-            # All template views require the request be piped through
-            # To see all route details run ./uvicore package list
-            return response.View('xx_appname/template.j2', {
-                'request': request,
-                'id': id,
-            })
+        # @route.get('/example1/{id}')
+        # async def example1(request: Request, id: int):
+        #     # Template should be in http/views/xx_appname/template.j2
+        #     # All web routes require request: Request
+        #     # All template views require the request be piped through
+        #     # To see all route details run ./uvicore package list
+        #     return await response.View('xx_appname/template.j2', {
+        #         'request': request,
+        #         'id': id,
+        #     })
 
 
         # ----------------------------------------------------------------------
         # Example: Other types of responses
         # ----------------------------------------------------------------------
-        @route.get('/example2')
-        async def example2(request: Request):
-            return response.Text('Text Here')
-            return response.HTML('<b>HTML</b> here')
-            return response.JSON({'json':'here'})
-            return response.UJSON({'json':'here'}) # requires ujson dependency
-            # and more ... see uvicore/http/response.py
+        # @route.get('/example2')
+        # async def example2(request: Request):
+        #     return response.Text('Text Here')
+        #     return response.HTML('<b>HTML</b> here')
+        #     return response.JSON({'json':'here'})
+        #     return response.UJSON({'json':'here'}) # requires ujson dependency
+        #     return response.ORJSON({'json':'here'}) # requires orjson dependency
+        #     # and more ... see uvicore/http/response.py
 
 
         # ----------------------------------------------------------------------
         # Example: GET request variables
         # curl http://localhost/?name=asdf
         # ----------------------------------------------------------------------
-        @route.get('/example2')
-        async def example2(request: Request, name: str):
-            return response.Text(name)
+        # @route.get('/example2')
+        # async def example2(request: Request, name: str):
+        #     return response.Text(name)
 
 
         # ----------------------------------------------------------------------
@@ -93,10 +94,10 @@ class xx_ControllerName(Controller):
         # from the path, even nested paths from groups.  Name always starts
         # with your apps name, ie: xx_appname.
         # ----------------------------------------------------------------------
-        @route.get('/example2a', name='ex2a')
-        async def example2a(request: Request):
-            # Route name is xx_appname.ex2a
-            return response.Text('example2a')
+        # @route.get('/example2a', name='ex2a')
+        # async def example2a(request: Request):
+        #     # Route name is xx_appname.ex2a
+        #     return response.Text('example2a')
 
 
         # ----------------------------------------------------------------------
@@ -106,19 +107,19 @@ class xx_ControllerName(Controller):
         # In order to set a full name you must set autoprefix=False.
         # This is handy when you want to override a route from another package.
         # ----------------------------------------------------------------------
-        @route.get('/example2b', name='someother.app.ex2b', autoprefix=False)
-        async def example2b(request: Request):
-            # Route name is someother.app.ex2b
-            return response.Text('example2b')
+        # @route.get('/example2b', name='someother.app.ex2b', autoprefix=False)
+        # async def example2b(request: Request):
+        #     # Route name is someother.app.ex2b
+        #     return response.Text('example2b')
 
 
         # ----------------------------------------------------------------------
         # Example: Injecting the current User using the Guard dependency
         # ----------------------------------------------------------------------
-        @route.get('/example3')
-        async def example3(request: Request, user: UserInfo = Guard()):
-            dump(user)
-            return response.Text('example3')
+        # @route.get('/example3')
+        # async def example3(request: Request, user: UserInfo = Guard()):
+        #     dump(user)
+        #     return response.Text('example3')
 
 
         # ----------------------------------------------------------------------
@@ -128,10 +129,10 @@ class xx_ControllerName(Controller):
         # injected so you don't have to use request.scope['user]
         # curl -u user:pass http://localhost/example4
         # ----------------------------------------------------------------------
-        @route.get('/example4')
-        async def example4(request: Request, user: UserInfo = Guard(['authenticated'])):
-            dump(user);
-            return response.Text('example4')
+        # @route.get('/example4')
+        # async def example4(request: Request, user: UserInfo = Guard(['authenticated'])):
+        #     dump(user);
+        #     return response.Text('example4')
 
 
         # ----------------------------------------------------------------------
@@ -139,11 +140,11 @@ class xx_ControllerName(Controller):
         # And guarding the route from the decorator using the scopes shortcut
         # curl -u user:pass http://localhost/example5
         # ----------------------------------------------------------------------
-        @route.get('/example5', scopes=['authenticated'])
-        async def example5(request: Request):
-            user: UserInfo = request.scope['user'];
-            dump(user)
-            return response.Text('example5')
+        # @route.get('/example5', scopes=['authenticated'])
+        # async def example5(request: Request):
+        #     user: UserInfo = request.scope['user'];
+        #     dump(user)
+        #     return response.Text('example5')
 
 
         # ----------------------------------------------------------------------
@@ -151,24 +152,24 @@ class xx_ControllerName(Controller):
         # while also getting the current user from request.scope['user']
         # curl -u user:pass http://localhost/example5a
         # ----------------------------------------------------------------------
-        @route.get('/example5a', auth=Guard(['authenticated']))
-        async def example5a(request: Request):
-            user: UserInfo = request.scope['user'];
-            dump(user)
-            return response.Text('example5a')
+        # @route.get('/example5a', auth=Guard(['authenticated']))
+        # async def example5a(request: Request):
+        #     user: UserInfo = request.scope['user'];
+        #     dump(user)
+        #     return response.Text('example5a')
 
 
         # ----------------------------------------------------------------------
         # Example: Using the per route middleware instead of auth or scopes
         # curl -u user:pass http://localhost/example5b
         # ----------------------------------------------------------------------
-        @route.get('/example5b', middleware=[
-            Guard(['authenticated'])
-        ])
-        async def example5b(request: Request):
-            user: UserInfo = request.scope['user'];
-            dump(user)
-            return response.Text('example5b')
+        # @route.get('/example5b', middleware=[
+        #     Guard(['authenticated'])
+        # ])
+        # async def example5b(request: Request):
+        #     user: UserInfo = request.scope['user'];
+        #     dump(user)
+        #     return response.Text('example5b')
 
 
         # ----------------------------------------------------------------------
@@ -176,17 +177,17 @@ class xx_ControllerName(Controller):
         # curl -X POST -F 'name=matthew' http://localhost/
         # http -v --form POST http://localhost/ name=matthew
         # ----------------------------------------------------------------------
-        @route.post('/example6')
-        async def example6(request: Request, name: str = Form(...)):
-            return response.Text(name)
+        # @route.post('/example6')
+        # async def example6(request: Request, name: str = Form(...)):
+        #     return response.Text(name)
 
 
         # ----------------------------------------------------------------------
         # Example raise proper HTTP Exception
         # ----------------------------------------------------------------------
-        @route.get('/example7')
-        async def example7(request: Request):
-            raise HTTPException(404, 'bad stuff')
+        # @route.get('/example7')
+        # async def example7(request: Request):
+        #     raise HTTPException(404, 'bad stuff')
 
 
         # ----------------------------------------------------------------------
@@ -196,38 +197,38 @@ class xx_ControllerName(Controller):
         # IF you also set name='g1', all route names will be
         # xx_appname.g1.example8 instead of autonamed xx_appname.group1.example8
         # ----------------------------------------------------------------------
-        @route.group('/group1', scopes=['authenticated'])
-        def group1():
-            @route.get('/example8')
-            async def example8(request: Request):
-                return response.Text("example8")
+        # @route.group('/group1', scopes=['authenticated'])
+        # def group1():
+        #     @route.get('/example8')
+        #     async def example8(request: Request):
+        #         return response.Text("example8")
 
-            @route.group('/subgroup1')
-            def subgroup1():
-                @route.get('/example9')
-                async def example9(request: Request):
-                    return response.Text("example9")
+        #     @route.group('/subgroup1')
+        #     def subgroup1():
+        #         @route.get('/example9')
+        #         async def example9(request: Request):
+        #             return response.Text("example9")
 
 
         # ----------------------------------------------------------------------
         # Example: Routes as method callbacks (no decorators)
         # ----------------------------------------------------------------------
-        def example10(request: Request):
-            return response.Text('example10')
-        route.get('/example10', example10)
+        # def example10(request: Request):
+        #     return response.Text('example10')
+        # route.get('/example10', example10)
 
 
         # ----------------------------------------------------------------------
         # Example: Groups and routes as method callbacks (no decorators)
         # ----------------------------------------------------------------------
-        def example11(request: Request):
-            return response.Text('example11')
-        def example12(request: Request):
-            return response.Text('example12')
-        route.group('/group2', scopes=['authenticated'], routes=[
-            route.get('/example11', example11),
-            route.get('/example12', example12),
-        ])
+        # def example11(request: Request):
+        #     return response.Text('example11')
+        # def example12(request: Request):
+        #     return response.Text('example12')
+        # route.group('/group2', scopes=['authenticated'], routes=[
+        #     route.get('/example11', example11),
+        #     route.get('/example12', example12),
+        # ])
 
 
         # ----------------------------------------------------------------------
@@ -239,21 +240,21 @@ class xx_ControllerName(Controller):
         # controlers from your http/routes/web.py, you can also include other
         # routes here.
         # ----------------------------------------------------------------------
-        route.controller('xx_vendor.xx_appname.http.controllers.some.other.Other')
+        # route.controller('xx_vendor.xx_appname.http.controllers.some.other.Other')
 
         # Also, route.controller and route.include are aliases of each other, same thing.
-        route.include('xx_vendor.xx_appname.http.controllers.some.other2.Other2')
+        # route.include('xx_vendor.xx_appname.http.controllers.some.other2.Other2')
 
         # Instead of typing the full module path, if route.controllers is defined
         # Then all .controller() and .include() can use relative paths
-        route.controllers = 'xx_vendor.xx_appname.http.controllers'
+        # route.controllers = 'xx_vendor.xx_appname.http.controllers'
 
         # Looks for Class in xx_vendor.xx_appname.http.controllers.some.Some
-        route.controller('some')
+        # route.controller('some')
 
         # Leading period means APPEND path to defined route.controllers
         # So this looks for xx_vendor.xx_appname.http.controllers.other3.Other3
-        route.controller('.other3.Other3')
+        # route.controller('.other3.Other3')
 
         # If no leading . but other . exists, then it is assuming a full path,
         # regardless if route.controllers is defined or not.

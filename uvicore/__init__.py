@@ -1,6 +1,7 @@
+# type: ignore
 from . import contracts
 from uvicore.typing import Dict
-from uvicore.foundation.decorators import event, model, seeder, service, table, provider, routes, controller
+from uvicore.foundation.decorators import event, model, seeder, service, table, provider, routes, controller, composer
 
 
 # Uvicore version.  Also available in app.version

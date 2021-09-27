@@ -34,7 +34,3 @@ class PostTags(Table):
     schema_kwargs = {
         #'sqlite_autoincrement': True,
     }
-
-
-# IoC Class Instance
-#PostTags: _PostTags = uvicore.ioc.make('app1.database.tables.post_tags.PostTags', _PostTags, singleton=True)

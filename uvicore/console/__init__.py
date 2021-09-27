@@ -1,3 +1,4 @@
+# type: ignore
 import sys
 
 # If using installed version of asyncclick

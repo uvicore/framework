@@ -13,10 +13,15 @@ async def cli():
     #await poly_play()
 
     from app1.models import Post
-    post = await Post.query().find(1)
-    dd(post)
+    posts = await Post.query().order_by(['id', 'DESC']).get()
+    #posts = await Post.query().where('other', 'null').where('creator_id', 2).get();
+    # posts = await Post.query().where([
+    #     ('other', 'null'),
+    #     ('creator_id', 2),
+    # ]).get();
+    dd(posts)
 
-    dd(Post.__dict__)
+    dd('')
 
 async def poly_play():
     from app1.models import User, Post, Comment, Tag

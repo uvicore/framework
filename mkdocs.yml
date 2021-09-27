@@ -29,6 +29,7 @@ nav:
     - db-tables.md
     - orm-basics.md
     - orm-model.md
+    - orm-querybuilder.md
     - orm-pydantic.md
   - Architecture:
     - service-providers.md

@@ -6,14 +6,11 @@ from .package import Package
 from .template import Template
 
 try:
+    from fastapi import FastAPI
     from starlette.applications import Starlette
 except ImportError:  # pragma: nocover
-    Starlette = None  # type: ignore
-
-try:
-    from fastapi import FastAPI
-except ImportError:  # pragma: nocover
     FastAPI = None  # type: ignore
+    Starlette = None  # type: ignore
 
 # Regular attributes (version: str = '0.0.0) vs
 # @property @abstractmethod

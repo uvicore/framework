@@ -15,6 +15,7 @@ class Package(Dict):
     name: str
     short_name: str
     vendor: str
+    version: str
     main: bool
     path: str
     registers: Dict

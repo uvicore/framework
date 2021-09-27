@@ -1,3 +1,4 @@
+# type: ignore
 from .db import Db
 from .table import Table
 from uvicore.contracts import Connection as ConnectionInterface

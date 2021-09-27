@@ -90,7 +90,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             # .order_by('column') or .order_by('column', 'DESC')
             # .order_by
             self.query.order_by.append((column, order.upper()))
-        elif type(column) == tuple:
+        elif type(column) == list:
             # Multiple order as a List[Tuple] (column, order)
             for order_by in column:
                 if type(order_by) == tuple:

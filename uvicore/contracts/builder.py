@@ -7,10 +7,10 @@ try:
     import sqlalchemy as sa
     from sqlalchemy.engine.result import RowProxy
     from sqlalchemy.sql.expression import BinaryExpression
-except:
-    sa = None
-    RowProxy = None
-    BinaryExpression = None
+except ImportError:  # pragma: nocover
+    sa = None  # type: ignore
+    RowProxy = None  # type: ignore
+    BinaryExpression = None  # type: ignore
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model

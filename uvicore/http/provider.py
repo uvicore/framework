@@ -1,7 +1,7 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import location, load
-from uvicore.typing import List, Dict, OrderedDict
+from uvicore.typing import List, Dict, OrderedDict, Union
 from uvicore.contracts import Provider
 from uvicore.console import command_is
 
@@ -52,6 +52,17 @@ class Http(Provider):
         # Register views only if allowed
         if self.package.registers.views:
             self.package.web.view_paths = items
+
+    def composers(self, views: Union[str, List], module: str):
+        # Default registration
+        self.package.registers.defaults({'views': True})
+
+        # Register views only if allowed
+        if self.package.registers.views:
+            if type(views) != list: views = [views]
+            for view in views:
+                self.package.web.view_composers[view] = module
+
 
     def assets(self, items: List):
         # Default registration

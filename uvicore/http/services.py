@@ -32,7 +32,6 @@ class Http(ServiceProvider, Cli, Http):
         #     is_async=False,
         # )
 
-
         #     @uvicore.app.http.on_event("shutdown")
         #     async def shutdown():
         #         for database in self.databases.values():

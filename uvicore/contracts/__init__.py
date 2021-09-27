@@ -1,3 +1,4 @@
+# type: ignore
 from .application import Application
 from .builder import DbQueryBuilder, OrmQueryBuilder, QueryBuilder
 from .cache import Cache
