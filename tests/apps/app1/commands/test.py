@@ -13,7 +13,9 @@ async def cli():
     #await poly_play()
 
     from app1.models import Post
-    posts = await Post.query().order_by(['id', 'DESC']).get()
+    posts = await Post.query().or_where([('creator_id', 1), ('creator_id', 2)]).get()
+
+    #posts = await Post.query().order_by(['id', 'DESC']).get()
     #posts = await Post.query().where('other', 'null').where('creator_id', 2).get();
     # posts = await Post.query().where([
     #     ('other', 'null'),
@@ -22,6 +24,19 @@ async def cli():
     dd(posts)
 
     dd('')
+
+
+    # from uvicoreteam.themes import mdb
+    # from uvicoreextra
+    # from uvcteam import themes
+    # from teamuvicore import themes
+    # from uvicore_extra import themes
+
+    # from teamuvc import themes
+    # teamuvc-themes
+
+
+
 
 async def poly_play():
     from app1.models import User, Post, Comment, Tag
@@ -33,6 +48,16 @@ async def poly_play():
 
     # comment = await Comment.query().include('post.attributes').find(1)
     # dd(comment)
+
+
+    # or_where: [["creator_id", 1],["creator_id",2]]
+
+    # where: ["creator_id", 1]
+    # where: ["creator_id", "!=", 1]
+    # where: [["creator_id", 1],["slug", "!=", "test-post1"]]
+
+    # combined: ?where=["owner_id",1]&or_where=[["creator_id", 1],["creator_id",2]]
+
 
     tags = await Tag.query().key_by('name').get()
 

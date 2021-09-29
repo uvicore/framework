@@ -1,7 +1,7 @@
 import os
 import uvicore
-from uvicore.support import str
 from uvicore import log
+from uvicore.support import str
 from uvicore.console import command, argument
 from uvicore.support.dumper import dump, dd
 from uvicore.support.schematic import Schematic
@@ -12,7 +12,7 @@ from uvicore.support.schematic import Schematic
 async def command(name: str):
     """
     \b
-    Generate a new CLI command...
+    Generate a new CLI command schematic...
     \b
     USAGE:
         Commands should be lower_underscore and SINGULAR (plural is OK)
@@ -39,7 +39,7 @@ async def command(name: str):
     package = uvicore.app.package(main=True)
 
     log.nl()
-    log.header('Add this to your Service Provider commands List')
+    log.header('Add this to your Service Provider boot() or define_commands self.commands()')
     print("'{}': '{}.commands.{}.cli',".format(str.kebab(name), package.name, name))
 
     log.nl()

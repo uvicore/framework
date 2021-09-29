@@ -439,8 +439,9 @@ class Router(Generic[R], RouterInterface[R]):
         # Get name
         no_name = False
         if not name:
+            # We have no explicit name, derive name from path including params or its not unique
             no_name = True
-            name = path
+            name = path.replace('{', '').replace('}', '')
 
         # Clean name
         name = name.replace('/', '.')

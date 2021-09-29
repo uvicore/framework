@@ -215,6 +215,12 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             column = [x for x in kwargs.keys()][0]
             value = [x for x in kwargs.values()][0]
 
+        # Ensure some incompatible builder methods are reset
+        self.query.wheres = []
+        self.query.or_wheres = []
+        self.query.order_by = []
+        self.query.keyed_by = None
+
         # Add in where on PK
         self.where(column, value)
 

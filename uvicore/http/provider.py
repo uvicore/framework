@@ -3,7 +3,8 @@ from uvicore.support.dumper import dump, dd
 from uvicore.support.module import location, load
 from uvicore.typing import List, Dict, OrderedDict, Union
 from uvicore.contracts import Provider
-from uvicore.console import command_is
+from uvicore.support.collection import unique
+
 
 
 class Http(Provider):
@@ -45,23 +46,42 @@ class Http(Provider):
         #if self.package.registers.middleware:
             #self._add_http_definition('middleware', items)
 
-    def views(self, items: List):
+    def views(self, modules: List):
         # Default registration
         self.package.registers.defaults({'views': True})
 
         # Register views only if allowed
         if self.package.registers.views:
-            self.package.web.view_paths = items
+            self.package.web.view_paths = modules
 
-    def composers(self, views: Union[str, List], module: str):
-        # Default registration
+    def composers(self, module: Union[str, Dict], views: Union[str, List] = None, *, append: bool = False):
+        # Default registration - we use same 'views' registration for composers as well
         self.package.registers.defaults({'views': True})
 
-        # Register views only if allowed
+        # Register composers only if allowed
         if self.package.registers.views:
-            if type(views) != list: views = [views]
-            for view in views:
-                self.package.web.view_composers[view] = module
+            if type(module) == dict:
+                # Dict based, example:
+                # self.composers({
+                #     'mreschke.themes.http.composers.theme.Theme': 'themes/*',
+                #     'mreschke.themes.http.composers.theme.Theme2': ['themes/*', 'themes2/*'],
+                # })
+                for (mod, views) in module.items():
+                    self.composers(mod, views)
+            else:
+                # Parameter based
+                if views is None:
+                    # Delete this entire view composer
+                    del self.package.web.view_composers[module]
+                    return
+                if type(views) != list: views = [views]
+                if append:
+                    # Append views to this modules List
+                    if not self.package.web.view_composers[module]: self.package.web.view_composers[module] = []
+                    self.package.web.view_composers[module].extend(views)
+                    self.package.web.view_composers[module] = unique(self.package.web.view_composers[module])
+                else:
+                    self.package.web.view_composers[module] = views
 
 
     def assets(self, items: List):

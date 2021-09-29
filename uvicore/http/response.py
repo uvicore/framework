@@ -1,8 +1,10 @@
+from os import stat
 import re
 import uvicore
 from uvicore.typing import Dict
 from uvicore.support.dumper import dump
 from uvicore.support.module import load
+from uvicore.http.request import Request
 from starlette.templating import _TemplateResponse
 from starlette.background import BackgroundTask as _BackgroundTask
 
@@ -31,18 +33,22 @@ async def View(
     background: _BackgroundTask = None,
 ) -> _TemplateResponse:
 
+    # Pull request out of context (which is always present as it is required for response.View())
+    request: Request = context.get('request');
+
     # Check for a view composer when rendering this view
     view_name = name.split('.')[0]
     context = Dict(context)
-    for (composer_view_name, composer_module) in uvicore.config.uvicore.http.view_composers.items():
-        if re.search(composer_view_name, view_name):
+    for (composer_module, composer_views) in uvicore.config.uvicore.http.view_composers.items():
+        if re.search(composer_views, view_name):
             try:
-                # Load composer and merge its return using .defaults() to ensure
-                # the view wins over the composer
-                composer = load(composer_module).object()
+                # Load composer and merge the return using .defaults() to ensure
+                # the view wins in the override battle over the composer
+                composer = load(composer_module).object(request, name, context, status_code, headers, media_type)
                 context.defaults(await composer.compose())
-            except:
+            except Exception as e:
                 # Composer not found, silently ignore
+                #dump(e)
                 pass
 
     # Renger the template

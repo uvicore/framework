@@ -1,3 +1,4 @@
+import re
 import copy
 from uvicore.support.dumper import dump, dd
 from collections import OrderedDict as _OrderedDict
@@ -229,18 +230,26 @@ class _SuperDict:
         self.freeze(freeze=False)
 
     def dotget(self, dotkey: str = None, _recursive_config = None):
-        """Get values using string dot notation"""
+        """Get values using string dot notation.  Surround with [] to include those . as the key"""
         # Recursive for dot notation
+        if not dotkey: return self
+        if _recursive_config is None: _recursive_config = self
+
         try:
-            if not dotkey:
-                return self
-            if _recursive_config is None: _recursive_config = self
+
+            # Replace any , with ^ inside [] temporarily
+            if "[" in dotkey:
+                def x(m): return m[0].replace('.', '^')[1:-1]
+                dotkey = re.sub('(\[.*?\])', x, dotkey)
+
             if "." in dotkey:
                 key, rest = dotkey.split(".", 1)
+                key = key.replace('^', '.')
                 if key not in _recursive_config:
                     _recursive_config[key] = self.__class__()
                 return self.dotget(rest, _recursive_config[key])
             else:
+                dotkey = dotkey.replace('^', '.')
                 if dotkey in _recursive_config:
                     return _recursive_config[dotkey]
                 else:
@@ -249,16 +258,25 @@ class _SuperDict:
             return self.__missing__(dotkey)
 
     def dotset(self, dotkey: str, value, _recursive_config=None):
-        """Set values using string dot notation"""
+        """Set values using string dot notation.  Surround with [] to include those . as the key."""
         # Recursive for dot notation
         # Remember objects are byRef, so changing config also changes self.items
         if _recursive_config is None: _recursive_config = self
+
+        # Replace any , with ^ inside [] temporarily
+        if "[" in dotkey:
+            def x(m): return m[0].replace('.', '^')[1:-1]
+            dotkey = re.sub('(\[.*?\])', x, dotkey)
+
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
+            key = key.replace('^', '.')
             if key not in _recursive_config:
                 _recursive_config[key] = self.__class__()
             return self.dotset(rest, value, _recursive_config[key])
         else:
+            # Replace ^ back with . for keys inside []
+            dotkey = dotkey.replace('^', '.')
             if type(value) == dict:
                 _recursive_config[dotkey] = self.__class__(value)
             else:

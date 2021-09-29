@@ -91,7 +91,7 @@ class Post(Controller):
         #from uvicore.http.routing.auto_api import autoapi_list2
 
         #@route.get('/post5', inherits=autoapi_list)
-        @route.get('/post5/', inherits=AutoApi.listsig)
+        @route.get('/post5/', inherits=AutoApi.getsig)
         #@route.get('/post5', response_model=models.Post, inherits=autoapi_list2)
         #@route.get('/post5', inherits=autoapi_list2)
         #async def post5(more: str, **kwargs) -> models.Post:
@@ -100,31 +100,54 @@ class Post(Controller):
             result = await api.orm_query().find(5)
             return result
 
-        @route.post('/post5')
-        async def post5_create():
-            pass
 
-        @route.put('/post5')
-        async def post5_put():
-            pass
-
-        @route.patch('/post5')
-        async def post5_patch():
-            pass
-
-        @route.delete('/post5')
-        async def post5_delete():
-            pass
-
-
-
-        @route.add('/post6', methods=['PATCH', 'POST'])
+        @route.get('/post6')
         async def post6():
             pass
 
-        @route.add('/post6', methods=['PUT', 'DELETE'], name='post6-PD')
+        @route.get('/post6/{id}')
         async def post6():
             pass
+
+        @route.get('/post6/{id}/comments')
+        async def post6():
+            pass
+
+        @route.get('/post6/{id}/comments/{comment_id}')
+        async def post6():
+            pass
+
+        @route.get('/post6/{id}/comments/{comment_id}/creator')
+        async def post6():
+            pass
+
+        # ?or_where={"creator_id": 1, "creator_id", 2}
+        # ?or_where={"creator_id": 1, "creator_id", [">", 3]}
+
+
+        # @route.post('/post5')
+        # async def post5_create():
+        #     pass
+
+        # @route.put('/post5')
+        # async def post5_put():
+        #     pass
+
+        # @route.patch('/post5')
+        # async def post5_patch():
+        #     pass
+
+        # @route.delete('/post5')
+        # async def post5_delete():
+        #     pass
+
+        # @route.add('/post6', methods=['PATCH', 'POST'])
+        # async def post6():
+        #     pass
+
+        # @route.add('/post6', methods=['PUT', 'DELETE'], name='post6-PD')
+        # async def post6():
+        #     pass
 
                 # path='/post5',
                 # name='app1.api.post5',

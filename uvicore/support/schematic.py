@@ -15,6 +15,7 @@ class Schematic:
         self.package = uvicore.app.package(main=True)
         self.stub = os.path.realpath(stub)
         self.dest = os.path.realpath(dest)
+        self.path = "/".join(self.dest.split('/')[0:-1])
 
         # Replacements (order is important)
         self.replacements = replace
@@ -32,6 +33,9 @@ class Schematic:
         log.item2('Destination: ' + self.dest)
         log.item2('Replacements:')
         log.dump(self.replacements)
+
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
 
         if os.path.exists(self.dest):
             #raise Exception('Destination file already exists')

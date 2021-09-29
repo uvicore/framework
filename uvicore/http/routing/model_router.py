@@ -20,6 +20,17 @@ from pydantic import BaseModel
 
 from starlette.responses import JSONResponse
 
+# where
+# or_where
+# filter
+# or_filter
+# order_by
+# sort
+# key_by
+# page and page_size - in vue and uvicore orm these are actually done with limit() and offset()
+# cache
+# show_writeonly
+
 
 class HTTPMessage(BaseModel):
   #status_code: int
@@ -53,10 +64,10 @@ class ModelRoutes:
     def register(self, Model: OrmModel, route: ApiRouter, path: str, tags: List, scopes: List):
         """Build dynamic model CRUD routes"""
 
-        #@route.get('/' + path, inherits=AutoApi.listsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
+        #@route.get('/' + path, inherits=AutoApi.getsig, response_model=List[Model], tags=tags, scopes=[Model.tablename + '.read'] if scopes is None else scopes)
         @route.get(
             path='/' + path,
-            inherits=AutoApi.listsig,
+            inherits=AutoApi.getsig,
             response_model=List[Model],
             tags=tags,
             scopes=scopes['read'],
@@ -78,7 +89,7 @@ class ModelRoutes:
 
         @route.get(
             path='/' + path + '/{id}',
-            inherits=AutoApi.getsig,
+            inherits=AutoApi.findsig,
             # responses={
             #     404: {
             #         'model': HTTPMessage,
@@ -92,7 +103,7 @@ class ModelRoutes:
             summary="Get one {} by primary key".format(Model.tablename),
             description="Get a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
         )
-        async def get_one(id: Union[str,int], **kwargs):
+        async def find_one(id: Union[str,int], **kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
 

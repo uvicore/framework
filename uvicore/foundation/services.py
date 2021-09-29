@@ -73,45 +73,57 @@ class Foundation(ServiceProvider, Cli):
         #         'commands': {
         #             'list': 'uvicore.events.commands.event.list',
         #             'get': 'uvicore.events.commands.event.get',
+        #             'listeners': 'uvicore.events.commands.event.listeners',
         #         },
         #     },
         # })
 
         # Alternative in kwargs format
 
-        # # Register Ioc commands
-        # self.commands(
-        #     group='ioc',
-        #     help='Uvicore Ioc (Inversion of Control) Information',
-        #     commands={
-        #         'bindings': 'uvicore.container.commands.ioc.bindings',
-        #         'singletons': 'uvicore.container.commands.ioc.singletons',
-        #         'overrides': 'uvicore.container.commands.ioc.overrides',
-        #         'type': 'uvicore.container.commands.ioc.type',
-        #         'get': 'uvicore.container.commands.ioc.get',
-        #     }
-        # )
+        # Register App commands
+        self.commands(
+            group='app',
+            help='Uvicore Application Information',
+            commands={
+                'info': 'uvicore.foundation.commands.app.info',
+            }
+        )
 
-        # # Register Package commands
-        # self.commands(
-        #     group='package',
-        #     help='Uvicore Package Information',
-        #     commands={
-        #         'providers': 'uvicore.package.commands.package.providers',
-        #         'list': 'uvicore.package.commands.package.list',
-        #         'get': 'uvicore.package.commands.package.get',
-        #     }
-        # )
 
-        # # Register Event commands
-        # self.commands(
-        #     group='event',
-        #     help='Uvicore Event Information',
-        #     commands={
-        #         'list': 'uvicore.events.commands.event.list',
-        #         'get': 'uvicore.events.commands.event.get',
-        #     },
-        # )
+        # Register Ioc commands
+        self.commands(
+            group='ioc',
+            help='Uvicore Ioc (Inversion of Control) Information',
+            commands={
+                'bindings': 'uvicore.container.commands.ioc.bindings',
+                'singletons': 'uvicore.container.commands.ioc.singletons',
+                'overrides': 'uvicore.container.commands.ioc.overrides',
+                'type': 'uvicore.container.commands.ioc.type',
+                'get': 'uvicore.container.commands.ioc.get',
+            }
+        )
+
+        # Register Package commands
+        self.commands(
+            group='package',
+            help='Uvicore Package Information',
+            commands={
+                'providers': 'uvicore.package.commands.package.providers',
+                'list': 'uvicore.package.commands.package.list',
+                'get': 'uvicore.package.commands.package.get',
+            }
+        )
+
+        # Register Event commands
+        self.commands(
+            group='event',
+            help='Uvicore Event Information',
+            commands={
+                'list': 'uvicore.events.commands.event.list',
+                'get': 'uvicore.events.commands.event.get',
+                'listeners': 'uvicore.events.commands.event.listeners',
+            },
+        )
 
         # Alternative, pull from a config
-        self.commands(self.package.config.commands)
+        #self.commands(self.package.config.commands)

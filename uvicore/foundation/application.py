@@ -81,6 +81,10 @@ class Application(ApplicationInterface):
     def packages(self) -> OrderedDict[str, PackageInterface]:
         return self._packages
 
+    # @property
+    # def running_config(self) -> OrderedDict:
+    #     return self._running_config
+
     @property
     def path(self) -> str:
         return self._path
@@ -106,9 +110,18 @@ class Application(ApplicationInterface):
         self._is_console = False
         self._is_http = False
         self._packages = OrderedDict()
+        self._running_config = OrderedDict()
         self._path = None
         self._name = None
         self._main = None
+
+    def add_running_config(self, key: str, value):
+        if type(value) == list:
+            if not self._running_config.dotget(key): self._running_config.dotset(key, [])
+            self._running_config.dotget(key).extend(value)
+        else:
+            self._running_config.dotset(key, value)
+
 
     def bootstrap(self, app_config: Dict, path: str, is_console: bool) -> None:
         """Bootstrap the uvicore application"""
@@ -120,6 +133,11 @@ class Application(ApplicationInterface):
         self._path = path
         self._name = app_config.name
         self._main = app_config.main
+        self.add_running_config('name', self.name)
+        self.add_running_config('main', self.main)
+        self.add_running_config('path', self.path)
+        self.add_running_config('version', '0.0.0')
+        self.add_running_config('uvicore.version', self.version)
 
         # Merge running config/app.py paths dictionary with defaults and full path
         self._build_paths(app_config)
@@ -136,6 +154,7 @@ class Application(ApplicationInterface):
         # Build recursive providers graph
         self._build_provider_graph(app_config)
 
+
         # Failsafe if no http package, force console
         # This solves a ./uvicore http serve error if you don't have the http package
         #if 'uvicore.web' not in self.providers or 'uvicore.api' not in self.providers:
@@ -145,6 +164,7 @@ class Application(ApplicationInterface):
 
         # Register and merge all providers
         self._register_providers(app_config)
+        self.add_running_config('providers', self.providers)
 
         #dump(self.packages)
         #dd('REGISTERED')
@@ -152,6 +172,20 @@ class Application(ApplicationInterface):
         # Boot all providers
         #self._boot_providers()
         self._boot_providers(app_config)
+
+        # Add each final package to running_config, but only the basic details
+        # for package in self.packages.values():
+        #     if package.main:
+        #         self.add_running_config('version', package.version)
+        #     self.add_running_config('packages.[' + package.name + ']', {
+        #         'name': package.name,
+        #         'short_name': package.short_name,
+        #         'vendor': package.vendor,
+        #         'version': package.version,
+        #         'main': package.main,
+        #         'path': package.path,
+        #         'registers': [k for (k,v) in package.registers.items() if v == True],
+        #     })
 
         #dd(self.packages)
 
@@ -283,6 +317,7 @@ class Application(ApplicationInterface):
             'routes': 'http/routes',
             'static': 'http/static',
             'views': 'http/views',
+            'view_composers': 'http/composers',
             'jobs': 'jobs',
             'listeners': 'listeners',
             'models': 'models',

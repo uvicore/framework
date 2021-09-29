@@ -29,14 +29,14 @@ class Http(Handler):
         # Import each packages router files and add their routes to the package definition
         self.build_package_routes()
 
+        # Merge all packages Web and Api routes
+        (web_routes, api_routes) = self.merge_routes()
+
         # Fire up the HTTP server only if running from HTTP
         # Notice this is below building package routes above.  This is because
         # package routes are still built with certain CLI groups like package list and http route.
         # The server however is NOT fired up if not running a full http server command
         if not uvicore.app.is_http: return
-
-        # Merge all packages Web and Api routes
-        (web_routes, api_routes) = self.merge_routes()
 
         # If no routes, do nothing, no HTTP server at all
         if not web_routes and not api_routes: return
@@ -95,7 +95,7 @@ class Http(Handler):
             await HttpServerEvents.Shutdown().dispatch_async()
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
-        debug_dump = True
+        debug_dump = False
         if debug_dump:
             dump('#################################################################')
             dump("Main HTTP Server APPLICATION", uvicore.app.http.__dict__)
@@ -134,7 +134,8 @@ class Http(Handler):
             uvicore.app.is_http or
             command_is('http') or
             command_is('package') or
-            command_is('ioc')
+            command_is('ioc') or
+            command_is('app')
         ) == False: return
 
         routes_module = package.web.routes_module
@@ -150,6 +151,10 @@ class Http(Handler):
             name_prefix = package.short_name + '.' + name_prefix
         else:
             name_prefix = package.short_name
+
+        # Add to application running config for debug overview only
+        uvicore.app.add_running_config('http.web.route_modules.[' + routes_module + '].prefix', prefix)
+        uvicore.app.add_running_config('http.web.route_modules.[' + routes_module + '].name_prefix', name_prefix)
 
         # Import the web router and create a new instance
         from uvicore.http.routing.web_router import WebRouter  # isort:skip
@@ -178,7 +183,8 @@ class Http(Handler):
             uvicore.app.is_http or
             command_is('http') or
             command_is('package') or
-            command_is('ioc')
+            command_is('ioc') or
+            command_is('app')
         ) == False: return
 
         routes_module = package.api.routes_module
@@ -194,6 +200,10 @@ class Http(Handler):
             name_prefix = package.short_name + '.' + name_prefix
         else:
             name_prefix = package.short_name
+
+        # Add to application running config for debug overview only
+        uvicore.app.add_running_config('http.api.route_modules.[' + routes_module + '].prefix', prefix)
+        uvicore.app.add_running_config('http.api.route_modules.[' + routes_module + '].name_prefix', name_prefix)
 
         # Import the api router and create a new instance
         from uvicore.http.routing.api_router import ApiRouter  # isort:skip
@@ -213,6 +223,9 @@ class Http(Handler):
 
     def merge_routes(self) -> Tuple[Dict[str, WebRoute], Dict[str, ApiRoute]]:
         """Merge all packages web and api routes together"""
+
+        # This merging means we can overwrite other packages routes.
+        # Last package define wins in a route override battle
         web_routes = Dict()
         api_routes = Dict()
         package: Package
@@ -222,6 +235,12 @@ class Http(Handler):
                web_routes.merge(package.web.routes)
             if package.api.routes and package.registers.api_routes:
                 api_routes.merge(package.api.routes)
+
+        # Add to application running config for debug overview only
+        uvicore.app.add_running_config('http.web.routes', web_routes)
+        uvicore.app.add_running_config('http.api.routes', api_routes)
+
+        # Return routes tuple
         return (web_routes, api_routes)
 
     def create_http_servers(self, web_routes: Dict[str, WebRoute], api_routes: Dict[str, ApiRoute]) -> Tuple[Starlette, FastAPI, FastAPI]:
@@ -489,8 +508,10 @@ class Http(Handler):
             # Deep merge template options
             template_options.merge(package.web.template_options or {})
 
-        # Save merged view composers into our config for use later (its a great singleton for data!)
+        # Save merged view composers into our config for use later (in http/response View() )
         uvicore.config.uvicore.http.view_composers = view_composers
+
+        #dd(view_composers)
 
         # Mount all static paths
         self.mount_static(web_server, public_paths, asset_paths)

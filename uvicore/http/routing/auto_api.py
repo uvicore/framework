@@ -23,7 +23,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         *,
         request: Request,
         include: Optional[List[str]] = None,
-        where: Optional[str] = None
+        where: Optional[str] = None,
+        or_where: Optional[str] = None,
     ):
         self.Model = Model
         self.scopes = scopes
@@ -31,40 +32,26 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         self.user: UserInfo = request.user
         self.includes = self._build_include(include)
         self.wheres = self._build_where(where)
+        self.or_wheres = self._build_where(or_where)
 
     @classmethod
-    def listsig(
+    def findsig(
         request: Request,
+        id: Union[str, int],
         include: Optional[List[str]] = Query([]),
-        where: Optional[str] = '',
     ):
+        """AutoApi Find Function Signature"""
         pass
 
     @classmethod
     def getsig(
         request: Request,
-        id: Union[str, int],
         include: Optional[List[str]] = Query([]),
+        where: Optional[str] = '',
+        or_where: Optional[str] = '',
     ):
+        """AutoApi Get Function Signature"""
         pass
-
-    """
-    A URL is a ONE-TO-ONE mapping to an ORM QUERY
-    ---------------------------------------------
-
-    HTTP: DELETE /api/posts?where={"creator_id":"1"} // mabe 500 posts
-    ORM: Post.query().where('creator_id', 1).delete()
-    SQL: DELETE FROM posts WHERE creator_id=1;
-
-    HTTP: PATCH /api/posts?where={"creator_id":"1"}
-    BODY would be the columns to update
-        {
-            'creator_id': 12
-            'owner_id': 5
-        }
-    ORM: Post.query().where('creator_id', 1).update('creator_id', 12).update('owner_id', 5)
-    SQL: UPDATE posts SET creator_id=12, owner_id=4 WHERE creator_id=1;
-    """
 
 
     def orm_query(self) -> OrmQueryBuilder[OrmQueryBuilder, E]:
@@ -77,7 +64,11 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
         # Where
         if self.wheres: query.where(self.wheres)
-        #dump(query.query)
+
+        # OR Where
+        dump(self.or_wheres)
+        if self.or_wheres: query.or_where(self.or_wheres)
+
 
         return query
 
@@ -172,37 +163,48 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         return results
 
     def _build_where(self, where_str: str) -> List[Tuple]:
-        # If where_str is already a Dict (from a JSON blog) convert to str first
+        # If where_str is already a Dict (from a JSON payload) convert to str first
         if type(where_str) == dict: where_str = json.dumps(where_str)
-        dump('where_str', where_str)
         wheres = []
         if not where_str: return wheres
         try:
             # Convert where string JSON to python object
+            dump('where_str: ' + where_str)
             where_json = json.loads(where_str)
 
-            # Where must be a dict
-            if not isinstance(where_json, dict): return
+            if type(where_json[0]) != list: where_json = [where_json]
 
-            # WORKS - where={"id": [">", 5]}
-            # WORKS - where={"id": ["in", [1, 2, 3]]}
-            # WORKS - where={"title": ["like", "%black%"]}
-            # WORKS - where={"id": 65, "topic_id": ["in", [1, 2, 3, 4, 5]]}
-            # WORKS - ?include=topic.section.space&where={"topic.slug": "/tools", "topic.section.slug": "/apps", "topic.section.space.slug": "/dev"}
+            for where in where_json:
+                if len(where) == 2:
+                    wheres.append((where[0], '=', where[1]))
+                elif len(where) == 3:
+                    wheres.append((where[0], where[1], where[2]))
+            dump(wheres)
 
-            for (key, value) in where_json.items():
-                #dump("Key: " + str(key) + " - Value: " + str(value))
-                if isinstance(value, List):
-                    if len(value) != 2: continue  # Valid advanced value must be 2 item List
-                    operator = value[0]
-                    value = value[1]
-                    #query.where(key, operator, value)
-                    wheres.append((key, operator, value))
-                else:
-                    #query.where(key, value)
-                    wheres.append((key, '=', value))
+            # # Where must be a dict
+            # if not isinstance(where_json, dict): return
+
+            # # WORKS - where={"id": [">", 5]}
+            # # WORKS - where={"id": ["in", [1, 2, 3]]}
+            # # WORKS - where={"title": ["like", "%black%"]}
+            # # WORKS - where={"id": 65, "topic_id": ["in", [1, 2, 3, 4, 5]]}
+            # # WORKS - ?include=topic.section.space&where={"topic.slug": "/tools", "topic.section.slug": "/apps", "topic.section.space.slug": "/dev"}
+
+            # for (key, value) in where_json.items():
+            #     #dump("Key: " + str(key) + " - Value: " + str(value))
+            #     if isinstance(value, List):
+            #         if len(value) != 2: continue  # Valid advanced value must be 2 item List
+            #         operator = value[0]
+            #         value = value[1]
+            #         #query.where(key, operator, value)
+            #         wheres.append((key, operator, value))
+            #     else:
+            #         #query.where(key, value)
+            #         wheres.append((key, '=', value))
+
             return wheres
         except Exception as e:
             #self.log.error(e)
             dump(e)
+
 

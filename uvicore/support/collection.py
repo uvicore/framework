@@ -79,6 +79,17 @@ def dotget(object: Dict, dotpath: str, default = None):
     return node
 
 
+def unique(object: List):
+    """Remove duplicates from a list while preserving the order"""
+    # list(set(object)) does the unique job, but it sets to random order
+    u = []
+    for item in object:
+        if item not in u:
+            u.append(item)
+    return u
+
+
+
 
 ### Below is junk, experimental
 # These once actually used, would go into uvicore.types instead

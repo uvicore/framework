@@ -114,6 +114,7 @@ class Http(ServiceProvider, Cli, Http):
                 'commands': {
                     'controller': 'uvicore.http.commands.generators.controller',
                     'api-controller': 'uvicore.http.commands.generators.api_controller',
+                    'composer': 'uvicore.http.commands.generators.composer',
                 },
             }
         })
