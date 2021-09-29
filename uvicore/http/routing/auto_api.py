@@ -25,6 +25,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         include: Optional[List[str]] = None,
         where: Optional[str] = None,
         or_where: Optional[str] = None,
+        filter: Optional[str] = None,
+        or_filter: Optional[str] = None,
     ):
         self.Model = Model
         self.scopes = scopes
@@ -33,12 +35,15 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         self.includes = self._build_include(include)
         self.wheres = self._build_where(where)
         self.or_wheres = self._build_where(or_where)
-
+        self.filters = self._build_where(filter)
+        self.or_filters = self._build_where(or_filter)
     @classmethod
     def findsig(
         request: Request,
         id: Union[str, int],
         include: Optional[List[str]] = Query([]),
+        filter: Optional[str] = '',
+        or_filter: Optional[str] = '',
     ):
         """AutoApi Find Function Signature"""
         pass
@@ -49,6 +54,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         include: Optional[List[str]] = Query([]),
         where: Optional[str] = '',
         or_where: Optional[str] = '',
+        filter: Optional[str] = '',
+        or_filter: Optional[str] = '',
     ):
         """AutoApi Get Function Signature"""
         pass
@@ -66,9 +73,13 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         if self.wheres: query.where(self.wheres)
 
         # OR Where
-        dump(self.or_wheres)
         if self.or_wheres: query.or_where(self.or_wheres)
 
+        # Filter
+        if self.filters: query.filter(self.filters)
+
+        # OR Filter
+        if self.or_filters: query.or_filter(self.or_filters)
 
         return query
 

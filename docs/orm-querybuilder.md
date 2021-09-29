@@ -164,7 +164,7 @@ posts = await Post.query().include('creator.info', 'comments.creator', 'tags').g
 
 Most other query builder methods on relations use dot notation as well.
 ```python
-posts = (await Post.query()
+posts = await (Post.query()
     .include('creator.info', 'comments.creator')
     .where('deleted', False)
     .where('creator.info.title', 'Master Gardner')
@@ -175,7 +175,27 @@ posts = (await Post.query()
 )
 ```
 
-
-
 !!! info
     All relations in a dot notation will be included, so `creator.info` includes both creator `User` and the `Info` of that creator.  No need to specify twice as `['creator', 'creator.info']`
+
+
+
+
+## Filter AND OR
+
+Filter is like `.where()` but only filters child relations.  For example you would use a `where` to get all posts by `creator_id=1` (include comments), but use a `filter` to filter the child comments to all non deleted comments.  Thus a `filter` is only applicable if you also have some `include()` defined that shows MANY children.
+
+Available chainables are `filter()` and `or_filter()`
+
+```python
+posts = await (Post.query()
+    .include('comments')
+    .where('creator_id', 1)
+    .filter('comments.deleted', False)
+    .get()
+)
+```
+
+!!! tip
+    The same rules for `where()` apply to `filter()`.  Meaning operator as 2nd parameter is optional.  Multiple filters may be either chained or used as a List of Tuples.  Just like `or_where()`, `or_filter()` is also available and has the same syntax.
+

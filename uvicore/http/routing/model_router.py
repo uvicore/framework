@@ -20,8 +20,8 @@ from pydantic import BaseModel
 
 from starlette.responses import JSONResponse
 
-# where
-# or_where
+# -where
+# -or_where
 # filter
 # or_filter
 # order_by
