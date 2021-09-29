@@ -23,7 +23,7 @@ class xx_ComposerName:
 
     async def compose(self) -> dict:
         # This composer is registered in your service provider boot() method.
-        # Example: self.composer('xx_appname/*', 'xx_vendor.xx_appname.http.composers.xx_composername.xx_ComposerName')
+        # Example: self.composer('xx_vendor.xx_appname.http.composers.xx_composername.xx_ComposerName', ['xx_appname/*'])
 
         # Return new context to merge into views
         return {

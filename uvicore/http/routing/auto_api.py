@@ -169,7 +169,6 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         if not where_str: return wheres
         try:
             # Convert where string JSON to python object
-            dump('where_str: ' + where_str)
             where_json = json.loads(where_str)
 
             if type(where_json[0]) != list: where_json = [where_json]
@@ -179,7 +178,6 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
                     wheres.append((where[0], '=', where[1]))
                 elif len(where) == 3:
                     wheres.append((where[0], where[1], where[2]))
-            dump(wheres)
 
             # # Where must be a dict
             # if not isinstance(where_json, dict): return

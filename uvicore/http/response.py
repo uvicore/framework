@@ -40,16 +40,18 @@ async def View(
     view_name = name.split('.')[0]
     context = Dict(context)
     for (composer_module, composer_views) in uvicore.config.uvicore.http.view_composers.items():
-        if re.search(composer_views, view_name):
-            try:
-                # Load composer and merge the return using .defaults() to ensure
-                # the view wins in the override battle over the composer
-                composer = load(composer_module).object(request, name, context, status_code, headers, media_type)
-                context.defaults(await composer.compose())
-            except Exception as e:
-                # Composer not found, silently ignore
-                #dump(e)
-                pass
+        for composer_view in composer_views:
+            if (composer_view == '*'): composer_view = '.*'
+            if re.search(composer_view, view_name):
+                try:
+                    # Load composer and merge the return using .defaults() to ensure
+                    # the view wins in the override battle over the composer
+                    composer = load(composer_module).object(request, name, context, status_code, headers, media_type)
+                    context.defaults(await composer.compose())
+                except Exception as e:
+                    # Composer not found, silently ignore
+                    #dump(e)
+                    pass
 
     # Renger the template
     return templates.TemplateResponse(
