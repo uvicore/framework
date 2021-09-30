@@ -18,7 +18,8 @@ async def cli():
     posts = await (Post.query()
         .include('comments')
         .where('creator_id', 1)
-        .filter('comments.creator_id', 2)
+        #.filter('comments.creator_id', 2)
+        .sort('comments.id', 'DESC')
     ).get()
 
     #posts = await Post.query().order_by(['id', 'DESC']).get()

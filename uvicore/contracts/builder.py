@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Tuple, TypeVar, Union
+from typing import Any, Generic, List, Tuple, TypeVar, Union, Dict
 
 try:
     import sqlalchemy as sa
@@ -26,7 +26,7 @@ class QueryBuilder(Generic[B, E], ABC):
         """Add or where statement to query"""
 
     @abstractmethod
-    def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def order_by(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Order results by these columns ASC or DESC order"""
 
     @abstractmethod
@@ -96,7 +96,7 @@ class OrmQueryBuilder(QueryBuilder[B, E], ABC):
         pass
 
     @abstractmethod
-    def sort(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def sort(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Sort Many relations only"""
         pass
 

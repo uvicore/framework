@@ -8,7 +8,7 @@
 [Uvicore CLI](/cli/)
 [SuperDict](/superdict/)
 
-
+[IoC](/ioc/)
 
 [encode/databases](https://github.com/encode/databases)
 

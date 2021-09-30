@@ -6,6 +6,8 @@ from uvicore.http import status
 # This is how you could do it, if you wanted to log
 #log = lambda : uvicore.log.name('uvicore.http')
 
+# See https://www.restapitutorial.com/httpstatuscodes.html for a good list to follow
+
 class HTTPException(_HTTPException):
     """Main Base HTTP Exception"""
 
@@ -97,6 +99,23 @@ class NotFound(HTTPException):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             message='Not Found',
+            detail=detail,
+            extra=extra,
+            headers=headers,
+        )
+
+
+class BadParameter(HTTPException):
+    """Bad Parameter"""
+    def __init__(self,
+        detail: Optional[str] = None,
+        *,
+        extra: Optional[Dict] = None,
+        headers: Optional[Dict[str, Any]] = None
+    ) -> None:
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            message='Bad Parameter',
             detail=detail,
             extra=extra,
             headers=headers,

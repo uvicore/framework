@@ -12,6 +12,8 @@ from uvicore.contracts import AutoApi as AutoApiInterface
 from uvicore.support.dumper import dump, dd
 from uvicore.http.exceptions import PermissionDenied
 from uvicore.contracts import UserInfo
+from uvicore.http.exceptions import BadParameter
+
 
 E = TypeVar("E")
 
@@ -27,16 +29,25 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         or_where: Optional[str] = None,
         filter: Optional[str] = None,
         or_filter: Optional[str] = None,
+        order_by: Optional[str] = None,
+        sort: Optional[str] = None,
     ):
         self.Model = Model
         self.scopes = scopes
         self.request = request
         self.user: UserInfo = request.user
         self.includes = self._build_include(include)
-        self.wheres = self._build_where(where)
-        self.or_wheres = self._build_where(or_where)
-        self.filters = self._build_where(filter)
-        self.or_filters = self._build_where(or_filter)
+
+        # Where and filter JSON look identical, as does the ORM, all considered "whereables"
+        self.wheres = self._build_whereable(where)
+        self.or_wheres = self._build_whereable(or_where)
+        self.filters = self._build_whereable(filter)
+        self.or_filters = self._build_whereable(or_filter)
+
+        # Order and sort JSON look identical, as does the ORM, all considered "sortables"
+        self.order_bys = self._build_sortable(order_by)
+        self.sorts = self._build_sortable(sort)
+
     @classmethod
     def findsig(
         request: Request,
@@ -56,6 +67,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         or_where: Optional[str] = '',
         filter: Optional[str] = '',
         or_filter: Optional[str] = '',
+        order_by: Optional[str] = '',
+        sort: Optional[str] = '',
     ):
         """AutoApi Get Function Signature"""
         pass
@@ -63,10 +76,11 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
     def orm_query(self) -> OrmQueryBuilder[OrmQueryBuilder, E]:
         """Start a new Uvicore ORM Model QueryBuilder Query"""
+
+        # Start empty query builder
         query = self.Model.query()
 
         # Include
-        #if include: query.include(*include.split(','))
         if self.includes: query.include(*self.includes)
 
         # Where
@@ -75,12 +89,19 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         # OR Where
         if self.or_wheres: query.or_where(self.or_wheres)
 
-        # Filter
+        # Filter (children)
         if self.filters: query.filter(self.filters)
 
-        # OR Filter
+        # OR Filter (children)
         if self.or_filters: query.or_filter(self.or_filters)
 
+        # Order by
+        if self.order_bys: query.order_by(self.order_bys)
+
+        # Sort (children)
+        if self.sorts: query.sort(self.sorts)
+
+        # Return unfinished, still chainable query builder
         return query
 
     def guard_relations(self):
@@ -173,47 +194,52 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
                 results.append(include)
         return results
 
-    def _build_where(self, where_str: str) -> List[Tuple]:
-        # If where_str is already a Dict (from a JSON payload) convert to str first
-        if type(where_str) == dict: where_str = json.dumps(where_str)
-        wheres = []
-        if not where_str: return wheres
+    def _build_whereable(self, where_str: str) -> List[Tuple]:
+        if not where_str: return None
+        orm_wheres = []
         try:
-            # Convert where string JSON to python object
-            where_json = json.loads(where_str)
+            # Convert where string JSON to python object only if str, may already be a List from JSON payload not URL
+            wheres = json.loads(where_str) if type(where_str) == str else where_str
 
-            if type(where_json[0]) != list: where_json = [where_json]
+            # Ensure we have a List[List]
+            if type(wheres[0]) != list: wheres = [wheres]
 
-            for where in where_json:
+            # Translate JSON object into ORM query builder
+            for where in wheres:
                 if len(where) == 2:
-                    wheres.append((where[0], '=', where[1]))
+                    # No operator provided, just field and value, let ORM decide (ORM defaults to =)
+                    orm_wheres.append((where[0], where[1]))
                 elif len(where) == 3:
-                    wheres.append((where[0], where[1], where[2]))
+                    # Field, Operator and Value provided
+                    orm_wheres.append((where[0], where[1], where[2]))
 
-            # # Where must be a dict
-            # if not isinstance(where_json, dict): return
-
-            # # WORKS - where={"id": [">", 5]}
-            # # WORKS - where={"id": ["in", [1, 2, 3]]}
-            # # WORKS - where={"title": ["like", "%black%"]}
-            # # WORKS - where={"id": 65, "topic_id": ["in", [1, 2, 3, 4, 5]]}
-            # # WORKS - ?include=topic.section.space&where={"topic.slug": "/tools", "topic.section.slug": "/apps", "topic.section.space.slug": "/dev"}
-
-            # for (key, value) in where_json.items():
-            #     #dump("Key: " + str(key) + " - Value: " + str(value))
-            #     if isinstance(value, List):
-            #         if len(value) != 2: continue  # Valid advanced value must be 2 item List
-            #         operator = value[0]
-            #         value = value[1]
-            #         #query.where(key, operator, value)
-            #         wheres.append((key, operator, value))
-            #     else:
-            #         #query.where(key, value)
-            #         wheres.append((key, '=', value))
-
-            return wheres
+            return orm_wheres
         except Exception as e:
-            #self.log.error(e)
-            dump(e)
+            raise BadParameter('Invalid where/or_where/filter/or_filter parameter, possibly invalid JSON?', extra={'params': where_str, 'exception': str(e)})
 
+    def _build_sortable(self, order_by_str: str) -> List[Tuple]:
+        if not order_by_str: return None
+        orm_order_bys = []
+        try:
+            # A simple order_by does not need to be json, could be ?order_by=id  If so, convert it to string [] list
+            if order_by_str[0] != '[': order_by_str = '["' + order_by_str + '"]'
+
+            # Convert order string JSON to python object only if str, may already be a List from JSON payload not URL
+            order_bys = json.loads(order_by_str) if type(order_by_str) == str else order_by_str
+
+            # Ensure we have a List[List]
+            if type(order_bys[0]) != list: order_bys = [order_bys]
+
+            # Translate JSON object into ORM query builder
+            for order_by in order_bys:
+                if len(order_by) == 1:
+                    # No 'DESC' or 'ASC' defined, let ORM decide (ORM defaults to ASC)
+                    orm_order_bys.append((order_by[0]))
+                elif len(order_by) == 2:
+                    # Both field and order (DESC, ASC) provided
+                    orm_order_bys.append((order_by[0], order_by[1]))
+
+            return orm_order_bys
+        except Exception as e:
+            raise BadParameter('Invalid order_by parameter, possibly invalid JSON?', extra={'params': order_by_str, 'exception': str(e)})
 

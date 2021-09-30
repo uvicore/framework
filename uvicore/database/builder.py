@@ -83,7 +83,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         self.query.or_wheres.extend(or_wheres)
         return self
 
-    def order_by(self, column: Union[str, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def order_by(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Order results by these columns ASC or DESC order"""
         if type(column) == str:
             # A single order_by as a string or actual SQLAlchemy Column

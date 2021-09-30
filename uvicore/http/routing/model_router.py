@@ -22,8 +22,8 @@ from starlette.responses import JSONResponse
 
 # -where
 # -or_where
-# filter
-# or_filter
+# -filter
+# -or_filter
 # order_by
 # sort
 # key_by

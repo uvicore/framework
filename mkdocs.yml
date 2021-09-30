@@ -33,7 +33,7 @@ nav:
     - orm-pydantic.md
   - Architecture:
     - service-providers.md
-    - ioc-container.md
+    - ioc.md
     - request-lifecycle.md
     - bootstrap.md
   - Digging Deeper:

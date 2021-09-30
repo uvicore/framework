@@ -162,7 +162,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         self.query.or_filters.extend(or_filters)
         return self
 
-    def sort(self, column: Union[str, List, List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def sort(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
         """Sort Many relations only"""
         # This will not work as binary expression, becuase relation name is often
         # different than colums tablename
