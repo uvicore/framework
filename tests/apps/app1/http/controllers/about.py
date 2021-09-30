@@ -11,7 +11,7 @@ class About(Controller):
 
         @route.get('/about', name='about')
         async def about(request: Request):
-            return response.View('app1/about.j2', {
+            return await response.View('app1/about.j2', {
                 'request': request
             })
 

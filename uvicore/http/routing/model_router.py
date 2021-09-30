@@ -24,10 +24,11 @@ from starlette.responses import JSONResponse
 # -or_where
 # -filter
 # -or_filter
-# order_by
-# sort
-# key_by
+# -order_by
+# -sort
 # page and page_size - in vue and uvicore orm these are actually done with limit() and offset()
+
+# key_by
 # cache
 # show_writeonly
 
@@ -82,9 +83,12 @@ class ModelRoutes:
             try:
                 results = await query.get()
                 return results
-            except Exception as ex:
-                dump(ex)
-                raise HTTPException(500, str("Error in query builder, most likely an unknown column or query parameter."))
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Error in query builder, most likely an unknown column or query parameter.",
+                    exception=str(e)
+                )
 
 
         @route.get(

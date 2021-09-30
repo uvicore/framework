@@ -2,8 +2,8 @@
 # See https://bugs.python.org/issue41249
 # NO from __future__ import annotations
 
-import uvicore
 import json
+import uvicore
 from uvicore.http.request import Request
 from uvicore.http.params import Query
 from uvicore.typing import Optional, Union, List, Any, Tuple, Generic, TypeVar
@@ -14,8 +14,12 @@ from uvicore.http.exceptions import PermissionDenied
 from uvicore.contracts import UserInfo
 from uvicore.http.exceptions import BadParameter
 
-
 E = TypeVar("E")
+
+# Default page size and maximum from app config
+page_size_default = uvicore.config.app.api.page_size or 25
+page_size_max = uvicore.config.app.api.page_size_max or 100
+
 
 @uvicore.service()
 class AutoApi(Generic[E], AutoApiInterface[E]):
@@ -31,12 +35,18 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         or_filter: Optional[str] = None,
         order_by: Optional[str] = None,
         sort: Optional[str] = None,
+        page: Optional[int] = 1,
+        page_size: Optional[int] = page_size_default,
     ):
         self.Model = Model
         self.scopes = scopes
         self.request = request
         self.user: UserInfo = request.user
         self.includes = self._build_include(include)
+        self.page = page
+        self.page_size = page_size
+        if self.page_size > page_size_max: self.page_size = page_size_max
+        dump(self.page_size, page_size_max)
 
         # Where and filter JSON look identical, as does the ORM, all considered "whereables"
         self.wheres = self._build_whereable(where)
@@ -69,6 +79,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         or_filter: Optional[str] = '',
         order_by: Optional[str] = '',
         sort: Optional[str] = '',
+        page: Optional[int] = 1,
+        page_size: Optional[int] = page_size_default,
     ):
         """AutoApi Get Function Signature"""
         pass
@@ -100,6 +112,9 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
         # Sort (children)
         if self.sorts: query.sort(self.sorts)
+
+        # Page and Page Size (ORM limit and offset)
+        query.limit(self.page_size).offset(self.page_size * (self.page - 1))
 
         # Return unfinished, still chainable query builder
         return query
@@ -215,7 +230,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
             return orm_wheres
         except Exception as e:
-            raise BadParameter('Invalid where/or_where/filter/or_filter parameter, possibly invalid JSON?', extra={'params': where_str, 'exception': str(e)})
+            raise BadParameter('Invalid where/or_where/filter/or_filter parameter, possibly invalid JSON?', exception=str(e), extra={'params': where_str})
 
     def _build_sortable(self, order_by_str: str) -> List[Tuple]:
         if not order_by_str: return None
@@ -241,5 +256,5 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
             return orm_order_bys
         except Exception as e:
-            raise BadParameter('Invalid order_by parameter, possibly invalid JSON?', extra={'params': order_by_str, 'exception': str(e)})
+            raise BadParameter('Invalid order_by parameter, possibly invalid JSON?', exception=str(e), extra={'params': order_by_str})
 

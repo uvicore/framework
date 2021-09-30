@@ -11,8 +11,10 @@ def url(context: dict, name: str, **path_params: Any) -> str:
     request = context["request"]
 
     # Get full URL from starlette's request url_for() method
-    dump(name)
-    url = request.url_for(name, **path_params)
+    try:
+        url = request.url_for(name, **path_params)
+    except Exception as e:
+        raise Exception('Could not find URL for {} in template {}'.format(name, context.name))
 
     # Ensure url contains proper x-forwarded-proto protocol
     # If serving with uvicorn this is detected properly, but if serving with

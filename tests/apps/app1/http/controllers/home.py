@@ -9,11 +9,17 @@ class Home(Controller):
 
     def register(self, route: WebRouter):
 
-        @route.get('/', name='home')
+        @route.get('/', name='home', autoprefix=False)
         async def home(request: Request):
             from uvicore.http.exceptions import NotFound, PermissionDenied, NotAuthenticated, InvalidCredentials, HTTPException
             from uvicore.exceptions import SmartException
-            raise SmartException('smart here', 404)
+            # raise SmartException('smart here', 404,
+            #     message='override message instead of Not Found',
+            #     exception="some e stack trace",
+            #     extra={
+            #         'my': 'stuff'
+            #     }
+            # )
             #raise HTTPException(404, 'blah blah detail', message='nop f', extra={'opt1': 'there'})
             #raise NotFound('There was a problem when trying to find the <b>home</b> page :(')
             #raise PermissionDenied(['one', 'two'])
@@ -24,7 +30,7 @@ class Home(Controller):
             #     'stuff2': 'two',
             # })
 
-            return response.View('app1/home.j2', {
+            return await response.View('app1/home.j2', {
                 'request': request
             })
 

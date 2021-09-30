@@ -1,8 +1,11 @@
-<h1>About Page</h1>
+{% extends "themes/" + theme.name + "/layout.j2" %}
+{% block content %}
 
-<a href="{{url('app1.home')}}">Home</a> |
-<a href="{{url('app1.about')}}">About</a> |
-<a href="{{url('app1.admin')}}">Admin</a> |
-<a href="{{url('app1.login')}}">Login</a> |
-<a href="{{url('app1.logout')}}">Logout</a>
+    <!-- Jumbotron -->
+    <div class="p-5 text-center">
+        <h1 class="mb-3">About Page Here</h1>
+        <a class="btn btn-primary" href="{{ url('home') }}" role="button">Back Home</a>
+    </div>
+    <!-- Jumbotron -->
 
+{% endblock %}

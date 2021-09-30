@@ -19,7 +19,7 @@ class Login(Controller):
 
             if referer:
                 return response.Redirect(referer)
-            return response.View('app1/login.j2', {
+            return await response.View('app1/login.j2', {
                 'request': request
             })
 

@@ -106,7 +106,14 @@ config = {
     # API endpoint specific configuration and middleware
     # --------------------------------------------------------------------------
     'api': {
+        # URL prefix for all API endpoints
         'prefix': '/api',
+
+        # Page Size
+        'page_size': 3,
+        'page_size_max': 5,
+
+        # OpenAPI docs site configuration
         'openapi': {
             'title': 'App1 API Docs',
             'path': '/openapi.json',

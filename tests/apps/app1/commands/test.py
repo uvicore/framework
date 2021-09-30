@@ -15,12 +15,16 @@ async def cli():
     from app1.models import Post
     #posts = await Post.query().or_where([('creator_id', 1), ('creator_id', 2), ('creator_id','=', 5)]).get()
 
-    posts = await (Post.query()
-        .include('comments')
-        .where('creator_id', 1)
-        #.filter('comments.creator_id', 2)
-        .sort('comments.id', 'DESC')
-    ).get()
+    # posts = await (Post.query()
+    #     .include('comments')
+    #     .where('creator_id', 1)
+    #     #.filter('comments.creator_id', 2)
+    #     .sort('comments.id', 'DESC')
+    # ).get()
+
+    page_size = 2
+    page = 5
+    posts = await Post.query().limit(page_size).offset(page_size * (page -1)).get()
 
     #posts = await Post.query().order_by(['id', 'DESC']).get()
     #posts = await Post.query().where('other', 'null').where('creator_id', 2).get();

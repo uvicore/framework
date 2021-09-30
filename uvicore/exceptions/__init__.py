@@ -6,7 +6,7 @@ has_http = True
 try:
     from uvicore.http.exceptions import HTTPException as BaseException
     #from starlette.exceptions import HTTPException as BaseException
-except ImportError:  # pragma: nocover
+except ImportError as e:  # pragma: nocover
     BaseException = Exception
     has_http = False
 
@@ -19,6 +19,7 @@ class SmartException(BaseException):
         status_code: int = None,
         *,
         message: Optional[str] = None,
+        exception: Optional[str] = None,
         extra: Optional[Dict] = None,
         headers: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -30,6 +31,7 @@ class SmartException(BaseException):
                 status_code=status_code,
                 message=message,  # None message will show defailt HTTP status code phrase
                 detail=detail,
+                exception=exception,
                 extra=extra,
                 headers=headers,
             )
@@ -41,6 +43,7 @@ class SmartException(BaseException):
             self.status_code = status_code
             self.message = message
             self.detail = detail
+            self.exception = exception if uvicore.config.app.debug else None  # Hidden unless in debug mode
             self.extra = extra
             # No need for self.headers in CLI
 

@@ -29,7 +29,7 @@ class Admin(Controller):
 
             user = request.user
             #return user.email
-            return response.View('app1/admin.j2', {
+            return await response.View('app1/admin.j2', {
                 'request': request,
                 'user': user,
             })

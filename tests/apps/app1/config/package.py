@@ -138,6 +138,9 @@ config = {
         'uvicore.http_client': {
             'provider': 'uvicore.http_client.services.HttpClient',
         },
+        'mreschke.themes': {
+            'provider': 'mreschke.themes.services.themes.Themes',
+        },
     }),
 
 }

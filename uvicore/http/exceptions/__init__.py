@@ -19,6 +19,7 @@ class HTTPException(_HTTPException):
         detail: Optional[str] = None,
         *,
         message: Optional[str] = None,
+        exception: Optional[str] = None,
         extra: Optional[Dict] = None,
         headers: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -28,6 +29,7 @@ class HTTPException(_HTTPException):
         # Swap starlette detail to my message
         self.message = self.detail
         self.detail = detail
+        self.exception = exception if uvicore.config.app.debug else None  # Hidden unless in debug mode
         self.extra = extra
         self.headers = headers
 
@@ -110,6 +112,7 @@ class BadParameter(HTTPException):
     def __init__(self,
         detail: Optional[str] = None,
         *,
+        exception: Optional[str] = None,
         extra: Optional[Dict] = None,
         headers: Optional[Dict[str, Any]] = None
     ) -> None:
@@ -117,6 +120,7 @@ class BadParameter(HTTPException):
             status_code=status.HTTP_400_BAD_REQUEST,
             message='Bad Parameter',
             detail=detail,
+            exception=exception,
             extra=extra,
             headers=headers,
         )
