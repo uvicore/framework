@@ -133,10 +133,26 @@ class Db(DatabaseInterface):
 
     async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
         metakey = self.metakey(connection, metakey)
-        database = self.databases.get(metakey)
-        if not database.is_connected:
-            # Connect on-the-fly
-            await database.connect()
+
+        # Do NOT connect on the fly.  For some reason the first time I query
+        # the db I get a mismatch in aiomysql.connection.Connection object
+        # Notice the Ids are different.
+
+        # [ERROR] Exception in ASGI application
+        # File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/databases/backends/mysql.py", line 100, in release
+        #     await self._database._pool.release(self._connection)
+        # File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aiomysql/pool.py", line 204, in release
+        #     assert conn in self._used, (conn, self._used)
+        # AssertionError: (<aiomysql.connection.Connection object at 0x7f733acc9130>, {<aiomysql.connection.Connection object at 0x7f733acc96d0>})
+
+        # So instead, I moved connection to a one-time event from Startup listener
+        # in database/services.py
+
+        # Connect on-the-fly
+        # database = self.databases.get(metakey)
+        # if not database.is_connected:
+        #     await database.connect()
+
         return self.databases.get(metakey)
 
     async def disconnect(self, connection: str = None, metakey: str = None, from_all: bool = False) -> None:

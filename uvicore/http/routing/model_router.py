@@ -26,7 +26,7 @@ from starlette.responses import JSONResponse
 # -or_filter
 # -order_by
 # -sort
-# page and page_size - in vue and uvicore orm these are actually done with limit() and offset()
+# -page and page_size - in vue and uvicore orm these are actually done with limit() and offset()
 
 # key_by
 # cache
@@ -69,7 +69,7 @@ class ModelRoutes:
         @route.get(
             path='/' + path,
             inherits=AutoApi.getsig,
-            response_model=List[Model],
+            response_model=Union[List[Model], Dict],
             tags=tags,
             scopes=scopes['read'],
             summary="List multiple {}".format(Model.tablename),
@@ -82,6 +82,7 @@ class ModelRoutes:
             # Run ORM query for results
             try:
                 results = await query.get()
+                dump(results)
                 return results
             except Exception as e:
                 raise HTTPException(

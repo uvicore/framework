@@ -16,6 +16,9 @@ from uvicore.http.routing import ApiRoute, WebRoute
 from uvicore.http.routing import Guard
 from uvicore.http.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 
+# Temp speed testing variable to swap Web router from FastAPI to Starlette
+USE_STARLETTE=False
+
 
 class Http(Handler):
 
@@ -261,12 +264,16 @@ class Http(Handler):
 
         # Web server is FastAPI with NO OpenAPI setup
         if web_routes:
-            web_server = FastAPI(
-                debug=debug,
-                version=uvicore.app.version,
-                openapi_url=None,
-                swagger_ui_oauth2_redirect_url=None,
-            )
+            if USE_STARLETTE:
+                # Try a pure starlette server
+                web_server = Starlette(debug=debug)
+            else:
+                web_server = FastAPI(
+                    debug=debug,
+                    version=uvicore.app.version,
+                    openapi_url=None,
+                    swagger_ui_oauth2_redirect_url=None,
+                )
 
         # Api server is FastAPI with OpenAPI setup
         if api_routes:
@@ -345,22 +352,27 @@ class Http(Handler):
         if not web_routes: return
 
         for route in web_routes.values():
-            web_server.add_api_route(
-                path=(prefix + route.path) or '/',
-                endpoint=route.endpoint,
-                methods=route.methods,
-                name=route.name,
-                include_in_schema=False,
-                response_class=response.HTML,
-                dependencies=route.middleware,
-            )
-            # Starlette
-            # web_server.add_route(
-            #     path=route.path,
-            #     route=route.endpoint,
-            #     methods=route.methods,
-            #     name=route.name,
-            # )
+            if USE_STARLETTE:
+                # Starlette
+                web_server.add_route(
+                    path=route.path,
+                    route=route.endpoint,
+                    methods=route.methods,
+                    name=route.name,
+                    include_in_schema=False,
+                )
+            else:
+                # FastAPI
+                web_server.add_api_route(
+                    path=(prefix + route.path) or '/',
+                    endpoint=route.endpoint,
+                    methods=route.methods,
+                    name=route.name,
+                    include_in_schema=False,
+                    response_class=response.HTML,
+                    dependencies=route.middleware,
+                )
+
 
     def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute], prefix) -> None:
         """Add api routes to the api server"""

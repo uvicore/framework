@@ -15,9 +15,9 @@ class About(Controller):
                 'request': request
             })
 
-        # @route.post('/about')
-        # async def about_post():
-        #     pass
+        @route.get('/about2')
+        async def about2():
+            return response.Text('About2 text here')
 
         # Return router
         return route

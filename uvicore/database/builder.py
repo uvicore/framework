@@ -134,7 +134,6 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
     def _build_query(self, method: str, query: Query) -> Tuple:
         # Convert our Query into SQLAlchemy query
-        #saquery: sa.sql.select = None
 
         # where
         #   select
@@ -142,8 +141,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         #   delete
 
         # insert will never come into this get() or build function
-
-        if method == 'select' and query.table is not None:
+        if method == 'select':
             # Build .select() query from tables, joins and selectable columns
             saquery = self._build_select(query).distinct()
 
@@ -162,11 +160,11 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             # Build .offset query
             if query.offset: saquery = saquery.offset(query.offset)
 
-        elif method == 'delete' and query.table is not None:
+        elif method == 'delete':
             # Build .delete() query from table
             saquery = sa.delete(query.table)
 
-        elif method == 'update' and query.table is not None:
+        elif method == 'update':
             # Build .update() query from table
             saquery = sa.update(query.table)
 

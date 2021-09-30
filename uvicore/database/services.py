@@ -24,8 +24,20 @@ class Database(ServiceProvider, Cli):
         # Register event listeners
         AppEvents.Booted.listen(bootstrap.Database)
 
+        # Event Handlers
         # String based events instead of class based because HTTP may not even
-        # be installed, so importing it would cause an issue.
+        # be installed, so importing the HTTP event would cause an issue.
+
+        # Connect to all databases one time, after the system has started up
+        @uvicore.events.handle(['uvicore.console.events.command.Startup', 'uvicore.http.events.server.Startup'])
+        async def uvicore_startup(event):
+            # Loop each database and connect()
+            # I used to do it on-the-fly in db.py but was getting pool errors
+            for metakey, database in uvicore.db.databases.items():
+                #dump('Connecting to ' + metakey)
+                await database.connect()
+
+        # Disconnect from all databases after the system has shutdown
         @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.http.events.server.Shutdown'])
         async def uvicore_shutdown(event):
             # Disconnect from all connected databases

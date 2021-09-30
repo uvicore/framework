@@ -31,6 +31,9 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             self.query.table = uvicore.db.table(table, self._connection())
         else:
             self.query.table = table
+
+        if self.query.table is None:
+            raise Exception('Table {} not found.  Are you missing a prefix?  Use uvicore.db.tablename() for proper prefixing.'.format(table))
         return self
 
     def select(self, *args) -> B[B, E]:

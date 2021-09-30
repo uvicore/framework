@@ -46,7 +46,6 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         self.page = page
         self.page_size = page_size
         if self.page_size > page_size_max: self.page_size = page_size_max
-        dump(self.page_size, page_size_max)
 
         # Where and filter JSON look identical, as does the ORM, all considered "whereables"
         self.wheres = self._build_whereable(where)
@@ -115,6 +114,8 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
 
         # Page and Page Size (ORM limit and offset)
         query.limit(self.page_size).offset(self.page_size * (self.page - 1))
+
+        #query.key_by('id')
 
         # Return unfinished, still chainable query builder
         return query
