@@ -27,6 +27,8 @@ from starlette.responses import JSONResponse
 # -order_by
 # -sort
 # -page and page_size - in vue and uvicore orm these are actually done with limit() and offset()
+# Add a find for named finds still returning one
+
 
 # key_by
 # cache
@@ -69,7 +71,7 @@ class ModelRoutes:
         @route.get(
             path='/' + path,
             inherits=AutoApi.getsig,
-            response_model=Union[List[Model], Dict],
+            response_model=Union[List[Model], Model, Dict],
             tags=tags,
             scopes=scopes['read'],
             summary="List multiple {}".format(Model.tablename),
@@ -81,8 +83,10 @@ class ModelRoutes:
 
             # Run ORM query for results
             try:
-                results = await query.get()
-                dump(results)
+                if api.find:
+                    results = await query.find(**api.find)
+                else:
+                    results = await query.get()
                 return results
             except Exception as e:
                 raise HTTPException(
@@ -90,7 +94,6 @@ class ModelRoutes:
                     detail="Error in query builder, most likely an unknown column or query parameter.",
                     exception=str(e)
                 )
-
 
         @route.get(
             path='/' + path + '/{id}',

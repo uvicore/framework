@@ -22,6 +22,7 @@ class Redis:
 
     @property
     def engines(self) -> Dict:
+        """All connected redis pools"""
         return self._engines
 
     def __init__(self) -> None:
@@ -51,10 +52,10 @@ class Redis:
         return conn
 
     async def connect(self, connection: str = None) -> aioredis.Redis:
-        """Connect to a redis database by uvicore connection and aioredis.Redis instance"""
+        """Connect to a redis database by uvicore connection"""
         conn = self.connection(connection)
 
-        # Connect to redis if connection never started
+        # Connect to redis pool if connection never started
         if conn.url not in self.engines:
             self._engines[conn.url] = await aioredis.create_redis_pool(conn.url)
 

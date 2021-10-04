@@ -26,16 +26,17 @@ class Array(CacheInterface):
 
     async def has(self, key: str) -> bool:
         """Check if key exists"""
+        key = self._prepair(key)
         return key in self.items.keys()
 
     async def get(self, key: Union[str, List], *, default: Any = None) -> Any:
         """Get one or more key values if exists else return default value"""
-        keys = await self._prepair(key)
+        keys = self._prepair(key)
         if type(keys) == list:
             values = Dict()
             for key in keys:
                 return_key = key[len(self.prefix):]
-                if await self.has(key):
+                if self._has(key):
                     # Item exists, get it
                     values[return_key] = self._deserialize(self.items[key])
                 else:
@@ -43,7 +44,7 @@ class Array(CacheInterface):
                     values[return_key] = default
             return values
         else:
-            if await self.has(keys):
+            if self._has(keys):
                 # Item exists, get it
                 return self._deserialize(self.items[keys])
             else:
@@ -52,11 +53,11 @@ class Array(CacheInterface):
 
     async def remember(self, key: Union[str, Dict], callback: Union[Callable, Any] = None, *, seconds: int = None) -> Any:
         """Get a key if exists, if not SET the key to callback value"""
-        keys = await self._prepair(key)
+        keys = self._prepair(key)
         if type(key) != dict: keys = {keys:callback}
         value = {}
         for key, callback in keys.items():
-            if await self.has(key):
+            if self._has(key):
                 # Item exists, simply return value
                 value[key] = await self.get(key)
             else:
@@ -76,7 +77,7 @@ class Array(CacheInterface):
 
     async def put(self, key: Union[str, Dict], value: Any = None, *, seconds: int = None) -> None:
         """Put one or more key/values in cache with optional expire in seconds (0=never expire)"""
-        keys = await self._prepair(key)
+        keys = self._prepair(key)
         if seconds is None: seconds = self.seconds
         if type(keys) != dict: keys = {keys:value}
         for (key, value) in keys.items():
@@ -88,7 +89,7 @@ class Array(CacheInterface):
 
     async def pull(self, key: Union[str, Dict]) -> Any:
         """Get one or more key values from cache them remove them after"""
-        keys = await self._prepair(key)
+        keys = self._prepair(key)
         value = await self.get(key)
         await self.forget(keys)
         return value
@@ -96,7 +97,7 @@ class Array(CacheInterface):
     async def add(self, key: str, value: Any, *, seconds: int = None) -> bool:
         """Put a single value in cache only if not exists"""
         key = self._prepair(key)
-        if await self.has(key):
+        if self._has(key):
             # Item already exists, return False for NOT added
             return False
         else:
@@ -108,7 +109,7 @@ class Array(CacheInterface):
         """Touch a key, if seconds are provided, also reset expire TTL"""
         key = self._prepair(key)
         if seconds is None: seconds = self.seconds
-        if await self.has(key) and seconds is not None:
+        if self._has(key) and seconds is not None:
             self.items_ttl[key] = self._now() + seconds
             return True
         return False
@@ -118,7 +119,7 @@ class Array(CacheInterface):
         key = self._prepair(key)
         if seconds is None: seconds = self.seconds
         value = 0
-        if await self.has(key): value = await self.get(key)
+        if self._has(key): value = await self.get(key)
         if type(value) == int:
             value += 1
             self.put(key, value, seconds=seconds)
@@ -129,7 +130,7 @@ class Array(CacheInterface):
         key = self._prepair(key)
         if seconds is None: seconds = self.seconds
         value = 0
-        if await self.has(key): value = await self.get(key)
+        if self._has(key): value = await self.get(key)
         if type(value) == int:
             value -= 1
             self.put(key, value, seconds=seconds)
@@ -137,7 +138,7 @@ class Array(CacheInterface):
 
     async def forget(self, key: Union[str, List]) -> None:
         """Delete a key from cache"""
-        keys = await self._prepair(key)
+        keys = self._prepair(key)
         if type(keys) != list: keys = [keys]
         for key in keys:
             if key in self.items:
@@ -154,7 +155,25 @@ class Array(CacheInterface):
         for key in delete:
             del self.items[key]
 
-    async def _prepair(self, key: Union[str, List] = None) -> Union[str, List, Dict]:
+    def _has(self, key: str) -> bool:
+        # This is an internal _has() only.  Why?  Because the public facing
+        # has is async def.  But it doesn't need to be.  Need to keep public
+        # as async def to match interface as Redis and other backends must be
+        # async def.
+
+        # I don't use _prepair here because ._has() is often used
+        # by many other internal method here.  Which means _prepair and therefore
+        # _expire() will be called many times.  So instead I just deduce
+        # the prefix right here.  This is only OK because _has() is INTERNAL
+        # and all callers already check _expire through their _prepair call.
+        # The public facing has() must use _prepair and therefore _expire or you
+        # could say a key exists even if its technically expired.
+        key = str(key)
+        prefix = self.prefix
+        if len(key) > len(prefix) and key[0:len(prefix)] == prefix: prefix = ''
+        return (prefix + key) in self.items.keys()
+
+    def _prepair(self, key: Union[str, List] = None) -> Union[str, List, Dict]:
         if key:
             if type(key) == list:
                 # Check if prefix already added
@@ -163,45 +182,48 @@ class Array(CacheInterface):
                 if len(key0) > len(prefix) and key0[0:len(prefix)] == prefix: prefix = ''
                 keys = [prefix + k for k in key]
                 for k in keys:
-                    await self._expire(k)
+                    self._expire(k)
                 return keys
             elif type(key) == dict:
                 key0 = [x for x in key.keys()][0]
                 prefix = self.prefix
                 if len(key0) > len(prefix) and key0[0:len(prefix)] == prefix: prefix = ''
                 for k in key.keys():
-                    await self._expire(prefix + k)
+                    self._expire(prefix + k)
                 return {prefix + k:v for k,v in key.items()}
             else:
                 # Check if prefix already added
                 key = str(key)
                 prefix = self.prefix
                 if len(key) > len(prefix) and key[0:len(prefix)] == prefix: prefix = ''
-                await self._expire(prefix + key)
+                self._expire(prefix + key)
                 return prefix + key
         else:
             return None
 
-    async def _expire(self, key):
+    def _expire(self, key):
         """Delete keys that are expired anytime they are accessed"""
         # If entry not in self.items_ttl, it never expires, keep it forever
-        if await self.has(key) and key in self.items_ttl:
-            now = self._now()
-            if now >= self.items_ttl[key]:
-                del self.items[key]
-                del self.items_ttl[key]
+        if key in self.items_ttl:
+            if key in self.items.keys():
+                now = self._now()
+                if now >= self.items_ttl[key]:
+                    del self.items[key]
+                    del self.items_ttl[key]
 
     def _now(self) -> int:
          return int(time())
 
     def _serialize(self, value):
-        return pickle.dumps(value)
+        return value
+        #return pickle.dumps(value)
 
     def _deserialize(self, value):
         # Error here means value was never serialized.
         # Like with .increment and .decrement keys
-        try:
-            return pickle.loads(value)
-        except:
-            return value.decode()
+        return value
+        # try:
+        #     return pickle.loads(value)
+        # except:
+        #     return value.decode()
 

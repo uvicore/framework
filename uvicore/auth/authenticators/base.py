@@ -64,5 +64,6 @@ class Authenticator(AuthenticatorInterface):
         """Extract authorization header parts"""
         authorization = request.headers.get('Authorization')
         if not authorization: return (authorization, '', '')
+        # Partition is a bit more performant that split
         scheme, _, param = authorization.partition(' ')
         return authorization, scheme.lower(), param

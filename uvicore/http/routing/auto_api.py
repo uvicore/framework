@@ -6,7 +6,7 @@ import json
 import uvicore
 from uvicore.http.request import Request
 from uvicore.http.params import Query
-from uvicore.typing import Optional, Union, List, Any, Tuple, Generic, TypeVar
+from uvicore.typing import Optional, Union, List, Tuple, Generic, TypeVar, Dict
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.contracts import AutoApi as AutoApiInterface
 from uvicore.support.dumper import dump, dd
@@ -29,6 +29,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         *,
         request: Request,
         include: Optional[List[str]] = None,
+        find: Optional[str] = None,
         where: Optional[str] = None,
         or_where: Optional[str] = None,
         filter: Optional[str] = None,
@@ -43,6 +44,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         self.request = request
         self.user: UserInfo = request.user
         self.includes = self._build_include(include)
+        self.find = self._build_find(find)
         self.page = page
         self.page_size = page_size
         if self.page_size > page_size_max: self.page_size = page_size_max
@@ -72,6 +74,7 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
     def getsig(
         request: Request,
         include: Optional[List[str]] = Query([]),
+        find: Optional[str] = '',
         where: Optional[str] = '',
         or_where: Optional[str] = '',
         filter: Optional[str] = '',
@@ -209,6 +212,15 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
             else:
                 results.append(include)
         return results
+
+    def _build_find(self, find_str: str) -> Dict:
+        if not find_str: return None
+        try:
+            find = json.loads(find_str)
+            if len(find) == 2:
+                return {find[0]: find[1]}
+        except Exception as e:
+            raise BadParameter('Invalid find by named parameter, possibly invalid JSON?', exception=str(e), extra={'params': find_str})
 
     def _build_whereable(self, where_str: str) -> List[Tuple]:
         if not where_str: return None

@@ -151,7 +151,10 @@ class Redis(CacheInterface):
         await redis.delete(*keys)
 
     async def _prepair(self, key: Union[str, List] = None) -> Tuple[RedisInterface, Union[str, List, Dict]]:
+        # Connect to redis pool if not connected
         if not self._redis:
+            # RedisDB is uvicore.redis.redis.py abstraction and .connect() there
+            # runs the await aioredis.create_redis_pool if not connected
             self._redis = await RedisDb.connect(self.connection)
 
         if key:

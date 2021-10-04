@@ -22,6 +22,16 @@ class Authentication:
         # Load and merge the auth config for this route type (web or api)
         self.config = get_auth_config(self.route_type)
 
+        # Variable caching
+        # Middleware needs to be fast.  Really fast!
+        # Even saving a few CPU cycles here and there makes a huge different
+        # with a high concurrency site (or wrk benchmark).  So I use variable
+        # caching to load, instantiate, clone...ONCE.  So __call__ need to be efficient.
+        self.cached_authenticators = {}
+        self.cached_providers = {}
+        self.cached_default_provider_options = {}
+        self.cached_default_provider_method = None
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         # Middleware only for http and websocket types
         if scope["type"] not in ["http", "websocket"]:
@@ -37,17 +47,28 @@ class Authentication:
         user = None
         authenticator_name = None
         for authenticator_name, authenticator in self.config.authenticators.items():
-            # Load authenticator backend
-            try:
-                backend: Authenticator = module.load(authenticator.module).object(authenticator)
-            except Exception as e:
-                raise Exception('Issue trying to import authenticator module defined in app.auth config - {}'.format(str(e)))
+            # Load authenticator backend from cache or module.load()
+            if authenticator_name in self.cached_authenticators:
+                #dump('cached authenticator')
+                backend = self.cached_authenticators[authenticator_name]
+            else:
+                try:
+                    # Load authenticator and instantiate it, saving the instance to our cached_authenticators
+                    # This essentially makes the instance a singleton, which is fine because it is
+                    # the 'authenticate' method that is called per request.  One instance is fine.
+                    backend: Authenticator = module.load(authenticator.module).object(authenticator)
+                    self.cached_authenticators[authenticator_name] = backend
+                except Exception as e:
+                    raise Exception('Issue trying to import authenticator module defined in app.auth config - {}'.format(str(e)))
 
             # Call backend authenticate() method
             # Return of False means this authentication method is not being attempted, try next authenticator
             # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
             # Return of User object means a valid user was found, skip next authenticator
+            #dump(backend)
+            # 8867 req/sec
             user = await backend.authenticate(request)
+            # 6924 req/sec logging, 8500 req/sec without logging
 
             # Determine if we should continue to next authenticator
             # Return of True means this authorization method was being attempted, but failed validation
@@ -74,12 +95,19 @@ class Authentication:
         # If all authenticators returned no User object, user is not logged in with any method.
         # Build an anonymous user object to inject into the request scope
         if not isinstance(user, UserInfo):
+            # 8350 req/sec
             user = await self.retrieve_anonymous_user(request)
+            # 6600 req/sec - even though I am now using ARRAY cache store
+            # to store the user.  This must mean pickle is slowing it down.
+            # 7500 without pickel!  Don't think array needs pickling because
+            # its already python!
 
             # Ensure authenticated is False
             user.authenticated = False
-            if 'authenticated' in user.permissions:
-                user.permissions.remove('authenticated')
+
+            # No, will never happen, its a new user
+            # if 'authenticated' in user.permissions:
+            #     user.permissions.remove('authenticated')
 
         # Add user to request
         scope['user'] = user
@@ -96,22 +124,37 @@ class Authentication:
 
     async def retrieve_anonymous_user(self, request: HTTPConnection):
         """Retrieve anonymous user from User Provider backend"""
-
         # Import user provider defined in auth config
-        # Anonymous user provider is always the 'default_provider'
-        user_provider: UserProvider = module.load(self.config.default_provider.module).object()
+        provider_module = self.config.default_provider.module
+        if provider_module in self.cached_providers:
+            #dump('cached provider')
+            user_provider = self.cached_providers[provider_module]
+        else:
+            #dump('UNcached provider')
+            # Anonymous user provider is always the 'default_provider'
+            # Load and instantiate just once, then cache the results, a huge boost for middleware!
+            user_provider: UserProvider = module.load(self.config.default_provider.module).object()
+            self.cached_providers[provider_module] = user_provider
 
         # Get additional provider kwargs from options and anonymous_options config
-        kwargs = self.config.default_provider.options.clone()
-        kwargs.merge(self.config.default_provider.anonymous_options)  # Anonymous wins in merge
+        if not self.cached_default_provider_options:
+            # Cached because of the .clone(), this is a nice boost for middleware!
+            self.cached_default_provider_options = self.config.default_provider.options.clone()
+            self.cached_default_provider_options.merge(self.config.default_provider.anonymous_options)  # Anonymous wins in merge
 
         # Alter provider method called based on existence of username, id, or uuid parameters
-        provider_method = user_provider.retrieve_by_username
-        if 'id' in kwargs: provider_method = user_provider.retrieve_by_id
-        if 'uuid' in kwargs: provider_method = user_provider.retrieve_by_uuid
+        if not self.cached_default_provider_method:
+            # No need to perform an 'in' statement on each request.  The first request
+            # simply cache the default providers retrieval method
+            self.cached_default_provider_method = user_provider.retrieve_by_username
+            if 'id' in self.cached_default_provider_options: self.cached_default_provider_method = user_provider.retrieve_by_id
+            if 'uuid' in self.cached_default_provider_options: self.cached_default_provider_method = user_provider.retrieve_by_uuid
 
-        # Call user provider method passing in defined kwargs
-        return await provider_method(request=request, **kwargs)
+        # Call user provider method passing in defined self.cached_default_provider_options
+        # 57600 req/sec
+        return await self.cached_default_provider_method(request=request, **self.cached_default_provider_options)
+        # 51489. req/sec
+        # Wow, this call to retrieve user is a bit slow, even with 'array' cache forced without pickle.
 
     async def error_response(self, user: UserInfo, scope: Scope, receive: Receive, send: Send):
         """Build and return error response"""

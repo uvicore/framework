@@ -41,17 +41,39 @@ class Orm(UserProvider):
     ) -> UserInfo:
         """Retrieve user from backend"""
 
+        # Cache store
+        # Array store is much faster than redis and since this is called at the
+        # middleware level on every request, we want it to be as performant as possible.
+        # Set to None to use config default.
+        cache_store = 'array'
+
         # Get password hash for cache key.  Password is still required to pull the right cache key
         # or else someone could login with an invalid password for the duration of the cache
         password_hash = '/' + sha1(password) if password is not None else ''
 
-        # Check if user already validated in cache
+        # Check if user already validated in cache, if so, skip DB hits!
+        # Don't do a cache.has() becuase cache.get() already does it
+        # and because of the array store _expire() it's a bit expensive.
+        # Eliminating the duplicate has() saved me about 1500 req/sec on wrk benchmark
         cache_key = 'auth/user/' + str(key_value) + password_hash
-        if await uvicore.cache.has(cache_key):
+        user = await uvicore.cache.store(cache_store).get(cache_key)
+        if user:
             # User is already validated and cached
             # Retrieve user from cache, no password check required because cache key has password has in it
-            user = await uvicore.cache.get(cache_key)
+            #dump('Cached authentication middleware User found, load from cache!')
             return user
+
+        # Interesting.  With a heavy 'wrk' performance test you can see this hit
+        # a dozen times on the first run.  Because of await, while caching is
+        # trying to take place, many other request are comming in and processing.
+        # We actually hit the DB a dozen times before the first request is cached.
+        # This is why we do 'wrk' at least twice, to "warm up" the cache.  Also
+        # with 'array` cache store and gunicorn, its actually one cache registery
+        # per THREAD unlinke the shared redis backend which is just one cache.  So
+        # with gunicorn and array caching you will see at least N cache misses.
+        # But even still you see several more due to the concurrency of wrk and the
+        # time it takes for await to set the cache.
+        dump('UNcached authentication middleware User, load from DB')
 
         # ORM is currently thworing a Warning: Truncated incorrect DOUBLE value: '='
         # when using actual bool as bit value.  So I convert to '1' or '0' strings instead
@@ -138,7 +160,17 @@ class Orm(UserProvider):
         )
 
         # Save to cache
-        await uvicore.cache.put(cache_key, user)
+        if anonymous and cache_store == 'array':
+            # If anonymous user, set cache to NEVER expire. Why?  Because
+            # the anonymouse user will never change, no need to have it expire from cache.
+            # This only works if cache store is 'array' because it will die when we kill
+            # the program.  If cache store is 'redis', we want it to expire in case anyone
+            # changes what the anonymous user in the DB looks like at some point.
+            await uvicore.cache.store(cache_store).put(cache_key, user, seconds=0)
+        else:
+            # User is a valid user, cache it using configs default TTL expire
+            # Or user is anonymous but cache_store is redis, we need to expire in redis.
+            await uvicore.cache.store(cache_store).put(cache_key, user)
 
         # Return to user
         return user
@@ -171,6 +203,7 @@ class Orm(UserProvider):
         return user
 
     async def sync_user(self, request: HTTPConnection, **kwargs):
+        """Sync user to backend"""
         # Get username
         username = kwargs['username']
 
