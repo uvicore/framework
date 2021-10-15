@@ -218,6 +218,13 @@ class _SuperDict:
                 base[key] = value
         return base
 
+    def dict(self):
+        """Convert SuperDict into regular builtin dict"""
+        # Why to_dict() and dict().  Pydantic has a dict(), so I want to mimic
+        # so all calls to dict() on SuperDict or Pydanttic models work the same
+        # Mostly for uvicore orm usage.
+        return self.to_dict()
+
     def freeze(self, freeze=True):
         """Set entire SuperDict to read only"""
         object.__setattr__(self, '__frozen', freeze)

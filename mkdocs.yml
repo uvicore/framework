@@ -27,6 +27,7 @@ nav:
   - Db/Orm:
     - db-config.md
     - db-tables.md
+    - db-queries.md
     - orm-basics.md
     - orm-model.md
     - orm-querybuilder.md
