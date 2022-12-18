@@ -24,7 +24,7 @@ class xx_TableName(Table):
     # This will be converted into an actual SQLAlchemy Table() instance
     # See https://docs.sqlalchemy.org/en/13/core/schema.html
     schema = [
-        # Defaults: nullable=False, index=False, unique=False, primary_key=False
+        # Defaults: nullable=True, index=False, unique=False, primary_key=False
 
         sa.Column('id', sa.Integer, primary_key=True),  # SQL auto incrementing primary key int(11) datatype, the "clustered"index
         sa.Column('slug', sa.String(length=100), unique=True),  # SQL varchar(100) with unique index

@@ -34,8 +34,8 @@ class Database(ServiceProvider, Cli):
             # Loop each database and connect()
             # I used to do it on-the-fly in db.py but was getting pool errors
             for metakey, database in uvicore.db.databases.items():
-                #dump('Connecting to ' + metakey)
-                await database.connect()
+                if not database.is_connected:
+                    await database.connect()
 
         # Disconnect from all databases after the system has shutdown
         @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.http.events.server.Shutdown'])

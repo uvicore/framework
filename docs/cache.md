@@ -107,6 +107,12 @@ You can obtain a cache instance in multiple ways.  The easiest and **recommended
 ```python
 import uvicore
 uvicore.cache.get('key1')
+
+
+# Or
+
+import uvicore.cache
+cache.get('key1')
 ```
 
 You can optionally get the cache instance from the [IoC](/ioc/) either by `uvicore.ioc.make` or by simply importing the cache manager.  In either case, you must manually `connect()` to start using the cache.

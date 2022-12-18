@@ -66,8 +66,19 @@ def test_load_namespace():
     #     fullpath='uvicore.foundation',
     #     package='uvicore.foundation',
     #     file='/home/mreschke/Code/mreschke/python/uvicore/uvicore/uvicore/foundation')
+
+    # sometimes
+    # uvicore.support.module.Module(
+    #     object=<module 'uvicore.foundation' (<_frozen_importlib_external._NamespaceLoader object at 0x7fb908cf4040>)>,
+    #     name='foundation',
+    #     path='uvicore',
+    #     fullpath='uvicore.foundation',
+    #     package='uvicore.foundation',
+    #     file='/home/mreschke/Code/uvicore/framework/uvicore/foundation'
+    # )
     x = module.load('uvicore.foundation')
-    assert str(x.object) == "<module 'uvicore.foundation' (namespace)>"
+    dump(x)
+    assert "<module 'uvicore.foundation'" in str(x.object)
     assert x.name == 'foundation'
     assert x.path == 'uvicore'
     assert x.fullpath == 'uvicore.foundation'

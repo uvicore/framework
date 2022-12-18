@@ -141,12 +141,15 @@ class Jwt(Authenticator):
         # Auto create or update user if allowed in config
         if self.config.auto_create_user and (user is None or user.uuid is None):
             jwt_mapping = self.config.auto_create_user_jwt_mapping
+            #dump(jwt_mapping)
             new_user = {}
             for key, value in self.config.auto_create_user_jwt_mapping.items():
                 if isinstance(value, Callable):
                     new_user[key] = value(jwt)
                 else:
                     new_user[key] = value
+
+            #dump(new_user)
 
             # User does not exist, create user
             if user is None:

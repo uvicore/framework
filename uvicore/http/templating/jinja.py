@@ -60,11 +60,13 @@ class Jinja(TemplateInterface, _Jinja2Templates):
     def _register_options(self):
         # Add Context Functions
         for name, method in self.context_functions.items():
-            self._env.globals[name] = jinja2.contextfunction(method)
+            #self._env.globals[name] = jinja2.contextfunction(method)
+            self._env.globals[name] = jinja2.pass_context(method)
 
         # Add Context Filters
         for name, method in self.context_filters.items():
-            self._env.filters[name] = jinja2.contextfilter(method)
+            #self._env.filters[name] = jinja2.contextfilter(method)
+            self._env.filters[name] = jinja2.pass_context(method)
 
         # Add Filters
         for name, method in self.filters.items():

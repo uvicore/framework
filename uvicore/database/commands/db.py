@@ -119,6 +119,8 @@ async def seed_tables(connections: str):
                     print()
 
 
+
+
 @command()
 @argument('connections')
 async def create(connections: str):

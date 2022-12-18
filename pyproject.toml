@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uvicore"
-version = "0.1.22"
+version = "0.1.24"
 license = "MIT"
 authors = ["Matthew Reschke <mail@mreschke.com>"]
 description = "The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework"
@@ -38,7 +38,7 @@ cryptography = "3.4.*"
 aiohttp = "3.7.*"
 merge-args = "0.1.*"
 # merge_args see also https://github.com/smarie/python-makefun
-httpx = "^0.19.0"
+httpx = "0.19.*"
 
 # Do not use asyncclick until a new version of 7.x is released that fixes call_on_close
 # Instead, uvicore now includes the code of my patched asyncclick in console/asyncclick
@@ -65,18 +65,23 @@ fastapi = {version = "0.68.*", optional = true}  # fastapi 0.66.1 starlette 0.14
 uvicorn = {version = "0.13.*", optional = true}
 gunicorn = {version = "20.0.*", optional = true}
 aiofiles = {version = "0.6.*", optional = true}
-Jinja2 = {version = "2.11.*", optional = true}
+#Jinja2 = {version = "2.11.*", optional = true}
+Jinja2 = {version = "3.1.*", optional = true}
 requests = {version = "2.25.*", optional = true}
 itsdangerous = {version = "1.1.*", optional = true}
-uvloop = {version = "0.14.*", optional = true}
+uvloop = {version = "0.16.*", optional = true}
 httptools = {version = "0.1.*", optional = true}
 python-multipart = {version = "0.0.*", optional = true}
 PyJWT = {version = "2.0.*", optional = true}
 
+# This must match fastapis requirement for whatever version of fastapi you are using
+# Because if you choose only "database" option, we need pydantic
+pydantic = {version = "1.8.*", optional = true}
+
 
 # Optional Dependencies for Themes
 # ------------------------------------------------------------------------------
-mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
+#mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
 
 
 [tool.poetry.extras]
@@ -84,7 +89,8 @@ mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
 database = [
     "sqlalchemy",
     "alembic",
-    "databases"
+    "databases",
+    "pydantic",
 ]
 redis = [
     "aioredis",
@@ -102,9 +108,9 @@ web = [
     "python-multipart",
     "PyJWT"
 ]
-themes = [
-    'mreschke-themes'
-]
+#themes = [
+#    'mreschke-themes'
+#]
 
 
 [tool.poetry.dev-dependencies]
@@ -113,8 +119,9 @@ pytest = "6.2.*"
 pytest-cov = "2.11.*"
 pytest-asyncio = "0.14.*"
 black = "20.8b1"
-mkdocs = "1.1.*"
-mkdocs-material = "6.2.*"
+mkdocs = "1.4.*"
+mkdocs-material = "8.4.*"
+
 #jupyterlab = "3.0.*"
 ipython = "7.21.*"
 
