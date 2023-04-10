@@ -7,7 +7,9 @@ from uvicore.support.dumper import dump, dd
 async def test_one_to_many(app1):
     #from uvicore.auth.models.user import User
     from app1.models.post import Post
-    #from app1.models.comment import Comment
+
+    # Import comments only for code coverage
+    from app1.models.comment import Comment
 
     # One Post has Many Comments
     post = await Post.query().include('comments').find(1)

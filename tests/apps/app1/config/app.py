@@ -565,7 +565,7 @@ config = {
     # If no cache config defined, the default of 'array' caching will be used
     # --------------------------------------------------------------------------
     'cache': {
-        'default': 'array',
+        'default': 'redis',
         'stores': {
             'redis': {
                 'driver': 'uvicore.cache.backends.redis.Redis',

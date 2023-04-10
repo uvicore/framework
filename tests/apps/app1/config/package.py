@@ -33,11 +33,12 @@ config = {
         'default': 'app1',
         'connections': {
             # SQLite
-            # 'app1': {
-            #     'driver': 'sqlite',
-            #     #'dialect': 'pysqlite',
-            #     'database': ':memory',
-            # },
+            # Leave this enabled for proper code coverage in db/provider.py connections()
+            'app1_lite': {
+                'driver': 'sqlite',
+                #'dialect': 'pysqlite',
+                'database': ':memory',
+            },
 
             # MySQL
             'app1': {

@@ -11,4 +11,5 @@ set -x; set -e
 export PYTHONPATH=./testapp
 
 # Run tests
-./bin/test.sh --cov=uvicore --cov=tests --cov-report=term-missing
+./bin/test.sh "$@" --cov=uvicore --cov=tests/apps/app1 --cov-report=term-missing
+#./bin/test.sh "$@" --cov=uvicore/database --cov-report=term-missing

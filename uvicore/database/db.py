@@ -6,6 +6,7 @@ from sqlalchemy.sql import ClauseElement
 
 import uvicore
 from uvicore.contracts import Connection
+from uvicore.contracts import Package as Package
 from uvicore.contracts import Database as DatabaseInterface
 from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
@@ -77,7 +78,7 @@ class Db(DatabaseInterface):
                 self._databases[connection.metakey] = EncodeDatabase(encode_url)
                 self._metadatas[connection.metakey] = sa.MetaData()
 
-    def packages(self, connection: str = None, metakey: str = None) -> Connection:
+    def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
         if not metakey:
             if not connection: connection = self.default
             metakey = self.connection(connection).metakey
@@ -109,11 +110,8 @@ class Db(DatabaseInterface):
         return self.metadatas.get(metakey)
 
     def tables(self, connection: str = None, metakey: str = None) -> List[sa.Table]:
-        """Get all tables for a given connection or metakey"""
         metadata = self.metadata(connection, metakey)
-        if metadata:
-            return metadata.tables
-        return []
+        return metadata.tables
 
     def table(self, table: str, connection: str = None) -> sa.Table:
         tablename = self.tablename(table, connection)
@@ -134,29 +132,46 @@ class Db(DatabaseInterface):
     async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
         metakey = self.metakey(connection, metakey)
 
-        # Do NOT connect on the fly.  For some reason the first time I query
-        # the db I get a mismatch in aiomysql.connection.Connection object
-        # Notice the Ids are different.
+        # To connect on-the-fly or NOT on-the-fly, in the service uvicore_startup event, or both???
 
-        # [ERROR] Exception in ASGI application
-        # File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/databases/backends/mysql.py", line 100, in release
-        #     await self._database._pool.release(self._connection)
-        # File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aiomysql/pool.py", line 204, in release
-        #     assert conn in self._used, (conn, self._used)
-        # AssertionError: (<aiomysql.connection.Connection object at 0x7f733acc9130>, {<aiomysql.connection.Connection object at 0x7f733acc96d0>})
+        # On-The-Fly ON Only
+        # - When running from ./serve-uvicorn and using wrk -c10 -t4 -d5 http://0.0.0.0:5000/api/tags/1
+        #   Notice the 2 IDs 0x7f733acc9130 and 0x7f733acc96d0 are different
+        #     [ERROR] Exception in ASGI application
+        #     File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/databases/backends/mysql.py", line 100, in release
+        #       await self._database._pool.release(self._connection)
+        #     File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aiomysql/pool.py", line 204, in release
+        #       assert conn in self._used, (conn, self._used)
+        #     AssertionError: (<aiomysql.connection.Connection object at 0x7f733acc9130>, {<aiomysql.connection.Connection object at 0x7f733acc96d0>})
 
-        # So instead, I moved connection to a one-time event from Startup listener
-        # in database/services.py
+        # On-The-Fly OFF (using Service events Only)
+        # - If off, during TESTING, uvicore.console.events.command.Startup event does not fire, so DB
+        #   is not connected and all tests against DB fail (can't seed tables, canot query tables..)
 
-        # Connect on-the-fly
-        # database = self.databases.get(metakey)
-        # if not database.is_connected:
-        #     await database.connect()
+        # Solution
+        # Alter test suite to fire a uvicore.console.events.command.PytestStartup and add that event to db/services.py uvicore_startup handler
 
+        # Connect on-the-fly - NO, NOT required anymore
+        # self.connect(connection, metakey)
+
+        # Return Encode database
         return self.databases.get(metakey)
 
-    async def disconnect(self, connection: str = None, metakey: str = None, from_all: bool = False) -> None:
-        if from_all:
+    async def connect(self, connection: str = None, metakey: str = None, *, all_dbs: bool = False) -> None:
+        if all_dbs:
+            # Connect all DBs
+            for metakey, database in uvicore.db.databases.items():
+                if not database.is_connected:
+                    await database.connect()
+        else:
+            # Connect a single DB
+            metakey = self.metakey(connection, metakey)
+            database = self.databases.get(metakey)  # Dont call self.database() as its recursive
+            if not database.is_connected:
+                await database.connect()
+
+    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
+        if all_dbs:
             # Disconnect from all connected databases
             for database in self.databases.values():
                 # Only disconnect if connected or will throw an error
@@ -191,125 +206,11 @@ class Db(DatabaseInterface):
     #         async for record in connection.iterate(query, values):
     #             yield record
 
-    # async def _connect(self, connection: str = None, metakey: str = None) -> None:
-    #     # Async connect to db if not connected
-    #     # If running from web, we will already be connected from on_event("startup")
-    #     # but if from CLI, we wont
-    #     metakey = self.metakey(connection, metakey)
-    #     database = self.databases.get(metakey)  # Dont call self.database() as its recursive
-    #     if not database.is_connected:
-    #         await database.connect()
-
     def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
         if not connection: connection = self.default
         return DbQueryBuilder(connection)
 
 
-    # def table(self, table: str):
-    #     return QueryBuilder(self, self.default, table)
-
-    # def conn(self, connection: str):
-    #     return QueryBuilder(self, connection)
-
-
 # IoC Class Instance
 # Not to be imported by the public from here.
 # Use the uvicore.db singleton global instead.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#class QueryBuilder:
-#     def __init__(self, db: DatabaseInterface, connection: str, table: str = None):
-#         self.db = db
-#         self.connection = connection or self.db.default
-#         self.prefix = self.db.connection(self.connection).prefix
-#         self._table = table
-#         self._join = None
-#         self._select = None
-#         self._where = []
-
-#     def table(self, table: str):
-#         self._table = self.prefix + table
-#         return self
-
-#     def select(self, *args):
-#         self._select = args
-#         return self
-
-#     def join(self, table: str, left: str, operator: str, right: str):
-#         dd('hi')
-
-#     def where(self, column: str, operator: str = None, value: Any = None):
-#         if not value:
-#             value = operator
-#             operator = '='
-#         self._where.append((column, operator, value))
-#         return self
-
-#     # Finalizers are find, get, update, delete, insert
-
-#     async def find(self, pk: Any):
-#         # FIDME, need dynamic pk
-#         table, query = self.build()
-#         query = query.where(table.c.id == pk)
-#         return await self.db.fetchone(query)
-
-#     async def get(self):
-#         table, query = self.build()
-
-#         # if self._select is none
-#         # query = sa.select([table.c.id, table.c.email])
-#         # #query = table.select()
-
-#         #x = [getattr(table.c, x) for x in self._select]
-#         #return x
-
-#         return await self.db.fetchall(query)
-#         return {
-#             'db': self.db,
-#             'connection': self.db.connection(self.connection),
-#             'select': self._select,
-#             'table': table,
-#             'where': self._where,
-#         }
-
-#     def build(self, method: str = 'select'):
-#         table = self.get_table()
-#         query = None
-
-#         # where
-#         #   select
-#         #   update (not in insert)
-#         #   delete
-
-#         if method == 'select':
-#             if self._select:
-#                 columns = []
-#                 #for select in self._select:
-#                 columns = [getattr(table.c, x) for x in self._select]
-#                 query = sa.select(columns)
-#             else:
-#                 query = sa.select([table])
-
-#         return table, query
-
-#     def get_table(self):
-#         #return self.db.table(self._table, connection=self.connection)
-#         metadata = self.db.metadata(self.connection)
-#         if metadata:
-#             return metadata.tables.get(self._table)
-
-#adf

@@ -81,9 +81,6 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
     )
 
 
-    def cb_results(self):
-        return self.slug + ' callback'
-
 
 # IoC Class Instance
 #Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentModel)

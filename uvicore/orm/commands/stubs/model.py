@@ -46,23 +46,19 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
 
     slug: str = Field('slug',
         description='URL Friendly xx_ModelName Title Slug',
-        required=True,
     )
 
     title: str = Field('title',
         description='xx_ModelName Title',
-        required=True,
     )
 
     # created_at: Optional[datetime] = Field('created_at',
     #     description='xx_ModelName Created at Datetime',
-    #     required=False,
     #     read_only=True,
     # )
 
     # deleted: Optional[bool] = Field('deleted',
     #     description='xx_ModelName Deleted',
-    #     required=False,
     #     default=False,
     # )
 
@@ -77,7 +73,7 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
     # )
         # PostInfo model would have the one-to-one inverse (info has one post)
         # post_id: int = Field('post_id',
-        #     description="Post ID", required=True,
+        #     description="Post ID",
         # )
         # post: Optional[Post] = Field(None,
         #     description="Post Model",
@@ -91,7 +87,6 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
     # --------------------------------------------------------------------------
     # creator_id: int = Field('creator_id',
     #     description="Post Creator UserID",
-    #     required=True,
     # )
     # creator: Optional[User] = Field(None,
     #     description="Post Creator User Model",
@@ -113,7 +108,6 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
     # --------------------------------------------------------------------------
     # format_key: str = Field('format_key',
     #     description='Post Format Key',
-    #     required=True,
     # )
     # format: Optional[Format] = Field(None,
     #     description='Post Format Model',

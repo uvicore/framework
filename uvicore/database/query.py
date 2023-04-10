@@ -82,9 +82,11 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
     async def find(self, pk_value: Union[int, str] = None, **kwargs) -> RowProxy:
         """Execute query by primary key or custom column and return first row found"""
         if pk_value:
+            # Assume column is PK .find(1234)
             column = self._pk()
             value = pk_value
         elif kwargs:
+            # Pass in the column to find .find(email='xyz')
             column = [x for x in kwargs.keys()][0]
             value = [x for x in kwargs.values()][0]
 
@@ -120,17 +122,18 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             else:
                 cache['key'] = prefix + cache.get('key')
 
-        if cache and await uvicore.cache.has(cache.get('key')):
+        # Get cache store from query builder, if None, uses default store
+        if cache and await uvicore.cache.store(cache.get('store')).has(cache.get('key')):
             # Cache found, use cached results
             #dump('DB FROM CACHE')
-            results = await uvicore.cache.get(cache.get('key'))
+            results = await uvicore.cache.store(cache.get('store')).get(cache.get('key'))
         else:
             # Execute query
             #dump('DB FROM DB')
             results = await uvicore.db.fetchall(saquery, connection=self._connection())
 
             # Add to cache if desired
-            if cache: await uvicore.cache.put(cache.get('key'), results, seconds=cache.get('seconds'))
+            if cache: await uvicore.cache.store(cache.get('store')).put(cache.get('key'), results, seconds=cache.get('seconds'))
 
         return results
 

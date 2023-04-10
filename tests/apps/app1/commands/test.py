@@ -12,6 +12,11 @@ async def cli():
     #await orm_insert_play()
     #await poly_play()
 
+    from app1.models import Tag
+    tag = await Tag.query().find(1)
+    dd(tag)
+    dd('hi')
+
     from app1.models import Post
     #posts = await Post.query().or_where([('creator_id', 1), ('creator_id', 2), ('creator_id','=', 5)]).get()
 

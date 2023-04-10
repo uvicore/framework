@@ -60,9 +60,12 @@ class App1(ServiceProvider, Cli, Db, Redis, Http):
 
         # Using __init__.py now so just import it
         #from app1 import models
-        # self.tables([
-        #    'app1.database.tables.*',
-        # ])
+
+        # Use self.tables only for code coverage
+        self.tables([
+           'app1.database.tables.*',
+        ])
+
         self.models(['app1.models'])
 
         self.seeders(['app1.database.seeders.seed'])

@@ -28,7 +28,7 @@ def get_metakeys(connections: str):
             metakey = conn.metakey
             if metakey not in metakeys:
                 metakeys.append(metakey)
-        else:
+        else: # pragma: no cover
             exit('Connection string {} not found in configs'.format(connection))
     return metakeys
 
@@ -123,21 +123,21 @@ async def seed_tables(connections: str):
 
 @command()
 @argument('connections')
-async def create(connections: str):
+async def create(connections: str): # pragma: no cover
     """Create tables for connection(s)"""
     await create_tables(connections)
 
 
 @command()
 @argument('connections')
-async def drop(connections: str):
+async def drop(connections: str): # pragma: no cover
     """Drop tables for connection(s)"""
     await drop_tables(connections)
 
 
 @command()
 @argument('connections')
-async def recreate(connections: str):
+async def recreate(connections: str): # pragma: no cover
     """Recreate (drop/create) tables for connection(s)"""
     #log.header('Recreating (drop/create) tables for connections: [' + connections + ']')
     await drop_tables(connections)
@@ -146,14 +146,14 @@ async def recreate(connections: str):
 
 @command()
 @argument('connections')
-async def seed(connections: str):
+async def seed(connections: str): # pragma: no cover
     """Seed tables for connection(s)"""
     await seed_tables(connections)
 
 
 @command()
 @argument('connections')
-async def reseed(connections: str):
+async def reseed(connections: str): # pragma: no cover
     """Reseed (drop/create/seed) tables for connection(s)"""
     await drop_tables(connections)
     await create_tables(connections)
@@ -161,7 +161,7 @@ async def reseed(connections: str):
 
 
 @command()
-def connections():
+def connections(): # pragma: no cover
     """Show all packages database connections"""
     log.header("All deep merged database connections from all defined packages")
     log.line()

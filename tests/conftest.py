@@ -25,6 +25,11 @@ async def app1(event_loop):
     from app1.services import bootstrap
     bootstrap.application(is_console=False)
 
+    # Register a PytestStartup event (uvicore.console.events.command.PytestStartup)
+    # Which is listened to by database/db.py to connect to all dbs
+    from uvicore.console.events import command as ConsoleEvents
+    await ConsoleEvents.PytestStartup().codispatch()
+
     # Drop/Create and Seed SQLite In-Memory Database
     from uvicore.database.commands import db
     await db.drop_tables('app1')
@@ -48,6 +53,9 @@ async def app1(event_loop):
     # Tear down tests
     ############################################################################
     #metadata.drop_all(engine)
+
+    # Register a PytestShutdown event (uvicore.console.events.command.PytestShutdown) to disconnect from all DBs
+    await ConsoleEvents.PytestShutdown().codispatch()
 
 
 

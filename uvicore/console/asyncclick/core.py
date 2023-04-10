@@ -183,7 +183,7 @@ class Context(object):
     A context exports `enter_context` and `enter_async_context` methods.
     You can use this to set up contexts in a command group which you can
     then use in commands. See :class:`contextlib.ExitStack` for details.
-    
+
     .. versionadded:: 2.0
        Added the `resilient_parsing`, `help_option_names`,
        `token_normalize_func` parameters.
@@ -866,7 +866,7 @@ class BaseCommand(object):
             import asyncclick
             _anyio_backend = asyncclick.anyio_backend
         return anyio.run(self._main, main, args, kwargs, backend=_anyio_backend)
-    
+
     async def _main(self, main, args, kwargs):
         return await main(*args, **kwargs)
 

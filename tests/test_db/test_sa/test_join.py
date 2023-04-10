@@ -3,26 +3,7 @@ import uvicore
 import sqlalchemy as sa
 from uvicore.support.dumper import dump
 
-
-# These will also move into test_* as they each have _builder, _encoed, _hybrid inside them
-
-@pytest.mark.asyncio
-async def test_select_all(app1):
-    from app1.database.tables.posts import Posts
-
-    query = Posts.table.select()
-    results = await uvicore.db.fetchall(query, connection='app1')
-    dump(results)
-    assert [
-        'test-post1',
-        'test-post2',
-        'test-post3',
-        'test-post4',
-        'test-post5',
-        'test-post6',
-        'test-post7'
-    ] == [x.unique_slug for x in results]
-
+# DB SQLAlchemy
 
 @pytest.mark.asyncio
 async def test_join1(app1):
@@ -55,7 +36,7 @@ async def test_join1(app1):
 
 
 @pytest.mark.asyncio
-async def test_join2(app1):
+async def test_join_one_to_many(app1):
     from sqlalchemy import select
     from app1.database.tables.posts import Posts
     from app1.database.tables.users import Users
@@ -77,7 +58,7 @@ async def test_join2(app1):
     )
     results = await uvicore.db.fetchall(query, connection='app1')
     dump(results)
-    dump(results[0].keys())  # Notice name collissions
+    dump(results[0].keys())
     assert [
         'test-post1',
         'test-post1',
@@ -85,26 +66,3 @@ async def test_join2(app1):
         'test-post3',
         'test-post3',
     ] == [x.unique_slug for x in results]
-
-
-@pytest.mark.asyncio
-async def test_group_by(app1):
-    from app1.database.tables.posts import Posts
-
-    posts = Posts.table
-    query = (
-        sa.select([
-            posts.c.creator_id,
-            sa.func.count(posts.c.title)
-        ])
-        .group_by(posts.c.creator_id)
-    )
-
-    results = await uvicore.db.fetchall(query, connection='app1')
-    dump(results)
-
-    assert results == [
-        (1, 2),
-        (2, 3),
-        (5, 2)
-    ]

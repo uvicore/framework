@@ -24,6 +24,6 @@ class Hashtag(Model['Hashtag'], metaclass=ModelMetaclass):
         description='Hashtag Name',
     )
 
-    @staticmethod
-    async def post2(entity: Hashtag):
-        return entity
+    # @staticmethod
+    # async def post2(entity: Hashtag):
+    #     return entity

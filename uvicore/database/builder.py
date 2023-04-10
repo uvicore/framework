@@ -95,6 +95,8 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             for order_by in column:
                 if type(order_by) == tuple:
                     if len(order_by) == 1:
+                        # Should never hit, because a tuple of (columnx) is actually not a tuple type at all
+                        # but if someone added (columnx,) then it is a tuple, and order by should default to ASC
                         column = order_by[0]
                         order = 'ASC'
                     elif len(order_by) == 2:
@@ -105,7 +107,13 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
                 self.order_by(column, order)
         else:
             # Direct SQLAlchemy expression
-            self.query.order_by.append(column)
+            if type(column) == sa.sql.elements.UnaryExpression:
+                # If we use SA for order ASC or DESC then column is a UnaryExpression
+                # .order_by(posts.id) or .order_by(sa.desc(posts.id)) or .order_by(sa.asc(posts.id))
+                self.query.order_by.append(column)
+            else:
+                # If not UnaryExpression, then we assume column is a true SA colum, and we use our order string
+                self.query.order_by.append((column, order))
         return self
 
     def limit(self, limit: int) -> B[B, E]:
@@ -118,12 +126,13 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         self.query.offset = offset
         return self
 
-    def cache(self, key: str = None, *, seconds: int = None) -> B[B, E]:
+    def cache(self, key: str = None, *, seconds: int = None, store: str = None) -> B[B, E]:
         """Cache results, None seconds uses cache backend default, 0=forever"""
         # Seconds as None will default to cache configured default seconds
         self.query.cache = {
             'key': key,
             'seconds': seconds,
+            'store': store,
         }
         return self
 

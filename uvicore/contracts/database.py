@@ -8,7 +8,6 @@ try:
     from sqlalchemy.sql import ClauseElement
     from sqlalchemy.engine.result import RowProxy
 except:
-    sa = None
     Engine = None
     Table = None
     MetaData = None
@@ -80,6 +79,11 @@ class Database(ABC):
         pass
 
     @abstractmethod
+    def tables(self, connection: str = None, metakey: str = None) -> List[Table]:
+        """Get all tables for a given connection or metakey"""
+        pass
+
+    @abstractmethod
     def table(self, table: str, connection: str = None) -> Table:
         """Get one SQLAlchemy Table by name (without prefix) and connection str or connection.tablename dot notation"""
         pass
@@ -100,8 +104,12 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    async def disconnect(self, connection: str = None, metakey: str = None, from_all: bool = False) -> None:
-        """Disconnect from a database by connection str or metakey.  Of ALL databases."""
+    async def connect(self, connection: str = None, metakey: str = None, *, all_dbs: bool = False) -> None:
+        """Connect to a database by connection str or metakey.  Or connect ALL databases."""
+
+    @abstractmethod
+    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
+        """Disconnect from a database by connection str or metakey.  Or disconnect ALL databases."""
         pass
 
     @abstractmethod
