@@ -81,7 +81,7 @@ pydantic = {version = "1.8.*", optional = true}
 
 # Optional Dependencies for Themes
 # ------------------------------------------------------------------------------
-mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
+# mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
 
 
 [tool.poetry.extras]
@@ -108,9 +108,9 @@ web = [
     "python-multipart",
     "PyJWT"
 ]
-themes = [
-    'mreschke-themes'
-]
+#themes = [
+#    'mreschke-themes'
+#]
 
 
 [tool.poetry.dev-dependencies]
