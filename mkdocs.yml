@@ -43,6 +43,7 @@ nav:
     - mail.md
     - auto-api.md
     - superdict.md
+    - cli-entrypoints.md
   - Epologue:
     - release-notes.md
     - mkdocs-help.md

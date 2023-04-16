@@ -863,8 +863,9 @@ class BaseCommand(object):
         """Alias for :meth:`main`."""
         main = self.main
         if _anyio_backend is None:
-            import asyncclick
-            _anyio_backend = asyncclick.anyio_backend
+            #import asyncclick
+            #_anyio_backend = asyncclick.anyio_backend
+            _anyio_backend = 'asyncio'
         return anyio.run(self._main, main, args, kwargs, backend=_anyio_backend)
 
     async def _main(self, main, args, kwargs):
