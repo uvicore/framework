@@ -34,7 +34,7 @@ colored = "1.4.*"
 prettyprinter = "0.18.*"
 environs = "9.3.*"
 argon2-cffi = "20.1.*"
-cryptography = "3.4.*"
+cryptography = ">=3.4,<41.1"
 aiohttp = "3.7.*"
 merge-args = "0.1.*"
 # merge_args see also https://github.com/smarie/python-makefun
