@@ -67,7 +67,7 @@ gunicorn = {version = "20.0.*", optional = true}
 aiofiles = {version = "0.6.*", optional = true}
 #Jinja2 = {version = "2.11.*", optional = true}
 Jinja2 = {version = "3.1.*", optional = true}
-requests = {version = "2.25.*", optional = true}
+requests = {version = ">=2.25,<2.32", optional = true}
 itsdangerous = {version = "1.1.*", optional = true}
 uvloop = {version = "0.16.*", optional = true}
 httptools = {version = "0.1.*", optional = true}
