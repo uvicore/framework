@@ -162,7 +162,7 @@ await cache.remember('key1', 'default value', seconds=60)
 
 # Default can be a callback.  This is ideal for retrieving a value from cache if exists.  If not
 # exist, run a complex query and set the queries results into the cache.
-def wiki_posts():
+async def wiki_posts():
     return await Post.query().get()
 await cache.remember('all_posts', wiki_posts)
 ```
