@@ -1,14 +1,14 @@
 import uvicore
-from uvicore.package import ServiceProvider
-from uvicore.http.provider import Http
-from uvicore.database.provider import Db
-from uvicore.console.provider import Cli
-from uvicore.redis.provider import Redis
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
+from uvicore.http.package.registers import Http
+from uvicore.database.package.registers import Db
+from uvicore.console.package.registers import Cli
+from uvicore.redis.package.registers import Redis
 
 
 @uvicore.provider()
-class App1(ServiceProvider, Cli, Db, Redis, Http):
+class App1(Provider, Cli, Db, Redis, Http):
 
     def register(self) -> None:
         # Register configs

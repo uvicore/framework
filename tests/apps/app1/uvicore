@@ -11,10 +11,11 @@ apps_path = os.path.dirname(os.path.realpath(__file__ + '/../'))
 if apps_path not in sys.path: sys.path.append(apps_path)
 
 import uvicore  # isort:skip
-from app1.services import bootstrap  # isort:skip
+from app1.package import bootstrap  # isort:skip
 
 # Bootstrap the Uvicore application
-app = bootstrap.application(is_console=True)
+#app = bootstrap.application(is_console=True)
+app = bootstrap.Application(is_console=True)()
 
 # Initialize CLI
 if __name__ == '__main__':

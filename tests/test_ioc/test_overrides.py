@@ -17,13 +17,13 @@ async def test_package(app1):
 
 @pytest.mark.asyncio
 async def test_provider(app1):
-    from uvicore.package.provider import ServiceProvider
-    assert ServiceProvider.__module__ + '.' + ServiceProvider.__name__ == 'app1.overrides.provider.ServiceProvider'
-    assert ServiceProvider.__annotations__.get('custom1') is not None
+    from uvicore.package.provider import Provider
+    assert Provider.__module__ + '.' + Provider.__name__ == 'app1.overrides.provider.Provider'
+    assert Provider.__annotations__.get('custom1') is not None
 
     # Should be able to pull the original via _BASE
-    original = uvicore.ioc.make('uvicore.package.provider.ServiceProvider_BASE')
-    assert original.__module__ + '.' + original.__name__ == 'uvicore.package.provider.ServiceProvider'
+    original = uvicore.ioc.make('uvicore.package.provider.Provider_BASE')
+    assert original.__module__ + '.' + original.__name__ == 'uvicore.package.provider.Provider'
 
 
 @pytest.mark.asyncio

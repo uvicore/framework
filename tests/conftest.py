@@ -22,8 +22,8 @@ async def app1(event_loop):
     # Setup Tests
     ############################################################################
     # Bootstrap uvicore application
-    from app1.services import bootstrap
-    bootstrap.application(is_console=False)
+    from app1.package import bootstrap
+    bootstrap.Application(is_console=False)()
 
     # Register a PytestStartup event (uvicore.console.events.command.PytestStartup)
     # Which is listened to by database/db.py to connect to all dbs

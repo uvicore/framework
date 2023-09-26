@@ -1,7 +1,8 @@
-from app1.services import bootstrap
+from app1.package import bootstrap
 
 # Bootstrap the Uvicore application
-app = bootstrap.application(is_console=False)
+#app = bootstrap.application(is_console=False)
+app = bootstrap.Application(is_console=False)()
 
 # Http entrypoint for uvicorn or gunicorn
 # uvicorn --port 5000 mreschke.wiki.http.server:http --reload

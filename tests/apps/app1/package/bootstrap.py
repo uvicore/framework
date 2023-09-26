@@ -3,26 +3,59 @@ from uvicore.configuration import Env
 from uvicore.support import path
 from uvicore.support.dumper import dd, dump
 
-def application(is_console: bool = False) -> None:
+
+class Application:
     """Bootstrap the application either from the CLI or Web entry points
 
     Bootstrap only runs when this package is running as the main app via
-    ./uvicore or uvicorn/gunicorn server
-    """
-    # Base path
-    base_path = path.find_base(__file__)
+    ./uvicore or uvicorn/gunicorn server"""
 
-    # Load .env from environs
-    Env().read_env(base_path + '/../../../.env')
+    def __init__(self, is_console: bool = False):
+        self.is_console = is_console
 
-    # Import this apps config (import must be after Env())
-    from ..config.app import config as app_config
+    def __call__(self):
+        # Base path
+        base_path = path.find_base(__file__)
 
-    # Bootstrap the Uvicore Application (Either CLI or HTTP entry points based on is_console)
-    uvicore.bootstrap(app_config, base_path, is_console)
+        # Load .env from environs
+        Env().read_env(base_path + '/.env')
 
-    # Return application
-    return uvicore.app
+        # Import this apps config (import must be after Env())
+        from ..config.app import config as app_config
+
+        # Bootstrap the Uvicore Application (Either CLI or HTTP entry points based on is_console)
+        uvicore.bootstrap(app_config, base_path, self.is_console)
+
+        # Return application
+        return uvicore.app
+
+
+
+
+
+
+
+
+# def application(is_console: bool = False) -> None:
+#     """Bootstrap the application either from the CLI or Web entry points
+
+#     Bootstrap only runs when this package is running as the main app via
+#     ./uvicore or uvicorn/gunicorn server
+#     """
+#     # Base path
+#     base_path = path.find_base(__file__)
+
+#     # Load .env from environs
+#     Env().read_env(base_path + '/../../../.env')
+
+#     # Import this apps config (import must be after Env())
+#     from ..config.app import config as app_config
+
+#     # Bootstrap the Uvicore Application (Either CLI or HTTP entry points based on is_console)
+#     uvicore.bootstrap(app_config, base_path, is_console)
+
+#     # Return application
+#     return uvicore.app
 
 
 

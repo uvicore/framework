@@ -119,29 +119,29 @@ config = {
     # --------------------------------------------------------------------------
     'dependencies': OrderedDict({
         'uvicore.foundation': {
-            'provider': 'uvicore.foundation.services.Foundation',
+            'provider': 'uvicore.foundation.package.provider.Foundation',
         },
         'uvicore.redis': {
-            'provider': 'uvicore.redis.services.Redis',
+            'provider': 'uvicore.redis.package.provider.Redis',
         },
         'uvicore.database': {
-            'provider': 'uvicore.database.services.Database',
+            'provider': 'uvicore.database.package.provider.Database',
         },
         'uvicore.orm': {
-            'provider': 'uvicore.orm.services.Orm',
+            'provider': 'uvicore.orm.package.provider.Orm',
         },
         'uvicore.auth': {
-            'provider': 'uvicore.auth.services.Auth',
+            'provider': 'uvicore.auth.package.provider.Auth',
         },
         'uvicore.http': {
-            'provider': 'uvicore.http.services.Http',
+            'provider': 'uvicore.http.package.provider.Http',
         },
         'uvicore.http_client': {
-            'provider': 'uvicore.http_client.services.HttpClient',
+            'provider': 'uvicore.http_client.package.provider.HttpClient',
         },
-        'mreschke.themes': {
-            'provider': 'mreschke.themes.services.themes.Themes',
-        },
+        #'mreschke.themes': {
+        #    'provider': 'mreschke.themes.package.provider.themes.Themes',
+        #},
     }),
 
 }

@@ -1,7 +1,7 @@
 import uvicore
 
 # Pull original from Ioc
-Base = uvicore.ioc.make('uvicore.package.provider.ServiceProvider_BASE')
+Base = uvicore.ioc.make('uvicore.package.provider.Provider_BASE')
 
-class ServiceProvider(Base):
+class Provider(Base):
     custom1: str
