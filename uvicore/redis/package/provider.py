@@ -1,13 +1,13 @@
 import uvicore
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
-from uvicore.redis import bootstrap
+from uvicore.redis.package import bootstrap
 from uvicore.foundation.events import app as AppEvents
-from uvicore.redis.provider import Redis as RedisMixin
+from uvicore.redis.package.registers import Redis as RedisMixin
 
 
 @uvicore.provider()
-class Redis(ServiceProvider, RedisMixin):
+class Redis(Provider, RedisMixin):
 
     def register(self) -> None:
         # Register event listeners

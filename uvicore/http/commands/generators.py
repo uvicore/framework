@@ -21,8 +21,14 @@ async def controller(name: str):
         ./uvicore gen controller about
         ./uvicore gen controller contact_us
     """
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/controller.py'
-    dest = uvicore.config('app.paths.controllers') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('controllers') + '/' + name + '.py'
 
     Schematic(
         type='controller',
@@ -50,8 +56,15 @@ async def api_controller(name: str):
         ./uvicore gen controller post
         ./uvicore gen controller post_tag
     """
+
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/api_controller.py'
-    dest = uvicore.config('app.paths.api') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('api') + '/' + name + '.py'
 
     Schematic(
         type='api_controller',
@@ -77,8 +90,15 @@ async def composer(name: str):
         ./uvicore gen composer layout
         ./uvicore gen composer side_nav
     """
+
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/composer.py'
-    dest = uvicore.config('app.paths.view_composers') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('view_composers') + '/' + name + '.py'
 
     Schematic(
         type='composer',

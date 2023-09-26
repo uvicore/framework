@@ -22,8 +22,15 @@ async def table(name: str):
         ./uvicore gen table posts
         ./uvicore gen table post_tags
     """
+
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/table.py'
-    dest = uvicore.config('app.paths.tables') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('tables') + '/' + name + '.py'
 
     Schematic(
         type='table',
@@ -54,8 +61,15 @@ async def seeder(name: str):
         ./uvicore gen seeder posts
         ./uvicore gen seeder post_tags
     """
+
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/seeder.py'
-    dest = uvicore.config('app.paths.seeders') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('seeders') + '/' + name + '.py'
 
     Schematic(
         type='seeder',

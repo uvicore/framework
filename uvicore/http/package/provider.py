@@ -1,14 +1,14 @@
 import uvicore
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
+from uvicore.http.package import bootstrap
 from uvicore.support.dumper import dump, dd
-from uvicore.console.provider import Cli
-from uvicore.http.provider import Http
+from uvicore.http.package.registers import Http
+from uvicore.console.package.registers import Cli
 from uvicore.foundation.events import app as AppEvents
-from uvicore.http import bootstrap
 
 
 @uvicore.provider()
-class Http(ServiceProvider, Cli, Http):
+class Http(Provider, Cli, Http):
 
     def register(self) -> None:
         """Register package into uvicore framework.
@@ -106,6 +106,7 @@ class Http(ServiceProvider, Cli, Http):
                 'help': 'Uvicore HTTP Commands',
                 'commands': {
                     'serve': 'uvicore.http.commands.serve.cli',
+                    'routes': 'uvicore.http.commands.routes.list',
                 },
             },
 

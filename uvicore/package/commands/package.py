@@ -1,5 +1,6 @@
 import uvicore
 import json as JSON
+from uvicore.typing import Dict
 from uvicore.console import command, argument, option
 from uvicore import app, log
 from uvicore.support.dumper import dd, dump
@@ -55,10 +56,7 @@ def providers(json: bool):
     else:
         log.header("Package provider graph (in exact order of registration dependency)")
         log.line()
-        for (name, detail) in app.providers.items():
-            log.info(name)
-            dump(detail)
-            print()
+        dump(app.providers)
 
         log.nl()
         log.line()

@@ -10,7 +10,7 @@ from uvicore.support.dumper import dd, dump
 def list(raw: bool = False):
     """List all deep merged configs from all packages"""
     if not raw:
-        log.header("List of all deep merged configs from all packages")
+        log.header("Final Merged Configs")
         log.line()
         dump(uvicore.config)
     else:

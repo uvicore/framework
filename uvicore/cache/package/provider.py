@@ -1,11 +1,11 @@
 import uvicore
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
 from uvicore.foundation.events import app as AppEvents
 
 
 @uvicore.provider()
-class Cache(ServiceProvider):
+class Cache(Provider):
 
     def register(self) -> None:
         # Register event listeners

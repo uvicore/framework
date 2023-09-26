@@ -1,12 +1,12 @@
 import uvicore
-from uvicore.http.provider import Http
-from uvicore.database.provider import Db
-from uvicore.package import ServiceProvider
-from uvicore.support.dumper import dump, dd  # type: ignore
+from uvicore.package import Provider
+from uvicore.support.dumper import dump, dd
+from uvicore.http.package.registers import Http
+from uvicore.database.package.registers import Db
 
 
 @uvicore.provider()
-class Auth(ServiceProvider, Db, Http):
+class Auth(Provider, Db, Http):
 
     def register(self) -> None:
         # Register IoC bindings

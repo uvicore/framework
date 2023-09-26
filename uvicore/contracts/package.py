@@ -18,6 +18,7 @@ class Package(Dict):
     version: str
     main: bool
     path: str
+    paths: Dict
     registers: Dict
     database: _Database
     web: _Web

@@ -81,9 +81,9 @@ class Application(ApplicationInterface):
     def packages(self) -> OrderedDict[str, PackageInterface]:
         return self._packages
 
-    # @property
-    # def running_config(self) -> OrderedDict:
-    #     return self._running_config
+    @property
+    def running_config(self) -> OrderedDict:
+        return self._running_config
 
     @property
     def path(self) -> str:
@@ -94,8 +94,9 @@ class Application(ApplicationInterface):
         return self._name
 
     @property
-    def main(self) -> str:
+    def main(self) -> Dict:
         return self._main
+
 
     def __init__(self):
         # Instance variables
@@ -115,6 +116,7 @@ class Application(ApplicationInterface):
         self._name = None
         self._main = None
 
+
     def add_running_config(self, key: str, value):
         if type(value) == list:
             if not self._running_config.dotget(key): self._running_config.dotset(key, [])
@@ -133,14 +135,13 @@ class Application(ApplicationInterface):
         self._path = path
         self._name = app_config.name
         self._main = app_config.main
+
+        # Add to running config
         self.add_running_config('name', self.name)
         self.add_running_config('main', self.main)
         self.add_running_config('path', self.path)
-        self.add_running_config('version', '0.0.0')
-        self.add_running_config('uvicore.version', self.version)
-
-        # Merge running config/app.py paths dictionary with defaults and full path
-        self._build_paths(app_config)
+        self.add_running_config('version', '0.0.0') # Fill in later from main running package config
+        self.add_running_config('uvicore_version', self.version)
 
         # Detect if running in console (to register commands)
         # Ensure console is False even when running ./uvicore http serve
@@ -150,10 +151,11 @@ class Application(ApplicationInterface):
 
         # Detect debug flag from main app config
         self._debug = app_config.debug
+        self.add_running_config('debug', self.debug)
 
         # Build recursive providers graph
         self._build_provider_graph(app_config)
-
+        #self.add_running_config('providers', self.providers)
 
         # Failsafe if no http package, force console
         # This solves a ./uvicore http serve error if you don't have the http package
@@ -162,37 +164,35 @@ class Application(ApplicationInterface):
             self._is_console = True
             self._is_http = False
 
-        # Register and merge all providers
+        # Register all providers by calling each packages register() method
+        # This is what builds self._packages with an actual Package Class objects
+        # Uses self.providers and converts those into full Package objects
         self._register_providers(app_config)
-        self.add_running_config('providers', self.providers)
 
-        #dump(self.packages)
-        #dd('REGISTERED')
-
-        # Boot all providers
-        #self._boot_providers()
+        # Boot all providers by calling each packages boot() method
         self._boot_providers(app_config)
 
         # Add each final package to running_config, but only the basic details
-        # for package in self.packages.values():
-        #     if package.main:
-        #         self.add_running_config('version', package.version)
-        #     self.add_running_config('packages.[' + package.name + ']', {
-        #         'name': package.name,
-        #         'short_name': package.short_name,
-        #         'vendor': package.vendor,
-        #         'version': package.version,
-        #         'main': package.main,
-        #         'path': package.path,
-        #         'registers': [k for (k,v) in package.registers.items() if v == True],
-        #     })
-
-        #dd(self.packages)
+        # self.add_running_config('packages', self.packages)
+        for package in self.packages.values():
+            if package.main:
+                self.add_running_config('version', package.version)
+            self.add_running_config('packages.[' + package.name + ']', {
+                'name': package.name,
+                'short_name': package.short_name,
+                'vendor': package.vendor,
+                'version': package.version,
+                'main': package.main,
+                'path': package.path,
+                'registers': [k for (k,v) in package.registers.items() if v == True],
+            })
 
         # Return application
         return self
 
+
     def package(self, package: str = None, *, main: bool = False, hint: str = None) -> PackageInterface:
+        """Get package by name or by main running package"""
         if package:
             return self.packages.get(package)
             #return self.packages.dotget(package)
@@ -202,10 +202,13 @@ class Application(ApplicationInterface):
             return self.package('app1')
             #return self.packages.dotget(self.main)
 
+
     def perf(self, item) -> None:
+        """Add entry to debug performance counter"""
         if self.debug:
             self.perfs.append(item)
             print(item)
+
 
     def _build_provider_graph(self, app_config: Dict) -> None:
         """Build recursive dependency graph of all packages"""
@@ -227,10 +230,17 @@ class Application(ApplicationInterface):
             # same.  Perfect!
             self._providers[package] = options
 
-        # Loop each main apps packages and recurse into each
-        packages = app_config.get('packages') or {}
-        for package, options in packages.items():
+        # Graph starts with "main", this is the package acting as the main running app itself
+        main = app_config.main
+        recurse(main.package, {
+            'provider': main.provider
+        })
+
+        # Next we loop all app defined overrides.providers
+        overrides = app_config.overrides.providers or {}
+        for package, options in overrides.items():
             recurse(package, options)
+
 
     def _register_providers(self, app_config: Dict) -> None:
         """Register all providers by calling each ServiceProviders register() method"""
@@ -238,25 +248,23 @@ class Application(ApplicationInterface):
         for package_name, service in self.providers.items():
             # Example:
             # package_name = uvicore.configuration
-            # service = {'provider': 'uvicore.configuration.services.Configuration'}
+            # service = {
+            #   'provider': 'uvicore.configuration.services.Configuration',
+            #   'config': 'uvicore.configuration.config.package.config',
+            # }
 
-            # Get package config
+            # Get the config/package.py config
             package_config = self._get_package_config(package_name, service)
 
             # Start a new package definition
-            #x = OrderedDict()
-            #x.dotset(package_name, package.Definition({
             self._packages[package_name] = Package({
                 'name': package_name,
                 'short_name': package_name.split('.')[-1] if '.' in package_name else package_name,
                 'vendor': package_name.split('.')[0],  # Works fine even if no .
                 'version': package_config.version or '0.1.0',
-                'main': True if package_name == self.main else False,
+                'main': True if package_name == self.main.package else False,
                 'path': location(package_name),
             })
-            #self._packages.merge(x)
-            #self._packages[package_name] = package.Definition({
-            #dd(self.packages)
 
             # Instantiate the provider and call the register() method
             provider = load(service['provider']).object(
@@ -278,9 +286,13 @@ class Application(ApplicationInterface):
 
     def _boot_providers(self, app_config: Dict) -> None:
         for package_name, service in self.providers.items():
+
             # Example:
             # package_name = uvicore.configuration
             # service = {'provider': 'uvicore.configuration.services.Configuration'}
+
+            # Get the config/package.py config
+            package_config = self._get_package_config(package_name, service)
 
             # Import the provider and call boot()
             provider = load(service['provider']).object(
@@ -288,7 +300,7 @@ class Application(ApplicationInterface):
                 name=package_name,
                 package=self.package(package_name),
                 app_config=app_config,
-                package_config=self._get_package_config(package_name, service),
+                package_config=package_config,
             )
             provider.boot()
 
@@ -299,38 +311,8 @@ class Application(ApplicationInterface):
         #uvicore.events.dispatch('uvicore.foundation.events.app.Booted')
         events.Booted().dispatch()
 
-    def _build_paths(self, app_config: Dict):
-        base = self.main.replace('.', '/')
-        defaults = {
-            'base': base,
-            'commands': 'commands',
-            'config': 'config',
-            'database': 'database',
-            'migrations': 'database/migrations',
-            'seeders': 'database/seeders',
-            'tables': 'database/tables',
-            'events': 'events',
-            'http': 'http',
-            'api': 'http/api',
-            'assets': 'http/assets',
-            'controllers': 'http/controllers',
-            'routes': 'http/routes',
-            'static': 'http/static',
-            'views': 'http/views',
-            'view_composers': 'http/composers',
-            'jobs': 'jobs',
-            'listeners': 'listeners',
-            'models': 'models',
-            'services': 'services',
-            'support': 'support',
-        }
-        #dd(app_config)
-        app_config['paths'].defaults(defaults)
-        # = {**defaults, **app_config['paths']}
-        for key, value in app_config['paths'].items():
-            app_config['paths'][key] = os.path.realpath(self.path + '/' + self.main.replace('.', '/') + '/' + value)
-
     def _get_package_config(self, package: str, options: Dict) -> Dict:
+        """Load packages configuration"""
         config_module = package + '.config.package.config'  # Default if not defined
         if 'config' in options: config_module = options['config']
         config = Dict()

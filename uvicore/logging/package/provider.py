@@ -1,10 +1,10 @@
 import uvicore
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
 
 
 @uvicore.provider()
-class Logging(ServiceProvider):
+class Logging(Provider):
 
     def register(self) -> None:
         """Register package into uvicore framework.

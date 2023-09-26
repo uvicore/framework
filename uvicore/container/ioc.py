@@ -23,7 +23,7 @@ class Ioc(IocInterface):
     @property
     def overrides(self) -> Dict[str, str]:
         # Merge app config bindings with registered overrides (app config wins)
-        app_config_overrides = self._app_config.get('bindings') or {}
+        app_config_overrides = self._app_config.dotget('overrides.ioc_bindings') or {}
         overrides = {**self._overrides, **app_config_overrides}
         return overrides
 

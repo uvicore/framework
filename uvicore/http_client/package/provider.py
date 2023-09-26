@@ -1,11 +1,11 @@
 import uvicore
 import aiohttp
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
 
 
 @uvicore.provider()
-class HttpClient(ServiceProvider):
+class HttpClient(Provider):
 
     def register(self) -> None:
 

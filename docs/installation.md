@@ -1,5 +1,10 @@
 # Installation
 
+
+![Bootstrap Diagram](./files/uvicore-installer.gif)
+
+
+
 Download the `uvicore-installer` bash script
 
 <!-- wget uvicore.io/uvicore-installer /usr/local/bin -->

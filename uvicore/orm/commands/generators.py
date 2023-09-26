@@ -24,8 +24,14 @@ async def model(name: str, table: str):
         ./uvicore gen model post_tag post_tags
     """
 
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
     stub = os.path.dirname(__file__) + '/stubs/model.py'
-    dest = uvicore.config('app.paths.models') + '/' + name + '.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('models') + '/' + name + '.py'
 
     Schematic(
         type='model',

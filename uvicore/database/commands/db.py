@@ -163,7 +163,7 @@ async def reseed(connections: str): # pragma: no cover
 @command()
 def connections(): # pragma: no cover
     """Show all packages database connections"""
-    log.header("All deep merged database connections from all defined packages")
+    log.header("Final Merged Database Connections")
     log.line()
     log.notice("Some connections share the same database which means their tables are in the same metedata space.  This is what the unique metakey denotes.")
     dump(db.connections)

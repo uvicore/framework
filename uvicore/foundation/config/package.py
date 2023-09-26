@@ -78,22 +78,22 @@ config = {
 
         # Configuration is used right away in provider register()
         'uvicore.configuration': {
-            'provider': 'uvicore.configuration.services.Configuration',
+            'provider': 'uvicore.configuration.package.provider.Configuration',
         },
 
         # I want logging quick as it may be used in providers register() and boot()
         'uvicore.logging': {
-            'provider': 'uvicore.logging.services.Logging',
+            'provider': 'uvicore.logging.package.provider.Logging',
         },
 
         # Console is required for every uvicore app
         'uvicore.console': {
-            'provider': 'uvicore.console.services.Console',
+            'provider': 'uvicore.console.package.provider.Console',
         },
 
         # Cache is required for every uvicore app
         'uvicore.cache': {
-            'provider': 'uvicore.cache.services.Cache',
+            'provider': 'uvicore.cache.package.provider.Cache',
         },
     }),
 

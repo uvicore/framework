@@ -1,17 +1,16 @@
 import uvicore
 from uvicore.typing import Dict
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
-from uvicore.console.provider import Cli
+from uvicore.console.package.registers import Cli
 from uvicore.support.module import load
 from uvicore.console import group as cli_group
-from uvicore.console import bootstrap
+from uvicore.console.package import bootstrap
 from uvicore.foundation.events import app as AppEvents
 
 
 @uvicore.provider()
-class Console(ServiceProvider, Cli):
-
+class Console(Provider, Cli):
 
     def register(self) -> None:
         # Register IoC bindings
@@ -30,9 +29,9 @@ class Console(ServiceProvider, Cli):
         # other uvicore services like Database.  If database is not initialized, and you import
         # a DB model/table from a command, it will error because the connection strings have not yet
         # been initialized.
-        AppEvents.Booted.listen(bootstrap.Console, priority=60)
-        #uvicore.events.listen('uvicore.foundation.events.app.Booted', bootstrap.Console, priority=60)
-        #uvicore.events.listen('uvicore.foundation.events.app.*', bootstrap.Console, priority=60)
+        AppEvents.Booted.listen(bootstrap.Console, priority=90)
+        #uvicore.events.listen('uvicore.foundation.events.app.Booted', bootstrap.Console, priority=90)
+        #uvicore.events.listen('uvicore.foundation.events.app.*', bootstrap.Console, priority=90)
 
     def boot(self) -> None:
 

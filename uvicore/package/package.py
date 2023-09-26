@@ -1,3 +1,4 @@
+import os
 import uvicore
 from uvicore.typing import Dict, Any
 from uvicore.contracts import Connection
@@ -31,7 +32,44 @@ class Package(PackageInterface):
         except:
             return None
 
+    def folder_path(self, key: str) -> str:
+        """Get a path for a package folder, accounting for package config paths overrides"""
 
+        # Default paths
+        defaults = Dict({
+            #'base': base,
+            'commands': 'commands',
+            'config': 'config',
+            'database': 'database',
+            'migrations': 'database/migrations',
+            'seeders': 'database/seeders',
+            'tables': 'database/tables',
+            'events': 'events',
+            'http': 'http',
+            'api': 'http/api',
+            'assets': 'http/assets',
+            'controllers': 'http/controllers',
+            'routes': 'http/routes',
+            'static': 'http/static',
+            'views': 'http/views',
+            'view_composers': 'http/composers',
+            'jobs': 'jobs',
+            'listeners': 'listeners',
+            'models': 'models',
+            'services': 'services',
+            'support': 'support',
+        })
+
+        # Merge defaults with package paths
+        paths = defaults.merge(self.config.paths)
+
+        if key in paths:
+            return os.path.realpath(self.path + '/' + paths[key])
+        return None
+
+        # Convert all to realpaths
+        # for key, value in paths.items():
+        #     paths[key] = os.path.realpath(self.path + '/' + value)
 
 
 

@@ -1,6 +1,7 @@
 # Uvicore
 
-Welcome to Uvicore!  The Async Python Framework for Artisans. An Elegant Fullstack Python Web, API and CLI Framework.
+Welcome to Uvicore!
+The Fullstack Async Python Web, API and CLI Framework
 
 
 ## Warning

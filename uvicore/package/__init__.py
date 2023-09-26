@@ -1,5 +1,5 @@
 # type: ignore
-from .provider import ServiceProvider
+from .provider import Provider
 #from uvicore.package.package import Package as _Package
 
 # Proxy instead of import to create a nicer uvicore.package.Package namespace

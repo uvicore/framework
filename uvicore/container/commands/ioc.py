@@ -17,6 +17,7 @@ def bindings(raw: bool = False):
             dic[key] = binding.__dict__
         print(dic)
 
+
 @command()
 def singletons():
     """List Singleton Ioc Bindings"""
@@ -60,6 +61,7 @@ def overrides():
     #     if key != binding.path:
     #         overridden[key] = binding
     dump(bindings)
+
 
 @command()
 @argument('key', default='')

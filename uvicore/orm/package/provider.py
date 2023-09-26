@@ -1,12 +1,12 @@
 import uvicore
 from typing import Dict
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
-from uvicore.console.provider import Cli
+from uvicore.console.package.registers import Cli
 
 
 @uvicore.provider()
-class Orm(ServiceProvider, Cli):
+class Orm(Provider, Cli):
 
     def register(self) -> None:
 

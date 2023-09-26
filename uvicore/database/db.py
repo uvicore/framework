@@ -162,13 +162,21 @@ class Db(DatabaseInterface):
             # Connect all DBs
             for metakey, database in uvicore.db.databases.items():
                 if not database.is_connected:
-                    await database.connect()
+                    try:
+                        await database.connect()
+                    except:
+                        # Will catch if DB is not running or port/constr is wrong
+                        pass
         else:
             # Connect a single DB
             metakey = self.metakey(connection, metakey)
             database = self.databases.get(metakey)  # Dont call self.database() as its recursive
             if not database.is_connected:
-                await database.connect()
+                try:
+                    await database.connect()
+                except:
+                    # Will catch if DB is not running or port/constr is wrong
+                    pass
 
     async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
         if all_dbs:

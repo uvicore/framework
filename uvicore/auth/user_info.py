@@ -4,6 +4,7 @@ from uvicore.contracts import UserInfo as UserInfoInterface
 from uvicore.support.dumper import dump, dd
 from pydantic import BaseModel as PydanticModel
 
+
 # Pydantic model because we often return this class in API endpoints
 # Endpoints can return classes, but pydantic forces a __initialized__ property
 # on them which is annoying.

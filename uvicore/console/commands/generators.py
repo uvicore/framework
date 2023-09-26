@@ -23,8 +23,14 @@ async def command(name: str):
         ./uvicore gen command scan_files
     """
 
-    stub = os.path.dirname(__file__) + '/stubs/command.py'
-    dest = uvicore.config('app.paths.commands') + '/' + name + '.py'
+    # Get calling package (main running app)
+    package = uvicore.app.package(main=True)
+
+    # Get stub (src)
+    stub = os.path.dirname(__file__) + '/stubs/commands.py'
+
+    # Get destination for this filetype, considering the packages path customizations
+    dest = package.folder_path('commands') + '/' + name + '.py'
 
     Schematic(
         type='command',

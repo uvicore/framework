@@ -7,6 +7,12 @@ title_ideas = """
 
     High Performance Web, API and CLI Python Framework
 
+    High Performance Async Fullstack Web, API and CLI Python Framework
+
+    The Async Fullstack Web, API and CLI Python Framework
+
+    High Performance Async Fullstack Python Web, API and CLI Framework
+
     Python async Web, API and CLI fullstack Framework
 
     Fullstack Asynchronous Python Framework
@@ -26,10 +32,9 @@ title_ideas = """
 @group(help=f"""
     \b
     Uvicore {uvicore.__version__}
-    The Async Python Framework for Artisans.
-    An Elegant Fullstack Python Web, API and CLI Framework
+    The Fullstack Async Web, API and CLI Python Framework
 
-    Copyright (c) 2020 Matthew Reschke
+    Copyright (c) 2023 Matthew Reschke
     License http://mreschke.com/license/mit
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')

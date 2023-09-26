@@ -24,6 +24,9 @@ class Redis(Handler):
             # Append connections
             connections.merge(package.redis.connections)
 
+        # Add all final merged connections to running_config
+        uvicore.app.add_running_config('redis.connections', connections)
+
         # Initialize Redis with all connections at once
         redis = uvicore.ioc.make('uvicore.redis.redis.Redis')
         redis.init(app_default or last_default, connections)

@@ -12,8 +12,8 @@ from uvicore.support.dumper import dd, dump
 from uvicore.support.module import load, location
 
 
-@uvicore.service(aliases=['ServiceProvider', 'Provider'])
-class ServiceProvider(ProviderInterface):
+@uvicore.service(aliases=['PackageProvider', 'Provider'])
+class Provider(ProviderInterface):
 
     # Class variable of all registered click groups from app packages
     # Used to extend an existing group from other packages
@@ -81,15 +81,24 @@ class ServiceProvider(ProviderInterface):
 
     def configs(self, options: List[Dict]) -> None:
         for config in options:
-            # Load module to get actual config value
-            value = load(config['module']).object
+            value = None;
+            if 'module' in config:
+                # Load module to get actual config value
+                value = load(config['module']).object
+            elif 'value' in config:
+                # Actual config already passed
+                value = config['value']
+
+            # Don't use is None, because empty Dict({}) won't be caught, must use if not value
+            if not value: continue;
+
+            # If uvicore.config is None (brand new) set to empty Dict() before .merge()
+            if uvicore.config is None: uvicore.config = Dict()
 
             # Merge config value with complete config
-            #uvicore.config.merge(config['key'], value)
             new = Dict()
             new.dotset(config['key'], value)
             uvicore.config.merge(new)
-            #uvicore.config.merge({config['key']: value})
 
     def registers(self, options: Dict) -> None:
         if options is not None:

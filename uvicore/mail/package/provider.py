@@ -1,9 +1,9 @@
 import uvicore
-from uvicore.package import ServiceProvider
+from uvicore.package import Provider
 
 
 @uvicore.provider()
-class Mail(ServiceProvider):
+class Mail(Provider):
 
     def register(self) -> None:
         pass

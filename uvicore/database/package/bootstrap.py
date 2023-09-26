@@ -37,6 +37,9 @@ class Database(Handler):
         # Initialize Database with all connections at once
         uvicore.db.init(app_default or last_default, connections)
 
+        # Add all final merged connections to running_config
+        uvicore.app.add_running_config('database.connections', uvicore.db.connections)
+
         # Dynamically Import models, tables and seeders
         for model in models: load(model)
         for table in tables: load(table)

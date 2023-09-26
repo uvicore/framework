@@ -58,6 +58,11 @@ config = {
                 'username': env('DB_AUTH_USER', 'root'),
                 'password': env('DB_AUTH_PASSWORD', 'techie'),
                 'prefix': env('DB_AUTH_PREFIX', None),
+
+                #'driver': 'sqlite',
+                #'database': ':memory',
+                #'database': '/tmp/x.db',
+                #'prefix': None,
             },
         },
     },

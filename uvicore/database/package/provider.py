@@ -1,15 +1,15 @@
 import uvicore
+from uvicore.package import Provider
 from uvicore.typing import Any, Dict
-from uvicore.package import ServiceProvider
-from uvicore.support.dumper import dump, dd
 from uvicore.support.module import load
-from uvicore.console.provider import Cli
-from uvicore.database import bootstrap
+from uvicore.support.dumper import dump, dd
+from uvicore.database.package import bootstrap
+from uvicore.console.package.registers import Cli
 from uvicore.foundation.events import app as AppEvents
 
 
 @uvicore.provider()
-class Database(ServiceProvider, Cli):
+class Database(Provider, Cli):
 
     def register(self) -> None:
         # Register IoC bindings
