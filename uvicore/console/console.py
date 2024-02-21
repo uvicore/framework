@@ -3,27 +3,7 @@ from uvicore.console import click, group
 from uvicore.console.events import command as ConsoleEvents
 
 title_ideas = """
-    A Fast Async Python Framework for CLI, Web and API
-
-    High Performance Web, API and CLI Python Framework
-
-    High Performance Async Fullstack Web, API and CLI Python Framework
-
-    The Async Fullstack Web, API and CLI Python Framework
-
-    High Performance Async Fullstack Python Web, API and CLI Framework
-
-    Python async Web, API and CLI fullstack Framework
-
-    Fullstack Asynchronous Python Framework
-    Python web framework
-    Python Fullstack Asynchronous Web, API and CLI Framework
-
-    Asynchronous Python Web, API and CLI Fullstack Framework
-
-    The Async Python Framework for Craftsmen
-    The Async Python Framework for Artisans
-    The Artisanal Asynchronous Python Framework
+    The Fullstack Asynchronous API+Web+CLI Python Framework
 """
 
 # Must include actual bind name when stacking decorators as it cannot deduce on its own.

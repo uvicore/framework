@@ -10,7 +10,8 @@ from uvicore.contracts import Package as Package
 from uvicore.contracts import Database as DatabaseInterface
 from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
-from sqlalchemy.engine.result import RowProxy
+from sqlalchemy.engine.result import Row as RowProxy
+
 
 @uvicore.service('uvicore.database.db.Db',
     aliases=['Database', 'database', 'db'],

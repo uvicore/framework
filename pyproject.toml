@@ -28,18 +28,34 @@ include = ["LICENSE"]
 [tool.poetry.dependencies]
 # These packages are mandatory and form the core of the uvicore distribution
 # ------------------------------------------------------------------------------
-python = ">=3.7,<4.0"
-###anyio = "3.2.*"
-anyio = "3.7.*"
-colored = "1.4.*"
+python = ">=3.9,<4.0"
+#anyio = "3.7.*"
+anyio = "4.3.*"
+
+#colored = "1.4.*"
+colored = "2.2.*"
+
 prettyprinter = "0.18.*"
-environs = "9.3.*"
-argon2-cffi = "20.1.*"
-cryptography = "3.4.*"
-aiohttp = "3.7.*"
+
+#environs = "9.3.*"
+environs = "10.3.*"
+
+#argon2-cffi = "20.1.*"
+argon2-cffi = "23.1.*"
+
+
+#cryptography = "3.4.*"
+cryptography = "42.0.*"
+
+#aiohttp = "3.7.*"
+aiohttp = "3.9.*"
+
+#httpx = "0.19.*"
+httpx = "0.26.*"
+
+
 merge-args = "0.1.*"
 # merge_args see also https://github.com/smarie/python-makefun
-httpx = "0.19.*"
 
 # Do not use asyncclick until a new version of 7.x is released that fixes call_on_close
 # Instead, uvicore now includes the code of my patched asyncclick in console/asyncclick
@@ -50,13 +66,22 @@ httpx = "0.19.*"
 
 # Optional Dependencies for Database Connectivity
 # ------------------------------------------------------------------------------
-sqlalchemy = {version = "1.3.*", optional = true}
-alembic = {version = "1.5.*", optional = true}
-databases = {version = "0.4.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
+#sqlalchemy = {version = "1.3.*", optional = true}
+sqlalchemy = {version = "1.4.*", optional = true}
+
+#alembic = {version = "1.5.*", optional = true}
+alembic = {version = "1.13.*", optional = true}
+
+#databases = {version = "0.4.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
+databases = {version = "0.8.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
 
 
 # Optional Dependencies for Redis Connectivity
 # ------------------------------------------------------------------------------
+# aioredis 2.0 needs a full refactor of how Uvicore connects
+# see https://aioredis.readthedocs.io/en/latest/migration/#connecting-to-redis
+# For now I will stick with 1.3 until I can refactor.
+#aioredis = {version = "2.0.*", optional = true}
 aioredis = {version = "1.3.*", optional = true}
 
 

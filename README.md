@@ -1,7 +1,8 @@
 # Uvicore
 
 Welcome to Uvicore!
-The Fullstack Async Python Web, API and CLI Framework
+
+The Fullstack Asynchronous API+Web+CLI Python Framework
 
 
 ## Warning

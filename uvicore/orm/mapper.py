@@ -3,7 +3,7 @@ import inspect
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Mapper as MapperInterface
 from uvicore.support.collection import haskey, getvalue
-from sqlalchemy.engine.result import RowProxy
+from sqlalchemy.engine.result import Row as RowProxy
 
 
 @uvicore.service()

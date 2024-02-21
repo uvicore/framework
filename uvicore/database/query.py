@@ -7,7 +7,7 @@ from uvicore.support.hash import sha1
 
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import BinaryExpression
-from sqlalchemy.engine.result import RowProxy
+from sqlalchemy.engine.result import Row as RowProxy
 
 import uvicore
 from uvicore.database.builder import QueryBuilder, Join
