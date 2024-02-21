@@ -232,9 +232,16 @@ class Application(ApplicationInterface):
 
         # Graph starts with "main", this is the package acting as the main running app itself
         main = app_config.main
-        recurse(main.package, {
-            'provider': main.provider
-        })
+        if 'config' in main:
+            # Allows main to specific a custom config location
+            recurse(main.package, {
+                'provider': main.provider,
+                'config': main.config
+            })
+        else:
+            recurse(main.package, {
+                'provider': main.provider,
+            })
 
         # Next we loop all app defined overrides.providers
         overrides = app_config.overrides.providers or {}

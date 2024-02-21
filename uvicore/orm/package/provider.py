@@ -9,6 +9,12 @@ from uvicore.console.package.registers import Cli
 class Orm(Provider, Cli):
 
     def register(self) -> None:
+        """Register package into the uvicore framework.
+        All packages are registered before the framework boots.  This is where
+        you define your packages configs, IoC bindings and early event listeners.
+        Configs are deep merged only after all packages are registered.  No real
+        work should be performed here as it is very early in the bootstraping
+        process and we have no clear view of the full configuration system."""
 
         # ???
         # Maybe provide a self.event_strings({}) to at least define which event strings there are
@@ -37,8 +43,8 @@ class Orm(Provider, Cli):
         # Listen to all post model events
         #orm-{post}-*
 
-        def test(event, payload):
-            print('hi')
+        # def test(event, payload):
+        #     print('hi')
 
         #dd(uvicore.events.event('uvicore.foundation.events.app.Registered'))
 
@@ -50,11 +56,19 @@ class Orm(Provider, Cli):
         #self.bind('ModelMetaclass', 'uvicore.orm.metaclass._ModelMetaclass')
 
     def boot(self) -> None:
+        """Bootstrap package into the uvicore framework.
+        Boot takes place after ALL packages are registered.  This means all package
+        configs are deep merged to provide a complete and accurate view of all
+        configuration. This is where you register, connections, models,
+        views, assets, routes, commands...  If you need to perform work after ALL
+        packages have booted, use the event system and listen to the booted event:
+        self.events.listen('uvicore.foundation.events.app.Booted', self.booted)"""
+
         # Define service provider registration control
         self.registers(self.package.config.registers)
 
         # Define commands
-        self.commands({
+        self.register_cli_commands({
             # Extend schematic generator commands
             'gen': {
                 'commands': {

@@ -13,12 +13,19 @@ if apps_path not in sys.path: sys.path.append(apps_path)
 import uvicore  # isort:skip
 from app1.package import bootstrap  # isort:skip
 
-# Bootstrap the Uvicore application
-#app = bootstrap.application(is_console=True)
+# Bootstrap the Uvicore application from the console entrypoint
 app = bootstrap.Application(is_console=True)()
 
-# Initialize CLI
 if __name__ == '__main__':
-    # Run the main click group by executing the actual method in the Ioc
-    cli = uvicore.ioc.make('Console')
-    cli(_anyio_backend='asyncio')
+    try:
+        # Get the cli method from the IoC
+        cli = uvicore.ioc.make('Console')
+
+        # Instantiate the main asyncclick group
+        cli(_anyio_backend='asyncio')
+
+    except KeyboardInterrupt:
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)

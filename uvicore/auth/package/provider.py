@@ -9,6 +9,13 @@ from uvicore.database.package.registers import Db
 class Auth(Provider, Db, Http):
 
     def register(self) -> None:
+        """Register package into the uvicore framework.
+        All packages are registered before the framework boots.  This is where
+        you define your packages configs, IoC bindings and early event listeners.
+        Configs are deep merged only after all packages are registered.  No real
+        work should be performed here as it is very early in the bootstraping
+        process and we have no clear view of the full configuration system."""
+
         # Register IoC bindings
         # self.bind(
         #     name='Auth',
@@ -32,11 +39,19 @@ class Auth(Provider, Db, Http):
         ])
 
     def boot(self) -> None:
+        """Bootstrap package into the uvicore framework.
+        Boot takes place after ALL packages are registered.  This means all package
+        configs are deep merged to provide a complete and accurate view of all
+        configuration. This is where you register, connections, models,
+        views, assets, routes, commands...  If you need to perform work after ALL
+        packages have booted, use the event system and listen to the booted event:
+        self.events.listen('uvicore.foundation.events.app.Booted', self.booted)"""
+
         # Define service provider registration control
         self.registers(self.package.config.registers)
 
         # Define Database Connections
-        self.connections(
+        self.register_db_connections(
             connections=self.package.config.database.connections,
             default=self.package.config.database.default
         )
@@ -50,13 +65,13 @@ class Auth(Provider, Db, Http):
         # Using __init__.py now, so just import it
         #from uvicore.auth import models
         #dump(self.package)
-        self.models(['uvicore.auth.models'])
+        self.register_db_models(['uvicore.auth.models'])
 
         # Define data seeders
         # NO - Auth shouldn't do its own seeding.  Let the app do it all.
         # You think?  What if a package is an app, then it runs seeders, but if that app is used
         # inside another package, you can't stop it from seeding.  Need to figure out overrideing seeders array better
-        self.seeders(['uvicore.auth.database.seeders.seed'])
+        self.register_db_seeders(['uvicore.auth.database.seeders.seed'])
 
         # Define view and asset paths and configure the templating system
         self.define_views()
@@ -71,23 +86,23 @@ class Auth(Provider, Db, Http):
         #self.views(['uvicore.auth.http.views'])
 
         # Define public paths
-        self.public(['uvicore.auth.http.public'])
+        self.register_http_public(['uvicore.auth.http.public'])
 
         # Define asset paths
-        self.assets(['uvicore.auth.http.public.assets'])
+        self.register_http_assets(['uvicore.auth.http.public.assets'])
 
     def define_routes(self) -> None:
         """Define Web and API routes and prefixes"""
 
         # Define web routes
-        # self.web_routes(
+        # self.register_http_web_routes(
         #     module='uvicore.auth.http.routes.web.Web',
         #     prefix=self.package.config.web.prefix,
         #     #name_prefix=None,
         # )
 
         # Define api routes
-        self.api_routes(
+        self.register_http_api_routes(
             module='uvicore.auth.http.routes.api.Api',
             prefix=self.package.config.api.prefix,
             #name_prefix='api',

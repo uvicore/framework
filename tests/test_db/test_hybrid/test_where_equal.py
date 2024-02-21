@@ -19,28 +19,28 @@ def post(Posts):
 @pytest.mark.asyncio
 async def test_single(app1, Posts, post):
     # Single where
-    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id, 2).get()
+    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id, 2).order_by('id').get()
     assert [3, 4, 5] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_single_bexp(app1, Posts, post):
     # Single where - binary expression
-    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id == 2).get()
+    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id == 2).order_by('id').get()
     assert [3, 4, 5] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_and(app1, Posts, post):
     # Multiple where AND
-    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id, '=', 2).where(post.owner_id, 1).get()
+    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id, '=', 2).where(post.owner_id, 1).order_by('id').get()
     assert [3, 4] == [x.id for x in posts]
 
 
 @pytest.mark.asyncio
 async def test_and_bexp(app1, Posts, post):
     # Multiple where AND - binary expression
-    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id == 2).where(post.owner_id == 1).get()
+    posts = await uvicore.db.query().table(Posts.table).where(post.creator_id == 2).where(post.owner_id == 1).order_by('id').get()
     assert [3, 4] == [x.id for x in posts]
 
 

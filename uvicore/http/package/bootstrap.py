@@ -495,7 +495,7 @@ class Http(Handler):
         asset_paths = []
         view_paths = []
         view_composers = Dict()
-        template_options = Dict()
+        context_processors = Dict()
         for package in uvicore.app.packages.values():
             #if not 'http' in package: continue
             if not 'web' in package: continue
@@ -518,7 +518,7 @@ class Http(Handler):
             view_composers.merge(package.web.view_composers or {})
 
             # Deep merge template options
-            template_options.merge(package.web.template_options or {})
+            context_processors.merge(package.web.context_processors or {})
 
         # Save merged view composers into our config for use later (in http/response View() )
         uvicore.config.uvicore.http.view_composers = view_composers
@@ -529,7 +529,7 @@ class Http(Handler):
         self.mount_static(web_server, public_paths, asset_paths)
 
         # Initialize new template environment from the options above
-        self.initialize_templates(view_paths, template_options)
+        self.initialize_templates(view_paths, context_processors)
 
     def mount_static(self, web_server, public_paths: List, asset_paths: List) -> None:
         """Mount static routes defined in all packages"""
@@ -544,10 +544,10 @@ class Http(Handler):
         # Since it is root / MUST be defined last or it wins above any path after it
         web_server.mount('/', StaticFiles(directories=public_paths), name='public')
 
-    def initialize_templates(self, paths, options) -> None:
+    def initialize_templates(self, paths, context_processors) -> None:
         """Initialize and configure template system"""
         # Get the template singleton from the IoC
-        templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
+        templates = uvicore.ioc.make('uvicore.templating.engine.Templates')
 
         # Add all packages view paths
         # First path wins, so we must REVERSE the package order
@@ -556,22 +556,22 @@ class Http(Handler):
         for path in paths:
             templates.include_path(module.location(path))
 
-        # Add all packages deep_merged template options
-        if 'context_functions' in options:
-            for name, method in options['context_functions'].items():
+        # Add all packages deep_merged template context_processors
+        if 'context_functions' in context_processors:
+            for name, method in context_processors['context_functions'].items():
                 templates.include_context_function(name, method)
-        if 'context_filters' in options:
-            for name, method in options['context_filters'].items():
+        if 'context_filters' in context_processors:
+            for name, method in context_processors['context_filters'].items():
                 templates.include_context_filter(name, method)
-        if 'filters' in options:
-            for name, method in options['filters'].items():
+        if 'filters' in context_processors:
+            for name, method in context_processors['filters'].items():
                 templates.include_filter(name, method)
-        if 'tests' in options:
-            for name, method in options['tests'].items():
+        if 'tests' in context_processors:
+            for name, method in context_processors['tests'].items():
                 templates.include_test(name, method)
 
         # Initialize template system
-        templates.init()
+        templates._init()
 
     def get_prefix(self, confpath: str) -> str:
         """Get configured web and api prefixes ensuring "" prefix and no trailing /, or / if blank)"""

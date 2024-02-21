@@ -47,19 +47,20 @@ async def table(name: str):
 
 
 @command()
-@argument('name')
-async def seeder(name: str):
+@argument('tablename')
+@argument('modelname')
+async def seeder(tablename: str, modelname: str):
     """
     \b
     Generate a new Database table seeder schematic...
     \b
     USAGE:
-        Seeder should match the lower_underscore PLURAL tablenames
+        Seeder should match the lower_underscore PLURAL tablename and lower_understore SINGLUAR model name
     \b
-        ./uvicore gen seeder users
-        ./uvicore gen seeder user_details
-        ./uvicore gen seeder posts
-        ./uvicore gen seeder post_tags
+        ./uvicore gen seeder users user
+        ./uvicore gen seeder user_details user_detail
+        ./uvicore gen seeder posts post
+        ./uvicore gen seeder post_tags post_tag
     """
 
     # Get calling package (main running app)
@@ -69,15 +70,17 @@ async def seeder(name: str):
     stub = os.path.dirname(__file__) + '/stubs/seeder.py'
 
     # Get destination for this filetype, considering the packages path customizations
-    dest = package.folder_path('seeders') + '/' + name + '.py'
+    dest = package.folder_path('seeders') + '/' + tablename + '.py'
 
     Schematic(
         type='seeder',
         stub=stub,
         dest=dest,
         replace = [
-            ('xx_modelname', name),
-            ('xx_ModelName', str.studly(name)),
+            ('xx_tablename', tablename),
+            ('xx_TableName', str.studly(tablename)),
+            ('xx_modelname', modelname),
+            ('xx_ModelName', str.studly(modelname)),
         ]
     ).generate()
 

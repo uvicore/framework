@@ -8,6 +8,12 @@ from uvicore.console.package.registers import Cli
 class Foundation(Provider, Cli):
 
     def register(self):
+        """Register package into the uvicore framework.
+        All packages are registered before the framework boots.  This is where
+        you define your packages configs, IoC bindings and early event listeners.
+        Configs are deep merged only after all packages are registered.  No real
+        work should be performed here as it is very early in the bootstraping
+        process and we have no clear view of the full configuration system."""
 
         # Register configs
         self.configs([
@@ -38,6 +44,14 @@ class Foundation(Provider, Cli):
         # )
 
     def boot(self):
+        """Bootstrap package into the uvicore framework.
+        Boot takes place after ALL packages are registered.  This means all package
+        configs are deep merged to provide a complete and accurate view of all
+        configuration. This is where you register, connections, models,
+        views, assets, routes, commands...  If you need to perform work after ALL
+        packages have booted, use the event system and listen to the booted event:
+        self.events.listen('uvicore.foundation.events.app.Booted', self.booted)"""
+
         # Define service provider registration control
         # No - Never allow this packages registrations to be disabled from other configs
 
@@ -81,7 +95,7 @@ class Foundation(Provider, Cli):
         # Alternative in kwargs format
 
         # Register App commands
-        self.commands(
+        self.register_cli_commands(
             group='app',
             help='Uvicore Application Information',
             commands={
@@ -91,7 +105,7 @@ class Foundation(Provider, Cli):
 
 
         # Register Ioc commands
-        self.commands(
+        self.register_cli_commands(
             group='ioc',
             help='Uvicore Ioc (Inversion of Control) Information',
             commands={
@@ -104,7 +118,7 @@ class Foundation(Provider, Cli):
         )
 
         # Register Package commands
-        self.commands(
+        self.register_cli_commands(
             group='package',
             help='Uvicore Package Information',
             commands={
@@ -115,7 +129,7 @@ class Foundation(Provider, Cli):
         )
 
         # Register Event commands
-        self.commands(
+        self.register_cli_commands(
             group='event',
             help='Uvicore Event Information',
             commands={

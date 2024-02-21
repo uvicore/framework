@@ -26,7 +26,7 @@ class Db:
         # else:
         #     self.package['database'][key] = value
 
-    def connections(self, connections: Dict, default: str):
+    def register_db_connections(self, connections: Dict, default: str):
         #connections = []
         for name, connection in connections.items():
 
@@ -74,7 +74,7 @@ class Db:
         self.package.database.connections = connections
         self.package.database.connection_default = default
 
-    def models(self, items: List):
+    def register_db_models(self, items: List):
         # Default registration
         self.package.registers.defaults({'models': True})
 
@@ -82,7 +82,7 @@ class Db:
         if self.package.registers.models:
             self.package.database.models = items
 
-    def tables(self, items: List):
+    def register_db_tables(self, items: List):
         # Default registration
         self.package.registers.defaults({'tables': True})
 
@@ -90,7 +90,7 @@ class Db:
         if self.package.registers.tables:
             self.package.database.tables = items
 
-    def seeders(self, items: List):
+    def register_db_seeders(self, items: List):
         # Default registration
         self.package.registers.defaults({'seeders': True})
 

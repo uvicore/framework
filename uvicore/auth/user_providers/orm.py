@@ -73,7 +73,7 @@ class Orm(UserProvider):
         # with gunicorn and array caching you will see at least N cache misses.
         # But even still you see several more due to the concurrency of wrk and the
         # time it takes for await to set the cache.
-        dump('UNcached authentication middleware User, load from DB')
+        # dump('UNcached authentication middleware User, load from DB')
 
         # ORM is currently thworing a Warning: Truncated incorrect DOUBLE value: '='
         # when using actual bool as bit value.  So I convert to '1' or '0' strings instead

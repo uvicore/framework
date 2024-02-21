@@ -12,8 +12,7 @@ from uvicore.support.dumper import dump, dd
 
 @uvicore.seeder()
 async def seed():
-    uvicore.log.item('Seeding xx_modelname')
-
+    uvicore.log.item('Seeding xx_tablename')
 
 
     # --------------------------------------------------------------------------

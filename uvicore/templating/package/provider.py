@@ -1,11 +1,12 @@
 import uvicore
 from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
+from uvicore.templating.package import bootstrap
 from uvicore.foundation.events import app as AppEvents
 
 
 @uvicore.provider()
-class Cache(Provider):
+class Templating(Provider):
 
     def register(self) -> None:
         """Register package into the uvicore framework.
@@ -16,23 +17,11 @@ class Cache(Provider):
         process and we have no clear view of the full configuration system."""
 
         # Register event listeners
-        #AppEvents.Registered.listen(bootstrap.Cache)
+        # After all providers are booted we have a complete list of view paths
+        # and template options fully merged.  Now we can fire up the static
+        # paths and template system.
+        AppEvents.Booted.listen(bootstrap.Templating)
 
-        #self.bind_override('uvicore.cache.cache.Cache', 'uvicore.cache.cache2.Cache2')
-        # self.bind('uvicore.cache.cache.Cache', 'uvicore.cache.cache.Cache',
-        #     aliases=['cache0', 'cache'],
-        #     singleton=False,
-        # )
-
-        #self.bind('uvicore.cache.cache.Cache')
-
-        # self.bind('uvicore.cache.cache.Cache', 'uvicore.cache.cache2.Cache2',
-        #     aliases=['cacheO'],
-        #     singleton=True,
-        # )
-
-        # Set uvicore.log global connecting to default store
-        uvicore.cache = uvicore.ioc.make('uvicore.cache.manager.Manager').connect()
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.
@@ -41,11 +30,8 @@ class Cache(Provider):
         configuration. This is where you register, connections, models,
         views, assets, routes, commands...  If you need to perform work after ALL
         packages have booted, use the event system and listen to the booted event:
-        self.events.listen('uvicore.foundation.events.app.Booted', self.booted)"""
+        self.events.listen('uvicore.foundation.events.app.Booted, self.booted')"""
 
-        # Define service provider registration control
-        #self.registers(self.package.config.registers)
+        # Define Provider Registrations
+        self.registers(self.package.config.registers)
 
-        # Import cache to fire up Ioc so we can later use as short 'cache' names
-        #from uvicore.cache.cache import Cache
-        pass

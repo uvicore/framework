@@ -47,6 +47,15 @@ class xx_TableName(Table):
         # sa.Column('format', sa.Integer, sa.ForeignKey(f"{formats}.id"), nullable=False),   # SQL Foreign key, which does create an index
         # sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False), # SQL Foreign key, which does create an index
         # sa.Column('updator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False), # SQL Foreign key, which does create an index
+
+        # Multi Column Unique Constraint.  By adding in the key we still ensure
+        # OneToMany can be used but it must be unique with the key.  This also creates
+        # a good composite index of type,id,key
+        # sa.UniqueConstraint('attributable_type', 'attributable_id', 'key'),
+
+        # If you don't want an ID primary_key, you could use the combined poly IDs as a PK
+        # But the ORM can't handle duel PKs at the moment
+        # sa.PrimaryKeyConstraint('attributable_type', 'attributable_id', 'key'),
     ]
 
     # Optional SQLAlchemy Table() instance kwargs

@@ -7,21 +7,23 @@ config = {
 
     # --------------------------------------------------------------------------
     # Registration Control
-    # --------------------------------------------------------------------------
+    #
     # This lets you control the service provider registrations.  If this app
     # is used as a package inside another app you might not want some things
-    # registered in that context.
-    # 'registers': {
-    #     'web_routes': False,
-    #     'api_routes': False,
-    #     'middleware': False,
-    #     'views': False,
-    #     'assets': False,
-    #     'commands': True,
-    #     'models': False,
-    #     'tables': False,
-    #     'seeders': False,
-    # },
+    # registered in that context.  Use config overrides in your app to change
+    # registrations
+    # --------------------------------------------------------------------------
+    'registers': {
+        # 'web_routes': True,
+        # 'api_routes': True,
+        # 'middleware': True,
+        # 'views': True,
+        # 'assets': True,
+        # 'commands': True,
+        # 'models': True,
+        # 'tables': True,
+        # 'seeders': True,
+    },
 
 
     # Just experimenting when commands being pulled from a config, probably
@@ -62,14 +64,14 @@ config = {
 
 
     # --------------------------------------------------------------------------
-    # Package Dependencies (Service Providers)
+    # Package Dependencies (Package Providers)
     #
     # Define all the packages that this package depends on.  At a minimum, only
-    # the uvicore.foundation package is required.  The foundation is very
-    # minimal and only depends on configuratino, logging and console itself.
-    # You must add other core services built into uvicore only if your package
-    # requires them.  Services like uvicore.database, uvicore.orm, uvicore.http
-    # uvicore.auth...
+    # the uvicore.foundation package is required.  The foundation is very minimal
+    # and only depends on configuration, logging and the console packages. You
+    # must add other core services built into uvicore only if your package
+    # requires them.  Services like uvicore.database, uvicore.orm, uvicore.auth
+    # uvicore.http, etc...
     # --------------------------------------------------------------------------
     'dependencies': OrderedDict({
         # Careful to only define REQUIRED services for a minimal Uvicore.  Things

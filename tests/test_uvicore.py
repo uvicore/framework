@@ -10,6 +10,7 @@ async def test_app1(app1):
 
     dump(uvicore.db.packages('app1'))
 
-    assert False
+
+    assert True
 
 

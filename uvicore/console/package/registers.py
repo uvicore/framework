@@ -4,7 +4,7 @@ from uvicore.typing import Dict
 class Cli:
     """CLI Service Provider Mixin"""
 
-    def commands(self, items: Dict[str, Dict] = None, *, group: str = None, help: str = None, commands: Dict = None):
+    def register_cli_commands(self, items: Dict[str, Dict] = None, *, group: str = None, help: str = None, commands: Dict = None):
         """Add commands as a dictionary or kwargs"""
 
         # Default registration

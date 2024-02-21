@@ -250,6 +250,9 @@ async def test_join_group_by(app1):
 
         # Group by nested field
         .group_by('creator.email', 'creator__first_name')
+
+        # Order for consistent results
+        .order_by('creator.email')
     )
     results = await query.get()
     print(query.sql())

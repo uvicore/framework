@@ -20,7 +20,9 @@ from starlette.responses import StreamingResponse as Stream
 from starlette.responses import FileResponse as File
 
 # Get our current template system from the IoC
-templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
+#templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')
+#templates = uvicore.ioc.make('uvicore.http.templating.engine.Templates')
+templates = uvicore.ioc.make('uvicore.templating.engine.Templates')
 #templates = uvicore.ioc.make('Templates') # Fixme when you impliment other templating engines, if ever
 
 # Cached composer->view matches, a slight performance optimization found by wrk benchmarks
@@ -90,7 +92,7 @@ async def View(
     #dump(name, cached_composers, composer_modules)
 
     # Render the template
-    return templates.TemplateResponse(
+    return templates.render_web_response(
         name=name,
         context=context,
         status_code=status_code,

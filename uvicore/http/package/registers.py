@@ -10,7 +10,7 @@ from uvicore.support.collection import unique
 class Http(Provider):
     """Http Service Provider Mixin"""
 
-    def web_routes(self, module: str, prefix: str, name_prefix: str = ''):
+    def register_http_web_routes(self, module: str, prefix: str, name_prefix: str = ''):
         # Default registration
         self.package.registers.defaults({'web_routes': True})
 
@@ -23,7 +23,7 @@ class Http(Provider):
         self.package.web.prefix = prefix
         self.package.web.name_prefix = name_prefix
 
-    def api_routes(self, module: str, prefix: str, name_prefix: str = 'api'):
+    def register_http_api_routes(self, module: str, prefix: str, name_prefix: str = 'api'):
         # Default registration
         self.package.registers.defaults({'api_routes': True})
 
@@ -36,17 +36,17 @@ class Http(Provider):
         self.package.api.prefix = prefix
         self.package.api.name_prefix = name_prefix
 
-    def middlewareNO(self, items: OrderedDict):
-        # Don't think this should be here.  middleware is app global
-        # not per package.  I add apps middleware in http service.py
-        # Default registration
-        self.package.registers.defaults({'middleware': True})
+    # def middlewareNO(self, items: OrderedDict):
+    #     # Don't think this should be here.  middleware is app global
+    #     # not per package.  I add apps middleware in http service.py
+    #     # Default registration
+    #     self.package.registers.defaults({'middleware': True})
 
-        # Register middleware only if allowed
-        #if self.package.registers.middleware:
-            #self._add_http_definition('middleware', items)
+    #     # Register middleware only if allowed
+    #     #if self.package.registers.middleware:
+    #         #self._add_http_definition('middleware', items)
 
-    def views(self, modules: List):
+    def register_http_views(self, modules: List):
         # Default registration
         self.package.registers.defaults({'views': True})
 
@@ -54,7 +54,15 @@ class Http(Provider):
         if self.package.registers.views:
             self.package.web.view_paths = modules
 
-    def composers(self, module: Union[str, Dict], views: Union[str, List] = None, *, append: bool = False):
+    def register_http_view_context_processors(self, items: Dict):
+        # Default registration - template obeys view registration
+        self.package.registers.defaults({'views': True})
+
+        # Register templates only if [views] allowed
+        if self.package.registers.views:
+            self.package.web.context_processors = Dict(items)
+
+    def register_http_view_composers(self, module: Union[str, Dict], views: Union[str, List] = None, *, append: bool = False):
         # Default registration - we use same 'views' registration for composers as well
         self.package.registers.defaults({'views': True})
 
@@ -84,7 +92,7 @@ class Http(Provider):
                     self.package.web.view_composers[module] = views
 
 
-    def assets(self, items: List):
+    def register_http_assets(self, items: List):
         # Default registration
         self.package.registers.defaults({'assets': True})
 
@@ -92,14 +100,7 @@ class Http(Provider):
         if self.package.registers.assets:
             self.package.web.asset_paths = items
 
-    def public(self, items: List):
+    def register_http_public(self, items: List):
         self.package.web.public_paths = items
 
 
-    def template(self, items: Dict):
-        # Default registration - template obeys view registration
-        self.package.registers.defaults({'views': True})
-
-        # Register templates only if [views] allowed
-        if self.package.registers.views:
-            self.package.web.template_options = Dict(items)
