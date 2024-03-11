@@ -33,7 +33,7 @@ class Redis(Provider, RedisMixin):
             # See https://github.com/aio-libs/aioredis-py/issues/154
             # I am doing the proper engine.close() and await engine.wait_closed() and it does run before I get the error
             # but the error persists.  Still not fully solved, but closing does help in some situations
-            redis = uvicore.ioc.make('uvicore.redis.redis.Redis')
+            from uvicore.redis.redis import Redis as redis
             for engine in redis.engines.values():
                 engine.close()
                 await engine.wait_closed()

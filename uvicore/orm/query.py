@@ -587,9 +587,15 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         # Debug dump which tables are which
                         #dump('relation_name: ' + relation_name + ' - main table: ' + left_table.name + ' - join_table: ' + join_table.name + ' - alias: ' + alias)
 
+                        # Map relation.local_key and foreign_key Field names to column names
+                        #local_key = relation.entity.mapper(relation.local_key).column()
+                        #foreign_key = relation.entity.mapper(relation.foreign_key).column()
+                        local_key = relation.local_key
+                        foreign_key = relation.foreign_key
+
                         # Join condition columns
-                        left = self._column(getattr(left_table.c, relation.local_key))
-                        right = self._column(getattr(join_table.c, relation.foreign_key))
+                        left = self._column(getattr(left_table.c, local_key))
+                        right = self._column(getattr(join_table.c, foreign_key))
 
                         # Onclause, default for most relations
                         onclause = left.sacol == right.sacol
@@ -623,6 +629,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                             method='outerjoin'
                         )
                         query.joins.append(join)
+
 
                     # All other types of relations
                     # elif type(relation) == HasMany:
@@ -874,7 +881,8 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Merge in Many-To-Many by using the original RowProxy result which contains
             # The pivot tables joining column (left_key)
             if type(relation) == BelongsToMany or type(relation) == MorphToMany:
-                left_key = relation.name + '__' + relation.left_key
+                #left_key = relation.name + '__' + relation.left_key
+                left_key = relation.name + '__' + relation.entity.mapper(relation.left_key).field()
                 right_key = relation.name + '__' + relation.entity.mapper(relation.entity.pk).column()
 
                 # QUESTION, what is the differente from children.values() vs
@@ -933,7 +941,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             else:
 
                 for child in children.values():
-                    parent_pk_value = getattr(child, relation.foreign_key)
+                    parent_pk_value = getattr(child, relation.entity.mapper(relation.foreign_key).field())
                     if parent_pk_value not in parents: continue;
 
                     parent = parents[parent_pk_value]

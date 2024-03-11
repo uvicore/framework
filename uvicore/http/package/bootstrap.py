@@ -17,6 +17,9 @@ from uvicore.http.routing import Guard
 from uvicore.http.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 
 # Temp speed testing variable to swap Web router from FastAPI to Starlette
+# NOTICE if you set this to TRUE, all your type hinded /{vars} and ?vars will NOT
+# work in your routes and you will have to revert to Starlettes way of
+# handling vars with request.path_params['user_id'] which will break all your apps.
 USE_STARLETTE=False
 
 
@@ -49,6 +52,8 @@ class Http(Handler):
         # If not, we will only use one server.
         (base_server, web_server, api_server) = self.create_http_servers(web_routes, api_routes)
 
+        #dd("Base: ", base_server, "WEB: ", web_server, "API: ", api_server)
+
         # Add global web and api specific middleware
         self.add_middleware(web_server, api_server)
 
@@ -60,16 +65,16 @@ class Http(Handler):
         api_prefix = self.get_prefix('app.api.prefix')
 
         # Add web routes to the web server
-        self.add_web_routes(web_server, web_routes, web_prefix if not base_server else '')
+        self.add_web_routes(web_server, web_routes)
 
         # Add api routes to the api server
-        self.add_api_routes(api_server, api_routes, api_prefix if not base_server else '')
+        self.add_api_routes(api_server, api_routes)
 
         # Add web paths (public, asset, view), configure templates and view composers
         self.configure_webserver(web_server)
 
-        # Fire up the proper servers and set our global app.http instance
-        if base_server:
+        # Mount our sub servers into our base server
+        if web_server and api_server:
             # Running both web and api servers, we must have a perent base server
             # to mount the web and api sub servers into.  This is how we properly
             # separate web vs api middleware and other configurations.
@@ -80,13 +85,14 @@ class Http(Handler):
             else:
                 base_server.mount(api_prefix, api_server)  # Api first
                 base_server.mount(web_prefix, web_server)
-            uvicore.app._http = base_server
         elif web_server:
-            # We only have a web server (no api routes)
-            uvicore.app._http = web_server
+            base_server.mount(web_prefix, web_server)
         elif api_server:
-            # We only have an api server (no web routes)
-            uvicore.app._http = api_server
+            base_server.mount(api_prefix, api_server)
+
+        # Add our base server to uvicore
+        uvicore.app._http = base_server
+
 
         # Attach to Starlette events and translate into Uvicore events
         @uvicore.app.http.on_event("startup")
@@ -100,6 +106,8 @@ class Http(Handler):
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
         debug_dump = False
         if debug_dump:
+            dump("Base: ", base_server, "WEB: ", web_server, "API: ", api_server)
+
             dump('#################################################################')
             dump("Main HTTP Server APPLICATION", uvicore.app.http.__dict__)
 
@@ -254,18 +262,18 @@ class Http(Handler):
         base_server: Starlette = None
         web_server: FastAPI = None
         api_server: FastAPI = None
-        debug = uvicore.config('app.debug'),
+        debug = uvicore.config('app.debug')
 
-        # Base server is Starlette
-        if web_routes and api_routes:
-            base_server = Starlette(
-                debug=debug,
-            )
+        # We ALWAYS have 2 servers and the base_server (parent) is alway starlette
+        # Why 2 servers?  Because of our web and api prefixes.  The web and api servers
+        # get "mounted" inside the base wtih a special prefix to separate all routes and api docs
 
-        # Web server is FastAPI with NO OpenAPI setup
+        # Base server is always starlette
+        base_server = Starlette(debug=debug)
+
+        # Web server is always a sub Starlette server
         if web_routes:
             if USE_STARLETTE:
-                # Try a pure starlette server
                 web_server = Starlette(debug=debug)
             else:
                 web_server = FastAPI(
@@ -275,10 +283,17 @@ class Http(Handler):
                     swagger_ui_oauth2_redirect_url=None,
                 )
 
-        # Api server is FastAPI with OpenAPI setup
+        # API server is always a sub FastAPI server
         if api_routes:
             api_server = FastAPI(
                 debug=debug,
+
+                #openapi_prefix=api_prefix,
+                #root_path=api_prefix,
+                #openapi_url='/api/openapi.json',
+
+                #docs_url='/api/docs',
+                #redoc_url='/api/redoc',
 
                 # This title is what shows up in OpenAPI <h1>, not the HTML <title>, which is defined in add_api_routes def openapi_docs()
                 title=uvicore.config('app.api.openapi.title'),
@@ -295,13 +310,68 @@ class Http(Handler):
                 #docs_url=uvicore.config('app.api.openapi.docs_url'),
                 #redoc_url=uvicore.config('app.api.openapi.redoc_url'),
 
+                # DISABLE the /docs and /redoc URLs
+                # Why?  Because we add our own CUSTOM one later in add_api_routes()
                 docs_url=None,
-                redoc_url=None,
+
+                # Can leave redoc on for now, maybe add to config to change /redoc path
+                #redoc_url=None,
 
                 #swagger_ui_oauth2_redirect_url=
 
                 #root_path='/api',  #fixme with trying out kong
             )
+
+
+
+        ############ ORIGINAL BELOW
+
+        # # Base server is Starlette
+        # if web_routes and api_routes:
+        #     base_server = Starlette(
+        #         debug=debug,
+        #     )
+
+        # # Web server is FastAPI with NO OpenAPI setup
+        # if web_routes:
+        #     if USE_STARLETTE:
+        #         # Try a pure starlette server
+        #         web_server = Starlette(debug=debug)
+        #     else:
+        #         web_server = FastAPI(
+        #             debug=debug,
+        #             version=uvicore.app.version,
+        #             openapi_url=None,
+        #             swagger_ui_oauth2_redirect_url=None,
+        #         )
+
+        # # Api server is FastAPI with OpenAPI setup
+        # if api_routes:
+        #     api_server = FastAPI(
+        #         debug=debug,
+
+        #         # This title is what shows up in OpenAPI <h1>, not the HTML <title>, which is defined in add_api_routes def openapi_docs()
+        #         title=uvicore.config('app.api.openapi.title'),
+
+        #         # Get version from main running apps package.version
+        #         version=uvicore.app.package(main=True).version,
+
+        #         # NOTE: Most other info is provided in my add_api_routes def openapi_docs() override
+
+        #         #openapi_url=uvicore.config('app.api.openapi.url'),
+        #         #swagger_ui_oauth2_redirect_url=uvicore.config('app.api.openapi.docs_url') + '/oauth2-redirect',
+
+        #         # Default FastAPI docs and redoc routes
+        #         #docs_url=uvicore.config('app.api.openapi.docs_url'),
+        #         #redoc_url=uvicore.config('app.api.openapi.redoc_url'),
+
+        #         docs_url=None,
+        #         redoc_url=None,
+
+        #         #swagger_ui_oauth2_redirect_url=
+
+        #         #root_path='/api',  #fixme with trying out kong
+        #     )
         return (base_server, web_server, api_server)
 
     def add_middleware(self, web_server: FastAPI, api_server: FastAPI) -> None:
@@ -345,7 +415,7 @@ class Http(Handler):
         #dump(api_server.__dict__)
         #dump(web_server.__dict__)
 
-    def add_web_routes(self, web_server, web_routes: Dict[str, WebRoute], prefix) -> None:
+    def add_web_routes(self, web_server, web_routes: Dict[str, WebRoute]) -> None:
         """Add web routes to the web server"""
 
         # Do nothing if no api_routes are defined
@@ -364,7 +434,7 @@ class Http(Handler):
             else:
                 # FastAPI
                 web_server.add_api_route(
-                    path=(prefix + route.path) or '/',
+                    path=route.path or '/',
                     endpoint=route.endpoint,
                     methods=route.methods,
                     name=route.name,
@@ -373,15 +443,14 @@ class Http(Handler):
                     dependencies=route.middleware,
                 )
 
-
-    def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute], prefix) -> None:
+    def add_api_routes(self, api_server, api_routes: Dict[str, ApiRoute]) -> None:
         """Add api routes to the api server"""
 
         # Do nothing if no api_routes are defined
         if not api_routes: return
 
         # Get important app configs
-        api_prefix = uvicore.config.app.api.prefix  # Different that the prefix parameter
+        api_prefix = self.get_prefix('app.api.prefix')
         openapi = uvicore.config.app.api.openapi
         oauth2 = uvicore.config.app.auth.oauth2
 
@@ -403,15 +472,19 @@ class Http(Handler):
             @api_server.get(openapi.docs.path, include_in_schema=False)
             def openapi_docs():
                 return get_swagger_ui_html(
+
+                    # Define our openapi.json path from prefix and config
                     openapi_url=api_prefix + openapi.path,
+                    oauth2_redirect_url=api_prefix + openapi_redirect_url,
 
                     # This title is html <title> while the title in app_server = FastAPI is what shows up in OpenAPI <h1> title, I make them the same
                     title=openapi.title,
 
+                    # Swagger urls
                     swagger_favicon_url=openapi.docs.favicon_url,
                     swagger_js_url=openapi.docs.js_url,
                     swagger_css_url=openapi.docs.css_url,
-                    oauth2_redirect_url=api_prefix + openapi_redirect_url,
+
                     init_oauth={
                         'clientId': oauth2.client_id,
                         #'clientSecret': "GaMz_F83_KB8ac6g-Eds0uoHyeoxg03X184yBqZR5Ws",
@@ -472,7 +545,8 @@ class Http(Handler):
 
             # Add uvicore route to FastAPI route
             api_server.add_api_route(
-                path=(prefix + route.path) or '/',
+                #path=(prefix + route.path) or '/',
+                path=(route.path) or '/',
                 endpoint=route.endpoint,
                 methods=route.methods,
                 name=route.name,
