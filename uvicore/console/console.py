@@ -3,7 +3,7 @@ from uvicore.console import click, group
 from uvicore.console.events import command as ConsoleEvents
 
 title_ideas = """
-    The Fullstack Asynchronous API+Web+CLI Python Framework
+    The Full Stack Asynchronous Python Framework with the performance of FastAPI and the elegance of Laravel!
 """
 
 # Must include actual bind name when stacking decorators as it cannot deduce on its own.
@@ -14,7 +14,7 @@ title_ideas = """
     Uvicore {uvicore.__version__}
     The Fullstack Async Web, API and CLI Python Framework
 
-    Copyright (c) 2023 Matthew Reschke
+    Copyright (c) 2024 Matthew Reschke
     License http://mreschke.com/license/mit
 """)
 @click.version_option(version=uvicore.__version__, prog_name='Uvicore Framework', flag_value='--d')

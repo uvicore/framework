@@ -30,11 +30,9 @@ function usage() {
     echo -e "${BROWN}Uvicore${DEFAULT}"
     echo
     echo -e "${PURPLE}  Uvicore Application/Package Installer${DEFAULT}"
-    #echo
-    echo -e "${WHITE}  The Async Python Framework for Artisans.${DEFAULT}"
-    echo -e "${DEFAULT}  An Elegant Fullstack Python Web, API and CLI Framework.${DEFAULT}"
     echo
-    echo -e "${DARKGRAY}  Copyright (c) 2020 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
+    echo -e "${WHITE}  The Full Stack Asynchronous Python Framework with the performance of FastAPI and the elegance of Laravel!${DEFAULT}"
+    echo -e "${DARKGRAY}  Copyright (c) 2024 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
     echo
     echo -e "${BROWN}Usage: ${DEFAULT}uvicore-insitaller ./path [branch] [gitrepo]"
     echo

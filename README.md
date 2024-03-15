@@ -1,3 +1,7 @@
+# Welcome to Uvicore
+
+The Full Stack Asynchronous Python Framework with the performance of FastAPI and the elegance of Laravel!
+
 ## About Uvicore
 
 Uvicore is a fullstack async API, Web and CLI python framework.  Uvicore is built on great technologies such as:
@@ -15,7 +19,7 @@ Uvicore is the missing Async fullstack framework that feels and performs like Fa
 
 ## Learning Uvicore
 
-Uvicore documentation is still underway, but you can get started at https://uvicore.io today!
+Uvicore documentation is still underway, but you can get started today at https://uvicore.io
 
 
 ## Quick Start Installation
