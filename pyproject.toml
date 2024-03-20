@@ -180,7 +180,7 @@ pytest-cov = "4.1.*"
 pytest-asyncio = "0.18.*"
 
 #black = "20.8b1"
-black = "24.2"
+black = "24.3.0"
 
 # 8.18.1 is the last ipython that supports python 3.9
 #ipython = "7.21.*"
