@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: Unix",
     "Environment :: Web Environment",
     "Environment :: Console",
-    "Framework :: Uvicore",
+    "Framework :: FastAPI",
     "Typing :: Typed",
 ]
 include = ["LICENSE"]
