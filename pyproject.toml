@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uvicore"
-version = "0.2.0"
+version = "0.2.1"
 license = "MIT"
 authors = ["Matthew Reschke <mail@mreschke.com>"]
 description = "The Fullstack Async Web, API and CLI Python Framework"
@@ -19,7 +19,7 @@ classifiers = [
     "Operating System :: Unix",
     "Environment :: Web Environment",
     "Environment :: Console",
-    "Framework :: AsyncIO",
+    "Framework :: Uvicore",
     "Typing :: Typed",
 ]
 include = ["LICENSE"]
