@@ -126,6 +126,7 @@ class Authentication:
         """Retrieve anonymous user from User Provider backend"""
         # Import user provider defined in auth config
         provider_module = self.config.default_provider.module
+
         if provider_module in self.cached_providers:
             #dump('cached provider')
             user_provider = self.cached_providers[provider_module]

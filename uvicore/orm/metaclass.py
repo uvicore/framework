@@ -32,11 +32,11 @@ class ModelMetaclass(PydanticMetaclass):
     # Testing of duplicate field
     # Only works if EACH model sets a metaclass=ModelMetaclass
     # You cannot set the metaclass at the Module.py level
-    def email(entity):
-        return 'email on meta'
+    # def email(entity):
+    #     return 'email on meta'
 
-    def slug(entity):
-        return 'slug on meta'
+    # def slug(entity):
+    #     return 'slug on meta'
 
 
     # Remember all metaclass method ARE @classmethods

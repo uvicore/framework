@@ -360,7 +360,7 @@ class Logger(LoggerInterface):
         self.reset()
 
     def exception(self, message):
-        self.logger.exception(str(message))
+        self.logger.error(str(message))
         self.reset()
 
     def blank(self) -> LoggerInterface:

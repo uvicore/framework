@@ -13,7 +13,7 @@ Uvicore is a fullstack async API, Web and CLI python framework.  Uvicore is buil
 - Robust modular and deep-merged config system across uvicore modules.
 - Custom and expressive ORM built on top of SQLAlchemy Core.
 
-Uvicore is the missing Async fullstack framework that feels and performs like FastAPI.
+Uvicore is the missing fullstack asynchronous framework for elegant and rapid python development.
 
 
 
@@ -40,4 +40,4 @@ uvicore-installer ./blog
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The Laravel framework is open-sourced software licensed under the [MIT license](https://mreschke.com/license/mit).

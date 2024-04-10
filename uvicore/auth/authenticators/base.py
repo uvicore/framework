@@ -4,6 +4,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.contracts import UserInfo, UserProvider
 from uvicore.typing import Dict, Optional, List, Tuple
+from uvicore.contracts import Logger as LoggerInterface
 from uvicore.contracts import Authenticator as AuthenticatorInterface
 
 
@@ -15,7 +16,7 @@ class Authenticator(AuthenticatorInterface):
         self.config = config
 
     @property
-    def log(self):
+    def log(self) -> LoggerInterface:
         return uvicore.log.name('uvicore.auth')
 
     async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[UserInfo]:

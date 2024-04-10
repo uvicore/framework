@@ -15,8 +15,20 @@ class Authenticator(ABC):
 
     @abstractmethod
     async def retrieve_user(self, username: str, password: str, provider: Dict) -> Optional[UserInfo]:
+        """Retrieve user from User Provider backend"""
+        pass
+
+    @abstractmethod
+    async def create_user(self, provider: Dict, request: HTTPConnection, **kwargs):
+        """Create new user in backend"""
+        pass
+
+    @abstractmethod
+    async def sync_user(self, provider: Dict, request: HTTPConnection, **kwargs):
+        """Sync user and group linkage to backend"""
         pass
 
     @abstractmethod
     def auth_header(self, request) -> Tuple[str, str, str]:
+        """Extract authorization header parts"""
         pass

@@ -1,7 +1,7 @@
 # type: ignore
 from . import contracts
 from uvicore.typing import Dict
-from uvicore.foundation.decorators import event, model, seeder, service, table, provider, routes, controller, composer
+from uvicore.foundation.decorators import event, job, model, seeder, service, table, provider, routes, controller, composer
 
 
 # Uvicore version.  Also available in app.version
@@ -10,11 +10,11 @@ __version__ = '0.2.0'
 # Core (non service provider based) singletons as globals
 ioc: contracts.Ioc = None
 events: contracts.Dispatcher = None
+jobs: contracts.JobDispatcher = None
 app: contracts.Application = None
 
 # Core (service provider based) singletons as globals
 config: contracts.Config = None
-#config: Dict()
 log: contracts.Logger = None
 db: contracts.Database = None
 cache: contracts.Cache = None
@@ -46,6 +46,10 @@ def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:
     # are ever loaded.
     from uvicore.events.dispatcher import Dispatcher
     uvicore.events = Dispatcher
+
+    # Import Job Dispatcher
+    from uvicore.jobs.dispatcher import Dispatcher as JobDispatcher
+    uvicore.jobs = JobDispatcher
 
     # Why can 'config' be a service provider?  Because it's always the FIRST service provider.
     # So all other providers after that have access to register their own configs.

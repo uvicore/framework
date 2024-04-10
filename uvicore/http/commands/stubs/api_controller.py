@@ -45,6 +45,7 @@ class xx_ControllerName(Controller):
     #   async def welcome(request: Request, user: UserInfo = self.user):
 
     def register(self, route: ApiRouter):
+        """Register API Controller Endpoints"""
 
         # ----------------------------------------------------------------------
         # Example: Basic route responding with a view dict to JSON blob

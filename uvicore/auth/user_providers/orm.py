@@ -177,6 +177,11 @@ class Orm(UserProvider):
 
     async def create_user(self, request: HTTPConnection, **kwargs):
         """Create new user in backend"""
+
+        # Consistent kwargs come from our JWT auto_create_user_jwt_mapping config
+        # uuid, username, email, first_name, last_name
+        # title, avatar, creator_id, groups (array)
+
         # Pop groups from kwargs
         groups = kwargs.pop('groups')
 
@@ -203,12 +208,18 @@ class Orm(UserProvider):
         return user
 
     async def sync_user(self, request: HTTPConnection, **kwargs):
-        """Sync user to backend"""
+        """Sync user and group linkage to backend"""
+        # Sync not only name changes, but also group linkage
+
+        # Consistent kwargs come from our JWT auto_create_user_jwt_mapping config
+        # uuid, username, email, first_name, last_name
+        # title, avatar, creator_id, groups (array)
+
         # Get username
         username = kwargs['username']
 
         # Get actual backend user
-        user = await UserModel.query().show_writeonly(['password']).find(username=username)
+        user = await UserModel.query().show_writeonly(['password']).include('groups').find(username=username)
 
         # If we have successfully logged in, we are not disabled
         user.disabled = False
@@ -227,8 +238,33 @@ class Orm(UserProvider):
         for key, value in kwargs.items():
             setattr(user, key, value)
 
-        # Save user
+        # Save user record
         await user.save()
+
+        # UNLINK any groups from DB that are not listed in groups JWT array
+        if groups and user.groups:
+            unlink_groups = []
+            for g in user.groups:
+                if g.name not in groups:
+                    unlink_groups.append(g)
+            if unlink_groups: await user.unlink('groups', unlink_groups)
+
+        # LINK any groups in JWT that are not linked in DB
+        if groups:
+            # Get actual groups in backend from groups array
+            real_groups = await Group.query().where('name', 'in', groups).get()
+            real_group_names = [x.name for x in real_groups]
+
+            # Convert users existing groups to list of names
+            user_group_names = []
+            if user.groups:
+                user_group_names = [x.name for x in user.groups]
+
+            link_groups = []
+            for g in real_groups:
+                if g.name not in user_group_names:
+                    link_groups.append(g)
+            if link_groups: await user.link('groups', link_groups)
 
         # Return new backend user (not actual Auth user class)
         return user

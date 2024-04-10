@@ -58,6 +58,7 @@ class Dispatcher(ABC):
         """Fire off an event and run all async listener callbacks"""
         pass
 
+    @abstractmethod
     async def codispatch(self, event: Any, payload: Dict = {}) -> None:
         """Alias for dispatch_async()"""
         pass

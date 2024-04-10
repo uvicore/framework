@@ -1,11 +1,13 @@
 import uvicore
 from jwt import PyJWKClient, decode
+from uvicore.support.hash import md5
+from uvicore.contracts import UserInfo
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.typing import Dict, Optional, Union, Callable
 from uvicore.auth.authenticators.base import Authenticator
 from uvicore.http.exceptions import NotAuthenticated, InvalidCredentials, HTTPException
-from uvicore.contracts import UserInfo
+
 
 @uvicore.service()
 class Jwt(Authenticator):
@@ -131,67 +133,45 @@ class Jwt(Authenticator):
                 self.log.debug(e)
                 return True
 
+        # Dump JWT to DEBUG log
         self.log.debug('JWT: ' + str(jwt))
-        #self.log.debug(jwt)
+
+        # Map JWT based on our auth configs JWT authenticator auto_create_user_jwt_mapping
+        mapped_jwt = {}
+        for key, value in self.config.auto_create_user_jwt_mapping.items():
+            if isinstance(value, Callable):
+                mapped_jwt[key] = value(jwt)
+            else:
+                mapped_jwt[key] = value
+
+        # Dump Mapped JWT to DEBUG log
+        self.log.debug('Mapped JWT: ' + str(mapped_jwt))
 
         # Get user and validate credentials
-        user: UserInfo = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+        user: UserInfo = await self.retrieve_user(mapped_jwt['email'], None, self.config.provider, request, jwt=jwt)
 
         # User from valid JWT not found in uvicore OR not synced for first time (no uuid).
         # Auto create or update user if allowed in config
         if self.config.auto_create_user and (user is None or user.uuid is None):
-            jwt_mapping = self.config.auto_create_user_jwt_mapping
-            #dump(jwt_mapping)
-            new_user = {}
-            for key, value in self.config.auto_create_user_jwt_mapping.items():
-                if isinstance(value, Callable):
-                    new_user[key] = value(jwt)
-                else:
-                    new_user[key] = value
-
-            #dump(new_user)
-
             # User does not exist, create user
             if user is None:
                 # Auto create new user in user provider
-                await self.create_user(self.config.provider, request, **new_user)
-
+                await self.create_user(self.config.provider, request, **mapped_jwt)
             else:
                 # User exists, but needs an initial sync
-                await self.sync_user(self.config.provider, request, **new_user)
+                await self.sync_user(self.config.provider, request, **mapped_jwt)
 
-            # Get user and validate credentials
-            user: User = await self.retrieve_user(jwt.email, None, self.config.provider, request, jwt=jwt)
+            # Re-pull user after creation
+            user: UserInfo = await self.retrieve_user(mapped_jwt['email'], None, self.config.provider, request, jwt=jwt)
 
-
-            # Dict({
-            #     'aud': 'd709a432-5edc-44c7-8721-4cf123473c45',
-            #     'exp': 1616000280,
-            #     'iat': 1615996680,
-            #     'iss': 'https://auth-local.sunfinity.com',
-            #     'sub': '217e27b4-0e0a-464c-84a8-c40312b55801',
-            #     'authenticationType': 'PASSWORD',
-            #     'email': 'it@sunfinity.com',
-            #     'email_verified': True,
-            #     'applicationId': 'd709a432-5edc-44c7-8721-4cf123473c45',
-            #     'roles': ['Administrator'],
-            #     'name': 'Admin|Istrator'
-            # })
-
-
-        # If user is none and auto_create_user is enabled, auto-create user
-        # Link user up to groups table based on JWT roles
-        # Now self.get_user again
-
-        # If no user returned, validation has failed or user not found
-        #if user is None: raise InvalidCredentials()
-
-        # Validate Permissions
-        #self.validate_permissions(user, scopes.scopes)
-
-        # Authentication successful.
-        # Add user to request in case we use it in a decorator, we can pull it out with request.scope.get('user')
-        #request.scope['user'] = user
+        # Periodically sync user and group info from JWT
+        if (self.config.sync_user):
+            # Example cache key mreschke.wiki::cache/users/mreschke@example.com/sync_user_ttl
+            cache_key = "users/" + user.email + "/sync_user_ttl"
+            cache_ttl = self.config.sync_user_ttl
+            #if not await uvicore.cache.has(cache_key):
+            await self.sync_user(self.config.provider, request, **mapped_jwt)
+            await uvicore.cache.put(cache_key, 1, seconds=cache_ttl)
 
         # Return user.  If no user return True to denote Anonymous User and skip next authenticator
         return user or True

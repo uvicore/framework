@@ -45,7 +45,7 @@ function usage() {
     info "    uvicore-insitaller ./wiki"
     echo
     echo -e "${GREEN}  Use a specific version of uvicore and dependencies${DEFAULT}"
-    info "    uvicore-insitaller ./wiki 1.0"
+    info "    uvicore-insitaller ./wiki 0.2"
     echo
     echo -e "${GREEN}  Use a custom schematic branch and repository${DEFAULT}"
     info "    uvicore-insitaller ./wiki master https://github.com/your/schematic"
@@ -119,7 +119,7 @@ if [ "$path" == "" ] || [ "$path" == "--help" ] || [ "$path" == "-h" ] || [ "$pa
     usage
 else
     if [ "$branch" == "" ]; then branch="master"; fi
-    if [ "$repo" == "" ]; then repo="https://github.com/uvicore/app"; fi
+    if [ "$repo" == "" ]; then repo="https://github.com/uvicore/schematic"; fi
 
     header "Uvicore Installer"; echo
 

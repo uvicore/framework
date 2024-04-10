@@ -9,6 +9,8 @@ from .dispatcher import Dispatcher
 #from .event import Event
 from .field import Field
 from .ioc import Binding, Ioc
+from .job_dispatcher import JobDispatcher
+from .job import Job
 from .logger import Logger
 from .mapper import Mapper
 from .model import Model
