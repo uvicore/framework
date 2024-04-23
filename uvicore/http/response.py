@@ -8,16 +8,21 @@ from uvicore.http.request import Request
 from starlette.templating import _TemplateResponse
 from starlette.background import BackgroundTask as _BackgroundTask
 
-# Proxy starlette response APIs
+# Proxy starlette and fastapi response APIs
+# Usage: from uvicore.http.response import FileResponse
+#    Or: from uvicore.http import response
+#        response.File
+# See https://fastapi.tiangolo.com/reference/responses/
 from starlette.responses import Response
-from starlette.responses import PlainTextResponse as Text
-from starlette.responses import HTMLResponse as HTML
-from starlette.responses import JSONResponse as JSON
-from fastapi.responses import UJSONResponse as UJSON
-from fastapi.responses import ORJSONResponse as ORJSON
-from starlette.responses import RedirectResponse as Redirect
-from starlette.responses import StreamingResponse as Stream
-from starlette.responses import FileResponse as File
+from starlette.responses import FileResponse, FileResponse as File
+from starlette.responses import HTMLResponse, HTMLResponse as HTML
+from starlette.responses import JSONResponse, JSONResponse as JSON
+from fastapi.responses import UJSONResponse, UJSONResponse as UJSON
+from fastapi.responses import ORJSONResponse, ORJSONResponse as ORJSON
+from starlette.responses import PlainTextResponse, PlainTextResponse as Text
+from starlette.responses import RedirectResponse, RedirectResponse as Redirect
+from starlette.responses import StreamingResponse, StreamingResponse as Stream
+
 
 # Get our current template system from the IoC
 #templates = uvicore.ioc.make('uvicore.http.templating.jinja.Jinja')

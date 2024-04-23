@@ -1,7 +1,10 @@
 import uvicore
+import traceback
 from uvicore.typing import Any, Dict, Optional, List
 from starlette.exceptions import HTTPException as _HTTPException
 from uvicore.http import status
+from uvicore.support.dumper import dump
+from uvicore.support.collection import haskey
 
 # This is how you could do it, if you wanted to log
 #log = lambda : uvicore.log.name('uvicore.http')
@@ -23,6 +26,23 @@ class HTTPException(_HTTPException):
         extra: Optional[Dict] = None,
         headers: Optional[Dict[str, Any]] = None
     ) -> None:
+        # Detect if we were raised from another HTTPException with a status_code
+        # If so, grab values from that first exception
+        if exception is not None and haskey(exception, 'status_code'):
+            status_code = exception.status_code
+            message = exception.message
+            detail = exception.detail
+            extra = exception.extra
+            headers = exception.headers
+            exception = None
+        else:
+            # Standard try catch that raises HTTPException
+            st = traceback.format_exc()
+            if 'NoneType' in st: st = None
+            message = message or str(exception)
+            detail = detail or message
+            exception = st
+
         # Call starlette exception where their detail is my message
         super().__init__(status_code=status_code, detail=message)
 

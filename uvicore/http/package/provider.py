@@ -44,49 +44,6 @@ class Http(Provider, Cli, Http):
         AppEvents.Booted.listen(bootstrap.Http)
 
 
-        # Register IoC bindings only if running in HTTP mode
-        #if self.app.is_http:
-
-            # # Bind HTTP Server
-            # self.bind('Http', 'uvicore.http.server._Server',
-            #     aliases=['uvicore.http.server.Server', 'http', 'HTTP'],
-            #     singleton=True,
-            #     kwargs={
-            #         'debug': uvicore.config('app.debug'),
-            #         'title': uvicore.config('app.openapi.title'),
-            #         'version': uvicore.app.version,
-            #         'openapi_url': uvicore.config('app.openapi.url'),
-            #         'docs_url': uvicore.config('app.openapi.docs_url'),
-            #         'redoc_url': uvicore.config('app.openapi.redoc_url'),
-            #     }
-            # )
-            # No because I added default to make
-            #self.bind('WebRouter', 'uvicore.http.routing.web_router._WebRouter', aliases=['uvicore.http.routing.web_router.WebRouter', 'web_router'])
-            #self.bind('ApiRouter', 'uvicore.http.routing.api_router._ApiRouter', aliases=['uvicore.http.routing.api_router.ApiRouter', 'api_router'])
-            #self.bind('Routes', 'uvicore.http.routing.routes._Routes', aliases=['uvicore.http.routing.routes.Routes', 'routes'])
-            #self.bind('StaticFiles', 'uvicore.http.static._StaticFiles', aliases=['Static', 'static'])
-
-            # Default templating system is Jinja2.  Users can overwrite this
-            # easily in their app configs 'bindings' dictionary.
-            #self.bind('Templates', 'uvicore.http.templating.jinja.Jinja', singleton=True, aliases=['templates'])
-
-            # Fire up a FastAPI server instance and store on app.http
-            #self.app._http = uvicore.ioc.make('uvicore.http.server._Server')
-            #self.app._http = uvicore.ioc.make('uvicore.http.servers.api._Server')  # FastAPI as Base
-            #self.app._http = uvicore.ioc.make('uvicore.http.servers.web._Server')  # Starlette as Base
-
-            # Base HTTP Server
-            #self.app._http = uvicore.ioc.make('uvicore.http.servers.api._Server')  # FastAPI as Base
-            # self.app._http: _FastAPI = _FastAPI(
-            #     debug=uvicore.config('app.debug'),
-            #     title=uvicore.config('app.openapi.title'),
-            #     version=uvicore.app.version,
-            #     openapi_url=uvicore.config('app.openapi.url'),
-            #     docs_url=uvicore.config('app.openapi.docs_url'),
-            #     redoc_url=uvicore.config('app.openapi.redoc_url'),
-            #     root_path='/api',
-            # )
-
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.
         Boot takes place after ALL packages are registered.  This means all package

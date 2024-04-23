@@ -15,6 +15,7 @@ from functools import partial, update_wrapper
 from uvicore.http.routing import ApiRoute, WebRoute
 from uvicore.http.routing import Guard
 from uvicore.http.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
+from uvicore.http.rapidoc.docs import get_rapidoc_ui_html, get_rapidoc_pdf_ui_html, get_rapidoc_ui_oauth2_redirect_html
 
 # Temp speed testing variable to swap Web router from FastAPI to Starlette
 # NOTICE if you set this to TRUE, all your type hinded /{vars} and ?vars will NOT
@@ -293,7 +294,7 @@ class Http(Handler):
                 #openapi_url='/api/openapi.json',
 
                 #docs_url='/api/docs',
-                #redoc_url='/api/redoc',
+                #redoc_url='/api/`redoc`',
 
                 # This title is what shows up in OpenAPI <h1>, not the HTML <title>, which is defined in add_api_routes def openapi_docs()
                 title=uvicore.config('app.api.openapi.title'),
@@ -314,8 +315,9 @@ class Http(Handler):
                 # Why?  Because we add our own CUSTOM one later in add_api_routes()
                 docs_url=None,
 
+                # DISABLE redoc
                 # Can leave redoc on for now, maybe add to config to change /redoc path
-                #redoc_url=None,
+                redoc_url=None,
 
                 #swagger_ui_oauth2_redirect_url=
 
@@ -452,6 +454,7 @@ class Http(Handler):
         # Get important app configs
         api_prefix = self.get_prefix('app.api.prefix')
         openapi = uvicore.config.app.api.openapi
+        rapidoc = uvicore.config.app.api.rapidoc
         oauth2 = uvicore.config.app.auth.oauth2
 
         # Determine if OpenAPI docs oauth2 authentication is enabled
@@ -462,6 +465,29 @@ class Http(Handler):
                 authorizationUrl=oauth2.base_url + oauth2.authorize_path,
                 tokenUrl=oauth2.base_url + oauth2.token_path,
             )
+
+        # Create our own custom RapiDoc docs route
+        if rapidoc.path and openapi.path:
+
+            # Oauth2 redirect URL (without api_prefid)
+            rapidoc_redirect_url =  rapidoc.path + '/oauth-receiver.html'
+
+            @api_server.get(rapidoc.path, include_in_schema=False)
+            def rapidoc_docs():
+                return get_rapidoc_ui_html(
+                    openapi_url=api_prefix + openapi.path,
+                )
+
+            @api_server.get(rapidoc.pdf_path, include_in_schema=False)
+            def rapidoc_docs():
+                return get_rapidoc_pdf_ui_html(
+                    openapi_url=api_prefix + openapi.path,
+                )
+
+            @api_server.get(rapidoc_redirect_url, include_in_schema=False)
+            def rapidoc_redirect():
+                return get_rapidoc_ui_oauth2_redirect_html()
+
 
         # Create our own custom OpenAPI docs route
         if openapi.path and openapi.docs.path:
@@ -551,6 +577,7 @@ class Http(Handler):
                 methods=route.methods,
                 name=route.name,
                 response_model=route.response_model,
+                response_class=route.response_class or response.JSONResponse,
                 responses=route.responses,
                 tags=route.tags,
                 dependencies=route.middleware,

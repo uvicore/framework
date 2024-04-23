@@ -34,6 +34,7 @@ class ApiRoute(Dict):
     endpoint: Callable
     methods: List[str]
     response_model: Optional[Any]
+    response_class: Optional[Any]
     tags: Optional[List]
     middleware: Optional[List]
     summary: Optional[str]

@@ -1,14 +1,25 @@
 import json
-from fastapi import UploadFile
-from fastapi.params import Security
-from uvicore.typing import Sequence, List
 from fastapi.security import SecurityScopes
-from uvicore.support.dumper import dump, dd
-from starlette.requests import Request, HTTPConnection
-from fastapi.params import Path, Query, Header, Cookie, Body, Form, File, Depends, Security
+from fastapi.params import Security as SecurityClass
+from fastapi.datastructures import UploadFile, DefaultPlaceholder
+from starlette.requests import Request, HTTPConnection, ClientDisconnect, cookie_parser
 
+# NOTE, all params are also available at uvicore.http.params
+# Difference between fastapi.params vs fastapi.param_functions??
+# param_functions add more props and defaults then instantiate
+# the param Class themselves.  Like a higher wrapper around the classes.
+# All docs say 'from fastapi import Form' which actually comes from param_functions
+from fastapi.param_functions import Path
+from fastapi.param_functions import Query
+from fastapi.param_functions import Header
+from fastapi.param_functions import Cookie
+from fastapi.param_functions import Body
+from fastapi.param_functions import Form
+from fastapi.param_functions import File
+from fastapi.param_functions import Depends
+from fastapi.param_functions import Security
 
-class Parameter(Security):
+class Parameter(SecurityClass):
     """Base class for user defined request parameters with infinite kwargs!"""
 
     # Parameters can accept any number of kwargs which are hacked as

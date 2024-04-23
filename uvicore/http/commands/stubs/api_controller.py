@@ -1,5 +1,7 @@
 import uvicore
+from uvicore.typing import Dict
 from uvicore.http import Request
+from uvicore.http.exceptions import HTTPException
 from uvicore.http.routing import ApiRouter, Controller
 
 # Extra
@@ -53,7 +55,10 @@ class xx_ControllerName(Controller):
         @route.get('/example1', tags=['Examples'])
         async def example1() -> Dict:
             """This docstring shows up in openapi"""
-            return {'welcome': 'to uvicore API!'}
+            try:
+                return {'welcome': 'to uvicore API!'}
+            except Exception as e:
+                raise HTTPException(500, exception=e)
 
 
         # ----------------------------------------------------------------------

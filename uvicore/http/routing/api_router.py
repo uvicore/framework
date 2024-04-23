@@ -1,12 +1,14 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator, get_type_hints
+from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator, get_type_hints, Union, Type
 from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from prettyprinter import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
 from merge_args import _merge as merge_args
 from functools import partial
+from uvicore.http.response import Response, JSON as JSONResponse
+from fastapi.datastructures import Default, DefaultPlaceholder
 
 
 from uvicore.http.routing.guard import Guard
@@ -39,6 +41,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -82,6 +85,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -125,6 +129,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -168,6 +173,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -211,6 +217,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -255,6 +262,7 @@ class ApiRouter(Router['ApiRoute']):
         # ApiRouter specific
         responses: Optional[Dict] = None,
         response_model: Optional[Any] = None,
+        response_class: Optional[Type[Response]] = None,
         tags: Optional[List[str]] = None,
         summary: Optional[str] = None,
         description: Optional[str] = None,
@@ -323,6 +331,7 @@ class ApiRouter(Router['ApiRoute']):
 
                 # ApiRouter specific
                 'response_model': response_model,
+                'response_class': response_class,
                 'tags': tags,
                 'summary': summary,
                 'description': description,
