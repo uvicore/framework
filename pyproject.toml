@@ -105,7 +105,7 @@ aiofiles = {version = "23.2.*", optional = true}
 Jinja2 = {version = "3.1.*", optional = true}
 
 #requests = {version = "2.25.*", optional = true}
-requests = {version = "2.31.*", optional = true}
+requests = {version = ">=2.31,<2.33", optional = true}
 
 #itsdangerous = {version = "1.1.*", optional = true}
 itsdangerous = {version = "2.1.*", optional = true}
