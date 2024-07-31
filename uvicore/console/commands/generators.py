@@ -27,7 +27,7 @@ async def command(name: str):
     package = uvicore.app.package(main=True)
 
     # Get stub (src)
-    stub = os.path.dirname(__file__) + '/stubs/commands.py'
+    stub = os.path.dirname(__file__) + '/stubs/command.py'
 
     # Get destination for this filetype, considering the packages path customizations
     dest = package.folder_path('commands') + '/' + name + '.py'
