@@ -19,7 +19,7 @@ function header() { echo -e "${BROWN}:: ${GREEN}$1 ${BROWN}::${DEFAULT}"; }
 function log() { echo -e "$1"; }
 function info() { echo -e "${WHITE}$1${DEFAULT}"; }
 function line() { echo -e "${GREEN}--------------------------------------------------------------------------------${DEFAULT}"; }
-function item() { echo -e "  ${BLUE}* ${DARKGRAY}$1${DEFAULT}"; }
+function item() { echo -e "  ${BLUE}* ${LIGHTGRAY}$1${DEFAULT}"; }
 function message() { echo -e "${BLUE}MESSAGE: ${WHITE}$1${DEFAULT}"; }
 function notice() { echo -e "${PURPLE}NOTICE: ${WHITE}$1${DEFAULT}"; }
 function warning() { echo -e "${YELLOW}WARNING: ${WHITE}$1${DEFAULT}"; }
@@ -32,7 +32,7 @@ function usage() {
     echo -e "${PURPLE}  Uvicore Application/Package Installer${DEFAULT}"
     echo
     echo -e "${WHITE}  The Full Stack Asynchronous Python Framework with the performance of FastAPI and the elegance of Laravel!${DEFAULT}"
-    echo -e "${DARKGRAY}  Copyright (c) 2024 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
+    echo -e "${LIGHTGRAY}  Copyright (c) 2024 Matthew Reschke License http://mreschke.com/license/mit${DEFAULT}"
     echo
     echo -e "${BROWN}Usage: ${DEFAULT}uvicore-insitaller ./path [branch] [gitrepo]"
     echo
