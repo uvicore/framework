@@ -53,12 +53,90 @@ class Db:
                         + '/' + connection.database
                     )
                     metakey = (
-                        connection.host
+                        connection.driver
+                        + '@' + connection.host
                         + ':' + str(connection.port)
                         + '/' + connection.database
                     )
+                # elif connection.driver == 'snowflake':
+
+                # Snowflake wip
+                #from cryptography.hazmat.backends import default_backend
+                #from cryptography.hazmat.primitives import serialization
+
+                #     # NOTICE: FIXME
+                #     # Snowflake does not work with database/encode
+                #     # It may however work fine with SQLAlechemy 2.0 once we convert over
+
+                #     # Once you get it working, here is what the CONFIG might look like
+                #     # 'driver': 'snowflake',
+                #     # # For private key auth - user, account and private_key are required (password should be blank)
+                #     # 'account': env('DB_SF_ACCOUNT', 'account'),
+                #     # 'database': env('DB_SF_DATABASE', ''),
+                #     # 'schema': env('DB_SF_SCHEMA', ''),
+                #     # 'warehouse': env('DB_SF_WAREHOUSE', ''),
+                #     # 'role': env('DB_SF_ROLE', ''),
+                #     # #'numpy': True,
+                #     # #'cache_column_metadata': True,
+                #     # # Username based
+                #     # 'username': env('DB_SF_USERNAME', ''),
+                #     # 'password': env('DB_SF_PASSWORD', ''),
+                #     # #'authenticator': env('DB_SF_AUTHENTICATOR', 'externalbrowser'),
+                #     # #'autocommit': True,
+                #     # #'timezone': env('TIMEZONE', 'America/Chicago'),
+                #     # #'paramstyle': env('DB_SF_PARAM_STYLE', 'numeric'),
+                #     # 'private_key': env('DB_SF_PRIVATE_KEY', 'xxx'),
+                #     # 'prefix': env('DB_SF_PREFIX', None),
+
+                #     # See https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy
+                #     sep = '?'
+                #     url += (
+                #         'snowflake'
+                #         + '://' + connection.username
+                #         + ':' + connection.password
+                #         + '@' + connection.account
+                #     )
+
+                #     # Optionally specify /database/schema
+                #     if connection.database: url += '/' + connection.database
+                #     if connection.schema: url += '/' + connection.schema
+
+                #     # Using private key authentication
+                #     # Required: username, account, private_key
+                #     if connection.private_key:
+                #         p_key = serialization.load_pem_private_key(
+                #             (connection.private_key).encode('ascii'),
+                #             password=None,
+                #             backend=default_backend()
+                #         )
+                #         pkb = p_key.private_bytes(
+                #             encoding=serialization.Encoding.DER,
+                #             format=serialization.PrivateFormat.PKCS8,
+                #             encryption_algorithm=serialization.NoEncryption()
+                #         )
+                #         url += "?connect_args={'private_key': " + str(pkb) + "}"
+                #         sep = '&'
+
+                #     if connection.warehouse:
+                #         url += sep + 'warehouse=' + connection.warehouse
+                #         sep = '&'
+                #     if connection.role:
+                #         url += sep + 'role=' + connection.role
+                #         sep = '&'
+                #     if connection.numpy:
+                #         url += sep + 'numpy=' + str(connection.numpy)
+                #         sep = '&'
+                #     if connection.cache_column_metadata:
+                #         url += sep + 'cache_column_metadata=' + str(connection.cache_column_metadata)
+                #         sep = '&'
+
+                #     metakey = (
+                #         'snowflake'
+                #         + '@' + connection.account
+                #     )
+
             else:
-                # Any opther backend type (like api), should have at minimum a url defined
+                # Any other backend type (like api), should have at minimum a url defined
                 url = connection.url
                 metakey = url
 

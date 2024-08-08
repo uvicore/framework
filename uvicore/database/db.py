@@ -67,7 +67,7 @@ class Db(DatabaseInterface):
                     encode_url = (connection.driver
                         + ':///' + connection.database
                     )
-                else:
+                elif connection.driver in ['mysql', 'postgresql']:
                     encode_url = (connection.driver
                         + '://' + connection.username
                         + ':' + connection.password
@@ -75,8 +75,11 @@ class Db(DatabaseInterface):
                         + ':' + str(connection.port)
                         + '/' + connection.database
                     )
+                else:
+                    encode_url = connection.url
+
                 self._engines[connection.metakey] = sa.create_engine(connection.url)
-                self._databases[connection.metakey] = EncodeDatabase(encode_url)
+                self._databases[connection.metakey] = EncodeDatabase(encode_url, **connection.options)
                 self._metadatas[connection.metakey] = sa.MetaData()
 
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
