@@ -34,46 +34,62 @@ def get_metakeys(connections: str):
 
 
 async def create_tables(connections: str):
-    #log.header('Creating tables for connections: [' + connections + ']')
-    metakeys = get_metakeys(connections)
-    for metakey in metakeys:
-        engine = db.engine(metakey=metakey)
-        log.header('Creating tables in {} in topologically order'.format(metakey))
-        metadata = db.metadata(metakey=metakey)
+    """Create tables for connection(s)"""
+
+    # Convert connections into List
+    connections = connections.split(',') if ',' in connections else [connections]
+    for conn_str in connections:
+        # Get actual connection configuration Dict
+        connection = db.connection(conn_str)
+
+        # Get [sync or async] engine
+        engine = db.engine(metakey=connection.metakey)
+
+        # Get metadata (table information) for this connection
+        metadata = db.metadata(metakey=connection.metakey)
+
+        # Log
+        log.header('Creating tables in {} in topological order'.format(connection.metakey))
         for table in metadata.sorted_tables:
             log.item('Creating table {}'.format(str(table.name)))
-        metadata.create_all(engine)
+
+        if connection.is_async:
+            # Create tables with async driver
+            async with engine.begin() as conn:
+                await conn.run_sync(metadata.create_all)
+        else:
+            # Create tables with sync driver
+            metadata.create_all(engine)
         print()
-
-    # # Get all tables in these connections
-    # tables = []
-    # for metakey in metakeys:
-    #     tables.append(db.tables(metakey=metakey))
-
-    # # Default permissions per entity
-    # permissions = [
-    #     'create',   # Django add
-    #     'read',     # Django view
-    #     'update',   # Django change
-    #     'delete',   # Django delete
-    # ]
-
-    # for table in tables:
-    #     for permission in permissions:
-
 
 
 async def drop_tables(connections: str):
     """Drop tables for connection(s)"""
-    #log.header('Dropping tables for connections: [' + connections + ']')
-    metakeys = get_metakeys(connections)
-    for metakey in metakeys:
-        engine = db.engine(metakey=metakey)
-        log.header('Dropping tables from {} in topologically order'.format(metakey))
-        metadata = db.metadata(metakey=metakey)
+
+    # Convert connections into List
+    connections = connections.split(',') if ',' in connections else [connections]
+    for conn_str in connections:
+        # Get actual connection configuration Dict
+        connection = db.connection(conn_str)
+
+        # Get [sync or async] engine
+        engine = db.engine(metakey=connection.metakey)
+
+        # Get metadata (table information) for this connection
+        metadata = db.metadata(metakey=connection.metakey)
+
+        # Log
+        log.header('Dropping tables from {} in topological order'.format(connection.metakey))
         for table in reversed(metadata.sorted_tables):
             log.item('Dropping table {}'.format(str(table.name)))
-        metadata.drop_all(engine)
+
+        if connection.is_async:
+            # Drop tables with async driver
+            async with engine.begin() as conn:
+                await conn.run_sync(metadata.drop_all)
+        else:
+            # Drop tables with sync driver
+            metadata.drop_all(engine)
         print()
 
 
@@ -84,12 +100,7 @@ async def seed_auth_permissions():
     metadata = db.metadata('auth')
 
     # Default permissions per entity
-    permissions = [
-        'create',   # Django add
-        'read',     # Django view
-        'update',   # Django change
-        'delete',   # Django delete
-    ]
+    permissions = ['create', 'read', 'update', 'delete']
 
     # Bulk insert each permission for each table
     bulk = []
@@ -117,8 +128,6 @@ async def seed_tables(connections: str):
                     await module.load(seeder).object()
                     ran.append(seeder)
                     print()
-
-
 
 
 @command()

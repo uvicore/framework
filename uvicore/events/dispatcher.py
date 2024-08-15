@@ -219,6 +219,7 @@ class Dispatcher(DispatcherInterface):
     async def _dispatch_async(self, event: Union[str, Callable], payload: Dict = {}) -> None:
         """Dispatch an event by fireing off all listeners/handlers"""
         (payload, handlers) = self._get_handlers(event, payload)
+        dd(payload, handlers)
         for handler in handlers:
             if asyncio.iscoroutinefunction(handler) or asyncio.iscoroutinefunction(handler.__call__):
                 await handler(event)

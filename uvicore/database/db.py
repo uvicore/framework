@@ -1,8 +1,9 @@
 from uvicore.typing import Any, AsyncGenerator, Dict, List, Mapping, Optional, Union
 
 import sqlalchemy as sa
-from databases import Database as EncodeDatabase
+#from databases import Database as EncodeDatabase
 from sqlalchemy.sql import ClauseElement
+from sqlalchemy.ext.asyncio import create_async_engine
 
 import uvicore
 from uvicore.contracts import Connection
@@ -23,6 +24,51 @@ class Db(DatabaseInterface):
     Do not import from this location.
     Use the uvicore.db singleton global instead."""
 
+    # Backends like sqlalchemy
+    SUPPORTED_BACKENDS = [
+        'sqlalchemy'
+    ]
+
+    # Dialects like postgresql (or postgres), mysql, sqlite
+    SUPPORTED_DIALECTS = [
+        'postgresql',
+        'postgres',
+        'mysql',
+        'sqlite',
+    ]
+
+    # Async drivers like
+    # Drivers are like pymysql, aiomysql, asyncio, psycopg2...
+    # This is limited to encode supported drivers
+    SUPPORTED_SYNC_DRIVERS = [
+        # MySQL
+        'mysqldb',
+        'pymysql',
+        'mysqlconnector',
+        'mariadbconnector',
+        # Postgres
+        'psycopg2',
+        'pg8000',
+        # SQLite
+        'pysqlite',
+        # Oracle
+        'cx_oracle',
+        # MSSQL
+        'pyodbc',
+        'pymssql',
+    ]
+
+    SUPPORTED_ASYNC_DRIVERS = [
+        # MySQL
+        'aiomysql',
+        'asyncmy',
+        # Postgres
+        'asyncpg',
+        'aiopg',
+        # SQLite
+        'aiosqlite'
+    ]
+
     @property
     def default(self) -> str:
         return self._default
@@ -36,7 +82,8 @@ class Db(DatabaseInterface):
         return self._engines
 
     @property
-    def databases(self) -> Dict[str, EncodeDatabase]:
+    # def databases(self) -> Dict[str, EncodeDatabase]:
+    def databases(self):
         return self._databases
 
     @property
@@ -51,36 +98,88 @@ class Db(DatabaseInterface):
         self._metadatas = Dict()
 
     def init(self, default: str, connections: Dict[str, Connection]) -> None:
+        """Tweak all connections and fill in URLs and Metadata. Runs from the app booted event."""
+
+        # Loop all connections from all packages
+        for connection_name, connection in connections.items():
+
+            # Define some defaults regardless of backend type
+            connection.defaults({
+                'name': connection_name,
+                'backend': 'sqlalchemy'
+            })
+
+            # Validate supported backends
+            if connection.backend not in self.SUPPORTED_BACKENDS:
+                raise Exception(f"A packages config/database.py connection backend {connection.backend} not supported by Uvicore.  Must be one of [{','.join(self.SUPPORTED_BACKENDS)}].")
+
+            # Build url and metakey from connection configuration
+            if connection.backend == 'sqlalchemy':
+
+                # Define some defaults for SQLAlchemy backend specifically
+                # Options is a superdict, which if a field doesn't exist produces a
+                # blank Dict({}) not an empty string.  So merge with all possible defaults
+                # for an sqlalchemy connection config
+                connection.defaults({
+                    'dialect': 'mysql',
+                    'driver': 'aiomysql',
+                    'host': '127.0.0.1',
+                    'port': 3306,
+                    'database': 'mysql',
+                    'username': '',
+                    'password': '',
+                    'prefix': None
+                })
+
+                # All Optional must be strings, so convert all values to str()
+                if connection.options:
+                    for (key, value) in connection.options.items():
+                        connection.options[key] = str(value)
+
+                # Build an SQLAlchemy compatible URL from connection configuration dictionary
+                # dialect+driver://<user>:<password>@<host>[:<port>]/<dbname>
+                connection.url = (sa.engine.url.URL.create(
+                    drivername=connection.dialect + '+' + connection.driver,
+                    username=connection.username,
+                    password=connection.password,
+                    host=connection.host,
+                    port=int(connection.port),
+                    database=connection.database,
+                    query=connection.options
+                ))
+
+                # Build metakey
+                # Metakey is slightly different than the URL because we are trying to deduce
+                # a single SERVER/HOST, not including the separate database itself
+                connection.metakey = (
+                    connection.dialect +
+                    '@' + connection.host +
+                    ':' + str(connection.port) +
+                    '/' + connection.database
+                )
+
+                # Attempt an async connection, else a sync connection
+                # And automatically set an is_async attribute on our connection Dict
+                try:
+                    engine = create_async_engine(connection.url)
+                    connection.is_async = True
+                except:
+                    engine = sa.create_engine(connection.url, pool_pre_ping=True)
+                    connection.is_async = False
+
+                # Add this new [sync or async] engine to our Dict of engines
+                self._engines[connection.metakey] = engine
+
+                # Add this new metadata to our Dict of metadatas
+                self._metadatas[connection.metakey] = sa.MetaData()
+
+                #self._engines[connection.metakey] = sa.create_engine(connection.url)
+                #self._databases[connection.metakey] = EncodeDatabase(encode_url, **connection.options)
+                #self._metadatas[connection.metakey] = sa.MetaData()
+
+        # Set instance variables
         self._default = default
         self._connections = connections
-
-        # For each unique metakey, create engines, encode databases and metadatas
-        for connection in connections.values():
-            # Check if we have already handled this unique metakey
-            if connection.metakey in self.metadatas: continue
-
-            if connection.backend == 'sqlalchemy':
-                # Build encode/databases specific connection URL
-                # connection.url has a dialect in it, which we need for engines
-                # but don't need for encode/databases library
-                if connection.driver == 'sqlite':
-                    encode_url = (connection.driver
-                        + ':///' + connection.database
-                    )
-                elif connection.driver in ['mysql', 'postgresql']:
-                    encode_url = (connection.driver
-                        + '://' + connection.username
-                        + ':' + connection.password
-                        + '@' + connection.host
-                        + ':' + str(connection.port)
-                        + '/' + connection.database
-                    )
-                else:
-                    encode_url = connection.url
-
-                self._engines[connection.metakey] = sa.create_engine(connection.url)
-                self._databases[connection.metakey] = EncodeDatabase(encode_url, **connection.options)
-                self._metadatas[connection.metakey] = sa.MetaData()
 
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
         if not metakey:
@@ -127,13 +226,15 @@ class Db(DatabaseInterface):
             connection, table = tuple(table.split('.'))
         connection = self.connection(connection)
         if connection:
-            return connection.prefix + table
+            if connection.prefix: return connection.prefix + table
+            return table
 
     def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
         metakey = self.metakey(connection, metakey)
         return self.engines.get(metakey)
 
-    async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
+    #async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
+    async def database(self, connection: str = None, metakey: str = None):
         metakey = self.metakey(connection, metakey)
 
         # To connect on-the-fly or NOT on-the-fly, in the service uvicore_startup event, or both???
@@ -197,21 +298,75 @@ class Db(DatabaseInterface):
                 await database.disconnect()
 
     async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
-        database = await self.database(connection, metakey)
-        return await database.fetch_all(query, values)
+        # Get engine for this (or default) connection
+        engine = self.engine(connection, metakey)
+
+        # Convert connection string into actual connection Dict
+        connection: Connection = self.connection(connection)
+
+        if connection.is_async:
+            # Fetchall with async driver
+            async with engine.connect() as conn:
+                cursor = await conn.execute(sa.text(query), values)
+                return cursor.fetchall()
+        else:
+            with engine.connect() as conn:
+                cursor = conn.execute(sa.text(query), values)
+                return cursor.fetchall()
+
+        # encode/databases
+        # ----------------
+        # database = await self.database(connection, metakey)
+        # return await database.fetch_all(query, values)
 
     async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[RowProxy]:
-        database = await self.database(connection, metakey)
-        return await database.fetch_one(query, values)
+        # Get engine for this (or default) connection
+        engine = self.engine(connection, metakey)
+
+        # Convert connection string into actual connection Dict
+        connection: Connection = self.connection(connection)
+
+        if connection.is_async:
+            # Fetchall with async driver
+            async with engine.connect() as conn:
+                cursor = await conn.execute(sa.text(query), values)
+                return cursor.fetchone()
+        else:
+            with engine.connect() as conn:
+                cursor = conn.execute(sa.text(query), values)
+                return cursor.fetchone()
+
+
+        # encode/databases
+        # ----------------
+        # database = await self.database(connection, metakey)
+        # return await database.fetch_one(query, values)
 
     async def execute(self, query: Union[ClauseElement, str], values: Union[List, Dict] = None, connection: str = None, metakey: str = None) -> Any:
-        database = await self.database(connection, metakey)
-        if type(values) == dict:
-            return await database.execute(query, values)
-        elif type(values) == list:
-            return await database.execute_many(query, values)
+        # Get engine for this (or default) connection
+        engine = self.engine(connection, metakey)
+
+        # Convert connection string into actual connection Dict
+        connection: Connection = self.connection(connection)
+
+        if connection.is_async:
+            # Execute with async driver
+            async with engine.begin() as conn:
+                return await conn.execute(query, values)
         else:
-            return await database.execute(query)
+            with engine.begin() as conn:
+                return conn.execute(query, values)
+
+        # encode/databases
+        # ----------------
+        # database = await self.database(connection, metakey)
+        # dd(database)
+        # if type(values) == dict:
+        #     return await database.execute(query, values)
+        # elif type(values) == list:
+        #     return await database.execute_many(query, values)
+        # else:
+        #     return await database.execute(query)
 
     #  async def iterate(self, query: Union[ClauseElement, str], values: dict = None, connection: str = None) -> AsyncGenerator[Mapping, None]:
     #     async with self.connection() as connection:

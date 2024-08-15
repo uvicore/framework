@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union, Mapping, Optional
 try:
     from sqlalchemy.engine import Engine
     from sqlalchemy import MetaData, Table
-    from databases import Database as EncodeDatabase
+    #from databases import Database as EncodeDatabase
     from sqlalchemy.sql import ClauseElement
     from sqlalchemy.engine.result import RowProxy
 except:
@@ -41,11 +41,11 @@ class Database(ABC):
         """All engines for all unique (by metakey) connections, keyed by metakey"""
         pass
 
-    @property
-    @abstractmethod
-    def databases(self) -> Dict[str, EncodeDatabase]:
-        """All Encode Databases for all unique (by metakey) connections, keyed by metakey"""
-        pass
+    # @property
+    # @abstractmethod
+    # def databases(self) -> Dict[str, EncodeDatabase]:
+    #     """All Encode Databases for all unique (by metakey) connections, keyed by metakey"""
+    #     pass
 
     @property
     @abstractmethod

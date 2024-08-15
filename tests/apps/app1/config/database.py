@@ -16,15 +16,18 @@ database = {
     'connections': {
         # SQLite Example
         'app1_lite': {
-            'driver': 'sqlite',
+            'backend': 'sqlalchemy',
+            'dialect': 'sqlite',
+            'driver': 'aiosqlite',
             'database': ':memory',
             'prefix': None,
         },
 
         # MySQL Example
         'app1': {
-            'driver': env('DB_APP1_DRIVER', 'mysql'),
-            'dialect': env('DB_APP1_DIALECT', 'pymysql'),
+            'backend': env('DB_APP1_BACKEND', 'sqlalchemy'),
+            'dialect': env('DB_APP1_DIALECT', 'mysql'),
+            'driver': env('DB_APP1_DRIVER', 'aiomysql'),
             'host': env('DB_APP1_HOST', '127.0.0.1'),
             'port': env.int('DB_APP1_PORT', 3306),
             'database': env('DB_APP1_DB', 'app1'),

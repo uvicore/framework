@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "uvicore"
-version = "0.2.6"
+version = "0.3.0"
 license = "MIT"
 authors = ["Matthew Reschke <mail@mreschke.com>"]
 description = "The Fullstack Async Web, API and CLI Python Framework"
@@ -78,13 +78,19 @@ pydantic = "1.10.*"
 # Optional Dependencies for Database Connectivity
 # ------------------------------------------------------------------------------
 #sqlalchemy = {version = "1.3.*", optional = true}
-sqlalchemy = {version = "1.4.*", optional = true}
+#sqlalchemy = {version = "1.4.*", optional = true}
+sqlalchemy = {version = "2.0.*", extras = ["asyncio"], optional = true}
+
+# Preferred async driver (no, let the app choose?)
+#aiomysql = {version = "0.2.*", optional = true}
+#psycopg = {version = "3.1.*", optional = true}
+
 
 #alembic = {version = "1.5.*", optional = true}
-alembic = {version = "1.13.*", optional = true}
+#alembic = {version = "1.13.*", optional = true}
 
 #databases = {version = "0.4.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
-databases = {version = "0.8.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
+#databases = {version = "0.8.*", extras = ["postgresql", "mysql", "sqlite"], optional = true}
 
 
 # Optional Dependencies for Redis Connectivity
@@ -143,7 +149,6 @@ PyJWT = {version = "2.8.*", optional = true}
 database = [
     "sqlalchemy",
     "alembic",
-    "databases",
 ]
 redis = [
     "aioredis",

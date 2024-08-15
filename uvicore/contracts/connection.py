@@ -17,6 +17,7 @@ class Connection(Dict):
     prefix: str
     metakey: str
     url: str
+    is_async: bool
 
 
 
