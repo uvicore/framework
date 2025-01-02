@@ -5,7 +5,7 @@ from uvicore.typing import Dict, Optional, Union, Callable
 
 
 @uvicore.service()
-class Event:
+class Event():
 
     # Defaults
     is_async: bool = False

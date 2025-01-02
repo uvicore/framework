@@ -2,13 +2,13 @@ import re
 import uvicore
 import inspect
 import asyncio
-from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
-from uvicore.support.dumper import dump, dd
-from types import SimpleNamespace as obj
 from collections import namedtuple
-from uvicore.contracts import Dispatcher as DispatcherInterface
 from uvicore.support import module
+from types import SimpleNamespace as obj
+from uvicore.support.dumper import dump, dd
 from uvicore.support.concurrency import run_in_threadpool
+from uvicore.contracts import Dispatcher as DispatcherInterface
+from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
 
 #from uvicore.contracts import Event as EventInterface
 # from prettyprinter import pretty_call, register_pretty
@@ -111,7 +111,7 @@ class Dispatcher(DispatcherInterface):
 
         listeners = {}
         for event, listener in self.listeners.items():
-            if '*' not in event:
+            if type(event) == str and '*' not in event:
                 listeners[event] = listener
 
                 for wildcard in self.wildcards:
@@ -162,7 +162,7 @@ class Dispatcher(DispatcherInterface):
                 self._listeners[event].append({'listener': listener, 'priority': priority})
 
                 # If event contains a *, add it to our wildcard list for use later
-                if '*' in event:
+                if type(event) == str and '*' in event:
                     self._wildcards.append(event)
 
         # Method access
@@ -174,9 +174,30 @@ class Dispatcher(DispatcherInterface):
             return func
         return decorator
 
+    def listener(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        return self.listen(events, listener)
+
     def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
+
+    def handler(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        return self.listen(events, listener)
+
+    def call(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        return self.listen(events, listener)
+
+
+
+
+
+
+
+
+
 
     def subscribe(self, listener: Union[str, Callable]) -> None:
         """Add a subscription class which handles both registration and listener callbacks"""
@@ -218,8 +239,7 @@ class Dispatcher(DispatcherInterface):
 
     async def _dispatch_async(self, event: Union[str, Callable], payload: Dict = {}) -> None:
         """Dispatch an event by fireing off all listeners/handlers"""
-        (payload, handlers) = self._get_handlers(event, payload)
-        dd(payload, handlers)
+        (event, handlers) = self._get_handlers(event, payload)
         for handler in handlers:
             if asyncio.iscoroutinefunction(handler) or asyncio.iscoroutinefunction(handler.__call__):
                 await handler(event)
@@ -284,14 +304,17 @@ class Dispatcher(DispatcherInterface):
                 # handler is a string to a listener class with handle() method
                 try:
                     #cls = module.load(listener).object(uvicore.app)
-                    cls = module.load(handler).object()
+                    cls = module.load(handler).object
+                    if inspect.isclass(cls):
+                        # If handler is a class, we instantiate it ()
+                        # If not a class, its a method, and we do not instantinate methods here
+                        cls = cls()
                     handlers.append(cls)
-                    #handlers.append(cls.handle)
                 except ModuleNotFoundError:
                     # Bad handler, handler will never fire
                     continue
             else:
-                # handler is a Class
+                # Handler is a Class, instantiate it, else its a method and we do not instantiate methods here
                 if inspect.isclass(handler): handler = handler()
 
                 # Listener is a Callable (if was a class, NOW its callable)
