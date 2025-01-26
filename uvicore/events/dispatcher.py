@@ -2,13 +2,13 @@ import re
 import uvicore
 import inspect
 import asyncio
-from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
-from uvicore.support.dumper import dump, dd
-from types import SimpleNamespace as obj
 from collections import namedtuple
-from uvicore.contracts import Dispatcher as DispatcherInterface
 from uvicore.support import module
+from types import SimpleNamespace as obj
+from uvicore.support.dumper import dump, dd
 from uvicore.support.concurrency import run_in_threadpool
+from uvicore.contracts import Dispatcher as DispatcherInterface
+from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
 
 #from uvicore.contracts import Event as EventInterface
 # from prettyprinter import pretty_call, register_pretty
@@ -111,7 +111,7 @@ class Dispatcher(DispatcherInterface):
 
         listeners = {}
         for event, listener in self.listeners.items():
-            if '*' not in event:
+            if type(event) == str and '*' not in event:
                 listeners[event] = listener
 
                 for wildcard in self.wildcards:
@@ -162,7 +162,7 @@ class Dispatcher(DispatcherInterface):
                 self._listeners[event].append({'listener': listener, 'priority': priority})
 
                 # If event contains a *, add it to our wildcard list for use later
-                if '*' in event:
+                if type(event) == str and '*' in event:
                     self._wildcards.append(event)
 
         # Method access
