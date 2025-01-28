@@ -22,5 +22,5 @@ async def test_group_by(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [(1, 2), (2, 3), (5, 1), (6, 1)] == results

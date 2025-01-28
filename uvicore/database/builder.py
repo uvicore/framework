@@ -187,7 +187,6 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             where_ors = self._build_where(query, query.or_wheres)
             saquery = saquery.where(sa.or_(*where_ors))
 
-
         # Return query and SQLAlchemy query
         return (query, saquery)
 
@@ -224,7 +223,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
         if not query.selects and not query.joins:
             # No explicit selects, no joins, return entire table of columns
-            return sa.select([query.table])
+            return sa.select(query.table)
 
         elif not query.selects and query.joins:
             selects.extend(query.table.columns)
@@ -241,8 +240,13 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
                 else:
                     selects.append(column.sacol)
 
+        # SA 1.4 vs 2.0
+        # SA 1.4 allowed LIST of Columns in sa.select(selects)
+        # SA 2.0 errors on a LIST and wants positional arguments instead
+        # So use pythons * operator to unpack LIST into *arg - sa.select(*selects)
+
         # Return SQLAlchemy .select() statment with above columns
-        return sa.select(selects)
+        return sa.select(*selects)
 
     def _build_where(self, query: Query, wheres: List[Tuple]):
         statements = []

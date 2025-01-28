@@ -26,7 +26,7 @@ async def test_join1(app1):
     contacts = Contacts.table
     users = Users.table
     query = (
-        sa.select([contacts, users])
+        sa.select(contacts, users)
         .select_from(contacts.join(users))
         .where(users.c.email == 'manager1@example.com')
     )
@@ -49,7 +49,7 @@ async def test_join_one_to_many(app1):
     # a lot simpler and a bit better looking.
     posts, users, contacts, comments = Posts.table, Users.table, Contacts.table, Comments.table
     query = (
-        select([posts, users, contacts, comments])
+        select(posts, users, contacts, comments)
         .select_from(posts
             .join(users, posts.c.creator_id == users.c.id)
             .join(contacts, users.c.id == contacts.c.user_id)
@@ -58,7 +58,7 @@ async def test_join_one_to_many(app1):
     )
     results = await uvicore.db.fetchall(query, connection='app1')
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post1',
         'test-post1',

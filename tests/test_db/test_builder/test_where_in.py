@@ -17,7 +17,7 @@ async def test_single1(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert ['test-post1', 'test-post2'] == [x.unique_slug for x in results]
 
 

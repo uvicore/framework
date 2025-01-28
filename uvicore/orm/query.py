@@ -244,7 +244,6 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
         # Build SQLAlchemy select queries
         queries = self._build_orm_queries('select')
-        #dump(queries)
 
         self.log.nl().header('Queries')
         self.log.dump(queries)
@@ -253,6 +252,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         self.log.info(self.sql('select', queries))
 
         # Get hook?  Experimental
+        # FIXME
         if hasattr(self.entity, 'get'):
             return await self.entity.get(queries)
 
@@ -357,7 +357,6 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             'saquery': saquery,
             'sql': str(saquery) if saquery is not None else '',
         })
-
 
         # So we have our first query perfect
         # Now we need to build a second or more queries for all *Many relations
@@ -717,7 +716,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
             #self.log.item('Field: ' + str(field))
             self.log.item('Entity: ' + str(entity))
-            self.log.item('Data Keys: ' + str(data[0].keys()))
+            self.log.item('Data Keys: ' + str(list(data[0]._mapping.keys())))
 
             # Add a new List to our Dict of models
             models[rel_name] = {}

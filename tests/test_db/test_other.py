@@ -7,15 +7,6 @@ from uvicore.support.dumper import dump
 # All misc items missed from the other test_* folders
 
 @pytest.mark.asyncio
-async def test_db_disconnect(app1):
-    # Disconnect
-    await uvicore.db.disconnect('app1')
-
-    # Reconnect so all tests dont fail
-    await uvicore.db.connect('app1')
-
-
-@pytest.mark.asyncio
 async def test_db_get_packages_by_connection(app1):
 
     packages = uvicore.db.packages('app1')

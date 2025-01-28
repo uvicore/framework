@@ -1,27 +1,17 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Union, Mapping, Optional
-
-try:
-    from sqlalchemy.engine import Engine
-    from sqlalchemy import MetaData, Table
-    #from databases import Database as EncodeDatabase
-    from sqlalchemy.sql import ClauseElement
-    from sqlalchemy.engine.result import RowProxy
-except:
-    Engine = None
-    Table = None
-    MetaData = None
-    EncodeDatabase = None
-    ClauseElement = None
-    RowProxy = None
-
-from uvicore.contracts import DbQueryBuilder
-from .connection import Connection
 from .package import Package
+from .connection import Connection
+from abc import ABC, abstractmethod
+from uvicore.contracts import DbQueryBuilder
+from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
+
+# Optional imports based on installed modules
+try:
+    import sqlalchemy as sa
+except ImportError:
+    pass
 
 
 class Database(ABC):
-    pass
 
     @property
     @abstractmethod
@@ -37,24 +27,18 @@ class Database(ABC):
 
     @property
     @abstractmethod
-    def engines(self) -> Dict[str, Engine]:
+    def engines(self) -> Dict[str, sa.engine.Engine]:
         """All engines for all unique (by metakey) connections, keyed by metakey"""
         pass
 
-    # @property
-    # @abstractmethod
-    # def databases(self) -> Dict[str, EncodeDatabase]:
-    #     """All Encode Databases for all unique (by metakey) connections, keyed by metakey"""
-    #     pass
-
     @property
     @abstractmethod
-    def metadatas(self) -> Dict[str, MetaData]:
+    def metadatas(self) -> Dict[str, sa.MetaData]:
         """All SQLAlchemy Metadata for all unique (by metakey) connections, keyed by metakey"""
         pass
 
     @abstractmethod
-    def init(self, default: str, connections: List[Connection]) -> None:
+    def init(self, default: str, connections: Dict[str, Connection]) -> None:
         """Initialize the database system with a default connection str and List of all Connections from all packages"""
         pass
 
@@ -74,17 +58,17 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def metadata(self, connection: str = None, metakey: str = None) -> MetaData:
+    def metadata(self, connection: str = None, metakey: str = None) -> sa.MetaData:
         """Get one SQLAlchemy Metadata by connection str or metakey"""
         pass
 
     @abstractmethod
-    def tables(self, connection: str = None, metakey: str = None) -> List[Table]:
-        """Get all tables for a given connection or metakey"""
+    def tables(self, connection: str = None, metakey: str = None) -> List[sa.Table]:
+        """Get all SQLAlchemy tables for a given connection str or metakey"""
         pass
 
     @abstractmethod
-    def table(self, table: str, connection: str = None) -> Table:
+    def table(self, table: str, connection: str = None) -> sa.Table:
         """Get one SQLAlchemy Table by name (without prefix) and connection str or connection.tablename dot notation"""
         pass
 
@@ -94,67 +78,143 @@ class Database(ABC):
         pass
 
     @abstractmethod
-    def engine(self, connection: str = None, metakey: str = None) -> Engine:
+    def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
         """Get one SQLAlchemy Engine by connection str or metakey"""
         pass
 
     @abstractmethod
-    async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
-        """Get one Encode Database by connection str or metakey"""
-        pass
+    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
+        """Database query builder passthrough"""
+
 
     @abstractmethod
-    async def connect(self, connection: str = None, metakey: str = None, *, all_dbs: bool = False) -> None:
-        """Connect to a database by connection str or metakey.  Or connect ALL databases."""
-
-    @abstractmethod
-    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
-        """Disconnect from a database by connection str or metakey.  Or disconnect ALL databases."""
-        pass
-
-    @abstractmethod
-    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
-        """Fetch List of records from a SQLAlchemy Core Query based on connection str or metakey"""
-        pass
-
-    @abstractmethod
-    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[RowProxy]:
-        """Fetch one record from a SQLAlchemy Core Query based on connection str or metakey"""
-        pass
-
-    @abstractmethod
-    async def execute(self, query: Union[ClauseElement, str], values: Union[List, Dict] = None, connection: str = None, metakey: str = None) -> Any:
+    async def execute(
+        self,
+        query: Any,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.CursorResult:
         """Execute a SQLAlchemy Core Query based on connection str or metakey"""
         pass
 
+
     @abstractmethod
-    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, None]:
-        """Database query builder passthrough"""
+    async def all(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[sa.Row]:
+        """Get many records from query. Returns empty List if no records found"""
+        pass
 
-    # @property
-    # @abstractmethod
-    # def events(self) -> Dict: pass
+    @abstractmethod
+    async def fetchall(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[sa.Row]:
+        """Alias to .all()"""
+        pass
 
-    # @property
-    # @abstractmethod
-    # def listeners(self) -> Dict[str, List]: pass
+    @abstractmethod
+    async def first(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Get one (first/top) record from query. Returns None if no records found"""
+        pass
 
-    # @property
-    # @abstractmethod
-    # def wildcards(self) -> List: pass
+    @abstractmethod
+    async def fetchone(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Alias to .first()"""
+        pass
 
-    # @abstractmethod
-    # def register(self, events: Dict):
-    #     pass
+    @abstractmethod
+    async def one(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row:
+        """Get one record from query. Throws Exception if no data found or querying more than one record"""
+        pass
 
-    # @abstractmethod
-    # def listen(self, events: Union[str, List], listener: Any) -> None:
-    #     pass
+    @abstractmethod
+    async def one_or_none(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Get one record from query.  Returns None if no record found.  Throws Exception of querying more than one record"""
+        pass
 
-    # @abstractmethod
-    # def dispatch(self, event: Any, payload = {}) -> None:
-    #     pass
+    @abstractmethod
+    async def scalars(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[Any]:
+        """Get many scalar values from query.  Returns empty List if no records found. If selecting multiple columns, returns List of FIRST column only."""
+        pass
 
-    # @abstractmethod
-    # def get_listeners(self, event: str) -> List:
-    #     pass
+    @abstractmethod
+    async def scalar(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any|None:
+        """Get a single scalar value from query. Returns None if no record found.  Returns first (top) if more than one record found"""
+        pass
+
+    @abstractmethod
+    async def scalar_one(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any:
+        """Get a single scalar value from query.  Throws Exception if no data found or if querying more than one record"""
+        pass
+
+    @abstractmethod
+    async def scalar_one_or_none(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any|None:
+        """Get a single scalar value from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
+        pass
+
+    @abstractmethod
+    async def insertmany(self,
+        query: sa.Insert|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> List[sa.Row]:
+        """Bulk insert many rows, returning bulk primary keys (for databases that support INSERT..RETURNING)"""
+        pass
+
+    @abstractmethod
+    async def insertone(self,
+        query: sa.Insert|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row:
+        """Insert one row, returning the one rows PK (as a tuple in case of dual PKs)"""
+        pass

@@ -1,17 +1,12 @@
-from uvicore.typing import Any, AsyncGenerator, Dict, List, Mapping, Optional, Union
-
-import sqlalchemy as sa
-#from databases import Database as EncodeDatabase
-from sqlalchemy.sql import ClauseElement
-from sqlalchemy.ext.asyncio import create_async_engine
-
 import uvicore
+import sqlalchemy as sa
 from uvicore.contracts import Connection
-from uvicore.contracts import Package as Package
-from uvicore.contracts import Database as DatabaseInterface
-from uvicore.database.query import DbQueryBuilder
 from uvicore.support.dumper import dd, dump
-from sqlalchemy.engine.result import Row as RowProxy
+from uvicore.contracts import Package as Package
+from uvicore.database.query import DbQueryBuilder
+from sqlalchemy.ext.asyncio import create_async_engine
+from uvicore.contracts import Database as DatabaseInterface
+from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
 
 
 @uvicore.service('uvicore.database.db.Db',
@@ -71,34 +66,32 @@ class Db(DatabaseInterface):
 
     @property
     def default(self) -> str:
+        """The default connection str for the main running app"""
         return self._default
 
     @property
     def connections(self) -> Dict[str, Connection]:
+        """All connections from all packages, keyed by connection str name"""
         return self._connections
 
     @property
     def engines(self) -> Dict[str, sa.engine.Engine]:
+        """All engines for all unique (by metakey) connections, keyed by metakey"""
         return self._engines
 
     @property
-    # def databases(self) -> Dict[str, EncodeDatabase]:
-    def databases(self):
-        return self._databases
-
-    @property
     def metadatas(self) -> Dict[str, sa.MetaData]:
+        """All SQLAlchemy Metadata for all unique (by metakey) connections, keyed by metakey"""
         return self._metadatas
 
     def __init__(self) -> None:
         self._default = None
         self._connections = Dict()
         self._engines = Dict()
-        self._databases = Dict()
         self._metadatas = Dict()
 
     def init(self, default: str, connections: Dict[str, Connection]) -> None:
-        """Tweak all connections and fill in URLs and Metadata. Runs from the app booted event."""
+        """Initialize the database system with a default connection str and List of all Connections from all packages"""
 
         # Loop all connections from all packages
         for connection_name, connection in connections.items():
@@ -173,15 +166,13 @@ class Db(DatabaseInterface):
                 # Add this new metadata to our Dict of metadatas
                 self._metadatas[connection.metakey] = sa.MetaData()
 
-                #self._engines[connection.metakey] = sa.create_engine(connection.url)
-                #self._databases[connection.metakey] = EncodeDatabase(encode_url, **connection.options)
-                #self._metadatas[connection.metakey] = sa.MetaData()
-
         # Set instance variables
         self._default = default
         self._connections = connections
 
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
+        """Get all packages with the metakey (direct or derived from connection str)."""
+
         if not metakey:
             if not connection: connection = self.default
             metakey = self.connection(connection).metakey
@@ -194,6 +185,7 @@ class Db(DatabaseInterface):
         return packages
 
     def metakey(self, connection: str = None, metakey: str = None) -> str:
+        """Get one metekay by connection str or metakey"""
         try:
             if not metakey:
                 if not connection:
@@ -205,23 +197,28 @@ class Db(DatabaseInterface):
             raise Exception('Metakey not found, connection={} metakey={}'.format(connection, metakey))
 
     def connection(self, connection: str = None) -> Connection:
+        """Get one connection by connection name"""
         if not connection: connection = self.default
         return self.connections.get(connection)
 
     def metadata(self, connection: str = None, metakey: str = None) -> sa.MetaData:
+        """Get one SQLAlchemy Metadata by connection str or metakey"""
         metakey = self.metakey(connection, metakey)
         return self.metadatas.get(metakey)
 
     def tables(self, connection: str = None, metakey: str = None) -> List[sa.Table]:
+        """Get all SQLAlchemy tables for a given connection str or metakey"""
         metadata = self.metadata(connection, metakey)
         return metadata.tables
 
     def table(self, table: str, connection: str = None) -> sa.Table:
+        """Get one SQLAlchemy Table by name (without prefix) and connection str or connection.tablename dot notation"""
         tablename = self.tablename(table, connection)
         metadata = self.metadata(connection)
         if metadata: return metadata.tables.get(tablename)
 
     def tablename(self, table: str, connection: str = None) -> str:
+        """Get a SQLAlchemy tablename with prefix by name (without prefix) and connection str or connection.tablename dot notation"""
         if '.' in table:
             connection, table = tuple(table.split('.'))
         connection = self.connection(connection)
@@ -230,152 +227,166 @@ class Db(DatabaseInterface):
             return table
 
     def engine(self, connection: str = None, metakey: str = None) -> sa.engine.Engine:
+        """Get one SQLAlchemy Engine by connection str or metakey"""
         metakey = self.metakey(connection, metakey)
         return self.engines.get(metakey)
 
-    #async def database(self, connection: str = None, metakey: str = None) -> EncodeDatabase:
-    async def database(self, connection: str = None, metakey: str = None):
-        metakey = self.metakey(connection, metakey)
+    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
+        """Database query builder passthrough"""
+        if not connection: connection = self.default
+        return DbQueryBuilder(connection)
 
-        # To connect on-the-fly or NOT on-the-fly, in the service uvicore_startup event, or both???
+    async def execute(
+        self,
+        query: Any,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.CursorResult:
+        """Execute a SQLAlchemy Core Query based on connection str or metakey"""
 
-        # On-The-Fly ON Only
-        # - When running from ./serve-uvicorn and using wrk -c10 -t4 -d5 http://0.0.0.0:5000/api/tags/1
-        #   Notice the 2 IDs 0x7f733acc9130 and 0x7f733acc96d0 are different
-        #     [ERROR] Exception in ASGI application
-        #     File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/databases/backends/mysql.py", line 100, in release
-        #       await self._database._pool.release(self._connection)
-        #     File "/home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aiomysql/pool.py", line 204, in release
-        #       assert conn in self._used, (conn, self._used)
-        #     AssertionError: (<aiomysql.connection.Connection object at 0x7f733acc9130>, {<aiomysql.connection.Connection object at 0x7f733acc96d0>})
-
-        # On-The-Fly OFF (using Service events Only)
-        # - If off, during TESTING, uvicore.console.events.command.Startup event does not fire, so DB
-        #   is not connected and all tests against DB fail (can't seed tables, canot query tables..)
-
-        # Solution
-        # Alter test suite to fire a uvicore.console.events.command.PytestStartup and add that event to db/services.py uvicore_startup handler
-
-        # Connect on-the-fly - NO, NOT required anymore
-        # self.connect(connection, metakey)
-
-        # Return Encode database
-        return self.databases.get(metakey)
-
-    async def connect(self, connection: str = None, metakey: str = None, *, all_dbs: bool = False) -> None:
-        if all_dbs:
-            # Connect all DBs
-            for metakey, database in uvicore.db.databases.items():
-                if not database.is_connected:
-                    try:
-                        await database.connect()
-                    except:
-                        # Will catch if DB is not running or port/constr is wrong
-                        pass
-        else:
-            # Connect a single DB
-            metakey = self.metakey(connection, metakey)
-            database = self.databases.get(metakey)  # Dont call self.database() as its recursive
-            if not database.is_connected:
-                try:
-                    await database.connect()
-                except:
-                    # Will catch if DB is not running or port/constr is wrong
-                    pass
-
-    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
-        if all_dbs:
-            # Disconnect from all connected databases
-            for database in self.databases.values():
-                # Only disconnect if connected or will throw an error
-                if database.is_connected:
-                    await database.disconnect()
-        else:
-            # Disconnect from one database by connection str or metakey
-            metakey = self.metakey(connection, metakey)
-            database = self.databases.get(metakey)
-            if database.is_connected:
-                await database.disconnect()
-
-    async def fetchall(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> List[RowProxy]:
         # Get engine for this (or default) connection
         engine = self.engine(connection, metakey)
 
         # Convert connection string into actual connection Dict
         connection: Connection = self.connection(connection)
 
-        if connection.is_async:
-            # Fetchall with async driver
-            async with engine.connect() as conn:
-                cursor = await conn.execute(sa.text(query), values)
-                return cursor.fetchall()
-        else:
-            with engine.connect() as conn:
-                cursor = conn.execute(sa.text(query), values)
-                return cursor.fetchall()
+        # If using raw SQL string
+        if type(query) == str: query = sa.text(query)
 
-        # encode/databases
-        # ----------------
-        # database = await self.database(connection, metakey)
-        # return await database.fetch_all(query, values)
-
-    async def fetchone(self, query: Union[ClauseElement, str], values: Dict = None, connection: str = None, metakey: str = None) -> Optional[RowProxy]:
-        # Get engine for this (or default) connection
-        engine = self.engine(connection, metakey)
-
-        # Convert connection string into actual connection Dict
-        connection: Connection = self.connection(connection)
-
-        if connection.is_async:
-            # Fetchall with async driver
-            async with engine.connect() as conn:
-                cursor = await conn.execute(sa.text(query), values)
-                return cursor.fetchone()
-        else:
-            with engine.connect() as conn:
-                cursor = conn.execute(sa.text(query), values)
-                return cursor.fetchone()
-
-
-        # encode/databases
-        # ----------------
-        # database = await self.database(connection, metakey)
-        # return await database.fetch_one(query, values)
-
-    async def execute(self, query: Union[ClauseElement, str], values: Union[List, Dict] = None, connection: str = None, metakey: str = None) -> Any:
-        # Get engine for this (or default) connection
-        engine = self.engine(connection, metakey)
-
-        # Convert connection string into actual connection Dict
-        connection: Connection = self.connection(connection)
-
+        conn: sa.Connection
         if connection.is_async:
             # Execute with async driver
             async with engine.begin() as conn:
-                return await conn.execute(query, values)
+                # To dump raw SQL use str() - dd(str(query))
+                # To get single inserted PK - result.inserted_primary_key
+                # To get bulk inserted PK lists (not supported by MySQL) - result.inserted_primary_key_rows
+                result: sa.CursorResult = await conn.execute(query, values)
+                return result
         else:
             with engine.begin() as conn:
-                return conn.execute(query, values)
+                result: sa.CursorResult = conn.execute(query, values)
+                return result
 
-        # encode/databases
-        # ----------------
-        # database = await self.database(connection, metakey)
-        # dd(database)
-        # if type(values) == dict:
-        #     return await database.execute(query, values)
-        # elif type(values) == list:
-        #     return await database.execute_many(query, values)
-        # else:
-        #     return await database.execute(query)
+    async def all(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[sa.Row]:
+        """Get many records from query. Returns empty List if no records found"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.all()
 
-    #  async def iterate(self, query: Union[ClauseElement, str], values: dict = None, connection: str = None) -> AsyncGenerator[Mapping, None]:
-    #     async with self.connection() as connection:
-    #         async for record in connection.iterate(query, values):
-    #             yield record
+    async def fetchall(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[sa.Row]:
+        """Alias to .all()"""
+        return await self.all(query, values, connection, metakey)
 
-    def query(self, connection: str = None) -> DbQueryBuilder[DbQueryBuilder, Any]:
-        if not connection: connection = self.default
-        return DbQueryBuilder(connection)
+    async def first(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Get one (first/top) record from query. Returns None if no records found"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.first()
+
+    async def fetchone(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Alias to .first()"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.fetchone()
+
+    async def one(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row:
+        """Get one record from query. Throws Exception if no data found or querying more than one record"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.one()
+
+    async def one_or_none(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row|None:
+        """Get one record from query.  Returns None if no record found.  Throws Exception of querying more than one record"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.one_or_none()
+
+    async def scalars(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Sequence[Any]:
+        """Get many scalar values from query.  Returns empty List if no records found. If selecting multiple columns, returns List of FIRST column only."""
+        result = await self.execute(query, values, connection, metakey)
+        return result.scalars().all()
+
+    async def scalar(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any|None:
+        """Get a single scalar value from query. Returns None if no record found.  Returns first (top) if more than one record found"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.scalar()
+
+    async def scalar_one(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any:
+        """Get a single scalar value from query.  Throws Exception if no data found or if querying more than one record"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.scalar_one()
+
+    async def scalar_one_or_none(self,
+        query: sa.Select|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> Any|None:
+        """Get a single scalar value from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.scalar_one_or_none()
+
+    async def insertmany(self,
+        query: sa.Insert|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> List[sa.Row]:
+        """Bulk insert many rows, returning bulk primary keys (for databases that support INSERT..RETURNING)"""
+        # For bulk returns see https://docs.sqlalchemy.org/en/20/core/connections.html#engine-insertmanyvalues
+        result = await self.execute(query, values, connection, metakey)
+        return result.inserted_primary_key_rows
+
+    async def insertone(self,
+        query: sa.Insert|str,
+        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
+        connection: Optional[str] = None,
+        metakey: Optional[str] = None
+    ) -> sa.Row:
+        """Insert one row, returning the one rows PK (as a tuple in case of dual PKs)"""
+        result = await self.execute(query, values, connection, metakey)
+        return result.inserted_primary_key
 
 
 # IoC Class Instance

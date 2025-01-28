@@ -37,16 +37,20 @@ class Database(Provider, Cli):
 
         # Connect to all databases one time, after the system has started up
         # We also connect on the fly in db.py def database()
+
+        # FIXME, NO databases is obsolete, this does nothing
         @uvicore.events.handle(['uvicore.console.events.command.Startup', 'uvicore.console.events.command.PytestStartup', 'uvicore.http.events.server.Startup'])
         async def uvicore_startup(event):
             # Connect to all databases
-            await uvicore.db.connect(all_dbs=True)
+            pass
+            #await uvicore.db.connect(all_dbs=True)
 
         # Disconnect from all databases after the system has shutdown
         @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.console.events.command.PytestShutdown', 'uvicore.http.events.server.Shutdown'])
         async def uvicore_shutdown(event):
             # Disconnect from all connected databases
-            await uvicore.db.disconnect(all_dbs=True)
+            pass
+            #await uvicore.db.disconnect(all_dbs=True)
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.

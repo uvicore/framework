@@ -81,7 +81,15 @@ pydantic = "1.10.*"
 #sqlalchemy = {version = "1.4.*", optional = true}
 sqlalchemy = {version = "2.0.*", extras = ["asyncio"], optional = true}
 
-# Preferred async driver (no, let the app choose?)
+# Preferred async driver
+# aiomysql required for my testing code, but not for actual bundle
+# If the user doesn't want to use Mysql this is wasted
+aiomysql = "0.2.*"
+
+# SQLite also needed for testing only, remove somehow?
+aiosqlite = "0.20.*"
+
+
 #aiomysql = {version = "0.2.*", optional = true}
 #psycopg = {version = "3.1.*", optional = true}
 
@@ -142,6 +150,8 @@ PyJWT = {version = "2.8.*", optional = true}
 # Optional Dependencies for Themes
 # ------------------------------------------------------------------------------
 # mreschke-themes = {path = "../../mreschke/uvicore/themes", develop = true}
+
+
 
 
 [tool.poetry.extras]

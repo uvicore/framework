@@ -15,13 +15,20 @@ database = {
     'default': env('DATABASE_DEFAULT', 'app1'),
     'connections': {
         # SQLite Example
-        'app1_lite': {
-            'backend': 'sqlalchemy',
-            'dialect': 'sqlite',
-            'driver': 'aiosqlite',
-            'database': ':memory',
-            'prefix': None,
-        },
+
+        # Adding this errors with
+            # sqlalchemy.exc.ArgumentError: Invalid SQLite URL: sqlite+aiosqlite://:***@127.0.0.1:3306/:memory
+            # Valid SQLite URL forms are:
+            #  sqlite:///:memory: (or, sqlite://)
+            #  sqlite:///relative/path/to/file.db
+            #  sqlite:////absolute/path/to/file.db
+        # 'app1_lite': {
+        #     'backend': 'sqlalchemy',
+        #     'dialect': 'sqlite',
+        #     'driver': 'aiosqlite',
+        #     'database': ':memory:',
+        #     'prefix': None,
+        # },
 
         # MySQL Example
         'app1': {

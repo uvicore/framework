@@ -55,7 +55,7 @@ async def test_join(app1):
     # sqlalchemy.sql.elements.quoted_name('creator__contact__address'),
     # sqlalchemy.sql.elements.quoted_name('creator__contact__phone'),
     # sqlalchemy.sql.elements.quoted_name('creator__contact__user_id')
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
 
     # Access first level deep
     assert [
@@ -110,7 +110,7 @@ async def test_join_wheredot(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         'test-post3',
         'test-post4',
@@ -143,7 +143,7 @@ async def test_join_whereunderscore(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         'test-post3',
         'test-post4',
@@ -179,7 +179,7 @@ async def test_join_orwhere(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         'test-post3',
         'test-post4',
@@ -208,7 +208,7 @@ async def test_join_order_by(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post6',
         'test-post7',
@@ -257,7 +257,7 @@ async def test_join_group_by(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         ('administrator@example.com', 'Admin', 3),
         ('anonymous@example.com', 'Anonymous', 2),
