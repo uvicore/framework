@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod, abstractproperty
 from uvicore.typing import Any, Dict, List, Tuple, OrderedDict, Union
 from .config import Config
-from .server import Server
+#from .server import Server
 from .package import Package
 from .template import Template
 

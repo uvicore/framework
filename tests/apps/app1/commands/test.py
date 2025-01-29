@@ -50,9 +50,9 @@ async def cli():
     # Empty list of none found
     # If selecting multiple columns, returns first column
 
-    x = await uvicore.db.scalars("SELECT entity, id FROM permissions where ID > 9")
+    #x = await uvicore.db.scalars("SELECT entity, id FROM permissions where ID > 9")
     #dd(type(x))
-    dd(x)
+    #dd(x)
 
 
 
@@ -73,16 +73,11 @@ async def cli():
     # dd(x, type(x))
 
 
-    dd (await uvicore.db.query().table('permissions').get())
+    dd(await uvicore.db.query().table('permissions').get())
 
 
     #x = await Permission.query().find(3)
     #x = await Permission.query().get()
-    dd(x)
-    dd(Permission)
-
-
-
 
 
     dd('DONE PLAY')

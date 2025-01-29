@@ -28,7 +28,7 @@ async def test_select_all(app1):
 
     # One User has One Contact (contact table has user_id as UNIQUE)
     # Fetch multiple
-    users = await User.query().include('contact').get()
+    users = await User.query().include('contact').order_by('id').get()
     dump(users)
     assert [
         'Anonymous User',
@@ -57,7 +57,7 @@ async def test_select_inverse_multiple(app1):
 
     # One Contact has One User (contact table has user_id as UNIQUE)
     # Fetch multiple
-    contacts = await Contact.query().include('user').get()
+    contacts = await Contact.query().include('user').order_by('id').get()
     dump(contacts)
     assert [
         'administrator@example.com',
@@ -174,7 +174,7 @@ async def test_where(app1):
     assert ['Manager1'] == [x.contact.title for x in users]
 
     # Test muli-level where
-    posts = await Post.query().include('creator.contact').where('creator.contact.name', 'Administrator').get()
+    posts = await Post.query().include('creator.contact').where('creator.contact.name', 'Administrator').order_by('id').get()
     dump(posts)
     assert [
         'test-post3',
@@ -191,6 +191,7 @@ async def test_where(app1):
             ('slug', 'test-post3'),
             ('slug', 'test-post5')
         ])
+        .order_by('id')
         .get()
     )
     dump(posts)
@@ -210,7 +211,7 @@ async def test_where_through_one_to_many(app1):
         'posts',
         'posts.comments',
         'posts.comments.creator'
-    ).where('posts.comments.creator.email', 'anonymous@example.com').get()
+    ).where('posts.comments.creator.email', 'anonymous@example.com').order_by('id').get()
     dump(users)
 
     # Where should filter only the parent record

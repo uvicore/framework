@@ -58,7 +58,11 @@ class Manager:
 
         if store_name not in self.backends:
             # Instantiate, connect and save store in local backends cache
-            driver = module.load(store.driver).object(self, store)
+            try:
+                driver = module.load(store.driver).object(self, store)
+            except ImportError:
+                raise Exception(f"No library installed to handle cache store {store.driver}")
+
             self._backends[store_name] = driver
 
         return self.backends[store_name]

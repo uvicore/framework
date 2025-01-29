@@ -94,62 +94,107 @@ class Db(DatabaseInterface):
         """Initialize the database system with a default connection str and List of all Connections from all packages"""
 
         # Loop all connections from all packages
+        connection: Connection
         for connection_name, connection in connections.items():
 
             # Define some defaults regardless of backend type
             connection.defaults({
                 'name': connection_name,
-                'backend': 'sqlalchemy'
+                'backend': 'sqlalchemy',
+                'dialect': 'sqlite',
             })
+
+            # Standardize case
+            connection.backend = connection.backend.lower()
+            connection.dialect = connection.dialect.lower()
 
             # Validate supported backends
             if connection.backend not in self.SUPPORTED_BACKENDS:
                 raise Exception(f"A packages config/database.py connection backend {connection.backend} not supported by Uvicore.  Must be one of [{','.join(self.SUPPORTED_BACKENDS)}].")
 
+            # Validate supported dialects
+            if connection.dialect not in self.SUPPORTED_DIALECTS:
+                raise Exception(f"A packages config/database.py connection backend {connection.backend} not supported by Uvicore.  Must be one of [{','.join(self.SUPPORTED_BACKENDS)}].")
+
             # Build url and metakey from connection configuration
             if connection.backend == 'sqlalchemy':
 
-                # Define some defaults for SQLAlchemy backend specifically
-                # Options is a superdict, which if a field doesn't exist produces a
-                # blank Dict({}) not an empty string.  So merge with all possible defaults
-                # for an sqlalchemy connection config
-                connection.defaults({
-                    'dialect': 'mysql',
-                    'driver': 'aiomysql',
-                    'host': '127.0.0.1',
-                    'port': 3306,
-                    'database': 'mysql',
-                    'username': '',
-                    'password': '',
-                    'prefix': None
-                })
+                if connection.dialect in ['mysql', 'postgres', 'postgresql']:
+
+                    # MySQL dialect defaults
+                    if connection.dialect == 'mysql':
+                        connection.defaults({
+                            'dialect': 'mysql',
+                            'driver': 'aiomysql',
+                            'host': '127.0.0.1',
+                            'port': 3306,
+                            'database': 'mysql',
+                            'username': '',
+                            'password': '',
+                            'prefix': None
+                        })
+
+                    # Postgres dialect defaults
+                    else:
+                        connection.defaults({
+                            'dialect': 'postgres',
+                            'driver': 'asyncpg',
+                            'host': '127.0.0.1',
+                            'port': 5432,
+                            'database': 'postgres',
+                            'username': '',
+                            'password': '',
+                            'prefix': None
+                        })
+
+                    # Build an SQLAlchemy compatible URL from connection configuration dictionary
+                    # dialect+driver://<user>:<password>@<host>[:<port>]/<dbname>
+                    connection.url = (sa.engine.url.URL.create(
+                        drivername=str(connection.dialect) + '+' + str(connection.driver),
+                        username=connection.username,
+                        password=connection.password,
+                        host=connection.host,
+                        port=int(connection.port),
+                        database=connection.database,
+                        query=connection.options
+                    ))
+
+                    # Build metakey
+                    # Metakey is slightly different than the URL because we are trying to deduce
+                    # a single SERVER/HOST, not including the separate database itself
+                    connection.metakey = (
+                        connection.dialect +
+                        '@' + connection.host +
+                        ':' + str(connection.port) +
+                        '/' + connection.database
+                    )
+
+                # SQLite dialect defaults
+                elif connection.dialect == 'sqlite':
+                    connection.defaults({
+                        'dialect': 'sqlite',
+                        'driver': 'aiosqlite',
+                        'host': '',
+                        'port': '',
+                        'database': ':memory:',
+                        'prefix': None
+                    })
+
+                    # SQLite has a different URL
+                    connection.url = (sa.engine.url.URL.create(
+                        drivername=str(connection.dialect) + '+' + str(connection.driver),
+                        database=connection.database,
+                        query=connection.options
+                    ))
+
+                    # SQLite has a different metakey
+                    connection.metakey = connection.dialect + '://' + connection.database
+
 
                 # All Optional must be strings, so convert all values to str()
                 if connection.options:
                     for (key, value) in connection.options.items():
                         connection.options[key] = str(value)
-
-                # Build an SQLAlchemy compatible URL from connection configuration dictionary
-                # dialect+driver://<user>:<password>@<host>[:<port>]/<dbname>
-                connection.url = (sa.engine.url.URL.create(
-                    drivername=connection.dialect + '+' + connection.driver,
-                    username=connection.username,
-                    password=connection.password,
-                    host=connection.host,
-                    port=int(connection.port),
-                    database=connection.database,
-                    query=connection.options
-                ))
-
-                # Build metakey
-                # Metakey is slightly different than the URL because we are trying to deduce
-                # a single SERVER/HOST, not including the separate database itself
-                connection.metakey = (
-                    connection.dialect +
-                    '@' + connection.host +
-                    ':' + str(connection.port) +
-                    '/' + connection.database
-                )
 
                 # Attempt an async connection, else a sync connection
                 # And automatically set an is_async attribute on our connection Dict

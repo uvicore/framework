@@ -48,31 +48,42 @@ config = {
     'database': {
         'default': 'auth',
         'connections': {
+
+            # SQLite Example
             'auth': {
                 'backend': env('DB_AUTH_BACKEND', 'sqlalchemy'),
-                'dialect': env('DB_AUTH_DIALECT', 'mysql'),
-                'driver': env('DB_AUTH_DRIVER', 'aiomysql'),
-
-                #'sync_driver': env('DB_AUTH_SYNC_DRIVER', 'pymysql'),
-                #'async_driver': env('DB_AUTH_ASYNC_DRIVER', 'aiomysql'),
-
-                'host': env('DB_AUTH_HOST', '127.0.0.1'),
-                'port': env.int('DB_AUTH_PORT', 3306),
-                'database': env('DB_AUTH_DB', 'auth'),
-                'username': env('DB_AUTH_USER', 'root'),
-                'password': env('DB_AUTH_PASSWORD', 'techie'),
+                'dialect': env('DB_AUTH_DIALECT', 'sqlite'),
+                'driver': env('DB_AUTH_DRIVER', 'aiosqlite'),
+                'database': env('DB_AUTH_DB', ':memory:'),
                 'prefix': env('DB_AUTH_PREFIX', None),
-
-                # All options are passed directly to the specific driver.
-                #'options': {
-                #    'ssl': env.bool('DB_AUTH_SSL', False),
-                #}
-
-                #'driver': 'sqlite',
-                #'database': ':memory',
-                #'database': '/tmp/x.db',
-                #'prefix': None,
             },
+
+            # MySQL Example
+            # 'auth': {
+            #     'backend': env('DB_AUTH_BACKEND', 'sqlalchemy'),
+            #     'dialect': env('DB_AUTH_DIALECT', 'mysql'),
+            #     'driver': env('DB_AUTH_DRIVER', 'aiomysql'),
+
+            #     #'sync_driver': env('DB_AUTH_SYNC_DRIVER', 'pymysql'),
+            #     #'async_driver': env('DB_AUTH_ASYNC_DRIVER', 'aiomysql'),
+
+            #     'host': env('DB_AUTH_HOST', '127.0.0.1'),
+            #     'port': env.int('DB_AUTH_PORT', 3306),
+            #     'database': env('DB_AUTH_DB', 'auth'),
+            #     'username': env('DB_AUTH_USER', 'root'),
+            #     'password': env('DB_AUTH_PASSWORD', 'techie'),
+            #     'prefix': env('DB_AUTH_PREFIX', None),
+
+            #     # All options are passed directly to the specific driver.
+            #     #'options': {
+            #     #    'ssl': env.bool('DB_AUTH_SSL', False),
+            #     #}
+
+            #     #'driver': 'sqlite',
+            #     #'database': ':memory',
+            #     #'database': '/tmp/x.db',
+            #     #'prefix': None,
+            # },
         },
     },
 

@@ -1,23 +1,26 @@
 # type: ignore
 from . import contracts
-from uvicore.typing import Dict
+from uvicore.typing import Dict, TYPE_CHECKING
 from uvicore.foundation.decorators import event, job, model, seeder, service, table, provider, routes, controller, composer
 
 
 # Uvicore version.  Also available in app.version
-__version__ = '0.2.8'
+__version__ = '0.3.0'
 
-# Core (non service provider based) singletons as globals
+# Foundational
 ioc: contracts.Ioc = None
 events: contracts.Dispatcher = None
 jobs: contracts.JobDispatcher = None
 app: contracts.Application = None
-
-# Core (service provider based) singletons as globals
 config: contracts.Config = None
 log: contracts.Logger = None
-db: contracts.Database = None
 cache: contracts.Cache = None
+
+# Optional
+if TYPE_CHECKING:
+    db: contracts.Database = None
+else:
+    db = None
 
 
 def bootstrap(app_config: Dict, path: str, is_console: bool) -> None:

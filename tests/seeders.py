@@ -49,3 +49,36 @@ async def seed_post8():
             ],
         },
     ])
+
+
+async def delete_post8(post_id):
+    import uvicore
+    await uvicore.db.query().table('comments').where('post_id', post_id).delete()
+    await uvicore.db.query().table('post_tags').where('post_id', post_id).delete()
+    await uvicore.db.query().table('images').where('imageable_type', 'posts').where('imageable_id', post_id).delete()
+    await uvicore.db.query().table('attributes').where('attributable_type', 'posts').where('attributable_id', post_id).delete()
+    await uvicore.db.query().table('hashtaggables').where('hashtaggable_type', 'posts').where('hashtaggable_id', post_id).delete()
+    await uvicore.db.query().table('posts').where('id', post_id).delete()
+
+
+
+# E               sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: images.imageable_type, images.imageable_id
+# E               [SQL: INSERT INTO images (imageable_type, imageable_id, filename, size) VALUES (?, ?, ?, ?)]
+# E               [parameters: ('posts', 8, 'post8-image.png', 1234932)]
+# E               (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+
+# CREATE TABLE images (
+# 	id INTEGER NOT NULL,
+# 	imageable_type VARCHAR(50),
+# 	imageable_id INTEGER,
+# 	filename VARCHAR(100),
+# 	size INTEGER,
+# 	PRIMARY KEY (id),
+# 	UNIQUE (imageable_type, imageable_id)
+# );
+# sqlite> select * from images;
+# 1|posts|1|post1-image.png|1234932
+# 2|posts|2|post2-image.png|2483282
+# 3|posts|6|post6-image.png|3345432
+# 4|posts|8|post8-image.png|1234932  ! this one getting constraint

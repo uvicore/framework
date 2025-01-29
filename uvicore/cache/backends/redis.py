@@ -84,7 +84,7 @@ class Redis(CacheInterface):
         if seconds is None: seconds = self.seconds
         if type(keys) != dict: keys = {keys:value}
         for (key, value) in keys.items():
-            await redis.set(key, self._serialize(value), expire=seconds)
+            await redis.set(key, self._serialize(value), ex=seconds)
 
     async def pull(self, key: Union[str, Dict]) -> Any:
         """Get one or more key values from cache them remove them after"""
