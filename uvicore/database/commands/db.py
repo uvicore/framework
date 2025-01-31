@@ -130,6 +130,12 @@ async def seed_tables(connections: str):
                     print()
 
 
+async def reseed_tables(connection:str):
+    await drop_tables(connection)
+    await create_tables(connection)
+    await seed_tables(connection)
+
+
 @command()
 @argument('connections')
 async def create(connections: str): # pragma: no cover
@@ -164,9 +170,7 @@ async def seed(connections: str): # pragma: no cover
 @argument('connections')
 async def reseed(connections: str): # pragma: no cover
     """Reseed (drop/create/seed) tables for connection(s)"""
-    await drop_tables(connections)
-    await create_tables(connections)
-    await seed_tables(connections)
+    await reseed_tables(connections)
 
 
 @command()
