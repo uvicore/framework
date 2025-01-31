@@ -3,7 +3,7 @@ import uvicore
 from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator, get_type_hints, Union, Type
 from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 from uvicore.support.dumper import dump, dd
 from merge_args import _merge as merge_args
 from functools import partial

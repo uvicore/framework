@@ -2,7 +2,7 @@ import re
 import copy
 from uvicore.support.dumper import dump, dd
 from collections import OrderedDict as _OrderedDict
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 
 
 # Builtin Dict Methods

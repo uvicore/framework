@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from .connection import Connection
 from uvicore.typing import Dict, List, Any
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 
 
 class Package(Dict):

@@ -6,7 +6,7 @@ from uvicore.support.dumper import dd, dump
 
 
 @command()
-@option('--raw', is_flag=True, help='Show output without prettyprinter')
+@option('--raw', is_flag=True, help='Show output without pretty printer')
 def list(raw: bool = False):
     """List all deep merged configs from all packages"""
     if not raw:
@@ -19,7 +19,7 @@ def list(raw: bool = False):
 
 @command()
 @argument('key', default='')
-@option('--raw', is_flag=True, help='Show output without prettyprinter')
+@option('--raw', is_flag=True, help='Show output without pretty printer')
 def get(key: str = None, raw: bool = False):
     """Get a config value by key"""
     if not raw:

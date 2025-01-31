@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 
 
 class JobResults(BaseModel):

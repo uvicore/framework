@@ -1,7 +1,7 @@
 import uvicore
 from uvicore.orm.fields import Field
 from uvicore.support.dumper import dd, dump
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic.main import ModelMetaclass as PydanticMetaclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Sequence

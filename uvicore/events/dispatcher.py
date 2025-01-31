@@ -11,7 +11,7 @@ from uvicore.contracts import Dispatcher as DispatcherInterface
 from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
 
 #from uvicore.contracts import Event as EventInterface
-# from prettyprinter import pretty_call, register_pretty
+# from uvicore.support.printer import pretty_call, register_pretty
 # class EventInfo(EventInterface):
 #     """Event Definition"""
 #     # These class level properties for for type annotations only.

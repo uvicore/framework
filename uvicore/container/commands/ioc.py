@@ -4,7 +4,7 @@ from uvicore.support.dumper import dd, dump
 
 
 @command()
-@option('--raw', is_flag=True, help='Show output without prettyprinter')
+@option('--raw', is_flag=True, help='Show output without pretty printer')
 def bindings(raw: bool = False):
     """List all Ioc Bindings"""
     if not raw:
@@ -65,7 +65,7 @@ def overrides():
 
 @command()
 @argument('key', default='')
-@option('--raw', is_flag=True, help='Show output without prettyprinter')
+@option('--raw', is_flag=True, help='Show output without pretty printer')
 def get(key: str = None, raw: bool = False):
     """Get a binding by name"""
     if not raw:

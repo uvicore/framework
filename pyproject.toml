@@ -50,7 +50,7 @@ dependencies = [
     # Held back to 0.26.* due to AsyncClient deprecating app variable
     # In conftest.py client()
     #"httpx==0.28.*",
-    "httpx==0.26.*"
+    "httpx==0.26.*",
 ]
 
 # Optional extra dependencies
@@ -61,10 +61,10 @@ database = [
     "alembic==1.14.*",
     "aiomysql==0.2.*",
     "aiosqlite==0.20.*",
-    "asyncpg==0.30.*"
+    "asyncpg==0.30.*",
 ]
 redis = [
-    "aioredis==2.0.*"
+    "redis[hiredis]==5.2.*",
 ]
 web = [
     "starlette==0.45.3",

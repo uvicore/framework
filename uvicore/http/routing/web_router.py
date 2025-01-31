@@ -4,7 +4,7 @@ from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator
 from uvicore.http.routing.router import Router
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import WebRoute as RouteInterface
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 from uvicore.http.routing.guard import Guard
 from merge_args import _merge as merge_args
 
