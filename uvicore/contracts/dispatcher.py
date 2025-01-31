@@ -4,8 +4,8 @@ from uvicore.typing import Dict, List, Any, Union, Callable
 
 class Dispatcher(ABC):
 
-    @property
-    @abstractmethod
+    # @property
+    # @abstractmethod
     # def events(self) -> Dict[str, Dict]:
     #     """Dictionary of all registered events in uvicore and all packages"""
     #     pass
