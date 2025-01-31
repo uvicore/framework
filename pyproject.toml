@@ -1,6 +1,6 @@
 [project]
 name = "uvicore"
-version = "0.3.0"
+version = "0.3.1"
 description = "The Fullstack Async Web, API and CLI Python Framework"
 authors = [
     {name = "Matthew Reschke",email = "mail@mreschke.com"}
@@ -8,6 +8,27 @@ authors = [
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Web Environment",
+    "Environment :: Console",
+    "Framework :: AnyIO",
+    "Framework :: FastAPI",
+    "Framework :: Pydantic",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
 
 # Required base dependencies
 dependencies = [
@@ -19,6 +40,11 @@ dependencies = [
     "cryptography==44.0.*",
     "aiohttp==3.11.*",
     "merge-args==0.1.*",
+
+    # Templating is part of core, not just web, so include it in base
+    "jinja2==3.1.5",
+
+    # Held back to 1.10 due to massive changes in their interface
     "pydantic==1.10.*",
 
     # Held back to 0.26.* due to AsyncClient deprecating app variable
@@ -27,6 +53,7 @@ dependencies = [
     "httpx==0.26.*"
 ]
 
+# Optional extra dependencies
 # poetry install --extras "database redis web"
 [project.optional-dependencies]
 database = [
@@ -45,7 +72,6 @@ web = [
     "uvicorn==0.34.0",
     "gunicorn==23.0.0",
     "aiofiles==24.1.0",
-    "jinja2==3.1.5",
     "requests==2.32.3",
     "itsdangerous==2.2.0",
     "uvloop==0.21.0",
@@ -54,12 +80,20 @@ web = [
     "pyjwt==2.10.1"
 ]
 
+# Optional unittest dependencies
 # poetry install --extras "database redis web --with test"
 [tool.poetry.group.test.dependencies]
 pytest = "8.3.*"
 pytest-cov = "6.0.*"
 pytest-asyncio = "0.25.*"
 
+[project.urls]
+homepage = "https://github.com/uvicore/framework"
+repository = "https://github.com/uvicore/framework"
+documentation = "https://github.com/uvicore/framework"
+
+[tool.poetry]
+include = ["LICENSE"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

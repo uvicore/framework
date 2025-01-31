@@ -5,7 +5,7 @@ from uvicore.foundation.decorators import event, job, model, seeder, service, ta
 
 
 # Uvicore version.  Also available in app.version
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 # Foundational
 ioc: contracts.Ioc = None

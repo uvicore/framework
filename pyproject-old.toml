@@ -163,6 +163,9 @@ database = [
 redis = [
     "aioredis",
 ]
+
+# NOTE templates were moved outside of web, can have CLI templates send emails etc...
+# maybe make a new templates optional section
 web = [
     "fastapi",
     "uvicorn",

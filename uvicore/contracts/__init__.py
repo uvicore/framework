@@ -14,12 +14,14 @@ from .user_provider import UserProvider
 from .authenticator import Authenticator
 from .email import Email
 
+# Connection is used in package/package.py so not not optional
+from .connection import Connection
+
 
 # Optional imports based on installed modules
 try:
     import sqlalchemy
     from .builder import DbQueryBuilder, OrmQueryBuilder, QueryBuilder
-    from .connection import Connection
     from .database import Database
     from .field import Field
     from .mapper import Mapper
