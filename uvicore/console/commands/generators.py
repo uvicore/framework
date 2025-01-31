@@ -50,7 +50,7 @@ async def command(name: str):
 
     log.nl()
     log.notice('IF you do NOT have a self.commands() already in your Service Provider, add this')
-    print("""self.commands(
+    print("""self.register_cli_commands(
     group='{}',
     help='{} Commands',
     commands={{
