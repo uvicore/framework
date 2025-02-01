@@ -143,8 +143,8 @@ class ColoredFormatter(Formatter):
                 + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
 
         # Format bullet * item
-        elif (level == 'INFO' and re.match("^\* ", message)):
-            message = re.sub("^\* ", "", message)
+        elif (level == 'INFO' and re.match("^\\* ", message)):
+            message = re.sub("^\\* ", "", message)
             message = ('{0}{1}{2}').format(fg('green'), '   * ', attr(0)) \
                 + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
 
@@ -155,8 +155,8 @@ class ColoredFormatter(Formatter):
                 + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
 
         # Format bullet3 + item
-        elif (level == 'INFO' and re.match("^\+ ", message)):
-            message = re.sub("^\+ ", "", message)
+        elif (level == 'INFO' and re.match("^\\+ ", message)):
+            message = re.sub("^\\+ ", "", message)
             message = ('{0}{1}{2}').format(fg('red'), '   + ', attr(0)) \
                 + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
 
