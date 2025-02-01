@@ -1,4 +1,3 @@
-#import redis
 import uvicore
 import redis.asyncio as redis
 from uvicore.typing import Dict, Any
@@ -65,8 +64,6 @@ class Redis:
             # 'password': None,
             # 'url': 'redis://127.0.0.1:6379/2'
             # })
-            #self._engines[conn.url] = await aioredis.create_redis_pool(conn.url)
-            #self._engines[conn.url] = aioredis.from_url(conn.url)
             self._engines[conn.url] = redis.from_url(conn.url)
 
         # Return actual connection (engine)
