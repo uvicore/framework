@@ -106,6 +106,11 @@ Requests/sec:  43255.92
 Transfer/sec:     86.30MB
 ```
 
+## Supported Python
+
+- Uvicore 0.2 - Python 3.9+
+- Uvicore 0.3 - Python 3.10+
+
 
 ## License
 
