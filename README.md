@@ -21,6 +21,10 @@ Uvicore is the missing fullstack asynchronous framework for elegant and rapid py
 View the Uvicore documentation to get started https://uvicore.io
 
 
+## Quick Install
+![](https://uvicore.io/files/uvicore-installer.gif)
+
+
 ### The CLI
 
 After starting your preferred virtual environment and installing dependencies...
