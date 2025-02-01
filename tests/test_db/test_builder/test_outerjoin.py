@@ -27,7 +27,7 @@ async def test_outerjoin(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         'test-post7',
         'test-post6',
@@ -75,7 +75,7 @@ async def test_outerjoin_where_no_match(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     # These posts have NO comments, only post 1 and 3 have comments
     assert [
         'test-post7',

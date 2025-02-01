@@ -14,7 +14,7 @@ async def test_order_by_desc(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post7',
         'test-post6',
@@ -35,7 +35,7 @@ async def test_order_by_asc(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post3',
         'test-post4',
@@ -60,7 +60,7 @@ async def test_order_by_list_multiples(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post1',
         'test-post2',
@@ -85,7 +85,7 @@ async def test_order_by_list_multiples_bad_tuple(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [
         'test-post1',
         'test-post2',

@@ -15,25 +15,29 @@ database = {
     'default': env('DATABASE_DEFAULT', 'app1'),
     'connections': {
         # SQLite Example
-        'app1_lite': {
-            'driver': 'sqlite',
-            'database': ':memory',
-            'prefix': None,
-        },
-
-        # MySQL Example
         'app1': {
-            'driver': env('DB_APP1_DRIVER', 'mysql'),
-            'dialect': env('DB_APP1_DIALECT', 'pymysql'),
-            'host': env('DB_APP1_HOST', '127.0.0.1'),
-            'port': env.int('DB_APP1_PORT', 3306),
-            'database': env('DB_APP1_DB', 'app1'),
-            'username': env('DB_APP1_USER', 'root'),
-            'password': env('DB_APP1_PASSWORD', 'techie'),
+            'backend': env('DB_APP1_BACKEND', 'sqlalchemy'),
+            'dialect': env('DB_APP1_DIALECT', 'sqlite'),
+            'driver': env('DB_APP1_DRIVER', 'aiosqlite'),
+            'database': env('DB_APP1_DB', ':memory:'),
             'prefix': env('DB_APP1_PREFIX', None),
         },
 
+        # MySQL Example
+        # 'app1': {
+        #     'backend': env('DB_APP1_BACKEND', 'sqlalchemy'),
+        #     'dialect': env('DB_APP1_DIALECT', 'mysql'),
+        #     'driver': env('DB_APP1_DRIVER', 'aiomysql'),
+        #     'host': env('DB_APP1_HOST', '127.0.0.1'),
+        #     'port': env.int('DB_APP1_PORT', 3306),
+        #     'database': env('DB_APP1_DB', 'app1'),
+        #     'username': env('DB_APP1_USER', 'root'),
+        #     'password': env('DB_APP1_PASSWORD', 'techie'),
+        #     'prefix': env('DB_APP1_PREFIX', None),
+        # },
+
         # Example of ORM over Remote Uvicore API
+        # NOT implemented yet
         # 'app1_remote': {
         #     'driver': 'api',
         #     'dialect': 'uvicore',

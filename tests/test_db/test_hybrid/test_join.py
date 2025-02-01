@@ -30,7 +30,7 @@ async def test_join(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         (1, 'test-post1', 'anonymous@example.com', None),
         (2, 'test-post2', 'anonymous@example.com', None),
@@ -72,7 +72,7 @@ async def test_join_one_to_many(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())  # Notice no name collisions
+    dump(results[0]._mapping.keys())  # Notice no name collisions
     assert [
         'test-post3',
         'test-post3',

@@ -24,19 +24,12 @@ class Redis(Provider, RedisMixin):
         # String based events instead of class based because HTTP may not even
         # be installed, so importing the HTTP event would cause an issue.
 
-        # Disconnect from all redis pools after the system has shutdown
-        @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.http.events.server.Shutdown'])
+        # Disconnect from all redis engines after the system has shutdown
+        @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.console.events.command.PytestShutdown', 'uvicore.http.events.server.Shutdown'])
         async def uvicore_shutdown(event):
-            # Trying to solve this error when I do a huge wrk test
-            # Task was destroyed but it is pending!
-            # task: <Task pending name='Task-13' coro=<RedisConnection._read_data() running at /home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aioredis/connection.py:186> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x7f6043f7ac10>()]> cb=[RedisConnection.__init__.<locals>.<lambda>() at /home/mreschke/.cache/pypoetry/virtualenvs/mreschke-speedtest-epfwGmSK-py3.9/lib/python3.9/site-packages/aioredis/connection.py:168]>
-            # See https://github.com/aio-libs/aioredis-py/issues/154
-            # I am doing the proper engine.close() and await engine.wait_closed() and it does run before I get the error
-            # but the error persists.  Still not fully solved, but closing does help in some situations
             from uvicore.redis.redis import Redis as redis
             for engine in redis.engines.values():
-                engine.close()
-                await engine.wait_closed()
+                await engine.close()
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.

@@ -6,7 +6,6 @@ from uvicore.package import Package
 from uvicore.contracts import Application as ApplicationInterface
 from uvicore.contracts import Config as ConfigInterface
 from uvicore.contracts import Package as PackageInterface
-from uvicore.contracts import Server as ServerInterface
 from uvicore.contracts import Template as TemplateInterface
 from uvicore.support.collection import dotget
 from uvicore.support.dumper import dd, dump

@@ -338,7 +338,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 pk_value = None
                 create = getvalue(model, relation.entity.pk) == None
                 if create:
-                    pk_value = await relation.entity.insert(model)
+                    result = await relation.entity.insert(model)
+                    pk_value = result.inserted_primary_key[0]
                     setvalue(model, relation.entity.pk, pk_value)
 
                 # Link in pivot table
@@ -397,7 +398,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         exists = None
         table = entity.table
         if getattr(self, entity.pk):
-            query = sa.select([getattr(table.c, entity.mapper(entity.pk).column())]).select_from(table).where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
+            query = sa.select(getattr(table.c, entity.mapper(entity.pk).column())).select_from(table).where(getattr(table.c, entity.pk) == getattr(self, entity.pk))
             #query = table.select().where(getattr(table.c, entity.pk) == getattr(self, entity.pk))  # Don't select *
             exists = await entity.fetchone(query)  # Returns None if not exists
 
@@ -422,7 +423,8 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             values = self.mapper().table()
 
             query = table.insert().values(**values)
-            new_pk = await entity.execute(query)
+            result: sa.CursorResult = await entity.execute(query)
+            new_pk = result.inserted_primary_key[0]
 
             # Only set the new_pk back to the entity if the entities PK is null
             # If not null, means its probably a string based pre-inserted PK like a 'key' field
@@ -460,7 +462,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # Well it could only work for HasOne/MorphOne, or possibly HasMany.  But those tables can simply
         # be deleted manually image.find(1).delete() for example.  For others like BelongsToMany we don't ever want
         # to delete the record and it could be used by many other records through the pivot, so we use unlink() instead
-        # and we can also manually delete it if we watned (tags.where(post=1).delete() etc...)
+        # and we can also manually delete it if we wanted (tags.where(post=1).delete() etc...)
         # So not sure I want a delete() to handle children?  If so maybe just HasOne and MorphOne?  Because with HasMany
         # you would also have to specify WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
         # With a HasOne/MorphOne you could at least do post.delete('image') and thats quicker than image.find(post=1).delete() manually?
@@ -547,7 +549,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 # try catch, I will see if the record exists manually first :( - See https://github.com/encode/databases/issues/162
                 table = relation.join_table
                 query = (
-                    sa.select([getattr(table.c, relation.left_key)]).select_from(table)
+                    sa.select(getattr(table.c, relation.left_key)).select_from(table)
                     .where(getattr(table.c, relation.left_key) == left_key_value)
                     .where(getattr(table.c, relation.right_key) == right_key_value)
                 )
@@ -583,7 +585,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
                 # try catch, I will see if the record exists manually first :( - See https://github.com/encode/databases/issues/162
                 table = relation.join_table
                 query = (
-                    sa.select([getattr(table.c, relation.left_type)]).select_from(table)
+                    sa.select(getattr(table.c, relation.left_type)).select_from(table)
                     .where(getattr(table.c, relation.left_type) == left_type_value)
                     .where(getattr(table.c, relation.left_key) == left_key_value)
                     .where(getattr(table.c, relation.right_key) == right_key_value)

@@ -1,14 +1,12 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty, abstractclassmethod
-from uvicore.typing import Dict, List, Union
-from prettyprinter import pretty_call, register_pretty
 from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from uvicore.typing import List, Union
 
 # Why a dataclass instead of a SuperDict?
 # Because a dataclass FORCES you to instantiate with ALL these attributes
 # making them required.  If one extends the UserInfo all of these are guarenteed
 # required in order to instantiate.  This is inherently a good contract.
-
 
 
 @dataclass
@@ -33,39 +31,48 @@ class UserInfo(ABC):
     superadmin: bool
     authenticated: bool
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self):
         """First and last name"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def avatar_url(self):
         """Alias to avatar"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def admin(self):
         """Alias to superadmin"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_admin(self):
         """Alias to superadmin"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_superadmin(self):
         """Alias to superadmin"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_authenticated(self):
         """Alias to authenticated"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def loggedin(self):
         """Alias to authenticated"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_loggedin(self):
         """Alias to authenticated"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def check(self):
         """Alias to authenticated"""
 

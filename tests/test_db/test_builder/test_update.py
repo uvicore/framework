@@ -2,7 +2,7 @@ import pytest
 import uvicore
 import sqlalchemy as sa
 from uvicore.support.dumper import dump
-from tests.seeders import seed_post8
+from tests.seeders import seed_post8, delete_post8
 
 # DB Builder
 
@@ -30,5 +30,5 @@ async def test_multi(app1):
         'new body'
     ] == [x.body for x in post.comments]
 
-    # Delete temp post
-    await uvicore.db.query().table('posts').where('id', post.id).delete()
+    # Delete data from seed_post8 and all children
+    await delete_post8(post.id)

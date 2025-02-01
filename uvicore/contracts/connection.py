@@ -7,6 +7,7 @@ class Connection(Dict):
     # They do not restrict of define valid properties like a dataclass would.
     # This is still a fully dynamic SuperDict!
     name: str
+    backend: str
     driver: str
     dialect: str
     host: str
@@ -17,6 +18,7 @@ class Connection(Dict):
     prefix: str
     metakey: str
     url: str
+    is_async: bool
 
 
 

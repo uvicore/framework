@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod, abstractproperty
-from uvicore.typing import Any, Dict, List, Tuple, OrderedDict, Union
 from .config import Config
-from .server import Server
 from .package import Package
 from .template import Template
+from abc import ABC, abstractmethod
+from uvicore.typing import Any, Dict, List, Tuple, OrderedDict, Union
 
 try:
     from fastapi import FastAPI
@@ -28,22 +27,26 @@ class Application(ABC):
     """Main uvicore application"""
 
     # Instance Variables
-    @abstractproperty
+    @property
+    @abstractmethod
     def version(self) -> str:
         """Uvicore framework version number"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def debug(self) -> bool:
         """Debug mode for entire application"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def perfs(self) -> List:
         """List of all perf dumps for performance tuning"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def http(self) -> Union[Starlette, FastAPI]:
         """HTTP Server Instance"""
         pass
@@ -54,47 +57,56 @@ class Application(ABC):
     #     """Configuration system"""
     #     pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def providers(self) -> OrderedDict[str, Dict]:
         """OrderedDict of providers from all packages in proper dependency order"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def registered(self) -> bool:
         """All providers have been registered"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def booted(self) -> bool:
         """All providers have been booted"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_console(self) -> bool:
         """App running from CLI (not serving web or API)"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def is_http(self) -> bool:
         """App running as HTTP server (not as CLI)"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def packages(self) -> Dict[str, Package]:
         """OrderedDict of all packages defined from providers"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def path(self) -> str:
         """Base path of running application"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self) -> str:
         """Short name of running application"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def main(self) -> str:
         """The main packages running this application"""
         pass

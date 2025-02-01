@@ -23,7 +23,7 @@ Decorator = TypeVar("Decorator", bound=Callable[..., Any])
 # #from uvicore.typing.dictionary import _SuperDict
 # from collections import OrderedDict as _OrderedDict
 # from uvicore.support.dumper import dump, dd
-# from prettyprinter import pretty_call, register_pretty
+# from uvicore.support.printer import pretty_call, register_pretty
 
 
 

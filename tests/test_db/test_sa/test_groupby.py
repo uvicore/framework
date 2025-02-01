@@ -11,13 +11,13 @@ async def test_group_by(app1):
 
     posts = Posts.table
     query = (
-        sa.select([
+        sa.select(
             posts.c.creator_id,
             sa.func.count(posts.c.title)
-        ])
+        )
         .group_by(posts.c.creator_id)
     )
     results = await uvicore.db.fetchall(query, connection='app1')
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [(1, 2), (2, 3), (5, 1), (6, 1)] == results

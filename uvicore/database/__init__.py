@@ -3,7 +3,6 @@ from .db import Db
 from .table import Table
 from uvicore.contracts import Connection as ConnectionInterface
 
-
 #from .connection import Connection
 # NO, just import it to keep the same path
 # Proxy instead of import to creata a nicer uvicore.database.Connection namespace

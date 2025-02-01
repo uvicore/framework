@@ -21,7 +21,7 @@ async def test_or_where_column(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert ['test-post1', 'test-post3', 'test-post4', 'test-post5'] == [x.unique_slug for x in results]
     #assert 1 == 2
 
@@ -42,6 +42,6 @@ async def test_or_where_expression(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert ['test-post1', 'test-post3', 'test-post4', 'test-post5'] == [x.unique_slug for x in results]
 

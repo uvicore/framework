@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from uvicore.typing import List, Dict, Callable, TypeVar, Generic, Decorator, Optional, Any, Union
 
 # Generic Route (Web or Api)
@@ -50,17 +50,20 @@ class Routes(ABC):
     auth = None
     scopes = None
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def package(self) -> Package: pass
 
 
 class Router(Generic[R], ABC):
     """Abstract base router class for Web and Api Router Implimentations"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def package(self) -> Package: pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def routes(self) -> Dict[str, R]: pass
 
     @abstractmethod

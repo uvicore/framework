@@ -10,7 +10,7 @@ async def test_single(app1):
     # Single where
     query = uvicore.db.query('app1').table('posts').where('creator_id', 2)
     posts = await query.get()
-    #print(query.sql());dump(posts); dump(posts[0].keys())
+    #print(query.sql());dump(posts); dump(posts[0]._mapping.keys())
     assert [3, 4, 5] == [x.id for x in posts]
 
 
@@ -19,7 +19,7 @@ async def test_and(app1):
     # Multiple where AND
     query = uvicore.db.query().table('posts').where('creator_id', '=', 2).where('owner_id', 1)
     posts = await query.get()
-    #print(query.sql());dump(posts); dump(posts[0].keys())
+    #print(query.sql());dump(posts); dump(posts[0]._mapping.keys())
     assert [3, 4] == [x.id for x in posts]
 
 

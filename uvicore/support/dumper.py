@@ -1,20 +1,7 @@
-import logging
 import sys
-
-import prettyprinter
-
 import uvicore
-
-# Enable extras like @dataclass
-prettyprinter.install_extras(exclude=[
-     # Not using django, no need to print django models
-    'django',
-
-    # Maybe when I get a shell ?
-    'ipython_repr_pretty',
-    'ipython',
-    'attrs',
-])
+import logging
+from uvicore.support.printer import prettyprinter
 
 
 def dump(*args):

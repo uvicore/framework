@@ -2,7 +2,7 @@ import pytest
 import uvicore
 import sqlalchemy as sa
 from uvicore.support.dumper import dump
-from tests.seeders import seed_post8
+from tests.seeders import seed_post8, delete_post8
 
 # DB ORM
 
@@ -29,9 +29,9 @@ async def test_single_instance(app1):
     new_posts.extend(['test-post8'])
     assert(new_posts == [x.slug for x in posts])
 
-    # Delete single from an instance
+    # Delete data from seed_post8 and all children
     post = await Post.query().find(slug='test-post8')
-    await post.delete()
+    await delete_post8(post.id)
 
     # Check normal seeded posts
     posts = await Post.query().get()
@@ -57,8 +57,8 @@ async def test_multi_query(app1):
     post = await Post.query().include('comments').find(slug='test-post8')
     assert post.comments == None
 
-    # Delete post
-    await Post.query().where('id', post.id).delete()
+    # Delete data from seed_post8 and all children
+    await delete_post8(post.id)
 
     # Check normal seeded posts
     seeded_posts = ['test-post1', 'test-post2', 'test-post3', 'test-post4', 'test-post5', 'test-post6', 'test-post7'];

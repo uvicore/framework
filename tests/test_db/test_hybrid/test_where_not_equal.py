@@ -21,7 +21,7 @@ async def test_single(app1, Posts, post):
     # Single NOT where
     query = uvicore.db.query().table(Posts.table).where(post.creator_id, '!=', 2)
     posts = await query.order_by('id').get()
-    #print(query.sql());dump(posts); dump(posts[0].keys())
+    #print(query.sql());dump(posts); dump(posts[0]._mapping.keys())
     assert [1, 2, 6, 7] == [x.id for x in posts]
 
 

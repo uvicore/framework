@@ -1,11 +1,11 @@
 import pickle
 import uvicore
-from uvicore.typing import Dict, Any, Callable, Union, List, Tuple
-from uvicore.support.dumper import dump, dd
-from uvicore.redis import Redis as RedisDb
-from aioredis import Redis as RedisInterface
-from uvicore.contracts import Cache as CacheInterface
 from uvicore.cache.manager import Manager
+from redis import Redis as RedisInterface
+from uvicore.redis import Redis as RedisDb
+from uvicore.support.dumper import dump, dd
+from uvicore.contracts import Cache as CacheInterface
+from uvicore.typing import Dict, Any, Callable, Union, List, Tuple
 
 
 @uvicore.service()
@@ -84,7 +84,7 @@ class Redis(CacheInterface):
         if seconds is None: seconds = self.seconds
         if type(keys) != dict: keys = {keys:value}
         for (key, value) in keys.items():
-            await redis.set(key, self._serialize(value), expire=seconds)
+            await redis.set(key, self._serialize(value), ex=seconds)
 
     async def pull(self, key: Union[str, Dict]) -> Any:
         """Get one or more key values from cache them remove them after"""

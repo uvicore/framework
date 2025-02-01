@@ -1,5 +1,5 @@
 import uvicore
-import aioredis
+import redis.asyncio as redis
 from uvicore.typing import Dict, Any
 from uvicore.support.dumper import dump, dd
 
@@ -51,13 +51,20 @@ class Redis:
             raise Exception('Redis connection {} not found'.format(connection))
         return conn
 
-    async def connect(self, connection: str = None) -> aioredis.Redis:
+    async def connect(self, connection: str = None) -> redis.Redis:
         """Connect to a redis database by uvicore connection"""
         conn = self.connection(connection)
 
         # Connect to redis pool if connection never started
         if conn.url not in self.engines:
-            self._engines[conn.url] = await aioredis.create_redis_pool(conn.url)
+            # Dict({
+            # 'host': '127.0.0.1',
+            # 'port': 6379,
+            # 'database': 2,
+            # 'password': None,
+            # 'url': 'redis://127.0.0.1:6379/2'
+            # })
+            self._engines[conn.url] = redis.from_url(conn.url)
 
         # Return actual connection (engine)
         return self.engines[conn.url]

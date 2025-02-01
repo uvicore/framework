@@ -1,13 +1,12 @@
 import uvicore
 from uvicore.orm.fields import Field
 from uvicore.support.dumper import dd, dump
-from prettyprinter import pretty_call, register_pretty
+from uvicore.support.printer import pretty_call, register_pretty
 from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic.main import ModelMetaclass as PydanticMetaclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.sql import ClauseElement
 
 # try:
 # except ImportError:  # pragma: nocover
@@ -123,17 +122,17 @@ class ModelMetaclass(PydanticMetaclass):
         if not field: raise Exception("Field {} not found in model {}".format(fieldname, entity.modelfqn))
         return field
 
-    async def execute(entity, query: Union[ClauseElement, str], values: Union[List, Dict] = None) -> Any:
+    async def execute(entity, query: Any, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> sa.CursorResult:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
 
-    async def fetchone(entity, query: Union[ClauseElement, str], values: Dict = None) -> Optional[Mapping]:
-        """Database fetchone in the context of this entities connection"""
-        return await uvicore.db.fetchone(query=query, connection=entity.__connection__)
-
-    async def fetchall(entity, query: Union[ClauseElement, str], values: Dict = None) -> List[Mapping]:
+    async def fetchall(entity, query: sa.Select|str, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> Sequence[sa.Row]:
         """Database fetchall in the context of this entities connection"""
         return await uvicore.db.fetchall(query=query, connection=entity.__connection__)
+
+    async def fetchone(entity, query: sa.Select|str, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> sa.Row|None:
+        """Database fetchone in the context of this entities connection"""
+        return await uvicore.db.fetchone(query=query, connection=entity.__connection__)
 
     # def to_model(entity, row, prefix: str = None) -> Any:
     #     """Convert a row of table data into a model"""

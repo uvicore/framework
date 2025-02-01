@@ -1,13 +1,8 @@
-from abc import ABC, abstractmethod, abstractclassmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 # class Event(ABC):
 
 #     is_async: bool
-
-#     @abstractclassmethod
-#     @abstractproperty
-#     def name(cls): pass
-
 
 # #from uvicore.typing import Dict
 # class Event(Dict):

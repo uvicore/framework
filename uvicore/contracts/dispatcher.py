@@ -1,20 +1,23 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from uvicore.typing import Dict, List, Any, Union, Callable
 
 
 class Dispatcher(ABC):
 
-    @abstractproperty
+    # @property
+    # @abstractmethod
     # def events(self) -> Dict[str, Dict]:
     #     """Dictionary of all registered events in uvicore and all packages"""
     #     pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def listeners(self) -> Dict[str, List]:
         """Dictionary of all listeners for each event"""
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def wildcards(self) -> List:
         """List of all wildcard listeners"""
         pass

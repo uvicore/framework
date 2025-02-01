@@ -18,5 +18,5 @@ async def test_select_max(app1):
     results = await query.get()
     print(query.sql())
     dump(results)
-    dump(results[0].keys())
+    dump(results[0]._mapping.keys())
     assert [(7,)] == results

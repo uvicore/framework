@@ -1,7 +1,8 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty
-from typing import Dict, Any
+from typing import Any
+from abc import ABC, abstractmethod
 from logging import Logger as PythonLogger
+
 
 class Logger(ABC):
 
@@ -10,12 +11,12 @@ class Logger(ABC):
     def console_handler(self) -> PythonLogger:
         """Get the console logger"""
 
-    @abstractproperty
+    @property
     @abstractmethod
     def file_handler(self) -> PythonLogger:
         """Get the file logger"""
 
-    @abstractproperty
+    @property
     @abstractmethod
     def logger(self):
         """Get the logger"""

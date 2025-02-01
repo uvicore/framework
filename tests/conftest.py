@@ -1,8 +1,9 @@
 import pytest
 import asyncio
 import uvicore
-from uvicore.typing import Generator
+import pytest_asyncio
 from httpx import AsyncClient
+from uvicore.typing import Generator
 from uvicore.support.dumper import dump, dd
 
 
@@ -13,7 +14,7 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def app1(event_loop):
 
     #import sys
@@ -61,7 +62,8 @@ async def app1(event_loop):
 
 # Async TestClient based on encode/httpx
 # https://github.com/tiangolo/fastapi/issues/1273
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="session")
 async def client() -> Generator:
     async with AsyncClient(app=uvicore.app.http, base_url="http://testserver") as client:
+    #async with AsyncClient(transport=uvicore.app.http, base_url="http://testserver") as client:
         yield client
