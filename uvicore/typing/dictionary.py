@@ -243,11 +243,12 @@ class _SuperDict:
         if _recursive_config is None: _recursive_config = self
 
         try:
-
             # Replace any , with ^ inside [] temporarily
             if "[" in dotkey:
+
                 def x(m): return m[0].replace('.', '^')[1:-1]
-                dotkey = re.sub('(\[.*?\])', x, dotkey)
+                dotkey = re.sub("(\\[.*?\\])", x, dotkey)
+                dump(dotkey)
 
             if "." in dotkey:
                 key, rest = dotkey.split(".", 1)
@@ -273,7 +274,7 @@ class _SuperDict:
         # Replace any , with ^ inside [] temporarily
         if "[" in dotkey:
             def x(m): return m[0].replace('.', '^')[1:-1]
-            dotkey = re.sub('(\[.*?\])', x, dotkey)
+            dotkey = re.sub('(\\[.*?\\])', x, dotkey)
 
         if "." in dotkey:
             key, rest = dotkey.split(".", 1)
