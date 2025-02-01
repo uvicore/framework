@@ -22,6 +22,9 @@ View the Uvicore documentation to get started https://uvicore.io
 
 
 ## Quick Install
+
+https://uvicore.io/getting-started/installation/
+
 ![](https://uvicore.io/files/uvicore-installer.gif)
 
 
