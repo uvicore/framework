@@ -108,7 +108,8 @@ Transfer/sec:     86.30MB
 
 ## Supported Python
 
-- Uvicore 0.2 - Python 3.9+
+- Uvicore 0.1 - Python 3.9
+- Uvicore 0.2 - Python 3.9, 3.10
 - Uvicore 0.3 - Python 3.10+
 
 

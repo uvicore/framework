@@ -149,14 +149,13 @@ class Db(DatabaseInterface):
 
                     # Build an SQLAlchemy compatible URL from connection configuration dictionary
                     # dialect+driver://<user>:<password>@<host>[:<port>]/<dbname>
-                    connection.url = (sa.engine.url.URL.create(
+                    conn_url = (sa.engine.url.URL.create(
                         drivername=str(connection.dialect) + '+' + str(connection.driver),
                         username=connection.username,
                         password=connection.password,
                         host=connection.host,
                         port=int(connection.port),
                         database=connection.database,
-                        query=connection.options
                     ))
 
                     # Build metakey
@@ -181,28 +180,24 @@ class Db(DatabaseInterface):
                     })
 
                     # SQLite has a different URL
-                    connection.url = (sa.engine.url.URL.create(
+                    conn_url = (sa.engine.url.URL.create(
                         drivername=str(connection.dialect) + '+' + str(connection.driver),
                         database=connection.database,
-                        query=connection.options
                     ))
 
                     # SQLite has a different metakey
                     connection.metakey = connection.dialect + '://' + connection.database
 
-
-                # All Optional must be strings, so convert all values to str()
-                if connection.options:
-                    for (key, value) in connection.options.items():
-                        connection.options[key] = str(value)
+                # Save conn_url as string
+                connection.url = str(conn_url)
 
                 # Attempt an async connection, else a sync connection
                 # And automatically set an is_async attribute on our connection Dict
                 try:
-                    engine = create_async_engine(connection.url)
+                    engine = create_async_engine(conn_url, connect_args=connection.options)
                     connection.is_async = True
                 except:
-                    engine = sa.create_engine(connection.url, pool_pre_ping=True)
+                    engine = sa.create_engine(conn_url, connect_args=connection.options, pool_pre_ping=True)
                     connection.is_async = False
 
                 # Add this new [sync or async] engine to our Dict of engines
