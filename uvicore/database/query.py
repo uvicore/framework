@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import operator as operators
-from copy import copy
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
-from uvicore.support.hash import sha1
-
-import sqlalchemy as sa
-from sqlalchemy.sql.expression import BinaryExpression
-from sqlalchemy.engine.result import Row as RowProxy
-
 import uvicore
-from uvicore.database.builder import QueryBuilder, Join
+from copy import copy
+import sqlalchemy as sa
 from uvicore.support.dumper import dd, dump
+from uvicore.database.builder import QueryBuilder, Join
+from typing import Generic, List, TypeVar, Union, Sequence, Any
 from uvicore.contracts import DbQueryBuilder as BuilderInterface
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
@@ -42,7 +36,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             self.query.selects.append(column)
         return self
 
-    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
+    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, sa.BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
         """Add join (default to INNER) statement to query"""
         # Get table and tablename
         conn = self._connection()
@@ -54,7 +48,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         # Get left, right and onclause expressions
         left = None
         right = None
-        if type(left_where) == BinaryExpression:
+        if type(left_where) == sa.BinaryExpression:
             onclause = left_where
         else:
             left = self._column(left_where)
@@ -68,7 +62,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         self.query.joins.append(Join(table, tablename, left, right, onclause, alias, method))
         return self
 
-    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
+    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, sa.BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
         """Add LEFT OUTER join statement to query"""
         self.join(table=table, left_where=left_where, right_where=right_where, method='outerjoin', alias=alias)
         return self
@@ -79,7 +73,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             self.query.group_by.append(group_by)
         return self
 
-    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> RowProxy:
+    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> sa.Row|None:
         """Execute query by primary key or custom column and return first row found"""
         if pk_value:
             # Assume column is PK .find(1234)
@@ -100,7 +94,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         if results: return results[0]
         return None
 
-    async def get(self) -> List[RowProxy]:
+    async def get(self) -> List[sa.Row]:
         """Execute select query and return all rows found"""
 
         # Build select query
@@ -136,6 +130,123 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             if cache: await uvicore.cache.store(cache.get('store')).put(cache.get('key'), results, seconds=cache.get('seconds'))
 
         return results
+
+    async def all(self) -> List[sa.Row]:
+        """Alias to .get()"""
+        return await self.get()
+
+    async def fetchall(self) -> List[sa.Row]:
+        """Alias to .get()"""
+        return await self.get()
+
+    async def first(self) -> sa.Row|None:
+        """Get one (first/top) record from query. Returns None if no records found"""
+
+        # Get results based on query results
+        results = await self.get()
+
+        # Return one record or None
+        if results: return results[0]
+        return None
+
+    async def fetchone(self) -> sa.Row|None:
+        """Alias to .first()"""
+        return await self.first()
+
+    async def one(self) -> sa.Row:
+        """Get one record from query. Throws Exception if no data found or querying more than one record"""
+
+        # Get results based on query results
+        results = await self.get()
+
+        # If no results, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if results is None or len(results) == 0:
+            raise Exception('No row was found when one was required')
+
+        # If > 1 result found, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if len(results) > 1:
+            raise Exception('Multiple rows were found when exactly one was required')
+
+        # Return first record
+        return results[0]
+
+    async def one_or_none(self) -> sa.Row|None:
+        """Get one record from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
+
+        # Get results based on query results
+        results = await self.get()
+
+        # If no results, return None
+        if results is None or len(results) == 0:
+            return None
+
+        # If > 1 result found, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if len(results) > 1:
+            raise Exception('Multiple rows were found when one or none was required')
+
+        # Return first record
+        return results[0]
+
+    async def scalars(self) -> Sequence[Any]:
+        """Get many scalar values from query.  Returns empty List if no records found. If selecting multiple columns, returns List of FIRST column only."""
+
+        # Get results based on query results
+        results = await self.get()
+
+        # If no results, return []
+        if results is None or len(results) == 0:
+            return []
+
+        # Return first column of all rows as List
+        return [x[0] for x in results]
+
+    async def scalar(self) -> Any|None:
+        """Get a single scalar value from query. Returns None if no record found.  Returns first (top) if more than one record found"""
+
+        results = await self.scalars()
+        if len(results) == 0: return None
+        return results[0]
+
+    async def scalar_one(self) -> Any:
+        """Get a single scalar value from query.  Throws Exception if no data found or if querying more than one record"""
+
+        # Get results based on query results
+        results = await self.scalars()
+
+        # If no results, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if results is None or len(results) == 0:
+            raise Exception('No row was found when one was required')
+
+        # If > 1 result found, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if len(results) > 1:
+            raise Exception('Multiple rows were found when exactly one was required')
+
+        # Return first column
+        return results[0]
+
+    async def scalar_one_or_none(self) -> Any|None:
+        """Get a single scalar value from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
+
+        # Get results based on query results
+        results = await self.scalars()
+
+        # If no results, return None
+        if results is None or len(results) == 0:
+            return None
+
+        # If > 1 result found, throw error
+        # Same message as SQLAlchemy query builder of same error
+        if len(results) > 1:
+            raise Exception('Multiple rows were found when one or none was required')
+
+        # Return first column
+        return results[0]
+
 
     async def delete(self) -> None:
         """Execute delete query"""

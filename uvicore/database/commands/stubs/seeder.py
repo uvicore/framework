@@ -40,7 +40,7 @@ async def seed():
     # --------------------------------------------------------------------------
     # tags = await Tag.query().key_by('name').get()
     # post = await xx_ModelName(slug='post-1', title='Post 1', creator_id=1).save()
-    # # Create AND Link if nto exist Many-To-Many tags
+    # # Create AND Link if not exist Many-To-Many tags
     # await post.link('tags', [
     #     tags['linux'],
     #     tags['bsd'],
@@ -51,7 +51,7 @@ async def seed():
     #     'size': 2483282
     # })
     # # Create Polymorphic One-To-Many
-    # # NOTE: .add is simplay an alias for .create()
+    # # NOTE: .add is simply an alias for .create()
     # await post.add('attributes', [
     #     {'key': 'post2-test1', 'value': 'value for post2-test1'},
     #     {'key': 'post2-test2', 'value': 'value for post2-test2'},

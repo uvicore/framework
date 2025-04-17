@@ -26,7 +26,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
     def __init__(self):
         self.query = Query()
 
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
         """Add where statement to query"""
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
@@ -40,12 +40,13 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             #   .where(table.column, '=', 'value')
 
             # Swap operator and value
-            if not value: value = operator; operator = '='
+            #if not value: value = operator; operator = '='
+            if value == '!None!': value = operator; operator = '='
             self.query.wheres.append((column, operator.lower(), value))
         elif type(column) == list:
             # Multiple wheres in one as a List[Tuple] or List[BinaryExpression]
             for where in column:
-                # Recursivelly add Tuple wheres
+                # Recursively add Tuple wheres
                 if type(where) == tuple:
                     # String
                     #   .where([('column', 'value'), ('column', '=', 'value')])
@@ -62,6 +63,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         else:
             # Direct SQLAlchemy expression
             # .where(table.column == 'value' and table.column >= 'value')
+            if value == 'null': value = None
             self.query.wheres.append(column)
         return self
 

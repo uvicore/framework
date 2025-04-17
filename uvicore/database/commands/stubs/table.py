@@ -13,16 +13,18 @@ from uvicore.support.dumper import dump, dd
 class xx_TableName(Table):
 
     # Actual database table name
-    # Plural table names and singluar model names are encouraged
+    # Plural table names and singular ORM model names are encouraged
     # Do not add a package prefix, leave that to the connection config
     name = 'xx_tablename'
 
-    # Connection for this database from your config file
+    # Connection for this table from your config/database.py file
     connection = 'xx_appname'
 
-    # SQLAlchemy Table definition as a list (exclude name and metadata)
+    # SQLAlchemy Table definition
     # This will be converted into an actual SQLAlchemy Table() instance
-    # See https://docs.sqlalchemy.org/en/13/core/schema.html
+    # and automatically associated with the proper SQLAlchemy Metadata
+    # See https://uvicore.io/database/db-tables/
+    # See https://docs.sqlalchemy.org/en/20/core/schema.html
     schema = [
         # Defaults: nullable=True, index=False, unique=False, primary_key=False
 
@@ -59,4 +61,7 @@ class xx_TableName(Table):
     ]
 
     # Optional SQLAlchemy Table() instance kwargs
-    schema_kwargs = {}
+    schema_kwargs = {
+        # Enable SQLite autoincrements (this is OK even when not using SQLite)
+        'sqlite_autoincrement': True,
+    }

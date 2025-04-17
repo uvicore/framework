@@ -12,8 +12,12 @@ async def cli():
     #await orm_insert_play()
     #await poly_play()
 
+    await query_builder_play()
+
 
     from uvicore.auth.models.permission import Permission
+
+
 
     # .scalar() and scalar_one and scalar_one_or_none
     # .scalars()
@@ -73,7 +77,7 @@ async def cli():
     # dd(x, type(x))
 
 
-    dd(await uvicore.db.query().table('permissions').get())
+    #dd(await uvicore.db.query().table('permissions').get())
 
 
     #x = await Permission.query().find(3)
@@ -125,6 +129,57 @@ async def cli():
 
     # from teamuvc import themes
     # teamuvc-themes
+
+
+async def query_builder_play():
+
+    # ORM example
+    # from app1.models import Post
+    # posts = await Post.query().first()
+    # dd(posts)
+
+    # sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when exactly one was required
+
+    #x = await uvicore.db.scalar_one("SELECT name, id FROM permissions where ID = 1")
+    #dd(x)
+
+
+    posts = (await uvicore.db.query()
+        .table('posts')
+        .select('title', 'id')
+        .where('id', '>', 2)
+        .scalar_one_or_none()
+    )
+    dd(posts)
+
+
+
+
+    # post = (await uvicore.db.query('app1')
+    #     .table('posts')
+    #     #.join('auth.users', 'posts.creator_id', 'auth.users.id', alias='creator')
+    #     .join('auth.users', 'posts.creator_id', 'auth.users.id')
+    #     .find(auth__users__id=2)
+    # )
+    #dd(post)
+
+    # 4, 5, 7
+    posts = (await uvicore.db.query('app1')
+        .table('posts')
+        .where('body', '!like', '%red%')
+        .get()
+    )
+    dd(posts)
+
+    # posts = (await uvicore.db.query('app1')
+    #     .table('posts')
+    #     .where([
+    #         ('id', '>', 2),
+    #         ('other', '=', None)
+    #     ])
+    #     .get()
+    # )
+    # dd(posts)
 
 
 

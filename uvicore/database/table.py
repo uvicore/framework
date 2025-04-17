@@ -8,7 +8,7 @@ from uvicore.support.dumper import dd, dump
 class Table:
 
     @property
-    def table(self):
+    def table(self) -> sa.Table:
         return self.schema
 
     def __init__(self):
@@ -25,7 +25,7 @@ class Table:
 
         # Only enhance schema if connection string backend is 'sqlalchemy'
         if uvicore.db.connection(self.connection).backend == 'sqlalchemy':
-            self.schema = sa.Table(
+            self.schema: sa.Table = sa.Table(
                 self.name,
                 self.metadata,
                 *self.schema,
