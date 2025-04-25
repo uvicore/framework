@@ -1,20 +1,10 @@
 import uvicore
-from uvicore.typing import Dict, List, OrderedDict, get_type_hints, Tuple
+from uvicore.typing import Dict
 from uvicore.events import Handler
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
-from uvicore.foundation.events.app import Booted as OnAppBooted
 from uvicore.contracts import Package as Package
-from uvicore.console import command_is
-from starlette.applications import Starlette
-from fastapi import FastAPI, Depends
-from uvicore.http import response
-from uvicore.http.events import server as HttpServerEvents
-from uvicore.http.routing.router import Routes
-from functools import partial, update_wrapper
-from uvicore.http.routing import ApiRoute, WebRoute
-from uvicore.http.routing import Guard
-from uvicore.http.openapi.docs import get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
+from uvicore.foundation.events.app import Booted as OnAppBooted
 
 
 class Templating(Handler):
@@ -50,7 +40,14 @@ class Templating(Handler):
         # This will set the main running app FIRST as we always want the app to win
         paths.reverse()
         for path in paths:
-            templates.include_path(module.location(path))
+            if '/' in path:
+                # Path is an actual unix path
+                templates.include_path(path)
+            else:
+                # Path is probably a python myapp.template path, convert to unix path
+                templates.include_path(module.location(path))
+        # Debug, can see actual jinja paths like so
+        # dd(templates._paths)
 
         # Add all packages deep_merged template options
         if 'context_functions' in context_processors:
