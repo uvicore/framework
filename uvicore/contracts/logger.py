@@ -22,7 +22,7 @@ class Logger(ABC):
         """Get the logger"""
 
     @abstractmethod
-    def name(self, name: str):
+    def name(self, name: str) -> Logger:
         """Set name of logger"""
 
     @abstractmethod
@@ -34,35 +34,35 @@ class Logger(ABC):
         """Dump message"""
 
     @abstractmethod
-    def info(self, message) -> Logger:
+    def info(self, message):
         """Log an info message"""
 
     @abstractmethod
-    def notice(self, message) -> Logger:
+    def notice(self, message):
         """Log a notice message"""
 
     @abstractmethod
-    def warning(self, message) -> Logger:
+    def warning(self, message):
         """Log a warning message"""
 
     @abstractmethod
-    def debug(self, message) -> Logger:
+    def debug(self, message):
         """Log a debug message"""
 
     @abstractmethod
-    def error(self, message) -> Logger:
+    def error(self, message):
         """Log an error message"""
 
     @abstractmethod
-    def critical(self, message) -> Logger:
+    def critical(self, message):
         """Log a critical message"""
 
     @abstractmethod
-    def exception(self, message) -> Logger:
+    def exception(self, message):
         """Log an exception message"""
 
     @abstractmethod
-    def blank(self) -> Logger:
+    def blank(self):
         """Log a blank line"""
 
     @abstractmethod
@@ -70,41 +70,41 @@ class Logger(ABC):
         """Log a blank line"""
 
     @abstractmethod
-    def separator(self) -> Logger:
+    def separator(self):
         """Log a = line separator"""
 
     @abstractmethod
-    def line(self) -> Logger:
+    def line(self):
         """Log a - line separator"""
 
     @abstractmethod
-    def header(self, message) -> Logger:
+    def header(self, message):
         """Header :: style"""
 
     @abstractmethod
-    def header2(self, message) -> Logger:
+    def header2(self, message):
         """Header ## style"""
 
     @abstractmethod
-    def header3(self, message) -> Logger:
+    def header3(self, message):
         """Header === style"""
 
     @abstractmethod
-    def header4(self, message) -> Logger:
+    def header4(self, message):
         """Header ---- style"""
 
     @abstractmethod
-    def item(self, message) -> Logger:
+    def item(self, message, *, level: int = 1):
         """Item * style"""
 
     @abstractmethod
-    def item2(self, message) -> Logger:
+    def item2(self, message, *, level: int = 1):
         """Item - style"""
 
     @abstractmethod
-    def item3(self, message) -> Logger:
+    def item3(self, message, *, level: int = 1):
         """Item + style"""
 
     @abstractmethod
-    def item4(self, message) -> Logger:
+    def item4(self, message, *, level: int = 1):
         """Item > style"""
