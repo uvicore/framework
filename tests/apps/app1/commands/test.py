@@ -12,6 +12,45 @@ async def cli():
     #await orm_insert_play()
     #await poly_play()
 
+
+    log.header("Example of .item()")
+    log.item("Item level 1")
+    log.item("Item level 2", level=2)
+    log.item("Item level 3", level=3)
+    log.item("Item level 4", level=4)
+
+
+    log.header("Example of .item2()")
+    log.item2("Item level 1")
+    log.item2("Item level 2", level=2)
+    log.item2("Item level 3", level=3)
+    log.item2("Item level 4", level=4)
+
+
+    log.header("Example of .item3()")
+    log.item3("Item level 1")
+    log.item3("Item level 2", level=2)
+    log.item3("Item level 3", level=3)
+    log.item3("Item level 4", level=4)
+
+
+    log.header("Example of .item4()")
+    log.item4("Item level 1")
+    log.item4("Item level 2", level=2)
+    log.item4("Item level 3", level=3)
+    log.item4("Item level 4", level=0)
+
+    log.header("Example .header()")
+    log.header2("Example .header()")
+    log.header3("Example .header()")
+    log.header4("Example .header()")
+
+
+
+
+
+    dd('x')
+
     await query_builder_play()
 
 

@@ -12,6 +12,7 @@ from colored import attr, bg, fg
 import uvicore
 from uvicore.contracts import Logger as LoggerInterface
 from uvicore.support.dumper import log_dump
+from uvicore.support.dumper import dump, dd
 
 # # Sunfinity standardized log configuration
 # config = {
@@ -109,81 +110,96 @@ class ColoredFormatter(Formatter):
         # See color chart https://pypi.org/project/colored/
         level = record.levelname
         message = logging.Formatter.format(self, record)
+        prefix = str(message.strip()[0:2]).strip()
 
-        # Format header
-        if (level == 'INFO' and re.match("^:: ", message)):
-            message = re.sub("^:: ", "", message)
-            message = re.sub(" ::$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ':: ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ::', attr(0))
+        # Format all INFO level messages
+        if level == 'INFO':
 
-        # Format header2
-        if (level == 'INFO' and re.match("^## ", message)):
-            message = re.sub("^## ", "", message)
-            message = re.sub(" ##$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '## ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ##', attr(0))
+            # Format header
+            if prefix == '::':
+                message = re.sub("^:: ", "", message)
+                message = re.sub(" ::$", "", message)
+                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ':: ', attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ::', attr(0))
 
-        # Format header3
-        if (level == 'INFO' and re.match("^=== ", message)):
-            message = re.sub("^=== ", "", message)
-            message = re.sub(" ===$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '=== ', attr(0)) \
-                + ('{0}{1}{2}').format(fg('green'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ===', attr(0))
+            # Format header2
+            if prefix == '##':
+                message = re.sub("^## ", "", message)
+                message = re.sub(" ##$", "", message)
+                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '## ', attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ##', attr(0))
 
-        # Format header4
-        if (level == 'INFO' and re.match("^---- ", message)):
-            message = re.sub("^---- ", "", message)
-            message = re.sub(" ----$", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '---- ', attr(0)) \
-                + ('{0}{1}{2}').format(fg('dark_green'), message, attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
+            # Format header3
+            if prefix == '==':
+                message = re.sub("^=== ", "", message)
+                message = re.sub(" ===$", "", message)
+                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '=== ', attr(0)) \
+                    + ('{0}{1}{2}').format(fg('green'), message, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ===', attr(0))
 
-        # Format bullet * item
-        elif (level == 'INFO' and re.match("^\\* ", message)):
-            message = re.sub("^\\* ", "", message)
-            message = ('{0}{1}{2}').format(fg('green'), '   * ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+            # Format header4
+            if prefix == '--':
+                message = re.sub("^---- ", "", message)
+                message = re.sub(" ----$", "", message)
+                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '---- ', attr(0)) \
+                    + ('{0}{1}{2}').format(fg('dark_green'), message, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
 
-        # Format bullet2 - item
-        elif (level == 'INFO' and re.match("^- ", message)):
-            message = re.sub("^- ", "", message)
-            message = ('{0}{1}{2}').format(fg('cyan'), '   - ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+            # Format item *
+            elif prefix == '*':
+                split = message.split('*')
+                pre = split[0] + '*'
+                post = '*'.join(split[1:])
+                message = ('{0}{1}{2}').format(fg('green'), pre, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
-        # Format bullet3 + item
-        elif (level == 'INFO' and re.match("^\\+ ", message)):
-            message = re.sub("^\\+ ", "", message)
-            message = ('{0}{1}{2}').format(fg('red'), '   + ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+            # Format item2 -
+            elif prefix == '-':
+                split = message.split('-')
+                pre = split[0] + '-'
+                post = '-'.join(split[1:])
+                message = ('{0}{1}{2}').format(fg('cyan'), pre, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
-        # Format bullet4 > item
-        elif (level == 'INFO' and re.match("^> ", message)):
-            message = re.sub("^> ", "", message)
-            message = ('{0}{1}{2}').format(fg('magenta'), '   > ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+            # Format item3 +
+            elif prefix == '+':
+                split = message.split('+')
+                pre = split[0] + '+'
+                post = '+'.join(split[1:])
+                message = ('{0}{1}{2}').format(fg('red'), pre, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
-        # Format notice
-        elif (level == 'INFO' and re.match("^NOTICE: ", message)):
-            message = re.sub("^NOTICE: ", "", message)
-            message = ('{0}{1}{2}{3}').format(fg('yellow'), attr('bold'), 'NOTICE: ', attr(0)) \
-                + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+            # Format item4 >
+            elif prefix == '>':
+                split = message.split('>')
+                pre = split[0] + '>'
+                post = '>'.join(split[1:])
+                message = ('{0}{1}{2}').format(fg('magenta'), pre, attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
-        # Format separator
-        elif (level == 'INFO' and re.match("^====", message)):
-            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+            # Format notice
+            elif (level == 'INFO' and re.match("^NOTICE: ", message)):
+                message = re.sub("^NOTICE: ", "", message)
+                message = ('{0}{1}{2}{3}').format(fg('yellow'), attr('bold'), 'NOTICE: ', attr(0)) \
+                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
 
-        # Format line
-        elif (level == 'INFO' and re.match("^----", message)):
-            message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+            # Format separator
+            elif (level == 'INFO' and re.match("^====", message)):
+                message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+
+            # Format line
+            elif (level == 'INFO' and re.match("^----", message)):
+                message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+
+            # No special formatting, plain old .info()
+            else:
+                message = message
 
         elif (level == 'DEBUG'):
             message = ('{0}{1}{2}').format(fg(241), message, attr(0))
-        elif (level == 'INFO'):
-            message = message
+
         elif (level == 'WARNING'):
             message = ('{0}{1}{2}').format(fg('orange_red_1'), message, attr(0))
         elif (level == 'ERROR'):
@@ -396,20 +412,24 @@ class Logger(LoggerInterface):
         self.logger.info("---- " + str(message) + " ----")
         self.reset()
 
-    def item(self, message):
-        self.logger.info("* " + str(message))
+    def item(self, message, *, level: int = 1):
+        spaces = ' ' * (level * 4)
+        self.logger.info(spaces + "* " + str(message))
         self.reset()
 
-    def item2(self, message):
-        self.logger.info("- " + str(message))
+    def item2(self, message, *, level: int = 1):
+        spaces = ' ' * (level * 4)
+        self.logger.info(spaces + "- " + str(message))
         self.reset()
 
-    def item3(self, message):
-        self.logger.info("+ " + str(message))
+    def item3(self, message, *, level: int = 1):
+        spaces = ' ' * (level * 4)
+        self.logger.info(spaces + "+ " + str(message))
         self.reset()
 
-    def item4(self, message):
-        self.logger.info("> " + str(message))
+    def item4(self, message, *, level: int = 1):
+        spaces = ' ' * (level * 4)
+        self.logger.info(spaces + "> " + str(message))
         self.reset()
 
 
