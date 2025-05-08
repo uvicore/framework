@@ -311,7 +311,7 @@ class Logger(LoggerInterface):
         if not self._name: return self._logger
         return logging.getLogger(self._name)
 
-    def name(self, name: str):
+    def name(self, name: str) -> LoggerInterface:
         self._name = name
         return self
 
@@ -379,7 +379,7 @@ class Logger(LoggerInterface):
         self.logger.error(str(message))
         self.reset()
 
-    def blank(self) -> LoggerInterface:
+    def blank(self):
         self.logger.info('')
         self.reset()
 

@@ -11,14 +11,35 @@ async def cli():
     #await cache_play()
     #await orm_insert_play()
     #await poly_play()
+    #await log_play()
+    #await query_builder_play()
+    await templating_play()
+
+    dd("Done Playing")
 
 
+async def templating_play():
+    from uvicore.templating.engine import Templates
+
+    file = 'test.yml.j2'
+    props = {
+        'foo': 'This is foo',
+        'bar': 'This is bar',
+    }
+
+    # Testing that Jinja does NOT remove the last newline in a file
+    # I had to set keep_trailing_newline=True in uvicore/templating/engine.py _init()
+    templated = Templates.render(file, props)
+    dd(templated)
+
+
+
+async def log_play():
     log.header("Example of .item()")
     log.item("Item level 1")
     log.item("Item level 2", level=2)
     log.item("Item level 3", level=3)
     log.item("Item level 4", level=4)
-
 
     log.header("Example of .item2()")
     log.item2("Item level 1")
@@ -26,13 +47,11 @@ async def cli():
     log.item2("Item level 3", level=3)
     log.item2("Item level 4", level=4)
 
-
     log.header("Example of .item3()")
     log.item3("Item level 1")
     log.item3("Item level 2", level=2)
     log.item3("Item level 3", level=3)
     log.item3("Item level 4", level=4)
-
 
     log.header("Example of .item4()")
     log.item4("Item level 1")
@@ -45,129 +64,7 @@ async def cli():
     log.header3("Example .header()")
     log.header4("Example .header()")
 
-
-
-
-
-    dd('x')
-
-    await query_builder_play()
-
-
-    from uvicore.auth.models.permission import Permission
-
-
-
-    # .scalar() and scalar_one and scalar_one_or_none
-    # .scalars()
-
-
-
-
-
-    # RAW sql works
-    #x = await uvicore.db.fetchone("SELECT * FROM permissions where ID = 1999")
-    #dd(x, type(x))
-
-
-
-
-
-    # Returns none if not found, returns FIRST value if multiples
-    # so always one or none
-    #x = await uvicore.db.scalar("SELECT id FROM permissions where ID > 9")
-    # dd(x)
-
-    # Errors if more than one found
-    # Errors if NO value found
-    #x = await uvicore.db.scalar_one("SELECT id FROM permissions where ID = 9999")
-    #dd(x)
-
-    # Returns None if not found
-    # Returns error if multiples
-    #x = await uvicore.db.scalar_one_or_none("SELECT id FROM permissions where ID = 9")
-    #dd(x)
-
-
-    # List of single items, even if only ONE found
-    # Empty list of none found
-    # If selecting multiple columns, returns first column
-
-    #x = await uvicore.db.scalars("SELECT entity, id FROM permissions where ID > 9")
-    #dd(type(x))
-    #dd(x)
-
-
-
-
-    #x = await uvicore.db.scalars("SELECT id FROM permissions where ID > 9")
-
-
-    # .execute return standard SA Result, which has all sorts of stuff like .unique(), .scalars() etc...
-    #x = await uvicore.db.execute("SELECT id FROM permissions where ID > 10")
-    #dd(x.scalars().all())
-
-    # RAW sql using .execute() works
-    #x = await uvicore.db.execute("SELECT * FROM permissions where ID = 1")
-    # dd(x.fetchall(), type(x))
-
-    # RAW paramaterized SQL works
-    # x = await uvicore.db.fetchall("SELECT * FROM permissions where ID > :id", {'id': 5})
-    # dd(x, type(x))
-
-
-    #dd(await uvicore.db.query().table('permissions').get())
-
-
-    #x = await Permission.query().find(3)
-    #x = await Permission.query().get()
-
-
-    dd('DONE PLAY')
-
-
-
-
-
-
-    from app1.models import Tag
-    tag = await Tag.query().find(1)
-    dd(tag)
-    dd('hi')
-
-    from app1.models import Post
-    #posts = await Post.query().or_where([('creator_id', 1), ('creator_id', 2), ('creator_id','=', 5)]).get()
-
-    # posts = await (Post.query()
-    #     .include('comments')
-    #     .where('creator_id', 1)
-    #     #.filter('comments.creator_id', 2)
-    #     .sort('comments.id', 'DESC')
-    # ).get()
-
-    page_size = 2
-    page = 5
-    posts = await Post.query().limit(page_size).offset(page_size * (page -1)).get()
-
-    #posts = await Post.query().order_by(['id', 'DESC']).get()
-    #posts = await Post.query().where('other', 'null').where('creator_id', 2).get();
-    # posts = await Post.query().where([
-    #     ('other', 'null'),
-    #     ('creator_id', 2),
-    # ]).get();
-    dd(posts)
-
-    dd('')
-
-
-    # from uvicoreteam.themes import mdb
-    # from uvicoreextra
-    # from uvcteam import themes
-    # from teamuvicore import themes
-    # from uvicore_extra import themes
-
-    # from teamuvc import themes
-    # teamuvc-themes
+    dd("Done Log Play")
 
 
 async def query_builder_play():

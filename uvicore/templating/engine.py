@@ -85,7 +85,11 @@ class Templates(TemplateInterface):
 
         # Load our jinja2 environment
         loader = jinja2.FileSystemLoader(self.paths)
-        self._env = jinja2.Environment(loader=loader, autoescape=True)
+        self._env = jinja2.Environment(
+            loader=loader,
+            autoescape=True,
+            keep_trailing_newline=True
+        )
 
         # Register all user defined context processors
         self._register_context_processors()

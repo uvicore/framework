@@ -34,6 +34,10 @@ dependencies = OrderedDict({
         'uvicore.http_client': {
             'provider': 'uvicore.http_client.package.provider.HttpClient',
         },
+        # Templating engine for HTTP Web Routes
+        'uvicore.templating': {
+            'provider': 'uvicore.templating.package.provider.Templating',
+        },
         # 'mreschke.themes': {
         #    'provider': 'mreschke.themes.package.provider.themes.Themes',
         # },
