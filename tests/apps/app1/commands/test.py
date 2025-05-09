@@ -11,9 +11,9 @@ async def cli():
     #await cache_play()
     #await orm_insert_play()
     #await poly_play()
-    #await log_play()
+    await log_play()
     #await query_builder_play()
-    await templating_play()
+    #await templating_play()
 
     dd("Done Playing")
 

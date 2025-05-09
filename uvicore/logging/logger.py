@@ -160,7 +160,7 @@ class ColoredFormatter(Formatter):
                 split = message.split('-')
                 pre = split[0] + '-'
                 post = '-'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('cyan'), pre, attr(0)) \
+                message = ('{0}{1}{2}').format(fg('red'), pre, attr(0)) \
                     + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
             # Format item3 +
@@ -168,7 +168,7 @@ class ColoredFormatter(Formatter):
                 split = message.split('+')
                 pre = split[0] + '+'
                 post = '+'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('red'), pre, attr(0)) \
+                message = ('{0}{1}{2}').format(fg('cyan'), pre, attr(0)) \
                     + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
             # Format item4 >
