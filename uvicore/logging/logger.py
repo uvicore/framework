@@ -1,55 +1,16 @@
 from __future__ import annotations
 
-import logging
-import logging.config
 import re
 import sys
-from logging import Formatter
-from logging import Logger as PythonLogger
-
-from colored import attr, bg, fg
-
 import uvicore
-from uvicore.contracts import Logger as LoggerInterface
-from uvicore.support.dumper import log_dump
+import logging
+import logging.config
+from logging import Formatter
+from uvicore.typing import List
+from colored import attr, bg, fg
+from logging import Logger as PythonLogger
 from uvicore.support.dumper import dump, dd
-
-# # Sunfinity standardized log configuration
-# config = {
-#     'version': 1,
-#     'formatters': {
-#         'console': {
-#             'format': '%(message)s',
-#             'datefmt': '%Y-%m-%d %H:%M:%S',
-#         },
-#         'file': {
-#             #format': ''%(asctime)s.%(msecs)03d | %(process)-5d | %(levelname)-7s | %(module)s:%(lineno)-10d | %(message)s'',
-#             #format': ''%(asctime)s.%(msecs)03d | %(levelname)-7s | %(message)s'',
-#             'format': '%(asctime)s.%(msecs)03d | %(levelname)-7s | %(message)s',
-#             'datefmt': '%Y-%m-%d %H:%M:%S',
-#         },
-#     },
-#     'handlers': {
-#         'console': {
-#             'class': 'logging.StreamHandler',
-#             'level': 'INFO',
-#             'formatter': 'console',
-#             'stream': 'ext://sys.stdout',
-#         },
-#         'file': {
-#             'class': 'logging.handlers.RotatingFileHandler',
-#             'level': 'DEBUG',
-#             'formatter': 'file',
-#             'filename': file,
-#             'maxBytes': 1024,
-#             'backupCount': 3,
-#         },
-#     },
-#     'root': {
-#         'level': 'DEBUG',
-#         'handlers': ['console', 'file'],
-#     }
-# }
+from uvicore.contracts import Logger as LoggerInterface
 
 
 class OutputFilter(logging.Filter):
@@ -319,37 +280,61 @@ class Logger(LoggerInterface):
         self._name = None
 
     def dump(self, *args):
-        self._dump_handler(*args, handler='file', filters=self.config['file']['filters'], excludes=self.config['file']['exclude'])
-        self._dump_handler(*args, handler='console', filters=self.config['console']['filters'], excludes=self.config['console']['exclude'])
+        running_pytest = uvicore.app.is_pytest
+        console_enabled = self.config['console']['enabled']
+        console_level = logging.getLevelName(uvicore.log.console_handler.level)
+        console_filters = self.config['console']['filters']
+        console_excludes = self.config['console']['exclude']
+        file_enabled = self.config['file']['enabled']
+        file_level = logging.getLevelName(uvicore.log.file_handler.level)
+
+        # Use dump() to prettyprint to console only if console is in DEBUG mode or we are running a pytest.
+        # The dump() does not understand log filters and excludes, so we must use those manually to decide
+        # if we should dump() the content or not.
+        if (console_enabled and console_level == 'DEBUG') or running_pytest:
+            show = False
+            loggerName = self._name or 'root'
+
+            # Check filters
+            if not console_filters: show = True
+            if not show:
+                for filter in console_filters:
+                    if loggerName[0:len(filter)] == filter:
+                        show = True
+                        break
+
+            # Check excludes
+            if show and console_excludes:
+                for exclude in console_excludes:
+                    if loggerName[0:len(exclude)] == exclude:
+                        show = False
+                        break
+
+            # Loglevel, Filters and Excludes say we can dump this to the console
+            if show: dump(*args)
+
+        # Dump to file
+        if (file_enabled and file_level == 'DEBUG'):
+            # We must temporarily disable the console logger or this prints to the console as well
+            # Which means a double print because of the dump(*args) abvove
+            # Must get handlers from the root logger.  If we are using a custom logger name like 'my-section' then it has no handlers
+            # so self.logger.handlers does not work.  We want the 'root' logger handlers
+            root_handlers = logging.getLogger().handlers
+            for handler in root_handlers:
+                if 'logging.StreamHandler' in str(type(handler)):
+                    handler.setLevel('CRITICAL')
+
+            # Log to file in in DEBUG mode
+            for arg in args:
+                self.logger.debug(arg)
+
+            # Re-enable console logger by restoring the original level
+            for handler in root_handlers:
+                if 'logging.StreamHandler' in str(type(handler)):
+                    handler.setLevel(console_level)
+
+        # Reset logger name
         self.reset()
-
-    def _dump_handler(self, *args, handler: str, filters: List, excludes: List):
-        if not self._name: self.name == 'root'
-        show = False
-
-        # Check filters
-        if not filters: show = True
-        if not show and self._name:
-            for filter in filters:
-                if self._name[0:len(filter)] == filter:
-                    show = True
-                    break
-
-        # Check excludes
-        if show and excludes and self._name is not None:
-            for exclude in excludes:
-                if self._name[0:len(exclude)] == exclude:
-                    show = False
-                    break
-
-        if show:
-            if handler == 'console':
-                # Pretty Printer to Console
-                log_dump(*args)
-            else:
-                # Print as text to file handler
-                for arg in args:
-                    self.logger.debug(arg)
 
     def info(self, message):
         self.logger.info(str(message))

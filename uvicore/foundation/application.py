@@ -77,6 +77,10 @@ class Application(ApplicationInterface):
         return self._is_http
 
     @property
+    def is_pytest(self) -> bool:
+        return self._is_pytest
+
+    @property
     def packages(self) -> OrderedDict[str, PackageInterface]:
         return self._packages
 
@@ -109,6 +113,7 @@ class Application(ApplicationInterface):
         self._booted = False
         self._is_console = False
         self._is_http = False
+        self._is_pytest = False
         self._packages = OrderedDict()
         self._running_config = OrderedDict()
         self._path = None
@@ -162,6 +167,12 @@ class Application(ApplicationInterface):
         if 'uvicore.http' not in self.providers:
             self._is_console = True
             self._is_http = False
+
+        # Detect if running in pytest mode
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            self._is_console = False
+            self._is_http = False
+            self._is_pytest = True
 
         # Register all providers by calling each packages register() method
         # This is what builds self._packages with an actual Package Class objects

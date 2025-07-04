@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from uvicore.typing import List, Union
+from uvicore.typing import List, Union, Optional
 
 # Why a dataclass instead of a SuperDict?
 # Because a dataclass FORCES you to instantiate with ALL these attributes
@@ -18,18 +18,18 @@ class UserInfo(ABC):
     # This is still a fully dynamic SuperDict!
     id: int
     uuid: str
-    sub: str
     username: str
     email: str
     first_name: str
     last_name: str
-    title: str
-    avatar: str
+    title: Optional[str]
+    avatar: Optional[str]
     groups: List[str]
     roles: List[str]
     permissions: List[str]
     superadmin: bool
     authenticated: bool
+    extra: Optional[dict]
 
     @property
     @abstractmethod
@@ -44,37 +44,52 @@ class UserInfo(ABC):
     @property
     @abstractmethod
     def admin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
 
     @property
     @abstractmethod
     def is_admin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
 
     @property
     @abstractmethod
     def is_superadmin(self):
-        """Alias to superadmin"""
+        """Check if user is a superadmin"""
+
+    @property
+    @abstractmethod
+    def is_not_admin(self):
+        """Check if user is not a superadmin"""
 
     @property
     @abstractmethod
     def is_authenticated(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
 
     @property
     @abstractmethod
     def loggedin(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
 
     @property
     @abstractmethod
     def is_loggedin(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
+
+    @property
+    @abstractmethod
+    def is_not_loggedin(self):
+        """Check if user is not logged in"""
+
+    @property
+    @abstractmethod
+    def is_not_authenticated(self):
+        """Check if user is not logged in"""
 
     @property
     @abstractmethod
     def check(self):
-        """Alias to authenticated"""
+        """Check if user is logged in"""
 
     def can(self, permissions: Union[str, List]) -> bool:
         """Check if user has ALL of these permissions"""
@@ -87,4 +102,3 @@ class UserInfo(ABC):
 
     def cannot(self, permissions: Union[str, List]) -> bool:
         """Alias to cant"""
-

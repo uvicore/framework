@@ -29,6 +29,7 @@ class Jwt(Authenticator):
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
+        if authorization: self.log.debug('Authorization:', + authorization)
 
         # This authentication method not provided or attempted, goto next authenticator
         if not authorization or scheme != "bearer":

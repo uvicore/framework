@@ -290,11 +290,11 @@ async def mail_play():
     # x = Mail(
     #     #mailer='smtp',
     #     #mailer_options={'port': 124},
-    #     to=['mreschke@sundiallabs.com'],
-    #     cc=['mreschke19@gmail.com'],
-    #     bcc=['mreschke@sunfinity.com'],
+    #     to=['mreschke1@example.com'],
+    #     cc=['mreschke2@example.com'],
+    #     bcc=['mreschke3@example.com'],
     #     from_name='Matthew',
-    #     from_address='mail@mreschke.com',
+    #     from_address='mreschke@example.com',
     #     subject='Hello1',
     #     html='Hello1 <b>Body</b> Here',
     #     attachments=[
@@ -307,11 +307,11 @@ async def mail_play():
     x = (Mail()
         #.mailer('mailgun')
         #.mailer_options({'port': 124})
-        .to(['mreschke@sundiallabs.com'])
-        .cc(['mreschke19@gmail.com'])
-        .bcc(['mreschke@sunfinity.com'])
+        .to(['mreschke1@example.com'])
+        .cc(['mreschke2@example.com'])
+        .bcc(['mreschke3@example.com'])
         .from_name('Matthew')
-        .from_address('mail@mreschke.com')
+        .from_address('mreschke@example.com')
         .subject('Hello1')
         .text('Hello1 <b>Body</b> Here')
         .attachments([

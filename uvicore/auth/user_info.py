@@ -1,8 +1,7 @@
 import uvicore
-from uvicore.typing import List, Union
-from uvicore.contracts import UserInfo as UserInfoInterface
-from uvicore.support.dumper import dump, dd
+from uvicore.typing import List, Union, Optional
 from pydantic import BaseModel as PydanticModel
+from uvicore.contracts import UserInfo as UserInfoInterface
 
 
 # Pydantic model because we often return this class in API endpoints
@@ -20,18 +19,18 @@ class UserInfo(PydanticModel, UserInfoInterface):
     # this is a pydantic model
     id: int
     uuid: str
-    sub: str
     username: str
     email: str
     first_name: str
     last_name: str
-    title: str
-    avatar: str
+    title: Optional[str]
+    avatar: Optional[str]
     groups: List[str]
     roles: List[str]
     permissions: List[str]
     superadmin: bool
     authenticated: bool
+    extra: Optional[dict]
 
     @property
     def name(self):
@@ -122,6 +121,3 @@ class UserInfo(PydanticModel, UserInfoInterface):
     def cannot(self, permissions: Union[str, List]) -> bool:
         """Alias to cant"""
         return self.cant(permissions)
-
-
-
