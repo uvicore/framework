@@ -4,6 +4,7 @@ from uvicore.support.dumper import dump, dd
 from uvicore.http.response import HTML, JSON
 from uvicore.http.request import HTTPConnection
 from uvicore.http.exceptions import HTTPException
+from uvicore.contracts import Logger as LoggerInterface
 from uvicore.typing import ASGIApp, Send, Receive, Scope
 from uvicore.contracts import Authenticator, UserInfo, UserProvider
 
@@ -11,6 +12,10 @@ from uvicore.contracts import Authenticator, UserInfo, UserProvider
 @uvicore.service()
 class Authentication:
     """Authentication global middleware capable of multiple authenticator backends"""
+
+    @property
+    def log(self) -> LoggerInterface:
+        return uvicore.log.name('uvicore.auth')
 
     def __init__(self, app: ASGIApp, route_type: str) -> None:
         # __init__ called one time on uvicore HTTP bootstrap
@@ -68,8 +73,6 @@ class Authentication:
             user = await backend.authenticate(request)
             # 6924 req/sec logging, 8500 req/sec without logging
 
-            uvicore.log.dump(user)
-
             # Determine if we should continue to next authenticator
             # Return of True means this authorization method was being attempted, but failed validation
             # This means we can SKIP the next authenticators as they are not being attempted.
@@ -118,6 +121,9 @@ class Authentication:
 
         # Add matched authenticator to request for later usage (like logout functionality)
         scope['authenticator'] = authenticator_name
+
+        # Dump entire scope including our UserInfo object
+        self.log.dump('Final request.scope after authenticators and user providers:', scope)
 
         # Next global middleware in stack
         await self.app(scope, receive, send)

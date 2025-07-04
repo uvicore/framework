@@ -28,14 +28,13 @@ class Scopes:
         return uvicore.log.name('uvicore.http')
 
     async def __call__(self, security_scopes: SecurityScopes, request: Request) -> UserInfo:
-        # Get scopes List.  These are permissions/scopes defined on this route
-        scopes = list(security_scopes.scopes)
-        self.log.debug('Auth guard scopes required for {}: {}'.format(request.scope['path'], str(scopes)))
-
         # Get user from request.  Will always exist.  If not logged it will be
         # the anonymous user which may still have permissions/scopes to compare
         user: UserInfo = request.user
-        self.log.debug('Auth guard user: {}'.format(str(user)))
+
+        # Get scopes List.  These are permissions/scopes defined on this route
+        scopes = list(security_scopes.scopes)
+        self.log.debug('Auth guard scopes required for {}: {}'.format(request.scope['path'], str(scopes)))
 
         # If no scopes, allow access
         if not scopes: return user
@@ -60,7 +59,12 @@ class Scopes:
 
         # Authorized and authenticated.  Return user in case Guard() is being used
         # as a route parameter using FastAPI Depends.  User will be injected back to param value.
-        if authorized: return user
+        if authorized:
+            self.log.debug(f"Auth guard scopes passed, {user.email} has one of {str(scopes)}")
+            return user
+
+        # User does not have the proper scopes, permission denied
+        self.log.debug(f"Auth guard scopes FAILED for {user.email}")
 
         # Not authorized or possibly even authenticated
         # Get unauthenticated handler from auth config
@@ -92,24 +96,3 @@ class Scopes:
         else:
             # User is not even logged in
             raise NotAuthenticated(headers=exception_headers)
-
-    def validate_permissions(self, user: UserInfo, scopes: SecurityScopes) -> None:
-        """Validate logged in users permissions again route permissions"""
-
-        # Superadmin is always allowed
-        if user.superadmin: return
-
-        # Get permissions defined on this route
-        route_permissions = scopes.scopes
-
-        # If route does not specify permissions, then anyone that is authenticated can access.
-        if not route_permissions: return
-
-        # Compare users permissions with route permissions
-        for permission in route_permissions:
-            if permission in user.permissions:
-                # This is an OR, if any one of these, then pass
-                return
-
-        # No matching permissinos means they are logged in, but they don't have the proper permissions.
-        raise PermissionDenied(route_permissions)

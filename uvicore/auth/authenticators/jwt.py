@@ -29,7 +29,7 @@ class Jwt(Authenticator):
 
         # Parse authorization header
         authorization, scheme, token = self.auth_header(request)
-        if authorization: self.log.debug('Authorization:', + authorization)
+        if authorization: self.log.debug(authorization)
 
         # This authentication method not provided or attempted, goto next authenticator
         if not authorization or scheme != "bearer":
@@ -50,17 +50,16 @@ class Jwt(Authenticator):
             self.log.debug('Anonymous header found, this is an Anonymous request')
             return True
 
-        #dump(request.headers)
-
         # Decode JWT with or without verification
         jwt = None
 
         # Verify JWT internally with uvicore
         if self.config.verify_signature:
-            #dump('VALIDATE JWT INTERNALLY')
+            verify_signature_method = self.config.verify_signature_method.lower()
+            self.log.debug(f"Validating JWT Signature using '{verify_signature_method}' method")
 
             # Verify JWT using JWKS
-            if self.config.verify_signature_method.lower() == 'jwks':
+            if verify_signature_method == 'jwks':
                 default_jwks_url = uvicore.config.app.auth.oauth2.base_url + uvicore.config.app.auth.oauth2.jwks_path
                 found_consumer = False
                 for (consumer_name, consumer) in self.config.consumers.items():
@@ -98,7 +97,6 @@ class Jwt(Authenticator):
 
             # Verify JWT using pub key secrets
             else:
-                self.log.debug('Verifying JWT via SECRET')
                 for (consumer_name, consumer) in self.config.consumers.items():
                     try:
                         jwt = Dict(decode(

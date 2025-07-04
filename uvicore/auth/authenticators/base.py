@@ -12,12 +12,12 @@ from uvicore.contracts import Authenticator as AuthenticatorInterface
 class Authenticator(AuthenticatorInterface):
     """Base authenticator class"""
 
-    def __init__(self, config: Dict):
-        self.config = config
-
     @property
     def log(self) -> LoggerInterface:
         return uvicore.log.name('uvicore.auth')
+
+    def __init__(self, config: Dict):
+        self.config = config
 
     async def retrieve_user(self, username: str, password: str, provider: Dict, request: HTTPConnection, **kwargs) -> Optional[UserInfo]:
         """Retrieve user from User Provider backend"""
