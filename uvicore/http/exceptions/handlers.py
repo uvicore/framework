@@ -1,22 +1,25 @@
 from uvicore.http import Request
 from uvicore.http import response
+from uvicore.http.response import APIErrorResponse
 from uvicore.http.exceptions import HTTPException
 
 
-async def api(request: Request, e: HTTPException) -> response.JSON:
+async def api(request: Request, e: HTTPException) -> APIErrorResponse:
     """Main exception handler for all API endpoints"""
 
     # Get error payload (smart based on uvicore or stock HTTPException)
     (status_code, detail, message, exception, extra, headers) = expand_payload(e)
-    return response.JSON(
-        {
-            "status_code": status_code,
-            "message": message,
-            "detail": detail,
-            "exception": exception,
-            "extra": extra,
-        }, status_code=status_code, headers=headers
+
+    # Note, the exception value is STRIPPED if your .env DEBUG=false and only shows in debug mode!
+    error = APIErrorResponse(
+        status_code=status_code,
+        message=message,
+        detail=detail,
+        exception=exception,
+        extra=extra
     )
+
+    return response.JSON(error.dict(), status_code=status_code, headers=headers)
 
 
 async def web(request: Request, e: HTTPException) -> response.HTML:

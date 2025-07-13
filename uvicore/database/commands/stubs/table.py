@@ -50,6 +50,10 @@ class xx_TableName(Table):
         # sa.Column('creator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False), # SQL Foreign key, which does create an index
         # sa.Column('updator_id', sa.Integer, sa.ForeignKey(f"{users}.id"), nullable=False), # SQL Foreign key, which does create an index
 
+        # Date now() default and onupdate example
+        # sa.Column('created_at', sa.DateTime(), default=sa.func.now(), nullable=False),
+        # sa.Column('updated_at', sa.DateTime(), default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
+
         # Multi Column Unique Constraint.  By adding in the key we still ensure
         # OneToMany can be used but it must be unique with the key.  This also creates
         # a good composite index of type,id,key
