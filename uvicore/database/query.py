@@ -102,19 +102,9 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         # them as multiple tables thworing a 1066, "Not unique table/alias: 'posts'"
         query, saquery = self._build_query('select', copy(self.query))  # do NOT use .copy()
 
-        # Detect caching
+        # Build cache key if cache enabled
         cache = self.query.cache
-        if cache:
-            prefix = 'uvicore.database/'
-            if cache.get('key') is None:
-                # No cache name specified, automatically build unique based on queries
-                cache['key'] = prefix + query.hash(
-                    hash_type='sha1',
-                    package='uvicore.database',
-                    connection=self._conn,
-                )
-            else:
-                cache['key'] = prefix + cache.get('key')
+        if cache: self._build_cache_key(query)
 
         # Get cache store from query builder, if None, uses default store
         if cache and await uvicore.cache.store(cache.get('store')).has(cache.get('key')):
@@ -138,6 +128,11 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
     async def fetchall(self) -> List[sa.Row]:
         """Alias to .get()"""
         return await self.get()
+
+    async def count(self) -> int:
+        """Execute count() on query"""
+        self.select(sa.func.count())
+        return await self.scalar_one()
 
     async def first(self) -> sa.Row|None:
         """Get one (first/top) record from query. Returns None if no records found"""
@@ -247,7 +242,6 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         # Return first column
         return results[0]
 
-
     async def delete(self) -> None:
         """Execute delete query"""
 
@@ -268,3 +262,19 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
 
         # Execute query
         await uvicore.db.execute(saquery, connection=self._connection())
+
+    def _build_cache_key(self, query) -> None:
+        """Build cache key from user input or query hash"""
+        cache = query.cache
+        if not cache: return
+
+        prefix = 'uvicore.database/'
+        if cache.get('key') is None:
+            # No cache name specified, automatically build unique based on queries
+            cache['key'] = prefix + query.hash(
+                hash_type='sha1',
+                package='uvicore.database',
+                connection=self._conn,
+            )
+        else:
+            cache['key'] = prefix + cache.get('key')

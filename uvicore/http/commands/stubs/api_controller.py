@@ -52,14 +52,14 @@ class xx_ControllerName(Controller):
         """Register API Controller Endpoints"""
 
         # ----------------------------------------------------------------------
-        # Example: Basic route responding with a view dict to JSON blob
+        # Example: Basic APIResponse
         # ----------------------------------------------------------------------
         @route.get('/example1', tags=['Examples'], scopes=['authenticated'])
         async def example1(request: Request) -> APIResponse[List[Dict]]:
             """This docstring shows up in openapi"""
             try:
                 # Begin response which start response timer
-                response = APIResponse.begin() # works
+                response = APIResponse.begin()
 
                 # Get User
                 user = request.scope['user']

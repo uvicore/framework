@@ -11,11 +11,52 @@ async def cli():
     #await cache_play()
     #await orm_insert_play()
     #await poly_play()
-    await log_play()
+    #await log_play()
     #await query_builder_play()
     #await templating_play()
+    await test_orm_count_play()
 
     dd("Done Playing")
+
+
+async def test_orm_count_play():
+    import sqlalchemy as sa
+    from app1.models import Post
+
+    #d = await Post.query().distinct().cache().get() # uvicore.orm/17db5f2e88fc220a6472d68151ca5653aeedde8e
+    #d = await Post.query().count()
+
+    # Even though I include relations, total count should still be 2
+    query = Post.query()
+    query.where('creator_id', 1).include('tags').include('comments')
+    c = await query.count(); # should be 2
+    d = await query.get()
+    #dd(query.query)
+
+    ###
+
+    #d = await uvicore.db.query().table('posts').count()
+
+    # Works select count(distinct creator_id) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().scalar()
+
+    # Works select count(distinct creator_id) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().count()
+
+    # select count(*) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').where('creator_id', 1).count()
+
+    # Works - select count(distinct creator_id) from posts where creator_id = 1
+    #from app1.database.tables.posts import Posts
+    #post = Posts.table.c
+    #d = await uvicore.db.query().table('posts').select(sa.func.count(sa.distinct(post.creator_id))).where('creator_id', 1).scalar()
+
+
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().get()
+
+    dd(d, c)
+    dd('Done ORM Count Play')
+
 
 
 async def templating_play():

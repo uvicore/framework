@@ -1,20 +1,17 @@
 from __future__ import annotations
 
-import operator as operators
-from copy import deepcopy
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict
-from uvicore.support import hash
-
-import sqlalchemy as sa
-from sqlalchemy.sql.expression import BinaryExpression
-
-from sqlalchemy.sql import quoted_name
-from collections import OrderedDict as ODict
-from dataclasses import dataclass
-
 import uvicore
-from uvicore.contracts import QueryBuilder as BuilderInterface
+import sqlalchemy as sa
+from copy import deepcopy
+import operator as operators
+from uvicore.support import hash
+from dataclasses import dataclass
+from sqlalchemy.sql import quoted_name
 from uvicore.support.dumper import dd, dump
+from collections import OrderedDict as ODict
+from sqlalchemy.sql.expression import BinaryExpression
+from uvicore.contracts import QueryBuilder as BuilderInterface
+from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict, Optional
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
@@ -25,6 +22,11 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
 
     def __init__(self):
         self.query = Query()
+
+    def distinct(self) -> B[B, E]:
+        """Add distinct statement to query"""
+        self.query.distinct = True
+        return self
 
     def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
         """Add where statement to query"""
@@ -154,7 +156,10 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         # insert will never come into this get() or build function
         if method == 'select':
             # Build .select() query from tables, joins and selectable columns
-            saquery = self._build_select(query).distinct()
+            saquery = self._build_select(query)
+
+            # Add distinct
+            if query.distinct: saquery = saquery.distinct()
 
             # Build .select_from() query from tables and joins
             saquery = self._build_from(query, saquery)
@@ -437,6 +442,7 @@ class Query:
     # __slots__ = (
     #     'includes',
     #     'selects',
+    #     'distinct',
     #     'wheres',
     #     'or_wheres',
     #     'filters',
@@ -453,6 +459,7 @@ class Query:
     # )
     includes: List
     selects: List
+    distinct: bool
     wheres: List
     or_wheres: List[Tuple]
     filters: List[Tuple]
@@ -473,6 +480,7 @@ class Query:
     def __init__(self):
         self.includes: List = []
         self.selects: List = []
+        self.distinct: bool = False
         self.wheres: List[Tuple] = []
         self.or_wheres: List[Tuple] = []
         self.filters: List[Tuple] = []
@@ -511,6 +519,7 @@ class Query:
             'tablename': self.table.name,
             'includes': self.includes,
             'selects': [str(col) for col in self.selects],
+            'distinct': self.distinct,
             'wheres': self.wheres,
             'or_wheres': self.or_wheres,
             'filters': self.filters,

@@ -282,11 +282,12 @@ class Logger(LoggerInterface):
     def dump(self, *args):
         running_pytest = uvicore.app.is_pytest
         console_enabled = self.config['console']['enabled']
-        console_level = logging.getLevelName(uvicore.log.console_handler.level)
+        console_level = logging.getLevelName(uvicore.log.console_handler.level) if console_enabled else ''
         console_filters = self.config['console']['filters']
         console_excludes = self.config['console']['exclude']
         file_enabled = self.config['file']['enabled']
-        file_level = logging.getLevelName(uvicore.log.file_handler.level)
+        file_level = logging.getLevelName(uvicore.log.file_handler.level) if file_enabled else ''
+
 
         # Use dump() to prettyprint to console only if console is in DEBUG mode or we are running a pytest.
         # The dump() does not understand log filters and excludes, so we must use those manually to decide
