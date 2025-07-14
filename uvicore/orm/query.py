@@ -43,13 +43,13 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
     def log(self):
         return uvicore.log.name('uvicore.orm')
 
-    def _where_dict(self, parent_method: Callable, column: str, operator: str = None, value: Any = None):
+    def _where_dict(self, parent_method: Callable, column: str, operator: str = None, value: Any = '!None!'):
         # Not sure I want this code if I can't do where AND and where OR etc...
         # Maybe revisit later.
         found_dict_where = False
         if type(column) == str:
             # Swap operator and value
-            if not value: value = operator; operator = '='
+            if value == '!None!': value = operator; operator = '='
             if '.' in column:
                 parts = column.split(".")
                 if len(parts) == 2:
@@ -74,7 +74,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Regular where, pass to parent (builder.py) where
             return parent_method(column, operator, value)
 
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
         # Custom where just for OrmQueryBuilder only to check for dict_key and dict_value type wheres
         # This is very limited and does not work with ORs or multiple ANDs.  Why not multiple ANDS?  Try querying posts join attributes and
         # where key=x and value=y and key=a and value=b and see what happens (you get nothing).  This is the nature of polymorphic one-to-many
