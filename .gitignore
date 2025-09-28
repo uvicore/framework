@@ -54,9 +54,6 @@ develop-eggs/
 __pycache__/
 .pytest_cache/
 
-# The framework doesn't need a poetry.lock
-poetry.lock
-
 # Django Files
 #
 

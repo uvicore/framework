@@ -1,6 +1,6 @@
 [project]
 name = "uvicore"
-version = "0.3.16"
+version = "0.3.17"
 description = "The Fullstack Async Web, API and CLI Python Framework"
 authors = [
     {name = "Matthew Reschke",email = "mail@mreschke.com"}
