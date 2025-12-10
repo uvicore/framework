@@ -28,10 +28,12 @@ class Template(ABC):
     @abstractmethod
     def tests(self) -> Dict: pass
 
+    @abstractmethod
     def render(self, template_name: str, data: Optional[Dict] = {}) -> str:
         """Render a template as string (for CLI usage, not a Web response)"""
         pass
 
+    @abstractmethod
     def render_web_response(self, name: str, context: dict, status_code: int = 200, headers: dict = None, media_type: str = None, background = None):
         """Render a template as Web Response"""
         pass

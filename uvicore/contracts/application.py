@@ -1,15 +1,14 @@
-from .config import Config
 from .package import Package
-from .template import Template
 from abc import ABC, abstractmethod
-from uvicore.typing import Any, Dict, List, Tuple, OrderedDict, Union
+from uvicore.typing import Dict, List, OrderedDict, Union
 
 try:
     from fastapi import FastAPI
     from starlette.applications import Starlette
-except ImportError:  # pragma: nocover
-    FastAPI = None  # type: ignore
-    Starlette = None  # type: ignore
+except ImportError:
+    class FastAPI: pass
+    class Starlette: pass
+
 
 # Regular attributes (version: str = '0.0.0) vs
 # @property @abstractmethod
@@ -50,12 +49,6 @@ class Application(ABC):
     def http(self) -> Union[Starlette, FastAPI]:
         """HTTP Server Instance"""
         pass
-
-    # @property
-    # @abstractmethod
-    # def config(self) -> Config:
-    #     """Configuration system"""
-    #     pass
 
     @property
     @abstractmethod

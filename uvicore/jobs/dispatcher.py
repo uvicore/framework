@@ -14,6 +14,7 @@ class Dispatcher(JobDispatcherInterface):
         return instance.handle()
 
     async def dispatch_async(self, instance: object) -> Any:
+        """Dispatch an async Job Class"""
         return await instance.handle()
 
     async def codispatch(self, instance: object) -> Any:

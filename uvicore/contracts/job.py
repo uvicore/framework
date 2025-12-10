@@ -1,6 +1,5 @@
-from uvicore.typing import Any, Callable
-from uvicore.typing import Dict, List, Any, Union, Callable
-from abc import ABC, abstractmethod, abstractproperty, abstractclassmethod
+from abc import ABC, abstractmethod
+from uvicore.typing import Dict, Any
 
 
 class Job(ABC, Dict):

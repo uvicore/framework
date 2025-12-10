@@ -91,14 +91,18 @@ class UserInfo(ABC):
     def check(self):
         """Check if user is logged in"""
 
+    @abstractmethod
     def can(self, permissions: Union[str, List]) -> bool:
         """Check if user has ALL of these permissions"""
 
+    @abstractmethod
     def can_any(self, permissions: Union[str, List]) -> bool:
         """Check if user has any one of these permissions"""
 
+    @abstractmethod
     def cant(self, permissions: Union[str, List]) -> bool:
         """Check if user does not have one of these permissions"""
 
+    @abstractmethod
     def cannot(self, permissions: Union[str, List]) -> bool:
         """Alias to cant"""

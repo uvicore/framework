@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List, Tuple, TypeVar, Union, Dict, Sequence
 
@@ -7,10 +6,14 @@ try:
     import sqlalchemy as sa
     from sqlalchemy.engine.result import RowProxy
     from sqlalchemy.sql.expression import BinaryExpression
-except ImportError:  # pragma: nocover
-    sa = None  # type: ignore
-    RowProxy = None  # type: ignore
-    BinaryExpression = None  # type: ignore
+except ImportError:
+    class BinaryExpression:
+        pass
+    class sa:
+        Table = object
+        Column = object
+    class RowProxy:
+        pass
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model

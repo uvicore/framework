@@ -1,5 +1,7 @@
-# type: ignore
+# Importing all from typing is OK becuase its a single self contained module anyhow
+# So importing one thing, imports it all anyway.
 from typing import *
+
 from .dictionary import Dict, OrderedDict
 try:
     from starlette.types import Scope, Message, Receive, Send, ASGIApp

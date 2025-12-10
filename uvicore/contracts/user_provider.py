@@ -4,7 +4,7 @@ from uvicore.contracts.user_info import UserInfo
 try:
     from starlette.requests import HTTPConnection
 except:
-    HTTPConnection = None
+    class HTTPConnection: pass
 
 
 class UserProvider(ABC):

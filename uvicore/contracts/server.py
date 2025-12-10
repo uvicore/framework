@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Callable, List, Any
+
 try:
     from starlette.types import ASGIApp
 except ImportError:
-    pass
+    class ASGIApp: pass
 
 
 class Server(ABC):

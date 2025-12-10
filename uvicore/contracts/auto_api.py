@@ -1,6 +1,6 @@
 #from __future__ import annotations
-from abc import ABC, abstractmethod, abstractclassmethod
-from typing import Optional, List, Generic, TypeVar
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
 from uvicore.contracts import OrmQueryBuilder
 
 E = TypeVar("E")

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
-
 from uvicore.contracts import Application, Package, Dispatcher
 
 

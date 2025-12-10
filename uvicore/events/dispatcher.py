@@ -78,26 +78,6 @@ class Dispatcher(DispatcherInterface):
             })
         return events
 
-
-    # def event(self, event: Union[str, Callable]) -> EventInfo:
-    #     """Get one known (pre-registered) EventInfo by str name or class"""
-    #     if type(event) == str:
-    #         # Get event by a string name
-    #         name = event
-    #     else:
-    #         # Get event by a class, use the class name as the event string name
-    #         #name = str(event.__class__).split("'")[1]
-    #         name = event.name
-    #     if name in self.events:
-    #         return self.events.get(name)
-    #     else:
-    #         # This event is NOT registered, but we still want it to work
-    #         # because of all the dynamic events like ORM makes
-    #         # So create a fake event meta
-    #         return Dict({
-    #             'name': name
-    #         })
-
     @property
     def expanded_sorted_listeners(self) -> List:
         """Get all listeners with expanded wildcards, sorted by priority ASC"""
@@ -122,6 +102,25 @@ class Dispatcher(DispatcherInterface):
                         break
 
         return listeners
+
+    # def event(self, event: Union[str, Callable]) -> EventInfo:
+    #     """Get one known (pre-registered) EventInfo by str name or class"""
+    #     if type(event) == str:
+    #         # Get event by a string name
+    #         name = event
+    #     else:
+    #         # Get event by a class, use the class name as the event string name
+    #         #name = str(event.__class__).split("'")[1]
+    #         name = event.name
+    #     if name in self.events:
+    #         return self.events.get(name)
+    #     else:
+    #         # This event is NOT registered, but we still want it to work
+    #         # because of all the dynamic events like ORM makes
+    #         # So create a fake event meta
+    #         return Dict({
+    #             'name': name
+    #         })
 
     def event_listeners(self, event: str) -> List:
         """Get all listeners for an event including wildcard, sorted by priority ASC"""
@@ -189,15 +188,6 @@ class Dispatcher(DispatcherInterface):
     def call(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
-
-
-
-
-
-
-
-
-
 
     def subscribe(self, listener: Union[str, Callable]) -> None:
         """Add a subscription class which handles both registration and listener callbacks"""

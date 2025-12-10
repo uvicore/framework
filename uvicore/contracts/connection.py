@@ -1,5 +1,6 @@
 from uvicore.typing import Dict
 
+
 class Connection(Dict):
     """Database Connection Definition"""
 
@@ -19,23 +20,3 @@ class Connection(Dict):
     metakey: str
     url: str
     is_async: bool
-
-
-
-#from abc import ABC
-#from dataclasses import dataclass
-# @dataclass
-# class Connection(ABC):
-#     name: str
-#     #default: bool
-#     driver: str
-#     dialect: str
-#     host: str
-#     port: int
-#     database: str
-#     username: str
-#     password: str
-#     prefix: str
-#     metakey: str
-#     url: str
-

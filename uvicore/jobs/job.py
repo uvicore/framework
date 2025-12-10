@@ -1,22 +1,18 @@
 import uvicore
-from uvicore.support.dumper import dump, dd
-from dataclasses import dataclass
-from uvicore.typing import Dict, Optional, Union, Callable
+from uvicore.support.classes import classproperty
 from uvicore.contracts.job import Job as JobInterface
 
 
 @uvicore.service()
 class Job(JobInterface):
 
-    @classmethod
-    @property
+    @classproperty
     def name(cls):
         """Get the name of this job"""
         name = str(cls).split("'")[1]
         return name
 
-    @classmethod
-    @property
+    @classproperty
     def description(cls):
         """Get the doc description of this job"""
         return cls.__doc__

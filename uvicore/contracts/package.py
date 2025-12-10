@@ -1,8 +1,7 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from abc import abstractmethod
 from .connection import Connection
-from uvicore.typing import Dict, List, Any
+from uvicore.typing import Dict, List
 from uvicore.support.printer import pretty_call, register_pretty
 
 
@@ -79,36 +78,6 @@ class _Console:
 
 # Bottom to avoid circular dependencies
 from .router import WebRoute, ApiRoute  # isort:skip
-
-
-
-# @dataclass
-# class Package_OBSOLETE_NOW_DIC(ABC):
-#     """asdfasdf"""
-#     name: str
-#     location: str
-#     main: bool
-#     #registers: Registers  # Register (singular) is a reserved word in ABC meta
-#     web_route_prefix: str
-#     api_route_prefix: str
-#     view_paths: List[str]
-#     asset_paths: List[str]
-#     template_options: Dict[str, str]
-#     connection_default: str
-#     connections: List[Connection]
-#     #models: List[str]
-#     seeders: List[str]
-#     commands: Dict
-#     config: Dict
-
-#     @abstractmethod
-#     def config(self, dotkey: str = None) -> Any:
-#         pass
-
-#     @abstractmethod
-#     def connection(self, name: str = None) -> Connection:
-#         pass
-
 
 
 @register_pretty(Package)

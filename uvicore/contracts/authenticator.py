@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from uvicore.contracts.user_info import UserInfo
-from uvicore.typing import Optional, Tuple, Dict, List, Union
+from uvicore.typing import Optional, Tuple, Dict, Union
+
 try:
     from starlette.requests import HTTPConnection
-except ImportError:  # pragma: nocover
-    HTTPConnection = None  # type: ignore
+except ImportError:
+    class HTTPConnection: pass
 
 
 class Authenticator(ABC):
