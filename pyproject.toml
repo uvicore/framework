@@ -77,7 +77,7 @@ web = [
     "uvloop==0.21.0",
     "httptools==0.6.4",
     "python-multipart==0.0.20",
-    "pyjwt==2.10.1"
+    "pyjwt==2.12.0"
 ]
 
 # Optional unittest dependencies
