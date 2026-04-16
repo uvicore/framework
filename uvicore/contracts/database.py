@@ -8,7 +8,14 @@ from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
 try:
     import sqlalchemy as sa
 except ImportError:
-    pass
+    class sa:
+        Table = object
+        MetaData = object
+        engine = object
+        Select = object
+        Insert = object
+        CursorResult = object
+        Row = object
 
 
 class Database(ABC):

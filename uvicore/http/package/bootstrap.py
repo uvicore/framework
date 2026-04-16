@@ -464,6 +464,15 @@ class Http(Handler):
             oauth2_scheme = OAuth2AuthorizationCodeBearer(
                 authorizationUrl=oauth2.base_url + oauth2.authorize_path,
                 tokenUrl=oauth2.base_url + oauth2.token_path,
+
+                # This little flag here is CRITICAL it be false.  If true
+                # then fastapi/security/oauth2.py OAuth2AuthorizationCodeBearer calss __call__() method
+                # will throw a '401 Not authenticated' if there is no token.  But Uvicore allows anonymous
+                # endpoints EVEN when that endpoint requires permission scopes.  This is because a non logged in user (no token, invalid token)
+                # is tied to the Anonymous user which still has roles and permissions which our endpoint scopes still obey.
+                # So setting this to False means FastAPI will NOT throw the 401 for us and let Uvicore handle scope validation
+                # in uvicore/http/routing/guard.py even if you are anonymous!
+                auto_error=False,
             )
 
         # Create our own custom RapiDoc docs route

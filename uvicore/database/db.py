@@ -30,6 +30,7 @@ class Db(DatabaseInterface):
         'postgres',
         'mysql',
         'sqlite',
+        'snowflake',
     ]
 
     # Async drivers like
@@ -114,7 +115,7 @@ class Db(DatabaseInterface):
 
             # Validate supported dialects
             if connection.dialect not in self.SUPPORTED_DIALECTS:
-                raise Exception(f"A packages config/database.py connection backend {connection.backend} not supported by Uvicore.  Must be one of [{','.join(self.SUPPORTED_BACKENDS)}].")
+                raise Exception(f"A packages config/database.py connection dialect {connection.dialect} not supported by Uvicore.  Must be one of [{','.join(self.SUPPORTED_DIALECTS)}].")
 
             # Build url and metakey from connection configuration
             if connection.backend == 'sqlalchemy':
@@ -149,14 +150,16 @@ class Db(DatabaseInterface):
 
                     # Build an SQLAlchemy compatible URL from connection configuration dictionary
                     # dialect+driver://<user>:<password>@<host>[:<port>]/<dbname>
-                    conn_url = (sa.engine.url.URL.create(
-                        drivername=str(connection.dialect) + '+' + str(connection.driver),
-                        username=connection.username,
-                        password=connection.password,
-                        host=connection.host,
-                        port=int(connection.port),
-                        database=connection.database,
-                    ))
+                    conn_url = connection.url
+                    if not conn_url:
+                        conn_url = (sa.engine.url.URL.create(
+                            drivername=str(connection.dialect) + '+' + str(connection.driver),
+                            username=connection.username,
+                            password=connection.password,
+                            host=connection.host,
+                            port=int(connection.port),
+                            database=connection.database,
+                        ))
 
                     # Build metakey
                     # Metakey is slightly different than the URL because we are trying to deduce
@@ -180,13 +183,46 @@ class Db(DatabaseInterface):
                     })
 
                     # SQLite has a different URL
-                    conn_url = (sa.engine.url.URL.create(
-                        drivername=str(connection.dialect) + '+' + str(connection.driver),
-                        database=connection.database,
-                    ))
+                    conn_url = connection.url
+                    if not conn_url:
+                        conn_url = (sa.engine.url.URL.create(
+                            drivername=str(connection.dialect) + '+' + str(connection.driver),
+                            database=connection.database,
+                        ))
 
                     # SQLite has a different metakey
                     connection.metakey = connection.dialect + '://' + connection.database
+
+                # Snowflake
+                elif connection.dialect == 'snowflake':
+                    connection.defaults({
+                        'dialect': 'snowflake',
+                        'account': '',
+                        'database': '',
+                        'schema': '',
+                        'warehouse': '',
+                        'username': '',
+                        'role': '',
+                        'password': '',
+                        'private_key': '',
+                        'prefix': None
+                    })
+
+                    conn_url = connection.url
+                    if not conn_url:
+                        # Ex: Using password                  - snowflake://username:password@account/db/schema?warehouse=default_wh
+                        # Ex: Using no password               - snowflake://username:@account/db/schema?warehouse=default_wh
+                        # Ex: Using no password, no db/schema - snowflake://username:@account//?warehouse=default_wh
+                        conn_url = f"{connection.dialect}://{connection.username}:{connection.password}@{connection.account}/{connection.database}/{connection.schema}?warehouse={connection.warehouse}&role={connection.role}"
+
+                    # Build metakey
+                    # Metakey is slightly different than the URL because we are trying to deduce
+                    # a single SERVER/HOST, not including the separate database itself
+                    connection.metakey = (
+                        connection.dialect +
+                        '@' + connection.account +
+                        '/' + connection.role
+                    )
 
                 # Save conn_url as string
                 connection.url = str(conn_url)

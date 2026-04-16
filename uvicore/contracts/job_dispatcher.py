@@ -1,9 +1,9 @@
-from uvicore.typing import Any, Callable
-from abc import ABC, abstractmethod, abstractproperty
-from uvicore.typing import Dict, List, Any, Union, Callable
+from uvicore.typing import Any
+from abc import ABC, abstractmethod
 
 
 class JobDispatcher(ABC):
+
     @abstractmethod
     def dispatch(self, instance: object) -> Any:
         """Dispatch a Job Class"""

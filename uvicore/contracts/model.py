@@ -1,13 +1,12 @@
 #from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, TypeVar, Union, List, Tuple, Any
-
 from uvicore.contracts import Mapper
 from uvicore.contracts import OrmQueryBuilder
-from uvicore.support.dumper import dump, dd
+from typing import Dict, Generic, TypeVar, Union, List, Any
 
 B = TypeVar("B")
 E = TypeVar("E")
+
 
 class Model(Generic[E], ABC):
 

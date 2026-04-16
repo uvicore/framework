@@ -34,7 +34,7 @@ class Comments(Table):
 
     # Optional SQLAlchemy Table() instance kwargs
     schema_kwargs = {
-       #'sqlite_autoincrement': True,
+       'sqlite_autoincrement': True,
     }
 
 

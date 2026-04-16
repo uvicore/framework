@@ -7,15 +7,23 @@ from uvicore.contracts import Template as TemplateInterface
 try:
     import jinja2
 except ImportError:  # pragma: nocover
-    jinja2 = None  # type: ignore
+    class jinja2:
+        class Environment:
+            pass
+        class FileSystemLoader:
+            pass
+        @staticmethod
+        def pass_context(func):
+            return func
 
 # This template system works for CLI templating and Web (starlette) templating
 # But starlette is optional
 try:
     from starlette.responses import Response
-except ImportError:  # pragma: nocover
-    class Response:
-        pass
+    from starlette.background import BackgroundTask
+except ImportError:
+    class Response: pass
+    class BackgroundTask: pass
 
 
 @uvicore.service('uvicore.templating.engine.Templates',
@@ -85,7 +93,11 @@ class Templates(TemplateInterface):
 
         # Load our jinja2 environment
         loader = jinja2.FileSystemLoader(self.paths)
-        self._env = jinja2.Environment(loader=loader, autoescape=True)
+        self._env = jinja2.Environment(
+            loader=loader,
+            autoescape=True,
+            keep_trailing_newline=True
+        )
 
         # Register all user defined context processors
         self._register_context_processors()

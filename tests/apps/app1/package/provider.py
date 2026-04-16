@@ -5,10 +5,11 @@ from uvicore.http.package.registers import Http
 from uvicore.database.package.registers import Db
 from uvicore.console.package.registers import Cli
 from uvicore.redis.package.registers import Redis
+from uvicore.templating.package.registers import Templating
 
 
 @uvicore.provider()
-class App1(Provider, Cli, Db, Redis, Http):
+class App1(Provider, Cli, Db, Redis, Http, Templating):
 
     def register(self) -> None:
         """Register package into the uvicore framework.
@@ -99,6 +100,9 @@ class App1(Provider, Cli, Db, Redis, Http):
         # Define Web and API routes and prefixes
         self.register_routes()
 
+        # Register templeting engine
+        self.register_templating()
+
         # Define CLI commands to be added to the ./uvicore command line interface
         self.register_commands()
 
@@ -177,6 +181,12 @@ class App1(Provider, Cli, Db, Redis, Http):
             prefix=self.package.config.api.prefix,
             #name_prefix='api',
         )
+
+    def register_templating(self) -> None:
+        """Register the Templating Engine with alternate non web view paths"""
+
+        # Define template paths
+        self.register_templating_paths(['app1.templates'])
 
     def register_commands(self) -> None:
         """Register CLI commands to be added to the ./uvicore command line interface"""

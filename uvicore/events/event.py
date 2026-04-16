@@ -1,7 +1,6 @@
 import uvicore
-from uvicore.support.dumper import dump, dd
-from dataclasses import dataclass
-from uvicore.typing import Dict, Optional, Union, Callable
+from uvicore.typing import Union, Callable
+from uvicore.support.classes import classproperty
 
 
 @uvicore.service()
@@ -10,8 +9,7 @@ class Event():
     # Defaults
     is_async: bool = False
 
-    @classmethod
-    @property
+    @classproperty
     def name(cls):
         name = str(cls).split("'")[1]
         # print(name, 'aaa')
@@ -20,8 +18,7 @@ class Event():
         #print(name, 'xxx')
         return name
 
-    @classmethod
-    @property
+    @classproperty
     def description(cls):
         return cls.__doc__
 

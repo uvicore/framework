@@ -43,13 +43,13 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
     def log(self):
         return uvicore.log.name('uvicore.orm')
 
-    def _where_dict(self, parent_method: Callable, column: str, operator: str = None, value: Any = None):
+    def _where_dict(self, parent_method: Callable, column: str, operator: str = None, value: Any = '!None!'):
         # Not sure I want this code if I can't do where AND and where OR etc...
         # Maybe revisit later.
         found_dict_where = False
         if type(column) == str:
             # Swap operator and value
-            if not value: value = operator; operator = '='
+            if value == '!None!': value = operator; operator = '='
             if '.' in column:
                 parts = column.split(".")
                 if len(parts) == 2:
@@ -74,7 +74,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Regular where, pass to parent (builder.py) where
             return parent_method(column, operator, value)
 
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
         # Custom where just for OrmQueryBuilder only to check for dict_key and dict_value type wheres
         # This is very limited and does not work with ORs or multiple ANDs.  Why not multiple ANDS?  Try querying posts join attributes and
         # where key=x and value=y and key=a and value=b and see what happens (you get nothing).  This is the nature of polymorphic one-to-many
@@ -187,6 +187,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         return self
 
     def show_writeonly(self, fields: List = None):
+        """Show write only fields"""
         if fields is None:
             self.query.show_writeonly = True
         else:
@@ -256,26 +257,9 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         if hasattr(self.entity, 'get'):
             return await self.entity.get(queries)
 
-        # Detect caching
+        # Build cache key if cache enabled
         cache = self.query.cache
-        if cache:
-            prefix = 'uvicore.orm/'
-            if cache.get('key') is None:
-                # No cache name specified, automatically build unique based on queries
-                query_hash = ''
-                for query in queries:
-                    if query['name'] == 'main':
-                        query_hash = query.get('query').hash(
-                            hash_type='sha1',
-                            package='uvicore.orm',
-                            entity=self.entity,
-                            connection=self._connection()
-                        )
-                        break
-                cache['key'] = prefix + query_hash
-                #dump(query_hash)
-            else:
-                cache['key'] = prefix + cache.get('key')
+        self._build_cache_key(self.query, queries)
 
         if cache and await uvicore.cache.has(cache.get('key')):
             # Cache found, use cached results
@@ -302,6 +286,43 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         # Return List of Entities
         return entities
 
+    async def count(self) -> int:
+        """Execute count() on query"""
+
+        # Build SQLAlchemy with custom selects for count(*)
+        queries = self._build_orm_queries('select', selects=[sa.func.count()], skip_relations=True)
+
+        # Count
+        count = 0
+
+        # Build cache key if cache enabled
+        cache = self.query.cache
+        if cache:
+            self._build_cache_key(self.query, queries)
+            cache['key'] += ":count"
+
+        if cache and await uvicore.cache.has(cache.get('key')):
+            # Cache found, use cached results
+            #dump('ORM FROM CACHE')
+            count = await uvicore.cache.get(cache.get('key'))
+        else:
+            # Execute each query
+            for query in queries:
+                # We only need to execute and count the main query
+
+                if query.get('name') == 'main':
+                    main_query = query.get('query')
+                    count = 0
+                    results = await self.entity.fetchall(query.get('saquery'))
+                    if results is not None and len(results) == 1:
+                        count = results[0][0]
+
+            # Add to cache if desired
+            if cache: await uvicore.cache.put(cache.get('key'), count, seconds=cache.get('seconds'))
+
+        # Return count
+        return count
+
     async def delete(self) -> None:
         """Execute delete query"""
 
@@ -323,7 +344,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         # Execute query
         await self.entity.execute(saquery)
 
-    def _build_orm_queries(self, method: str) -> List:
+    def _build_orm_queries(self, method: str, *, selects: List = None, skip_relations: bool = False) -> List:
         # Different than the single _build_query in the DB Builder
         # This one is for ORM only and build multiple DB queries from one ORM query.
         queries = []
@@ -332,10 +353,15 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         query = self.query.copy()
 
         # Build relation (join) queries
-        self._build_orm_relations(query)
+        # Somethings, like for .count(), we skip relations or it increaese the count because of joins
+        if not skip_relations:
+            self._build_orm_relations(query)
 
         # Add all columns from main model
-        query.selects = self.entity.selectable_columns(show_writeonly=self.query.show_writeonly)
+        if selects:
+            query.selects = selects
+        else:
+            query.selects = self.entity.selectable_columns(show_writeonly=self.query.show_writeonly)
 
         # Add all selects where any nested relation is NOT a *Many
         relation: Relation
@@ -999,6 +1025,29 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
         # No keyby, convert primary models to a List
         return [x for x in models['primary'].values()]
+
+    def _build_cache_key(self, query: Query, queries: List[Query]) -> None:
+        """Build cache key from user input or query hash"""
+        cache = query.cache
+        if not cache: return
+
+        prefix = 'uvicore.orm/'
+        if cache.get('key') is None:
+            # No cache name specified, automatically build unique based on queries
+            query_hash = ''
+            for query in queries:
+                if query['name'] == 'main':
+                    query_hash = query.get('query').hash(
+                        hash_type='sha1',
+                        package='uvicore.orm',
+                        entity=self.entity,
+                        connection=self._connection()
+                    )
+                    break
+            cache['key'] = prefix + query_hash
+            #dump(query_hash)
+        else:
+            cache['key'] = prefix + cache.get('key')
 
     def _connection(self):
         return self.entity.connection

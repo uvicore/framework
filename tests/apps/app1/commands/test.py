@@ -11,120 +11,152 @@ async def cli():
     #await cache_play()
     #await orm_insert_play()
     #await poly_play()
+    #await log_play()
+    #await query_builder_play()
+    #await templating_play()
+    await test_orm_count_play()
+
+    dd("Done Playing")
 
 
-    from uvicore.auth.models.permission import Permission
-
-    # .scalar() and scalar_one and scalar_one_or_none
-    # .scalars()
-
-
-
-
-
-    # RAW sql works
-    #x = await uvicore.db.fetchone("SELECT * FROM permissions where ID = 1999")
-    #dd(x, type(x))
-
-
-
-
-
-    # Returns none if not found, returns FIRST value if multiples
-    # so always one or none
-    #x = await uvicore.db.scalar("SELECT id FROM permissions where ID > 9")
-    # dd(x)
-
-    # Errors if more than one found
-    # Errors if NO value found
-    #x = await uvicore.db.scalar_one("SELECT id FROM permissions where ID = 9999")
-    #dd(x)
-
-    # Returns None if not found
-    # Returns error if multiples
-    #x = await uvicore.db.scalar_one_or_none("SELECT id FROM permissions where ID = 9")
-    #dd(x)
-
-
-    # List of single items, even if only ONE found
-    # Empty list of none found
-    # If selecting multiple columns, returns first column
-
-    #x = await uvicore.db.scalars("SELECT entity, id FROM permissions where ID > 9")
-    #dd(type(x))
-    #dd(x)
-
-
-
-
-    #x = await uvicore.db.scalars("SELECT id FROM permissions where ID > 9")
-
-
-    # .execute return standard SA Result, which has all sorts of stuff like .unique(), .scalars() etc...
-    #x = await uvicore.db.execute("SELECT id FROM permissions where ID > 10")
-    #dd(x.scalars().all())
-
-    # RAW sql using .execute() works
-    #x = await uvicore.db.execute("SELECT * FROM permissions where ID = 1")
-    # dd(x.fetchall(), type(x))
-
-    # RAW paramaterized SQL works
-    # x = await uvicore.db.fetchall("SELECT * FROM permissions where ID > :id", {'id': 5})
-    # dd(x, type(x))
-
-
-    dd(await uvicore.db.query().table('permissions').get())
-
-
-    #x = await Permission.query().find(3)
-    #x = await Permission.query().get()
-
-
-    dd('DONE PLAY')
-
-
-
-
-
-
-    from app1.models import Tag
-    tag = await Tag.query().find(1)
-    dd(tag)
-    dd('hi')
-
+async def test_orm_count_play():
+    import sqlalchemy as sa
     from app1.models import Post
-    #posts = await Post.query().or_where([('creator_id', 1), ('creator_id', 2), ('creator_id','=', 5)]).get()
 
-    # posts = await (Post.query()
-    #     .include('comments')
-    #     .where('creator_id', 1)
-    #     #.filter('comments.creator_id', 2)
-    #     .sort('comments.id', 'DESC')
-    # ).get()
+    #d = await Post.query().distinct().cache().get() # uvicore.orm/17db5f2e88fc220a6472d68151ca5653aeedde8e
+    #d = await Post.query().count()
 
-    page_size = 2
-    page = 5
-    posts = await Post.query().limit(page_size).offset(page_size * (page -1)).get()
+    # Even though I include relations, total count should still be 2
+    query = Post.query()
+    query.where('creator_id', 1).include('tags').include('comments')
+    c = await query.count(); # should be 2
+    d = await query.get()
+    #dd(query.query)
 
-    #posts = await Post.query().order_by(['id', 'DESC']).get()
-    #posts = await Post.query().where('other', 'null').where('creator_id', 2).get();
-    # posts = await Post.query().where([
-    #     ('other', 'null'),
-    #     ('creator_id', 2),
-    # ]).get();
+    ###
+
+    #d = await uvicore.db.query().table('posts').count()
+
+    # Works select count(distinct creator_id) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().scalar()
+
+    # Works select count(distinct creator_id) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().count()
+
+    # select count(*) from posts where creator_id = 1
+    #d = await uvicore.db.query().table('posts').where('creator_id', 1).count()
+
+    # Works - select count(distinct creator_id) from posts where creator_id = 1
+    #from app1.database.tables.posts import Posts
+    #post = Posts.table.c
+    #d = await uvicore.db.query().table('posts').select(sa.func.count(sa.distinct(post.creator_id))).where('creator_id', 1).scalar()
+
+
+    #d = await uvicore.db.query().table('posts').select('creator_id').where('creator_id', 1).distinct().get()
+
+    dd(d, c)
+    dd('Done ORM Count Play')
+
+
+
+async def templating_play():
+    from uvicore.templating.engine import Templates
+
+    file = 'test.yml.j2'
+    props = {
+        'foo': 'This is foo',
+        'bar': 'This is bar',
+    }
+
+    # Testing that Jinja does NOT remove the last newline in a file
+    # I had to set keep_trailing_newline=True in uvicore/templating/engine.py _init()
+    templated = Templates.render(file, props)
+    dd(templated)
+
+
+
+async def log_play():
+    log.header("Example of .item()")
+    log.item("Item level 1")
+    log.item("Item level 2", level=2)
+    log.item("Item level 3", level=3)
+    log.item("Item level 4", level=4)
+
+    log.header("Example of .item2()")
+    log.item2("Item level 1")
+    log.item2("Item level 2", level=2)
+    log.item2("Item level 3", level=3)
+    log.item2("Item level 4", level=4)
+
+    log.header("Example of .item3()")
+    log.item3("Item level 1")
+    log.item3("Item level 2", level=2)
+    log.item3("Item level 3", level=3)
+    log.item3("Item level 4", level=4)
+
+    log.header("Example of .item4()")
+    log.item4("Item level 1")
+    log.item4("Item level 2", level=2)
+    log.item4("Item level 3", level=3)
+    log.item4("Item level 4", level=0)
+
+    log.header("Example .header()")
+    log.header2("Example .header()")
+    log.header3("Example .header()")
+    log.header4("Example .header()")
+
+    dd("Done Log Play")
+
+
+async def query_builder_play():
+
+    # ORM example
+    # from app1.models import Post
+    # posts = await Post.query().first()
+    # dd(posts)
+
+    # sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when exactly one was required
+
+    #x = await uvicore.db.scalar_one("SELECT name, id FROM permissions where ID = 1")
+    #dd(x)
+
+
+    posts = (await uvicore.db.query()
+        .table('posts')
+        .select('title', 'id')
+        .where('id', '>', 2)
+        .scalar_one_or_none()
+    )
     dd(posts)
 
-    dd('')
 
 
-    # from uvicoreteam.themes import mdb
-    # from uvicoreextra
-    # from uvcteam import themes
-    # from teamuvicore import themes
-    # from uvicore_extra import themes
 
-    # from teamuvc import themes
-    # teamuvc-themes
+    # post = (await uvicore.db.query('app1')
+    #     .table('posts')
+    #     #.join('auth.users', 'posts.creator_id', 'auth.users.id', alias='creator')
+    #     .join('auth.users', 'posts.creator_id', 'auth.users.id')
+    #     .find(auth__users__id=2)
+    # )
+    #dd(post)
+
+    # 4, 5, 7
+    posts = (await uvicore.db.query('app1')
+        .table('posts')
+        .where('body', '!like', '%red%')
+        .get()
+    )
+    dd(posts)
+
+    # posts = (await uvicore.db.query('app1')
+    #     .table('posts')
+    #     .where([
+    #         ('id', '>', 2),
+    #         ('other', '=', None)
+    #     ])
+    #     .get()
+    # )
+    # dd(posts)
 
 
 
@@ -299,11 +331,11 @@ async def mail_play():
     # x = Mail(
     #     #mailer='smtp',
     #     #mailer_options={'port': 124},
-    #     to=['mreschke@sundiallabs.com'],
-    #     cc=['mreschke19@gmail.com'],
-    #     bcc=['mreschke@sunfinity.com'],
+    #     to=['mreschke1@example.com'],
+    #     cc=['mreschke2@example.com'],
+    #     bcc=['mreschke3@example.com'],
     #     from_name='Matthew',
-    #     from_address='mail@mreschke.com',
+    #     from_address='mreschke@example.com',
     #     subject='Hello1',
     #     html='Hello1 <b>Body</b> Here',
     #     attachments=[
@@ -316,11 +348,11 @@ async def mail_play():
     x = (Mail()
         #.mailer('mailgun')
         #.mailer_options({'port': 124})
-        .to(['mreschke@sundiallabs.com'])
-        .cc(['mreschke19@gmail.com'])
-        .bcc(['mreschke@sunfinity.com'])
+        .to(['mreschke1@example.com'])
+        .cc(['mreschke2@example.com'])
+        .bcc(['mreschke3@example.com'])
         .from_name('Matthew')
-        .from_address('mail@mreschke.com')
+        .from_address('mreschke@example.com')
         .subject('Hello1')
         .text('Hello1 <b>Body</b> Here')
         .attachments([

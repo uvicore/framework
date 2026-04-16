@@ -1,16 +1,21 @@
 import uvicore
-from uvicore.typing import Dict, Callable, ASGIApp, Send, Receive, Scope
-from uvicore.http.response import Text, HTML, JSON, Response
-from uvicore.http.request import HTTPConnection, Request
-from uvicore.support.dumper import dump, dd
 from uvicore.support import module
+from uvicore.support.dumper import dump, dd
+from uvicore.http.response import HTML, JSON
+from uvicore.http.request import HTTPConnection
 from uvicore.http.exceptions import HTTPException
+from uvicore.contracts import Logger as LoggerInterface
+from uvicore.typing import ASGIApp, Send, Receive, Scope
 from uvicore.contracts import Authenticator, UserInfo, UserProvider
 
 
 @uvicore.service()
 class Authentication:
     """Authentication global middleware capable of multiple authenticator backends"""
+
+    @property
+    def log(self) -> LoggerInterface:
+        return uvicore.log.name('uvicore.auth')
 
     def __init__(self, app: ASGIApp, route_type: str) -> None:
         # __init__ called one time on uvicore HTTP bootstrap
@@ -49,7 +54,6 @@ class Authentication:
         for authenticator_name, authenticator in self.config.authenticators.items():
             # Load authenticator backend from cache or module.load()
             if authenticator_name in self.cached_authenticators:
-                #dump('cached authenticator')
                 backend = self.cached_authenticators[authenticator_name]
             else:
                 try:
@@ -65,7 +69,6 @@ class Authentication:
             # Return of False means this authentication method is not being attempted, try next authenticator
             # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
             # Return of User object means a valid user was found, skip next authenticator
-            #dump(backend)
             # 8867 req/sec
             user = await backend.authenticate(request)
             # 6924 req/sec logging, 8500 req/sec without logging
@@ -119,6 +122,9 @@ class Authentication:
         # Add matched authenticator to request for later usage (like logout functionality)
         scope['authenticator'] = authenticator_name
 
+        # Dump entire scope including our UserInfo object
+        self.log.dump('Final request.scope after authenticators and user providers:', scope)
+
         # Next global middleware in stack
         await self.app(scope, receive, send)
 
@@ -128,10 +134,8 @@ class Authentication:
         provider_module = self.config.default_provider.module
 
         if provider_module in self.cached_providers:
-            #dump('cached provider')
             user_provider = self.cached_providers[provider_module]
         else:
-            #dump('UNcached provider')
             # Anonymous user provider is always the 'default_provider'
             # Load and instantiate just once, then cache the results, a huge boost for middleware!
             user_provider: UserProvider = module.load(self.config.default_provider.module).object()
@@ -181,7 +185,7 @@ class Authentication:
 
 
 # Stand-alone function because we use this elsewhere outside the Authentication class
-def get_auth_config(route_type: str = 'aip'):
+def get_auth_config(route_type: str = 'api'):
     """Get web or api auth config and merge default options and providers"""
 
     # Load all default option configs
@@ -226,75 +230,3 @@ def get_auth_config(route_type: str = 'aip'):
 
     # Returned merge config for all authenticators
     return config
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import typing
-
-# from starlette.authentication import (
-#     AuthCredentials,
-#     AuthenticationBackend,
-#     AuthenticationError,
-#     UnauthenticatedUser,
-# )
-# from starlette.requests import HTTPConnection
-# from starlette.responses import PlainTextResponse, Response
-# from starlette.types import ASGIApp, Receive, Scope, Send
-
-
-# class AuthenticationMiddleware:
-#     def __init__(
-#         self,
-#         app: ASGIApp,
-#         backend: AuthenticationBackend,
-#         on_error: typing.Callable[
-#             [HTTPConnection, AuthenticationError], Response
-#         ] = None,
-#     ) -> None:
-#         self.app = app
-#         self.backend = backend
-#         self.on_error = (
-#             on_error if on_error is not None else self.default_on_error
-#         )  # type: typing.Callable[[HTTPConnection, AuthenticationError], Response]
-
-#     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-#         if scope["type"] not in ["http", "websocket"]:
-#             await self.app(scope, receive, send)
-#             return
-
-#         conn = HTTPConnection(scope)
-#         try:
-#             auth_result = await self.backend.authenticate(conn)
-#         except AuthenticationError as exc:
-#             response = self.on_error(conn, exc)
-#             if scope["type"] == "websocket":
-#                 await send({"type": "websocket.close", "code": 1000})
-#             else:
-#                 await response(scope, receive, send)
-#             return
-
-#         if auth_result is None:
-#             auth_result = AuthCredentials(), UnauthenticatedUser()
-#         scope["auth"], scope["user"] = auth_result
-#         await self.app(scope, receive, send)
-
-#     @staticmethod
-#     def default_on_error(conn: HTTPConnection, exc: Exception) -> Response:
-#         return PlainTextResponse(str(exc), status_code=400)

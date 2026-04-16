@@ -1,6 +1,4 @@
-import uvicore
 import inspect
-import importlib
 from uvicore.support import module
 from uvicore.container import Binding
 from uvicore.support.dumper import dd, dump

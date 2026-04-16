@@ -120,7 +120,7 @@ config = {
     #             'module': 'uvicore.http.middleware.TrustedHost',
     #             'options': {
     #                 # Host testserver is for automated unit tests
-    #                 'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.sunfinity.com'],
+    #                 'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.example.com'],
     #                 'www_redirect': True,
     #             }
     #         },
@@ -196,7 +196,7 @@ config = {
     #             'module': 'uvicore.http.middleware.TrustedHost',
     #             'options': {
     #                 # Host testserver is for automated unit tests
-    #                 'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
+    #                 'allowed_hosts': ['127.0.0.1', 'localhost', '0.0.0.0', 'testserver', 'sunjaro', 'p53', 'uvicore-local.example.io'],
     #                 'www_redirect': True,
     #             }
     #         },
@@ -205,7 +205,7 @@ config = {
     #         'CORS': {
     #             'module': 'uvicore.http.middleware.CORS',
     #             'options': {
-    #                 'allow_origins': ['http://127.0.0.1:5000', 'http://0.0.0.0:5000', 'http://localhost:5000', 'sunjaro', 'p53', 'uvicore-local.sunfinity.io'],
+    #                 'allow_origins': ['http://127.0.0.1:5000', 'http://0.0.0.0:5000', 'http://localhost:5000', 'sunjaro', 'p53', 'uvicore-local.example.io'],
     #                 #'allow_origins': ['*'],
     #                 'allow_methods': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     #                 'allow_headers': [],

@@ -1,27 +1,19 @@
 import os
-import sys
 import uvicore
-from uvicore.typing import Any, List, NamedTuple, Tuple, Dict, OrderedDict, Union
 from uvicore.package import Package
-from uvicore.contracts import Application as ApplicationInterface
-from uvicore.contracts import Config as ConfigInterface
-from uvicore.contracts import Package as PackageInterface
-from uvicore.contracts import Template as TemplateInterface
-from uvicore.support.collection import dotget
-from uvicore.support.dumper import dd, dump
-from uvicore.support.hash import md5
-from uvicore.support.module import load, location
 from uvicore.console import command_is
-
-#import uvicore.foundation.events.app
+from uvicore.support.module import load, location
 from uvicore.foundation.events import app as events
+from uvicore.typing import List, Dict, OrderedDict, Union
+from uvicore.contracts import Package as PackageInterface
+from uvicore.contracts import Application as ApplicationInterface
 
 try:
     from fastapi import FastAPI
     from starlette.applications import Starlette
-except ImportError:  # pragma: nocover
-    FastAPI = None  # type: ignore
-    Starlette = None  # type: ignore
+except ImportError:
+    class FastAPI: pass
+    class Starlette: pass
 
 
 @uvicore.service('uvicore.foundation.application.Application',
@@ -51,11 +43,6 @@ class Application(ApplicationInterface):
     def http(self) -> Union[Starlette, FastAPI]:
         return self._http
 
-    # No, don't want duplicate entrypoints
-    # @property
-    # def config(self) -> ConfigInterface:
-    #     return self._config
-
     @property
     def providers(self) -> OrderedDict[str, Dict]:
         return self._providers
@@ -75,6 +62,10 @@ class Application(ApplicationInterface):
     @property
     def is_http(self) -> bool:
         return self._is_http
+
+    @property
+    def is_pytest(self) -> bool:
+        return self._is_pytest
 
     @property
     def packages(self) -> OrderedDict[str, PackageInterface]:
@@ -109,6 +100,7 @@ class Application(ApplicationInterface):
         self._booted = False
         self._is_console = False
         self._is_http = False
+        self._is_pytest = False
         self._packages = OrderedDict()
         self._running_config = OrderedDict()
         self._path = None
@@ -162,6 +154,12 @@ class Application(ApplicationInterface):
         if 'uvicore.http' not in self.providers:
             self._is_console = True
             self._is_http = False
+
+        # Detect if running in pytest mode
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            self._is_console = False
+            self._is_http = False
+            self._is_pytest = True
 
         # Register all providers by calling each packages register() method
         # This is what builds self._packages with an actual Package Class objects

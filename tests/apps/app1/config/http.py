@@ -29,6 +29,9 @@ api = {
     # URL prefix for all API endpoints
     'prefix': env('API_PREFIX', '/api'),
 
+    # API Payload version when using APIResponse wrapper
+    'version': env('API_VERSION', "1.0"),
+
     # Page Size
     'page_size': 25, # 3
     'page_size_max': 100, # 5

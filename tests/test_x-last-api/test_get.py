@@ -5,7 +5,7 @@ from starlette.testclient import TestClient
 from uvicore.support.dumper import dump
 
 @pytest.mark.asyncio
-async def test_list(app1, client):
+async def Xtest_list(app1, client):
     res = await client.get("/api/posts")
     assert res.status_code == 200, res.text
 

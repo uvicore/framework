@@ -22,9 +22,21 @@ class Dispatcher(ABC):
         """List of all wildcard listeners"""
         pass
 
+    @property
+    @abstractmethod
+    def registered_events(self) -> List:
+        """Get all registered events from IOC bindings and manual registrations"""
+        pass
+
+    @property
+    @abstractmethod
+    def expanded_sorted_listeners(self) -> List:
+        """Get all listeners with expanded wildcards, sorted by priority ASC"""
+        pass
+
     # @abstractmethod
     # def event(self, event: Union[str, Callable]) -> Dict:
-    #     """Get one event by str name or class"""
+    #     """Get one known (pre-registered) EventInfo by str name or class"""
     #     pass
 
     @abstractmethod
@@ -39,11 +51,27 @@ class Dispatcher(ABC):
 
     @abstractmethod
     def listen(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
-        """Append a listener (string or method) callback to one or more events"""
+        """Decorator or method to append a listener (string or Callable) callback to one or more events."""
         pass
 
+    @abstractmethod
+    def listener(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        pass
+
+    @abstractmethod
     def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
-        """Alias to listen"""
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        pass
+
+    @abstractmethod
+    def handler(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
+        pass
+
+    @abstractmethod
+    def call(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+        """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         pass
 
     @abstractmethod

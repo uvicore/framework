@@ -72,7 +72,7 @@ async def test_where_through_one_to_many(app1):
     users = await User.query().include(
         'posts',  # The One-To-Many the Many-To-Many is going through
         'posts.tags',  # Many-To-Many
-    ).where('posts.tags.name', 'linux').get()
+    ).where('posts.tags.name', 'linux').order_by('email').get()
     dump(users)
 
     # Should limit by just 2 users

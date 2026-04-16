@@ -24,7 +24,7 @@ class PytestStartup(Event):
 
 @uvicore.event()
 class Shutdown(Event):
-    """Console is shutting down.  Runs after console command"""
+    """Console is shutting down.  Runs after console command."""
 
     is_async = True
 
@@ -34,7 +34,7 @@ class Shutdown(Event):
 
 @uvicore.event()
 class PytestShutdown(Event):
-    """Pytest console is shutting down.  Runs after pytests"""
+    """Pytest console is shutting down.  Runs after pytests."""
 
     is_async = True
 

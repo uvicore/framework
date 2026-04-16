@@ -49,10 +49,11 @@ async def test_cache_array_store(app1):
 
 @pytest.mark.asyncio
 async def test_cache_generated_hashkey(app1):
-    # Generated has key for this query is c0a54e3e4c5e0620776e1f24651bdaaace3962de
-    cache_key = 'uvicore.database/c0a54e3e4c5e0620776e1f24651bdaaace3962de'
+    # Generated has key for this query is e9525cba3fa87f27a0f840dad95c3e6855466205
+    cache_key = 'uvicore.database/e9525cba3fa87f27a0f840dad95c3e6855466205'
     hashtags = (await uvicore.db.query()
         .table('hashtags')
+        .order_by('id')
         .cache()
         .get()
     )

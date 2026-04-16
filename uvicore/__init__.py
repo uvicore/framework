@@ -1,25 +1,30 @@
 # type: ignore
-from . import contracts
-from uvicore.typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
+from uvicore.typing import Dict
 from uvicore.foundation.decorators import event, job, model, seeder, service, table, provider, routes, controller, composer
 
-
 # Uvicore version.  Also available in app.version
-__version__ = '0.3.4'
+__version__ = '0.3.17'
 
-# Foundational
-ioc: contracts.Ioc = None
-events: contracts.Dispatcher = None
-jobs: contracts.JobDispatcher = None
-app: contracts.Application = None
-config: contracts.Config = None
-log: contracts.Logger = None
-cache: contracts.Cache = None
-
-# Optional
+# Types are only required during type checking
 if TYPE_CHECKING:
+    from . import contracts
+    ioc: contracts.Ioc = None
+    events: contracts.Dispatcher = None
+    jobs: contracts.JobDispatcher = None
+    app: contracts.Application = None
+    config: contracts.Config = None
+    log: contracts.Logger = None
+    cache: contracts.Cache = None
     db: contracts.Database = None
 else:
+    ioc = None
+    events = None
+    jobs = None
+    app = None
+    config = None
+    log = None
+    cache = None
     db = None
 
 
