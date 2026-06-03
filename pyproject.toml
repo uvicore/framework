@@ -38,7 +38,7 @@ dependencies = [
     "environs==14.1.*",
     "argon2-cffi==23.1.*",
     "cryptography==44.0.*",
-    "aiohttp==3.11.*",
+    "aiohttp==3.14.*",
     "merge-args==0.1.*",
 
     # Templating is part of core, not just web, so include it in base
