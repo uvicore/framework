@@ -920,10 +920,21 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                 # I bet the API will not know how to handle input and complain?
                 # I may have to handle specially in the ModelRouter
 
-                # Loop raw RowProxy to find proper pivot keys
+                # Loop raw RowProxy to find proper pivot keys.
+                # When MULTIPLE *Many relations are included on the same query, each
+                # secondary relation query joins all the other *Many relations too,
+                # producing a cartesian product of raw rows (e.g. tags x comments x
+                # attributes).  The same (parent, child) pivot pair therefore repeats
+                # many times.  Dedup by the (left_id, right_id) pivot pair so each
+                # link is attached exactly once.
+                seen_pivot_pairs = set()
                 for row in secondary[relation.name]:
                     left_id = getattr(row, left_key)
                     right_id = getattr(row, right_key)
+
+                    # Skip duplicate pivot pairs from cartesian-joined secondary rows
+                    if (left_id, right_id) in seen_pivot_pairs: continue
+                    seen_pivot_pairs.add((left_id, right_id))
 
                     # Get parent value, the value of the main table
                     parent = parents[left_id]

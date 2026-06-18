@@ -152,14 +152,17 @@ class ModelRoutes:
                     is_single = True
 
                 for item in items:
-                    pk = await Model.insert(item)
+                    # Model.insert() returns the raw SQLAlchemy CursorResult, not the
+                    # primary key.  Extract the new pk from it, same as Model.save() and
+                    # Model.create() do via result.inserted_primary_key[0].
+                    result = await Model.insert(item)
 
                     # If primary key is read_only, assume its an auto-incrementing pk
                     # If not read_only, its a manual pk like 'key'.
                     # Only set new pk result if pk is read_only.  Why? Because when pk is 'key'
                     # a string, encode/databases does not return the new pk, just returns 1 every time.
                     if Model.modelfield(Model.pk).read_only == True:
-                        setvalue(item, Model.pk, pk)
+                        setvalue(item, Model.pk, result.inserted_primary_key[0])
 
                 # Return inserted item
                 if is_single:

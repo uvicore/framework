@@ -137,7 +137,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             await models._after_insert()
             await models._after_save()
 
-        # Return insert results (if single will be PK)
+        # Return the raw SQLAlchemy CursorResult.  For a single insert, get the new
+        # primary key from result.inserted_primary_key[0] (see Model.save()/create()).
+        # For a bulk (list) insert, per-row primary keys are not available.
         return result
 
     @classmethod
@@ -467,7 +469,10 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         # you would also have to specify WHICH ones to delete, like post.delete('comments', [1,2,3]) etc...
         # With a HasOne/MorphOne you could at least do post.delete('image') and thats quicker than image.find(post=1).delete() manually?
 
-        # Notice I have not yet added delete for HasMany (like post comments).  May be a bit dangerous maybe?
+        # delete(relation) supports HasOne, HasMany, MorphOne and MorphMany (it deletes the
+        # child records whose foreign key points back at this parent).  It does NOT support
+        # BelongsToMany/MorphToMany - use unlink() for those (the records live independently
+        # and are shared via a pivot table).
 
         if relation_name is not None:
             # Deleting children, do NOT delete the parent after the children, this is children only
@@ -476,7 +481,9 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             rel_table = relation.entity.table
 
             # Notice this will all fail if the child has other constraints
-            if type(relation) == HasOne:
+            # HasOne deletes the single child, HasMany deletes ALL children, but the
+            # query is identical (every child whose foreign_key matches this parents pk).
+            if type(relation) == HasOne or type(relation) == HasMany:
                 query = (rel_table
                     .delete()
                     .where(getattr(rel_table.c, relation.foreign_key) == getattr(self, entity.pk))
