@@ -86,12 +86,35 @@ created/dropped in topological FK order; conns comma-separated). The test confte
 - `registers` gate dict (in `config/package.py`) toggles what providers load
   (`models/tables/seeders/web_routes/api_routes/views/assets/commands`).
 
+## Where operators (`builder.py` `_where_expression`)
+Single source of truth for `where`/`or_where`/`filter`/`or_filter` on BOTH builders.
+Supported (case- + whitespace-insensitive): `= == != <> > < >= <=`, `in`, `!in`/`not in`,
+`like`, `!like`/`not like`, **`ilike`/`!ilike`** (case-insensitive, portable), `between`/
+`not between`, `is`/`is null`, `is not`/`is not null`. Unknown operator or column → clear
+raised error (not a silent wrong result). Add new operators here, not in callers.
+
+## Dialect / connection layer (`db.py` `configure_connection`)
+- `configure_connection()` is pure (no engine creation) → unit-testable per dialect
+  (`tests/test_db/test_dialects.py`). `init()` calls it then creates the engine.
+- `postgres` is normalized to `postgresql` (SQLAlchemy dropped the alias). Any standard server
+  dialect works via `SERVER_DIALECT_DEFAULTS` (postgresql/mysql/mariadb/mssql/oracle/cockroachdb).
+- Async vs sync is **deterministic** via `SUPPORTED_ASYNC_DRIVERS` (no bare-except fallback).
+- `connection.url` stores the real password (str(URL) masks it; a masked url can't make an engine).
+
+## Cross-dialect correctness (SQLite is forgiving; Postgres/MySQL are strict)
+- **Never insert an explicit NULL auto-increment PK** — `mapper.table()` omits a `None` primary
+  key so the DB generates it (SQLite tolerated the NULL; Postgres/MySQL reject it).
+- **`find(pk)` coerces** the value to the pk column's Python type (string id from a URL path
+  would otherwise fail on Postgres with `integer = varchar`).
+- **`LIKE` is case-sensitive on Postgres**; use `ilike` for portable case-insensitive matching.
+- **Row order isn't guaranteed** without `.order_by()` on Postgres/MySQL.
+
 ## Conventions for db/config changes
 - Don't break the metakey/shared-metadata design — it's why FKs span connections.
 - Keep the low-level builder and the ORM builder's `Query` shape consistent.
 - Table `name` must NOT include the prefix; the prefix is config-driven and applied at runtime.
-- New connection/driver/dialect support: add defaults in `db.init()` and the driver maps at the top
-  of `db.py`.
+- New dialect support: add it to `SUPPORTED_DIALECTS` + `SERVER_DIALECT_DEFAULTS` (and any async
+  driver to `SUPPORTED_ASYNC_DRIVERS`). Validate with `test_dialects.py`.
 - Use `env()` for anything environment-specific; never hardcode.
-- Test against `tests/test_db/` (test_builder/test_orm/test_raw/test_sa/test_hybrid) and
-  `tests/test_configuration/`, `tests/test_typing/`. See `uvicore-testing`.
+- Test against `tests/test_db/`, and run the **cross-db matrix** (`./bin/test-integration.sh all`,
+  see `tests/integration/`) when touching `database/` or `orm/`. See `uvicore-testing`.

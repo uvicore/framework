@@ -106,4 +106,4 @@ come back prefixed, e.g. `creator__username`).
 - Keep `read_only`/`write_only` honored in `selectable_columns()` and `mapper().table()`.
 - Models are non-singleton IoC bindings (`{module}.{Class}`); Table classes are singletons.
 - Test relation changes against `tests/test_db/test_orm/` (one file per relation type) and
-  `tests/test_orm_queries.py`. See `uvicore-testing`.
+  the basics in `tests/test_db/test_orm/test_query_basics.py`. See `uvicore-testing`.

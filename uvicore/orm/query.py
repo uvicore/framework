@@ -212,6 +212,16 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         if pk_value:
             column = self._pk()
             value = pk_value
+            # Coerce the pk value to the pk column's Python type.  By-id lookups often
+            # arrive as strings (e.g. a URL path param), and strict engines like Postgres
+            # reject "integer = varchar"; SQLite silently coerces.  This keeps find() portable.
+            try:
+                pk_column_name = self.entity.mapper(column).column()
+                py_type = self.entity.table.c[pk_column_name].type.python_type
+                if not isinstance(value, py_type):
+                    value = py_type(value)
+            except Exception:
+                pass
         elif kwargs:
             column = [x for x in kwargs.keys()][0]
             value = [x for x in kwargs.values()][0]

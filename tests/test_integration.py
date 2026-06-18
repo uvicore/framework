@@ -59,8 +59,9 @@ async def test_container_make_service(app1):
 async def test_orm_query_with_where(app1):
     """Test ORM query with where clause"""
     from uvicore.auth.models.user import User
-    users = await User.query().where('is_active', '=', True).get()
+    users = await User.query().where('email', 'like', '%manager%').get()
     assert isinstance(users, list)
+    assert all('manager' in u.email for u in users)
 
 
 @pytest.mark.asyncio

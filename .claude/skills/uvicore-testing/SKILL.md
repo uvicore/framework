@@ -16,7 +16,7 @@ This repo uses **Poetry** — run everything through `poetry run`, from the `fra
 
 - All tests: `poetry run ./bin/test.sh` — sets `PYTHONPATH=./tests/apps`, runs pytest with color,
   ignores `tests/test_database`, passes extra args through. (~361 tests, a few seconds.)
-- A subset: `poetry run ./bin/test.sh tests/test_orm` or
+- A subset: `poetry run ./bin/test.sh tests/test_db/test_orm` or
   `poetry run ./bin/test.sh tests/test_db/test_orm/test_find.py`.
 - Coverage: `poetry run ./bin/test-cov.sh` (term-missing over `uvicore` + `tests/apps/app1`), HTML
   via `poetry run ./bin/test-cov-html.sh`.
@@ -49,10 +49,13 @@ async def test_orm_query_first(app1):
 
 `tests/` folders: `test_auth, test_cache, test_configuration, test_console, test_contracts,
 test_db/{test_builder,test_orm,test_raw,test_sa,test_hybrid}, test_exceptions, test_foundation,
-test_http, test_http_client, test_ioc, test_jobs, test_logging, test_mail, test_orm, test_package,
-test_redis, test_templating, test_typing, test_unit/test_support`. Plus top-level files
-`test_uvicore.py, test_events.py, test_integration.py, test_orm_queries.py, test_http_routing.py,
-test_container_ioc.py`.
+test_http, test_http_client, test_ioc, test_jobs, test_logging, test_mail, test_package,
+test_redis, test_templating, test_typing, test_unit/test_support`. (ORM tests live under
+`test_db/test_orm/`, not a separate top-level `test_orm`.) IoC container + overrides → `test_ioc/`;
+HTTP routing → `test_http/` with live API behavior in `test_api/`; events → `test_events.py`. Plus
+the cross-db matrix in `tests/integration/`. Genuinely cross-cutting top-level files:
+`test_uvicore.py, test_events.py, test_integration.py`. Don't add loose top-level `test_*.py` files
+for things that belong in a subsystem folder.
 
 Put new framework tests in the closest matching folder. **Do not** add tests under `tests/apps/`
 unless the change is about the stub app itself.

@@ -114,8 +114,15 @@ class Mapper(MapperInterface):
 
             for (field, value) in model.__dict__.items():
                 field = self.entity.modelfields.get(field)
-                if field.column and not field.read_only:
-                    row[field.column] = value
+                if not field.column or field.read_only:
+                    continue
+                # Omit a None-valued primary key so the database auto-generates it.
+                # SQLite tolerates an explicit NULL on an INTEGER PRIMARY KEY (treats it
+                # as autoincrement) but Postgres/MySQL reject NULL on a serial/identity PK.
+                # This keeps inserts portable even when a model forgets read_only on its PK.
+                if field.primary and value is None:
+                    continue
+                row[field.column] = value
             tables.append(row)
 
         # Return

@@ -22,6 +22,7 @@ keep changes from breaking the bootstrap/IoC contract.
 | `uvicore-http-dev` | `uvicore/http/` — routing, controllers, AutoApi/ModelRouter, Guard/auth scopes, servers, responses, middleware. |
 | `uvicore-database-dev` | `uvicore/database/`, `uvicore/configuration/`, `uvicore/typing/` — the `db` service, low-level query builder, Table, seeders, connections, config system, the `Dict`/SuperDict type. |
 | `uvicore-console-events-jobs-dev` | `uvicore/console/`, `uvicore/events/`, `uvicore/jobs/` — CLI commands, schematic generators, the event dispatcher, jobs. |
+| `uvicore-services-reference` | leaf service subsystems — `uvicore/templating`, `mail`, `redis`, `cache`, `logging`, `auth` (UserInfo/authenticators/guards), `exceptions` (SmartException + HTTP exceptions/status). |
 | `uvicore-testing` | writing/running framework tests (`tests/`, `tests/apps/app1`, `bin/test*.sh`). |
 | `uvicore-add-subsystem` | adding a brand-new framework package/service (provider + mixin + IoC binding + config + tests). |
 
@@ -111,9 +112,15 @@ the key to the whole codebase.
 - **Run tests with Poetry, from `framework/`:** `poetry run ./bin/test.sh` (sets
   `PYTHONPATH=./tests/apps`, runs pytest; ~361 tests in a few seconds). Coverage:
   `poetry run ./bin/test-cov.sh` / `poetry run ./bin/test-cov-html.sh`. A single area:
-  `poetry run ./bin/test.sh tests/test_orm`.
+  `poetry run ./bin/test.sh tests/test_db/test_orm`.
 - The test suite bootstraps the **`app1`** reference app (`tests/apps/app1/`) against an in-memory
   SQLite DB via the `app1` fixture in `tests/conftest.py`. Reuse it; don't invent new bootstrap.
+- **Cross-database integration tests:** `poetry run ./bin/test-integration.sh {postgres|mysql|mariadb|all}`
+  runs the dialect-agnostic suites against real engines in docker (the app1+auth connections are
+  env-driven — see `tests/integration/`). Use this when changing the `database`/`orm` layers.
+  Cross-dialect gotchas to respect: never insert an explicit NULL auto-increment PK (SQLite
+  tolerates it, Postgres/MySQL don't); `LIKE` is case-sensitive on Postgres (use `ilike` for
+  portable case-insensitive matching); row order isn't guaranteed without `.order_by()`.
 - **Versioning:** bump `pyproject.toml` AND `uvicore/__init__.py.__version__` together (see
   `bin/build.sh`). User-visible/breaking changes should update the docs `epologue` (see the
   release-notes Copilot instruction).

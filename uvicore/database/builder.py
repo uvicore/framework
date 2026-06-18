@@ -259,27 +259,72 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         statements = []
         for where in wheres:
             if type(where) == tuple:
-                column, operator, value = where
-                column = self._column(column, query).sacol
-
-                # Convert to SQL Alchemy Where
-                if type(value) == str and value.lower() == 'null': value = None
-                if operator == 'in':
-                    statements.append(column.in_(value))
-                elif operator == '!in':
-                    statements.append(sa.not_(column.in_(value)))
-                elif operator == 'like':
-                    statements.append(column.like(value))
-                elif operator == '!like':
-                    statements.append(sa.not_(column.like(value)))
-                else:
-                    op = self._operator(operator)
-                    statements.append(op(column, value))
+                column_ref, operator, value = where
+                col = self._column(column_ref, query)
+                if col is None or col.sacol is None:
+                    raise Exception(
+                        "Cannot build where clause: column '{}' was not found on table '{}'. "
+                        "Check the column/field name and any relation include.".format(
+                            column_ref, query.table.name if query.table is not None else '?')
+                    )
+                statements.append(self._where_expression(col.sacol, operator, value))
             else:
                 # SQLAlchemy expression
                 statements.append(where)
-
         return statements
+
+    def _where_expression(self, column, operator, value):
+        """Build one SQLAlchemy where expression from a (column, operator, value) tuple.
+
+        This is the single source of truth for ALL where operators, used by both the
+        low-level DbQueryBuilder and the ORM builder, for .where(), .or_where(),
+        .filter() and .or_filter().  Operators are case-insensitive and whitespace
+        normalized so 'NOT IN', 'not  in' and '!in' are all equivalent.
+        """
+        # Normalize operator: lowercase and collapse all internal whitespace
+        op = ' '.join(str(operator).lower().split())
+
+        # Treat the literal string 'null' as a real SQL NULL
+        if isinstance(value, str) and value.lower() == 'null': value = None
+
+        # Equality / inequality (SQLAlchemy renders == None / != None as IS NULL / IS NOT NULL)
+        if op in ('=', '=='): return column == value
+        if op in ('!=', '<>'): return column != value
+
+        # Comparison
+        if op == '>': return column > value
+        if op == '<': return column < value
+        if op == '>=': return column >= value
+        if op == '<=': return column <= value
+
+        # IN / NOT IN
+        if op == 'in': return column.in_(value)
+        if op in ('!in', 'not in', 'notin'): return sa.not_(column.in_(value))
+
+        # LIKE / NOT LIKE (case sensitive)
+        if op == 'like': return column.like(value)
+        if op in ('!like', 'not like', 'notlike'): return sa.not_(column.like(value))
+
+        # ILIKE / NOT ILIKE (case insensitive)
+        if op == 'ilike': return column.ilike(value)
+        if op in ('!ilike', 'not ilike', 'notilike'): return sa.not_(column.ilike(value))
+
+        # BETWEEN / NOT BETWEEN (value is a 2 item [low, high] list/tuple)
+        if op == 'between': return column.between(value[0], value[1])
+        if op in ('!between', 'not between', 'notbetween'):
+            return sa.not_(column.between(value[0], value[1]))
+
+        # IS NULL / IS NOT NULL (explicit; value is typically None)
+        if op in ('is', 'is null'): return column.is_(value)
+        if op in ('is not', 'is not null', '!is'): return column.is_not(value)
+
+        # Unknown operator - fail loudly with an actionable message
+        raise Exception(
+            "Unsupported where operator '{}'.  Supported operators: "
+            "=, ==, !=, <>, >, <, >=, <=, in, !in (not in), like, !like (not like), "
+            "ilike, !ilike (not ilike), between, !between (not between), "
+            "is (is null), is not (is not null)".format(operator)
+        )
 
     def _connection(self):
         return self._conn
