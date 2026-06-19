@@ -54,3 +54,16 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
+
+  # Real redis server for the cache backend integration suite
+  # (./bin/test-cache-integration.sh).  The default unit run uses the in-memory
+  # 'array' cache backend; this verifies the 'redis' backend end-to-end.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

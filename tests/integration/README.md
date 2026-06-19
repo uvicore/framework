@@ -1,4 +1,17 @@
-# Uvicore Database Integration Test Matrix
+# Uvicore Integration Test Matrix
+
+The default unit suite (`poetry run ./bin/test.sh`) runs against in-memory backends
+(SQLite for the database, the `array` in-memory store for the cache). This directory
+runs the **same** behavior end-to-end against **real** services in throwaway docker
+containers, so gaps the in-memory backends hide are caught:
+
+- **Database** (`test_cross_db.py`) — real Postgres / MySQL / MariaDB engines.
+- **Redis cache** (`test_redis_cache.py`) — a real redis server behind the `redis` cache backend.
+- **Redis service** (`test_redis_service.py`) — the generic `uvicore.redis` connection helper + passthrough against a real redis server.
+
+---
+
+# Database Integration Test Matrix
 
 The default unit suite (`poetry run ./bin/test.sh`) runs against in-memory **SQLite**.
 This directory runs the **same** schema, seeders and ORM/query tests end-to-end against
@@ -47,3 +60,77 @@ matching `env/<backend>.env` file, then tears the container down.
 Add a service to `docker-compose.yml` (with a healthcheck) and an `env/<name>.env` file,
 then add the name to the `case` in `bin/test-integration.sh`. Any standard SQLAlchemy
 server dialect works as long as its driver is in the `database` extra.
+
+---
+
+# Redis Cache Integration Tests
+
+The default unit suite exercises the in-memory **`array`** cache backend (`CACHE_STORE`
+defaults to `array` in `tests/apps/app1/config/cache.py`). `test_redis_cache.py` exercises
+the **`redis`** cache backend end-to-end against a real redis server, covering the full
+`Cache` contract: `put`/`get`/`has`, multi-key get/put, `forget`, `pull`, `add`, `remember`,
+`increment`/`decrement`, real server-enforced TTL expiry, `touch`, pickle round-tripping of
+arbitrary python objects, key prefixing, and prefix-scoped `flush`.
+
+## Run it
+
+```bash
+poetry run ./bin/test-cache-integration.sh
+KEEP_UP=1 poetry run ./bin/test-cache-integration.sh   # leave the redis container running
+poetry run ./bin/test-cache-integration.sh tests/integration/test_redis_cache.py -x   # extra pytest args
+```
+
+The runner brings up a `redis:7-alpine` container (offset port **56379**), waits for its
+healthcheck, then runs the suite with `env/redis.env` (which sets `CACHE_STORE=redis` and
+points the `cache` redis connection at the container).
+
+## How it works
+
+- The tests resolve the redis store explicitly via `uvicore.cache.store('redis')`, so they
+  verify the redis backend regardless of which store is the configured default.
+- The `cache` fixture **skips** the whole module if no redis server is reachable, so the
+  suite is harmless under the plain `./bin/test.sh` run (it skips when no redis is up, and
+  runs for real when one is — e.g. a local redis on `127.0.0.1:6379` or the docker container).
+- The fixture is `loop_scope="session"` so it shares the same event loop as the tests and
+  the session-scoped `app1` fixture. Without this, pytest-asyncio runs a function-scoped
+  async fixture in its own loop, the redis connection pool binds to that loop, and every test
+  fails with *"Future attached to a different loop"* when it reuses the cached pool.
+
+## Gotcha this suite caught
+
+`redis` `DEL` requires at least one key — `Cache.flush()` on an **empty** cache was calling
+`redis.delete()` with no arguments and raising. Fixed in `uvicore/cache/backends/redis.py`
+(skip the delete when no prefixed keys exist). The `array` backend never had this problem,
+so the in-memory unit suite never exposed it.
+
+---
+
+# Redis Service Integration Tests
+
+`uvicore/redis` (the `Redis` service, reached via `from uvicore.redis import Redis`) is a thin
+connection helper + passthrough — separate from caching. It resolves named connections from
+config, builds their URLs, lazily opens and **caches one `redis.asyncio` pool per connection
+URL**, and hands back the raw async redis client. The default unit suite only asserts the
+service is wired up; `test_redis_service.py` exercises it end-to-end against a real redis server.
+
+It covers:
+
+- **Connection management** — default selection (`app1`), named lookup, `redis://host:port/db`
+  URL building, unknown-connection errors, one cached engine per URL, and **database-level
+  isolation** between the `app1` (db 0) and `cache` (db 2) connections.
+- **The passthrough** — a representative slice of real redis commands through the returned
+  client: strings (`set`/`get`/`setnx`/`append`), counters (`incr`/`decrby`), expiry
+  (`expire`/`ttl`/`persist`/`setex`), hashes, lists, sets, and `keys` pattern scans.
+
+## Run it
+
+```bash
+poetry run ./bin/test-redis-integration.sh
+KEEP_UP=1 poetry run ./bin/test-redis-integration.sh
+poetry run ./bin/test-redis-integration.sh tests/integration/test_redis_service.py -x
+```
+
+Like the cache runner, it uses the `redis:7-alpine` container (port **56379**) and `env/redis.env`.
+All test keys are namespaced under `uvicore-redis-itest:` and cleaned up per test, so the suite is
+safe to run against a shared/local redis, and it **skips** entirely when no redis is reachable.
+The fixture is `loop_scope="session"` for the same event-loop reason described in the cache section.

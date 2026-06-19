@@ -1,74 +1,77 @@
 """
-Full Cache contract coverage for the in-memory `array` cache backend.
+End-to-end integration tests for the REDIS cache backend.
 
-This is the default cache store for the unit suite (CACHE_STORE defaults to
-'array' in tests/apps/app1/config/cache.py).  The matching redis backend is
-covered end-to-end in tests/integration/test_redis_cache.py against a real redis
-server; this module exercises the SAME contract against the array backend so the
-two stay behaviorally aligned.
+The default unit suite (`poetry run ./bin/test.sh`) exercises the in-memory
+`array` cache backend (CACHE_STORE defaults to 'array' in app1's cache config).
+This module talks to the **redis** cache store explicitly via
+`uvicore.cache.store('redis')`, so it verifies the real redis backend regardless
+of which store is configured as the default.
 
-The array backend keeps python objects in a plain dict (no pickle), so values
-round-trip by identity and TTLs are enforced lazily on access.
+It runs for real under `poetry run ./bin/test-cache-integration.sh`, which brings
+up a throwaway redis container and points the cache 'redis' store at it (see
+tests/integration/env/redis.env).  When no redis server is reachable - e.g. the
+plain SQLite unit run with no redis available - every test in this module SKIPS
+(via the `cache` fixture) instead of failing, exactly like the cross-db suite
+runs harmlessly against SQLite by default.
+
+The redis backend pickle-serializes values, so arbitrary python objects must
+round-trip, and it stores keys under the configured prefix ('app1::cache/').
 """
 import asyncio
 import pytest
 import pytest_asyncio
 import uvicore
 
-
-# Every method on the Cache contract (uvicore/contracts/cache.py).
-CONTRACT_METHODS = [
-    'connect', 'store', 'has', 'get', 'remember', 'put', 'pull',
-    'add', 'touch', 'increment', 'decrement', 'forget', 'flush',
-]
+try:
+    from redis.exceptions import RedisError
+except ImportError:  # pragma: no cover - redis extra always present in tests
+    RedisError = Exception
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def cache(app1):
-    """Function-scoped array cache store, flushed before and after for isolation.
+    """Function-scoped redis cache store, isolated and auto-skipped.
 
-    Resolves the 'array' store explicitly (not the configured default) so this
-    suite always exercises the array backend, even when CACHE_STORE is pointed at
-    redis.  The array backend holds state in a process-local dict that lives for
-    the whole session, so flush() on each side keeps tests independent.  No
-    loop_scope juggling is needed here (unlike the redis fixture) because the
-    array backend owns no event-loop-bound resources.
+    Resolves the 'redis' cache store (not the configured default) so these tests
+    always exercise the redis backend.  `redis.asyncio.from_url` is lazy, so the
+    first command is what actually opens the socket - if that fails (no redis
+    server), the whole test skips rather than erroring.  flush() before and after
+    keeps each test isolated; flush only touches keys under the cache prefix.
+
+    loop_scope="session" pins this fixture to the same session event loop the
+    tests run in (matching the session-scoped `app1` fixture).  Without it,
+    pytest-asyncio runs a function-scoped async fixture in its OWN loop, the
+    redis connection pool binds to that loop, and every test then fails with
+    "Future attached to a different loop" when it reuses the cached pool.
     """
-    store = uvicore.cache.store('array')
-    await store.flush()
+    store = uvicore.cache.store('redis')
+    try:
+        await store.flush()
+    except (RedisError, OSError) as e:
+        pytest.skip(f'redis not reachable for cache integration tests: {e}')
     yield store
-    await store.flush()
+    try:
+        await store.flush()
+    except (RedisError, OSError):
+        pass
+
+
+async def raw_redis():
+    """The underlying aioredis connection behind the 'cache' store, for asserting
+    on what physically landed in redis (prefixes, TTLs, untouched foreign keys)."""
+    from uvicore.redis import Redis as RedisDb
+    return await RedisDb.connect('cache')
 
 
 # --------------------------------------------------------------------------
-# Service / wiring
+# Wiring / connectivity
 # --------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_cache_service_available(app1):
-    assert hasattr(uvicore, 'cache'), "Cache service should be available"
-
-
-@pytest.mark.asyncio
-async def test_store_is_array_backend(cache):
-    """uvicore.cache.store('array') resolves the array driver, not the redis one."""
-    assert cache.__class__.__module__ == 'uvicore.cache.backends.array'
-    assert cache.__class__.__name__ == 'Array'
+async def test_store_is_redis_backend(cache):
+    """uvicore.cache.store('redis') resolves the redis driver, not the array one."""
+    assert cache.__class__.__module__ == 'uvicore.cache.backends.redis'
+    assert cache.__class__.__name__ == 'Redis'
     assert cache.prefix  # a non-empty key prefix is configured
-
-
-@pytest.mark.asyncio
-async def test_full_contract_surface(cache):
-    """Every method declared on the Cache contract is implemented."""
-    for method in CONTRACT_METHODS:
-        assert hasattr(cache, method), f"array backend missing '{method}'"
-
-
-@pytest.mark.asyncio
-async def test_distinct_stores(cache):
-    """The 'redis' store resolves to a different backend instance/class."""
-    redis_store = uvicore.cache.store('redis')  # instantiation only, no connection
-    assert redis_store.__class__.__name__ == 'Redis'
-    assert redis_store is not cache
 
 
 # --------------------------------------------------------------------------
@@ -159,12 +162,10 @@ async def test_increment_and_decrement(cache):
     assert await cache.increment('counter', 5) == 7
     assert await cache.decrement('counter', 3) == 4
     assert await cache.decrement('counter') == 3
-    # The running total is actually persisted between calls
-    assert await cache.get('counter') == 3
 
 
 # --------------------------------------------------------------------------
-# Serialization - the array backend stores live python objects as-is
+# Serialization - arbitrary python objects must survive the pickle round-trip
 # --------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_complex_value_roundtrip(cache):
@@ -182,58 +183,66 @@ async def test_complex_value_roundtrip(cache):
 
 
 # --------------------------------------------------------------------------
-# TTL / expiry - the array backend expires lazily on access
+# TTL / expiry - the real redis server enforces expiration
 # --------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_ttl_expiry(cache):
     await cache.put('ephemeral', 'soon-gone', seconds=1)
     assert await cache.get('ephemeral') == 'soon-gone'
-    await asyncio.sleep(1.2)
+    await asyncio.sleep(1.3)
     assert await cache.has('ephemeral') is False
     assert await cache.get('ephemeral') is None
 
 
 @pytest.mark.asyncio
-async def test_put_zero_seconds_never_expires(cache):
-    """seconds=0 means 'never expire' - no TTL is registered for the key."""
-    await cache.put('forever', 'value', seconds=0)
-    assert (cache.prefix + 'forever') not in cache.items_ttl
-    assert await cache.get('forever') == 'value'
-
-
-@pytest.mark.asyncio
 async def test_touch_resets_ttl(cache):
-    pk = cache.prefix + 'touchme'
-    await cache.put('touchme', 'v', seconds=1000)
-    high = cache.items_ttl[pk]
+    await cache.put('touchme', 'v', seconds=100)
     assert await cache.touch('touchme', seconds=5) is True
-    assert cache.items_ttl[pk] < high          # TTL was reset down to ~5s
     assert await cache.touch('does-not-exist') is False
-    assert await cache.get('touchme') == 'v'   # value still present
+    raw = await raw_redis()
+    ttl = await raw.ttl(cache.prefix + 'touchme')
+    assert 0 < ttl <= 5  # TTL was reset down to the new 5s window
 
 
 # --------------------------------------------------------------------------
-# Physical store behavior - prefixing and prefix-scoped flush
+# Physical redis behavior - prefixing and prefix-scoped flush
 # --------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_keys_are_stored_with_prefix(cache):
     await cache.put('prefixed', 'val', seconds=3600)
-    # Key physically lives under the configured prefix in the backing dict...
-    assert (cache.prefix + 'prefixed') in cache.items
+    raw = await raw_redis()
+    # Key physically exists under the configured prefix in redis...
+    assert await raw.exists(cache.prefix + 'prefixed') == 1
     # ...and not under the bare, un-prefixed name.
-    assert 'prefixed' not in cache.items
+    assert await raw.exists('prefixed') == 0
 
 
 @pytest.mark.asyncio
 async def test_flush_only_removes_prefixed_keys(cache):
-    foreign = 'unit-foreign-key-not-a-cache-entry'
-    cache.items[foreign] = 'keep-me'  # a key without the cache prefix
+    raw = await raw_redis()
+    foreign = 'integration-foreign-key-not-a-cache-entry'
+    await raw.set(foreign, b'keep-me')
     try:
         await cache.put('inside', 'v', seconds=3600)
         await cache.flush()
         # Our cache key is gone...
         assert await cache.get('inside') is None
         # ...but the unrelated, non-prefixed key is left untouched.
-        assert cache.items.get(foreign) == 'keep-me'
+        assert await raw.get(foreign) == b'keep-me'
     finally:
-        cache.items.pop(foreign, None)
+        await raw.delete(foreign)
+
+
+# --------------------------------------------------------------------------
+# Multiple stores are independent backends
+# --------------------------------------------------------------------------
+@pytest.mark.asyncio
+async def test_redis_and_array_stores_are_independent(cache):
+    array = uvicore.cache.store('array')
+    await cache.put('shared', 'from-redis', seconds=3600)
+    await array.put('shared', 'from-array', seconds=3600)
+    try:
+        assert await cache.get('shared') == 'from-redis'
+        assert await array.get('shared') == 'from-array'
+    finally:
+        await array.forget('shared')

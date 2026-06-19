@@ -148,7 +148,9 @@ class Redis(CacheInterface):
         """Flush entire cache.  Only deletes keys with proper cache prefix."""
         redis = (await self._prepair())[0]
         keys = await redis.keys(self.prefix + '*')
-        await redis.delete(*keys)
+        # redis DEL requires at least one key, so skip when nothing is cached
+        if keys:
+            await redis.delete(*keys)
 
     async def _prepair(self, key: Union[str, List] = None) -> Tuple[RedisInterface, Union[str, List, Dict]]:
         # Connect to redis pool if not connected

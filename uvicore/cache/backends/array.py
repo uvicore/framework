@@ -102,7 +102,7 @@ class Array(CacheInterface):
             return False
         else:
             # Item does not exist, set value and return True
-            await self.put(key, value)
+            await self.put(key, value, seconds=seconds)
             return True
 
     async def touch(self, key: str, *, seconds: int = None) -> bool:
@@ -121,8 +121,8 @@ class Array(CacheInterface):
         value = 0
         if self._has(key): value = await self.get(key)
         if type(value) == int:
-            value += 1
-            self.put(key, value, seconds=seconds)
+            value += by
+            await self.put(key, value, seconds=seconds)
         return value
 
     async def decrement(self, key, by: int = 1, *, seconds: int = None) -> int:
@@ -132,8 +132,8 @@ class Array(CacheInterface):
         value = 0
         if self._has(key): value = await self.get(key)
         if type(value) == int:
-            value -= 1
-            self.put(key, value, seconds=seconds)
+            value -= by
+            await self.put(key, value, seconds=seconds)
         return value
 
     async def forget(self, key: Union[str, List]) -> None:
