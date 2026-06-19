@@ -116,5 +116,5 @@ raised error (not a silent wrong result). Add new operators here, not in callers
 - New dialect support: add it to `SUPPORTED_DIALECTS` + `SERVER_DIALECT_DEFAULTS` (and any async
   driver to `SUPPORTED_ASYNC_DRIVERS`). Validate with `test_dialects.py`.
 - Use `env()` for anything environment-specific; never hardcode.
-- Test against `tests/test_db/`, and run the **cross-db matrix** (`./bin/test-integration.sh all`,
+- Test against `tests/test_db/`, and run the **cross-db matrix** (`./bin/test-db-integration.sh all`,
   see `tests/integration/`) when touching `database/` or `orm/`. See `uvicore-testing`.

@@ -5,8 +5,8 @@
 # (the default unit tests use in-memory SQLite).
 #
 # Usage:
-#   ./bin/test-integration.sh postgres     # one backend
-#   ./bin/test-integration.sh all          # every backend
+#   ./bin/test-db-integration.sh postgres     # one backend
+#   ./bin/test-db-integration.sh all          # every backend
 #
 # Ports are offset from the defaults to avoid clashing with any local servers.
 

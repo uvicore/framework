@@ -115,7 +115,7 @@ the key to the whole codebase.
   `poetry run ./bin/test.sh tests/test_db/test_orm`.
 - The test suite bootstraps the **`app1`** reference app (`tests/apps/app1/`) against an in-memory
   SQLite DB via the `app1` fixture in `tests/conftest.py`. Reuse it; don't invent new bootstrap.
-- **Cross-database integration tests:** `poetry run ./bin/test-integration.sh {postgres|mysql|mariadb|all}`
+- **Cross-database integration tests:** `poetry run ./bin/test-db-integration.sh {postgres|mysql|mariadb|all}`
   runs the dialect-agnostic suites against real engines in docker (the app1+auth connections are
   env-driven — see `tests/integration/`). Use this when changing the `database`/`orm` layers.
   Cross-dialect gotchas to respect: never insert an explicit NULL auto-increment PK (SQLite

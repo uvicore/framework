@@ -21,11 +21,11 @@ caught (SQLite is very forgiving; Postgres/MySQL are strict).
 ## Run it
 
 ```bash
-poetry run ./bin/test-integration.sh postgres     # one engine
-poetry run ./bin/test-integration.sh mysql
-poetry run ./bin/test-integration.sh mariadb
-poetry run ./bin/test-integration.sh all          # every engine, sequentially
-KEEP_UP=1 poetry run ./bin/test-integration.sh postgres   # leave the container running
+poetry run ./bin/test-db-integration.sh postgres     # one engine
+poetry run ./bin/test-db-integration.sh mysql
+poetry run ./bin/test-db-integration.sh mariadb
+poetry run ./bin/test-db-integration.sh all          # every engine, sequentially
+KEEP_UP=1 poetry run ./bin/test-db-integration.sh postgres   # leave the container running
 ```
 
 The runner brings the container up, waits for its healthcheck, runs the suite with the
@@ -58,7 +58,7 @@ matching `env/<backend>.env` file, then tears the container down.
 ## Adding a backend
 
 Add a service to `docker-compose.yml` (with a healthcheck) and an `env/<name>.env` file,
-then add the name to the `case` in `bin/test-integration.sh`. Any standard SQLAlchemy
+then add the name to the `case` in `bin/test-db-integration.sh`. Any standard SQLAlchemy
 server dialect works as long as its driver is in the `database` extra.
 
 ---

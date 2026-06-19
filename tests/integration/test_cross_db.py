@@ -2,7 +2,7 @@
 Dialect-agnostic end-to-end integration tests for the database + ORM layers.
 
 These run against WHATEVER backend the app1 connection is configured for: the
-default unit run exercises in-memory SQLite, and ./bin/test-integration.sh points
+default unit run exercises in-memory SQLite, and ./bin/test-db-integration.sh points
 both the app1 and auth connections at a real Postgres / MySQL / MariaDB server.
 
 All assertions are written to be portable across engines:

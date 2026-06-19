@@ -95,27 +95,15 @@ dependencies = [
 
 # Database dependencies upgraded to latest versions on 2026-06-19
 database = [
-    # DONE, already at 2.0.51
     "sqlalchemy==2.0.51",
-
-    # Done
-    #"alembic==1.14.*",
     "alembic==1.18.4",
-
-    # Done
-    #"aiomysql==0.2.*",
     "aiomysql==0.3.2",
-
-    # Done
-    #"aiosqlite==0.20.*",
     "aiosqlite==0.22.1",
-
-    # Done
-    #"asyncpg==0.30.*",
     "asyncpg==0.31.0",
 ]
+# Redis dependencies upgraded to latest versions on 2026-06-19
 redis = [
-    "redis[hiredis]==5.2.*",
+    "redis[hiredis]==8.0.0",
 ]
 web = [
     "starlette==0.45.3",

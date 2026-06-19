@@ -7,7 +7,7 @@
 # backend (CACHE_STORE defaults to 'array').  This runner brings up a redis
 # container, points the cache 'redis' store at it (via tests/integration/env/redis.env)
 # and runs the redis cache integration suite so the redis backend is verified
-# against a live server - mirroring how ./bin/test-integration.sh exercises the
+# against a live server - mirroring how ./bin/test-db-integration.sh exercises the
 # database layer against real engines.
 #
 # Usage:

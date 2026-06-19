@@ -10,7 +10,7 @@
 # The normal unit suite (./bin/test.sh) only checks that the service is wired up;
 # this runner brings up a redis container, points the app1/cache redis connections
 # at it, and exercises real redis commands through the service - mirroring how
-# ./bin/test-integration.sh exercises the database layer against real engines.
+# ./bin/test-db-integration.sh exercises the database layer against real engines.
 #
 # Usage:
 #   ./bin/test-redis-integration.sh

@@ -9,14 +9,14 @@
 # and tests execute against each engine - exposing any dialect-specific gaps.
 #
 # Usage:
-#   ./bin/test-integration.sh postgres
-#   ./bin/test-integration.sh mysql
-#   ./bin/test-integration.sh mariadb
-#   ./bin/test-integration.sh all
-#   KEEP_UP=1 ./bin/test-integration.sh postgres   # leave containers running
+#   ./bin/test-db-integration.sh postgres
+#   ./bin/test-db-integration.sh mysql
+#   ./bin/test-db-integration.sh mariadb
+#   ./bin/test-db-integration.sh all
+#   KEEP_UP=1 ./bin/test-db-integration.sh postgres   # leave containers running
 #
 # Extra pytest args pass through after the backend, e.g.:
-#   ./bin/test-integration.sh postgres tests/test_db/test_orm -x
+#   ./bin/test-db-integration.sh postgres tests/test_db/test_orm -x
 
 set -e
 base="$( cd "$(dirname "$0")" ; cd .. ; pwd -P )"; cd "$base"
