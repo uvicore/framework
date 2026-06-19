@@ -333,30 +333,45 @@ class ModelMetaclass(PydanticMetaclass):
             if cls.__table__ is None: cls.__table__ = cls.__tableclass__.schema
 
 
-        # Dynamically Build SQLAlchemy Table From Model Properties
-        if cls.__table__ is not None:
-            pass
-            # Set connection and table name from table class
-            #dd(cls.__table__.metadata.__dict__)
-            #dd(dir(cls.__table__))
-            #if cls.__connection__ is None: cls.__connection__ = cls.__table__.connection
-            #if cls.__tablename__ is None: cls.__tablename__ = cls.__table__.name
+        # Inline table definition.
+        # If __table__ is still a raw list of SQLAlchemy columns, the model defined its
+        # schema INLINE (instead of pointing __tableclass__ at a Table class).  Build a
+        # real sa.Table from that list now, mirroring uvicore.database.Table.__init__ so
+        # inline tables behave identically to separate-file tables (shared metadata
+        # association and connection table prefix).
+        if type(cls.__table__) == list:
+            if uvicore.db is None:
+                raise Exception(
+                    "Model '{}' defines an inline __table__ but the database has not been "
+                    "initialized yet.  Inline-table models must be loaded after the database "
+                    "bootstraps (register them with register_db_models() in your package "
+                    "provider), or point __tableclass__ at a Table class instead.".format(name)
+                )
+            if not cls.__connection__ or not cls.__tablename__:
+                raise Exception(
+                    "Model '{}' defines an inline __table__ list and therefore must also "
+                    "define __connection__ and __tablename__ (or use a __tableclass__).".format(name)
+                )
 
-        else:
-            pass
-            #dump('Building SA Table From Model Properties')
-            # Fixme, code could go here to dynamically build
-            # an SQLAlchemy table here.
+            connection = uvicore.db.connection(cls.__connection__)
+            metadata = uvicore.db.metadata(cls.__connection__)
 
-            # An example of basic build, but fix to use __fields__
-            # and each fields .field_info instead, and convert each model
-            # property Field() into SA table stuff like columns and indexes...
-            # columns = [x for x in entity.__field_defaults__.values()]
-            # __class__.__table__ = sa.Table(
-            #     entity.__tablename__,
-            #     db.metadata.get(entity.__connection__),
-            #     *columns
-            # )
+            # Apply the connection's table prefix, exactly like the Table base class
+            prefix = connection.prefix
+            if prefix is not None:
+                cls.__tablename__ = str(prefix) + cls.__tablename__
+
+            # Only build an actual sa.Table for the sqlalchemy backend.  Optional
+            # __table_kwargs__ on the model maps to sa.Table()'s **kwargs (the inline
+            # equivalent of a Table class's schema_kwargs).
+            if connection.backend == 'sqlalchemy':
+                table_kwargs = getattr(cls, '__table_kwargs__', None) or {}
+                cls.__table__ = sa.Table(
+                    cls.__tablename__,
+                    metadata,
+                    *cls.__table__,
+                    **table_kwargs,
+                )
 
         # Pull out all callbacks from __modelfields__ and store in cls.__callbacks__ for future processing
         for (key, field) in cls.__modelfields__.items():
