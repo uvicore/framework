@@ -93,11 +93,24 @@ dependencies = [
 # poetry install --extras "database redis web"
 [project.optional-dependencies]
 database = [
+    # DONE, already at 2.0.51
     "sqlalchemy==2.0.*",
-    "alembic==1.14.*",
-    "aiomysql==0.2.*",
-    "aiosqlite==0.20.*",
-    "asyncpg==0.30.*",
+
+    # Done
+    #"alembic==1.14.*",
+    "alembic==1.18.*",
+
+    # Done
+    #"aiomysql==0.2.*",
+    "aiomysql==0.3.*",
+
+    # Done
+    #"aiosqlite==0.20.*",
+    "aiosqlite==0.22.*",
+
+    # Done
+    #"asyncpg==0.30.*",
+    "asyncpg==0.31.*",
 ]
 redis = [
     "redis[hiredis]==5.2.*",
