@@ -19,7 +19,7 @@ async def api(request: Request, e: HTTPException) -> APIErrorResponse:
         extra=extra
     )
 
-    return response.JSON(error.dict(), status_code=status_code, headers=headers)
+    return response.JSON(error.model_dump(), status_code=status_code, headers=headers)
 
 
 async def web(request: Request, e: HTTPException) -> response.HTML:

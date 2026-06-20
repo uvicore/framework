@@ -964,7 +964,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                             else:
                                 value = getattr(child, dict_value)
                         else:
-                            value = child.dict()
+                            value = child.model_dump()
                         getattr(parent, field)[getattr(child, dict_key)] = value
 
 
@@ -1011,7 +1011,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                                 value = getattr(child, dict_value)
                         else:
                             # No dict value set, but there is a dict_key, so we want a dict.  Use the entire record as a dict
-                            value = child.dict()
+                            value = child.model_dump()
                         getattr(parent, field)[getattr(child, dict_key)] = value
                         #setattr(parent, field, 'x')
 

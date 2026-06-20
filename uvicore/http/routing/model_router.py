@@ -16,7 +16,7 @@ from uvicore.orm import Model as OrmModel
 from uvicore.http.routing.auto_api import AutoApi
 from uvicore.support.collection import setvalue
 from pydantic import BaseModel as PydanticModel
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from starlette.responses import JSONResponse
 
@@ -43,10 +43,10 @@ class HTTPMessage(BaseModel):
 
 
 class DeleteQuery(PydanticModel):
-    where: Optional[dict[str, Union[str, List]]]
+    where: Optional[dict[str, Union[str, List]]] = None
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "where": {
                     "creator_id": 1,
@@ -55,6 +55,7 @@ class DeleteQuery(PydanticModel):
                 },
             }
         }
+    )
 
 @uvicore.service()
 class ModelRoutes:
@@ -71,7 +72,9 @@ class ModelRoutes:
         @route.get(
             path='/' + path,
             inherits=AutoApi.getsig,
-            response_model=Union[List[Model], Model, Dict],
+            # Use the builtin dict here (not uvicore.typing.Dict/SuperDict) — Pydantic v2
+            # only accepts standard types as response/field types.
+            response_model=Union[List[Model], Model, dict],
             tags=tags,
             scopes=scopes['read'],
             summary="List multiple {}".format(Model.tablename),
@@ -176,13 +179,13 @@ class ModelRoutes:
 
         @route.post(
             path='/' + path + '/with_relations',
-            response_model=Union[Dict, List[Dict]],
+            response_model=Union[dict, List[dict]],
             tags=tags,
             scopes=scopes['create'],
             summary="Create new {} with nested relations".format(Model.tablename),
             description="Create one or more {} ({}) with deeply nested relations by POSTING an object/array.  Uvicore must disable model validation when passing a complex nested relational object.  It is therefore up to you to ensure an accurate object is passed.".format(Model.tablename, Model.modelfqn),
         )
-        async def create_with_relations(request: Request, items: Union[Dict, List[Dict]]):
+        async def create_with_relations(request: Request, items: Union[dict, List[dict]]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -254,7 +257,7 @@ class ModelRoutes:
             summary="Update one partial {} by primary key".format(Model.tablename),
             description="Update a single {} ({}) by primary key by PATCHING a partial object.  All fields in the object are optional.".format(Model.tablename, Model.modelfqn),
         )
-        async def update_one_partial(request: Request, id: Union[str,int], item: Dict):
+        async def update_one_partial(request: Request, id: Union[str,int], item: dict):
             # PATCH is used to UPDATE an EXISTNIG record.
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
@@ -265,9 +268,16 @@ class ModelRoutes:
                 raise HTTPException(500, str(e))
 
             if result:
-                # PUT requires a complete item.  It is not partial, it is not merged like a PATCH
-                # So we take the entire "item" and simply use the PK from results to update the right record
+                # PATCH merges the partial body into the existing record.  Only assign real
+                # scalar column fields: silently skip relation keys (relations are managed via
+                # /with_relations and the relation endpoints) and any unknown keys.  Assigning a
+                # relation key would echo unsaved raw dicts back in the response AND trip Pydantic
+                # v2's serializer ("Expected Comment, got dict"); assigning an unknown key would
+                # raise on a Pydantic v2 model.
                 for (key, value) in item.items():
+                    field = Model.modelfields.get(key)
+                    if not field or field.relation:
+                        continue
                     setattr(result, key, value)
                 try:
                     await result.save()

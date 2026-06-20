@@ -234,11 +234,16 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
 
 
 # ------------------------------------------------------------------------------
-# Example: If models relate to each other, solve circular dependencies
-# by importing some at the bottom and using update_forward_refs()
+# Example: If models relate to each other, solve circular dependencies by
+# importing the related models at the BOTTOM of the file (after the class).
+# Combined with `from __future__ import annotations` at the top, relation type
+# hints become forward references and these bottom imports populate the module
+# namespace so they can be resolved later.
+#
+# You do NOT need to call model_rebuild() yourself — Uvicore rebuilds every
+# registered model once, centrally, after all model modules are imported (see
+# uvicore/database/package/bootstrap.py).
 # ------------------------------------------------------------------------------
-# Update forward refs to circumvent circular dependencies
 # from uvicore.auth.models.user import User  # isort:skip
 # from xx_vendor.xx_appname.models.post_info import PostInfo  # isort:skip
 # from xx_vendor.xx_appname.models.tags import Tags  # isort:skip
-# xx_ModelName.update_forward_refs()

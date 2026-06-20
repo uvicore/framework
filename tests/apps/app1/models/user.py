@@ -139,10 +139,7 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 
 
 
-# Update forwrad refs (a work around to circular dependencies)
 #User = uvicore.ioc.make('uvicore.auth.models.User')
-#Contact.update_forward_refs()
-
 
 from app1.models.user_info import UserInfo  # isort:skip
 from app1.models.contact import Contact  # isort:skip
@@ -151,7 +148,3 @@ from app1.models.post import Post  # isort:skip
 from uvicore.auth.models.group import Group  # isort:skip
 from uvicore.auth.models.role import Role  # isort:skip
 
-User.update_forward_refs()
-
-#User.update_forward_refs()
-#UserModel.update_forward_refs()

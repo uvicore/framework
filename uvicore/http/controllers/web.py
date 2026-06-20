@@ -1,11 +1,16 @@
 import inspect
+from typing import ClassVar, get_origin
 from uvicore.typing import Any, Callable, List, Type, TypeVar, Union, get_type_hints
 from fastapi import Depends
 from uvicore.http.routing.web_router import WebRouter
-from pydantic.typing import is_classvar
 from starlette.routing import Route, WebSocketRoute
 import uvicore
 from uvicore.support.dumper import dump, dd
+
+
+def is_classvar(hint) -> bool:
+    """Stdlib replacement for the removed pydantic.typing.is_classvar (Pydantic v2)."""
+    return hint is ClassVar or get_origin(hint) is ClassVar
 
 T = TypeVar("T")
 

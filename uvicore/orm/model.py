@@ -2,7 +2,7 @@ from __future__ import annotations
 import uvicore
 import sqlalchemy as sa
 from uvicore.orm.mapper import Mapper
-from pydantic import main as PydanticMain
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict
 from uvicore.support.dumper import dd, dump
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
@@ -13,26 +13,12 @@ from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne,
 
 E = TypeVar("E")
 
-# Monkey Patch Pydantics Main validate_field_name.  Why?
-# Because if you EXTEND a model from another model, and your extension has
-# fieldnames that match fieldnames in metaclass.py, you will receive the
-# Field name xxx shadows a BaseModel attribute.  Only happens when you extend.  Normally
-# a field and a metaclass.py property will not collide.  Extension will happen often, especially
-# extending the main uvicore.auth User model to add custom fields to user table.
-def validate_field_name(bases, field_name) -> None:
-    # mReschke modify from original method in pydantic utils.py.
-    # Only check for field clashes if we are not extending another model
-    for base in bases:
-        # Can't check isinstance because even if extended it will always be true
-        if base.__class__.__module__ == 'pydantic.main':
-            # We are not extending another Uvicore model.  If we were it class module would be uvicore.orm.model
-            if getattr(base, field_name, None):
-                raise NameError(
-                    f'Field name "{field_name}" shadows a BaseModel attribute; '
-                    f'use a different field name with "alias=\'{field_name}\'".'
-                )
-PydanticMain.validate_field_name = validate_field_name
-PydanticBaseModel = PydanticMain.BaseModel
+# NOTE (Pydantic v2 migration): The Pydantic v1 monkeypatch of
+# pydantic.main.validate_field_name used to live here.  Its purpose was to allow a
+# model that EXTENDS another model to declare field names that collided with the
+# field-shadowing check.  Pydantic v2 removed validate_field_name entirely, and its
+# field model (model_fields) is kept separate from class methods/metaclass
+# properties, so the v1 collision no longer occurs and the patch is unnecessary.
 
 
 # Any method here in the model WILL CLASH with your models field names but do show up in code intellisense.
@@ -57,6 +43,14 @@ PydanticBaseModel = PydanticMain.BaseModel
 
 @uvicore.service()
 class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
+
+    # Pydantic v2 model configuration.
+    # - arbitrary_types_allowed: model fields may be typed as relations/other models
+    #   or arbitrary Python types the ORM manages itself.
+    # - extra='ignore': the Mapper instantiates models from DB rows / dicts that may
+    #   carry keys that are not model fields (e.g. joined relation columns) — ignore
+    #   them rather than erroring (matches Pydantic v1 default behavior).
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra='ignore')
 
     def __init__(self, **data: Any) -> None:
         # Call pydantic parent
@@ -176,7 +170,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             if not model: continue
 
             # If model is not a dict, its probably a real pydantic model instance, convert it to a dict
-            if type(model) != dict: model = model.dict()
+            if type(model) != dict: model = model.model_dump()
 
             # Check each field for relations and rename them before inserting parent
             relations = {}

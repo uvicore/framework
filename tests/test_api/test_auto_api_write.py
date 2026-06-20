@@ -152,6 +152,10 @@ async def test_patch_ignores_relation_keys(apiclient):
         })
         assert res.status_code == 200, res.text
 
+        # ...and the ignored relation is NOT echoed back in the response (it must not
+        # leak unsaved raw dicts, which also tripped Pydantic v2's serializer).
+        assert not res.json().get('comments')
+
         # Scalar updated...
         refreshed = await Post.query().find(post.id)
         assert refreshed.title == 'After'

@@ -191,7 +191,6 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 # ): pass
 
 
-# Update forwrad refs (a work around to circular dependencies)
 # If the relation has an ID foreign key on this table, use ioc.make
 # If not (the reverse relation) use from xyz import abc
 
@@ -207,6 +206,3 @@ from app1.models.user import User  # isort:skip
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
 #Comment = uvicore.ioc.make('app1.models.comment.Comment')
 #Tag = uvicore.ioc.make('app1.models.tag.Tag')
-
-Post.update_forward_refs()
-#PostModel.update_forward_refs()
