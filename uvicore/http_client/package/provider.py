@@ -30,8 +30,15 @@ class HttpClient(Provider):
         @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.console.events.command.PytestShutdown', 'uvicore.http.events.server.Shutdown'])
         async def uvicore_shutdown(event):
             #print('httpx console/http shutdown')
-            # Shutdown the httpx async client
-            await uvicore.ioc.make('http_client').aclose()
+            # Shutdown the httpx async client, but only if it was ever bound.
+            # The matching startup event does not always fire in the same process
+            # that fires shutdown.  For example `uvicore http serve` runs the actual
+            # http server (which fires the server Startup) in a uvicorn reload worker
+            # subprocess, while the console Shutdown fires later in the parent process
+            # where http_client was never bound.  Guard against that so ctrl+c does
+            # not raise ModuleNotFoundError.
+            if uvicore.ioc.binding('http_client'):
+                await uvicore.ioc.make('http_client').aclose()
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.
