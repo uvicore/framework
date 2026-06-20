@@ -29,7 +29,7 @@ class Redis(Provider, RedisMixin):
         async def uvicore_shutdown(event):
             from uvicore.redis.redis import Redis as redis
             for engine in redis.engines.values():
-                await engine.close()
+                await engine.aclose()
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.

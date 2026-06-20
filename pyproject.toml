@@ -1,13 +1,14 @@
 [project]
 name = "uvicore"
-version = "0.4.1"
+version = "0.4.2"
 description = "The Fullstack Async Web, API and CLI Python Framework"
 authors = [
-    {name = "Matthew Reschke",email = "mail@mreschke.com"}
+    {name = "Matthew Reschke", email = "mail@mreschke.com"}
 ]
 license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Web Environment",
@@ -18,7 +19,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Internet",
     "Topic :: Internet :: WWW/HTTP",
@@ -101,6 +101,7 @@ dependencies = [
 
 # Optional extra dependencies
 # poetry install --extras "database redis web"
+# poetry install --extras "database redis web" --with test
 [project.optional-dependencies]
 
 # Optional database deps upgraded to latest versions on 2026-06-19
@@ -131,8 +132,13 @@ web = [
     "pyjwt==2.13.0"
 ]
 
-# Optional unittest dependencies
-# poetry install --extras "database redis web --with test"
+[project.urls]
+Homepage = "https://github.com/uvicore/framework"
+Repository = "https://github.com/uvicore/framework"
+Documentation = "https://github.com/uvicore/framework"
+
+# Optional unittest dependencies (a poetry-native dependency group, not a PEP 621
+# extra): poetry install --extras "database redis web" --with test
 # Test deps upgraded to exact latest versions on 2026-06-19
 [tool.poetry.group.test.dependencies]
 pytest = "9.1.1"
@@ -151,14 +157,6 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 
-[project.urls]
-homepage = "https://github.com/uvicore/framework"
-repository = "https://github.com/uvicore/framework"
-documentation = "https://github.com/uvicore/framework"
-
-[tool.poetry]
-include = ["LICENSE"]
-
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.1.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

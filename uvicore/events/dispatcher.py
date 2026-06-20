@@ -1,7 +1,6 @@
 import re
 import uvicore
 import inspect
-import asyncio
 from collections import namedtuple
 from uvicore.support import module
 from types import SimpleNamespace as obj
@@ -231,7 +230,7 @@ class Dispatcher(DispatcherInterface):
         """Dispatch an event by fireing off all listeners/handlers"""
         (event, handlers) = self._get_handlers(event, payload)
         for handler in handlers:
-            if asyncio.iscoroutinefunction(handler) or asyncio.iscoroutinefunction(handler.__call__):
+            if inspect.iscoroutinefunction(handler) or inspect.iscoroutinefunction(handler.__call__):
                 await handler(event)
             else:
                 # Listener/handler is NOT async but was called from await, lets throw in thread pool

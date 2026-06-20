@@ -208,9 +208,11 @@ async def test_expire_and_ttl(redis):
 
 
 @pytest.mark.asyncio
-async def test_setex(redis):
+async def test_set_with_expiry(redis):
+    # redis-py deprecated the standalone setex() method in favor of set(ex=...);
+    # this still exercises the SETEX-style "set a key with a TTL" passthrough.
     client = await redis.connect()
-    await client.setex(k('sx'), 100, 'v')
+    await client.set(k('sx'), 'v', ex=100)
     assert await client.get(k('sx')) == b'v'
     assert 0 < await client.ttl(k('sx')) <= 100
 
