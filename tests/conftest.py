@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import uvicore
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from uvicore.typing import Generator
 from uvicore.support.dumper import dump, dd
 
@@ -64,6 +64,5 @@ async def app1(event_loop):
 # https://github.com/tiangolo/fastapi/issues/1273
 @pytest_asyncio.fixture(scope="session")
 async def client() -> Generator:
-    async with AsyncClient(app=uvicore.app.http, base_url="http://testserver") as client:
-    #async with AsyncClient(transport=uvicore.app.http, base_url="http://testserver") as client:
+    async with AsyncClient(transport=ASGITransport(app=uvicore.app.http), base_url="http://testserver") as client:
         yield client

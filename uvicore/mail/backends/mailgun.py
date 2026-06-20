@@ -1,11 +1,9 @@
 import os
 import uvicore
-import aiohttp
 import aiofiles
 from uvicore.typing import Dict, List
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Email
-from aiohttp import BasicAuth
 
 
 @uvicore.service()
@@ -13,7 +11,7 @@ class Mailgun:
 
     @classmethod
     async def send(cls, message: Email, options: Dict):
-        # Get aiohttp ClientSession
+        # Get httpx AsyncClient
         http = uvicore.ioc.make('http_client')
 
         # Get message body as text or html
@@ -26,46 +24,38 @@ class Mailgun:
             body_type = 'text'
             body_content = message.text
 
-        # New multi-part form data (because mailgun can accept both email fields and attachment data)
-        data = aiohttp.FormData()
+        # Build multipart form fields.  httpx repeats a field once per value in
+        # a list, which is what mailgun needs for multiple to/cc/bcc recipients.
+        data = {
+            'from': message.from_name + '<' + message.from_address + '>',
+            'to': list(message.to),
+            'cc': list(message.cc),
+            'bcc': list(message.bcc),
+            'subject': message.subject,
+            body_type: body_content,
+        }
 
-        # Add from name and address
-        data.add_field('from', message.from_name + '<' + message.from_address + '>')
-
-        # Add to recipients
-        for to in message.to:
-            data.add_field('to', to)
-
-        # Add cc recipients
-        for cc in message.cc:
-            data.add_field('cc', cc)
-
-        # Add bcc recipients
-        for bcc in message.bcc:
-            data.add_field('bcc', bcc)
-
-        # Add subject
-        data.add_field('subject', message.subject)
-
-        # Add body (as html or text)
-        data.add_field(body_type, body_content)
-
-        # Add attachments
+        # Read attachments as multipart files.  httpx repeats the 'attachment'
+        # field once per (filename, content) tuple.
+        files = []
         for attachment in message.attachments:
             if os.path.exists(attachment):
                 filename = attachment.split('/')[-1]
-                data.add_field('attachment', await aiofiles.open(attachment, 'rb'), filename=filename)
+                async with aiofiles.open(attachment, 'rb') as f:
+                    content = await f.read()
+                files.append(('attachment', (filename, content)))
 
-        # Post to mailgun using async aiohttp
-        async with http.post(
+        # Post to mailgun using async httpx
+        r = await http.post(
             url='https://api.mailgun.net/v3/' + options.domain + '/messages',
-            auth=BasicAuth('api', options.secret),
+            auth=('api', options.secret),
             data=data,
-        ) as r:
-            # Success
-            detail = await r.text()
-            if r.status == 200:
-                return
+            files=files or None,
+        )
 
-            # Failure
-            raise Exception("Could not send mailgun email - " + detail)
+        # Success
+        if r.status_code == 200:
+            return
+
+        # Failure
+        raise Exception("Could not send mailgun email - " + r.text)

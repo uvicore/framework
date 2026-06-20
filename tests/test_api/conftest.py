@@ -16,7 +16,7 @@ exception handlers end to end.
 import base64
 import pytest_asyncio
 import uvicore
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -41,7 +41,7 @@ async def apiclient(app1):
 
     assert uvicore.app.http is not None, "HTTP server was not built for API tests"
 
-    async with AsyncClient(app=uvicore.app.http, base_url="http://testserver") as client:
+    async with AsyncClient(transport=ASGITransport(app=uvicore.app.http), base_url="http://testserver") as client:
         yield client
 
 

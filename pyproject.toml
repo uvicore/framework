@@ -38,7 +38,6 @@ dependencies = [
     "environs==14.1.*",
     "argon2-cffi==23.1.*",
     "cryptography==44.0.*",
-    "aiohttp==3.11.*",
     "merge-args==0.1.*",
 
     # Templating is part of core, not just web, so include it in base
@@ -48,10 +47,13 @@ dependencies = [
     # FastAPI dropped Pydantic v1 in 0.126.0 and removed the v1 shim in 0.128.0.
     "pydantic==2.*",
 
-    # Held back to 0.26.* due to AsyncClient deprecating app variable
-    # In conftest.py client()
-    #"httpx==0.28.*",
-    "httpx==0.26.*",
+    # Uvicore's async HTTP client (runtime http_client service + mail backends)
+    # AND the in-process ASGI test client in conftest.py. conftest now uses the
+    # modern AsyncClient(transport=ASGITransport(app=...)) API, so we are no
+    # longer held back to 0.26 by the removed app= shortcut.
+    # Future: starlette.testclient nudges toward the httpx2 package, but only
+    # matters if we adopt starlette's TestClient (we use httpx.AsyncClient direct).
+    "httpx==0.28.1",
 
     # NOTICE: Everything below this line is a subdependency of my actual requirements
     # here in pyproject.toml.  I am listing them here to ensure they are pinned to
