@@ -212,6 +212,16 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         if pk_value:
             column = self._pk()
             value = pk_value
+            # Coerce the pk value to the pk column's Python type.  By-id lookups often
+            # arrive as strings (e.g. a URL path param), and strict engines like Postgres
+            # reject "integer = varchar"; SQLite silently coerces.  This keeps find() portable.
+            try:
+                pk_column_name = self.entity.mapper(column).column()
+                py_type = self.entity.table.c[pk_column_name].type.python_type
+                if not isinstance(value, py_type):
+                    value = py_type(value)
+            except Exception:
+                pass
         elif kwargs:
             column = [x for x in kwargs.keys()][0]
             value = [x for x in kwargs.values()][0]
@@ -920,10 +930,21 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                 # I bet the API will not know how to handle input and complain?
                 # I may have to handle specially in the ModelRouter
 
-                # Loop raw RowProxy to find proper pivot keys
+                # Loop raw RowProxy to find proper pivot keys.
+                # When MULTIPLE *Many relations are included on the same query, each
+                # secondary relation query joins all the other *Many relations too,
+                # producing a cartesian product of raw rows (e.g. tags x comments x
+                # attributes).  The same (parent, child) pivot pair therefore repeats
+                # many times.  Dedup by the (left_id, right_id) pivot pair so each
+                # link is attached exactly once.
+                seen_pivot_pairs = set()
                 for row in secondary[relation.name]:
                     left_id = getattr(row, left_key)
                     right_id = getattr(row, right_key)
+
+                    # Skip duplicate pivot pairs from cartesian-joined secondary rows
+                    if (left_id, right_id) in seen_pivot_pairs: continue
+                    seen_pivot_pairs.add((left_id, right_id))
 
                     # Get parent value, the value of the main table
                     parent = parents[left_id]
@@ -943,7 +964,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                             else:
                                 value = getattr(child, dict_value)
                         else:
-                            value = child.dict()
+                            value = child.model_dump()
                         getattr(parent, field)[getattr(child, dict_key)] = value
 
 
@@ -990,7 +1011,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                                 value = getattr(child, dict_value)
                         else:
                             # No dict value set, but there is a dict_key, so we want a dict.  Use the entire record as a dict
-                            value = child.dict()
+                            value = child.model_dump()
                         getattr(parent, field)[getattr(child, dict_key)] = value
                         #setattr(parent, field, 'x')
 

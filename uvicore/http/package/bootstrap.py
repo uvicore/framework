@@ -1,4 +1,5 @@
 import uvicore
+from contextlib import asynccontextmanager
 from uvicore.typing import Dict, List, OrderedDict, get_type_hints, Tuple
 from uvicore.events import Handler
 from uvicore.support import module
@@ -93,16 +94,6 @@ class Http(Handler):
 
         # Add our base server to uvicore
         uvicore.app._http = base_server
-
-
-        # Attach to Starlette events and translate into Uvicore events
-        @uvicore.app.http.on_event("startup")
-        async def startup():
-            await HttpServerEvents.Startup().dispatch_async()
-
-        @uvicore.app.http.on_event("shutdown")
-        async def shutdown():
-            await HttpServerEvents.Shutdown().dispatch_async()
 
         # Debug and dump the actual HTTP servers (base, web, api) info and routes
         debug_dump = False
@@ -269,8 +260,17 @@ class Http(Handler):
         # Why 2 servers?  Because of our web and api prefixes.  The web and api servers
         # get "mounted" inside the base wtih a special prefix to separate all routes and api docs
 
-        # Base server is always starlette
-        base_server = Starlette(debug=debug)
+        # Base server is always starlette.
+        # Starlette 1.0 removed the on_event/add_event_handler startup/shutdown API in
+        # favor of a lifespan context manager.  We translate the lifespan enter/exit into
+        # Uvicore's HttpServerEvents.Startup()/Shutdown() events.
+        @asynccontextmanager
+        async def lifespan(app):
+            await HttpServerEvents.Startup().dispatch_async()
+            yield
+            await HttpServerEvents.Shutdown().dispatch_async()
+
+        base_server = Starlette(debug=debug, lifespan=lifespan)
 
         # Web server is always a sub Starlette server
         if web_routes:

@@ -1,9 +1,10 @@
 import uvicore
+import warnings
 from uvicore.orm.fields import Field
 from uvicore.support.dumper import dd, dump
 from uvicore.support.printer import pretty_call, register_pretty
 from pydantic.fields import FieldInfo as PydanticFieldInfo
-from pydantic.main import ModelMetaclass as PydanticMetaclass
+from pydantic._internal._model_construction import ModelMetaclass as PydanticMetaclass
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Sequence
 
 import sqlalchemy as sa
@@ -218,54 +219,53 @@ class ModelMetaclass(PydanticMetaclass):
                 field.name = field_name
                 __modelfields__[field_name] = field
 
-                # Derive extra field information for pydantics FieldInfo OpenAPI schema generation
-                #dump(getattr(namespace, field_name))
-
-                # Convert uvicore model field into pydantic FieldInfo
-                # Be careful what you pipe into PydanticFieldInfo() as these show up in the OpenAPI schema
-                # from FastAPI 0.65.0+ because in their openapi/models.py they set class Config extra='allow'
-                # by default.  Which means any item you put in PydanticFieldInfo that is not a keyword on that class
-                # goes into extra *kwargs and extra now shows up in openapi.json.  The problem with that is valid
-                # OpenAPI only allows certain keywords, see https://swagger.io/docs/specification/data-models/keywords/
-                # In fact, the 'properties' I was using for a catch-all JSON blog is totally invalid.  Its not a ignored blog
-                # its a nested schame field properties.  The only valid way to add extra ignored fields to a schema is to
-                # prefix them with x-  see https://swagger.io/specification/#specification-extensions
-
-                # For some dumb reason I was also piping EVERY thing into PydanticFieldInfo, even callback, evaluate
-                # and relation.  Which now that extra=allow those were all trying to be parsed by FastAPI json_encoder
-                # which totally broke everything.  So I need to be more strategic which uvicore Field() items I pump into
-                # Pydantic FieldInfo().  I added a fields_passed_to_pydantic_FieldInfo in my Field class that contains a
-                # List of valid properties to pass into PydanticFieldInfo()
-
+                # Convert uvicore model field into a Pydantic v2 FieldInfo.
+                # Valid v2 FieldInfo kwargs (title, description, default, min_length,
+                # max_length) are passed directly.  'example' (Pydantic v1, singular)
+                # becomes 'examples' (v2, a list).  Non-standard JSON-schema keys
+                # (readOnly/writeOnly and the x-tra "specification extensions") are NOT
+                # FieldInfo kwargs in v2 — they go into json_schema_extra, which Pydantic
+                # merges verbatim into the generated OpenAPI/JSON schema.
+                # See https://swagger.io/docs/specification/data-models/keywords/ and
+                # https://swagger.io/specification/#specification-extensions
                 field_info_kwargs = {}
-                #dump(field.__annotations__)
+                json_schema_extra = {}
                 for slot in field.__annotations__.keys():
                     value = getattr(field, slot)
-                    if value is None: continue;
+                    if value is None: continue
 
-                    # Only pipe certain uvicore Field properties into pydantics FieldInfo or you get invalid OpenAPI spec
                     if slot in Field.__valid_oepnapi_keywords__:
-                        arg = slot
-
-                        # Convert some understores to camelCase for OpenAPI keyword compatibility
-                        if slot == 'read_only': arg = 'readOnly'
-                        if slot == 'write_only': arg = 'writeOnly'
-                        if slot == 'min_length': arg = 'minLength'
-                        if slot == 'max_length': arg = 'maxLength'
-                        field_info_kwargs[arg] = value
+                        if slot == 'example':
+                            field_info_kwargs['examples'] = [value]
+                        elif slot == 'read_only':
+                            json_schema_extra['readOnly'] = value
+                        elif slot == 'write_only':
+                            json_schema_extra['writeOnly'] = value
+                        else:
+                            # title, description, default, min_length, max_length
+                            field_info_kwargs[slot] = value
 
                     elif slot in Field.__convert_to_extensions__:
                         # Convert these Field() arguments to the x-tra Dict
-                        # See https://swagger.io/specification/#specification-extensions
-                        if 'x-tra' not in field_info_kwargs: field_info_kwargs['x-tra'] = {}
+                        if 'x-tra' not in json_schema_extra: json_schema_extra['x-tra'] = {}
                         if slot == 'properties':
-                            field_info_kwargs['x-tra'] = {**field_info_kwargs['x-tra'], **getattr(field, slot)}
+                            json_schema_extra['x-tra'] = {**json_schema_extra['x-tra'], **getattr(field, slot)}
                         else:
-                            field_info_kwargs['x-tra'][slot] = getattr(field, slot)
+                            json_schema_extra['x-tra'][slot] = getattr(field, slot)
 
-                #dump(field_info_kwargs)
+                # Pydantic v2: Optional[x] no longer implies a default.  Uvicore models
+                # are DB-row containers routinely instantiated from a PARTIAL set of
+                # columns (see Mapper), so every field must remain optional.  Default to
+                # None unless the uvicore Field() declared an explicit default — this
+                # preserves the Pydantic v1 ORM behavior where Optional fields defaulted
+                # to None automatically.
+                if 'default' not in field_info_kwargs:
+                    field_info_kwargs['default'] = None
+
+                if json_schema_extra:
+                    field_info_kwargs['json_schema_extra'] = json_schema_extra
+
                 namespace[field_name] = PydanticFieldInfo(**field_info_kwargs)
-                #dump(namespace[field_name])
 
         #dump(namespace)
 
@@ -309,12 +309,21 @@ class ModelMetaclass(PydanticMetaclass):
         # Amoung other things, pydantic will take all model attributes that do not
         # begin with a _ and convert them into ModelField classes
         # This is why I keep the originals in my new __modelfields__ attribute
-        cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
+        #
+        # Suppress Pydantic v2's "Field name 'x' shadows an attribute in parent" warning.
+        # By design, Uvicore exposes ORM helpers (info, table, pk, connection, ...) as
+        # metaclass methods specifically so they DON'T collide with real model field names
+        # of the same name (e.g. a model field named 'info').  Pydantic v2 still emits a
+        # warning for the name overlap even though it is intentional and harmless here.
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message=r'Field name .* shadows an attribute in parent.*')
+            cls = super().__new__(mcls, name, bases, new_namespace, **kwargs)
         #dump(name, cls, cls.__dict__, '-----------------------------')
 
         # Meta is fired up more than once, sometimes pydantic has NOT
         # actually populated all fields.  If no fields, ignore rest of this custom __new__
-        if not cls.__fields__: return cls
+        # (Pydantic v2: __fields__ -> model_fields)
+        if not cls.model_fields: return cls
 
         # Pretty Printer
         # Register a pretty printer just for this entity.  Why not on the main
@@ -333,30 +342,45 @@ class ModelMetaclass(PydanticMetaclass):
             if cls.__table__ is None: cls.__table__ = cls.__tableclass__.schema
 
 
-        # Dynamically Build SQLAlchemy Table From Model Properties
-        if cls.__table__ is not None:
-            pass
-            # Set connection and table name from table class
-            #dd(cls.__table__.metadata.__dict__)
-            #dd(dir(cls.__table__))
-            #if cls.__connection__ is None: cls.__connection__ = cls.__table__.connection
-            #if cls.__tablename__ is None: cls.__tablename__ = cls.__table__.name
+        # Inline table definition.
+        # If __table__ is still a raw list of SQLAlchemy columns, the model defined its
+        # schema INLINE (instead of pointing __tableclass__ at a Table class).  Build a
+        # real sa.Table from that list now, mirroring uvicore.database.Table.__init__ so
+        # inline tables behave identically to separate-file tables (shared metadata
+        # association and connection table prefix).
+        if type(cls.__table__) == list:
+            if uvicore.db is None:
+                raise Exception(
+                    "Model '{}' defines an inline __table__ but the database has not been "
+                    "initialized yet.  Inline-table models must be loaded after the database "
+                    "bootstraps (register them with register_db_models() in your package "
+                    "provider), or point __tableclass__ at a Table class instead.".format(name)
+                )
+            if not cls.__connection__ or not cls.__tablename__:
+                raise Exception(
+                    "Model '{}' defines an inline __table__ list and therefore must also "
+                    "define __connection__ and __tablename__ (or use a __tableclass__).".format(name)
+                )
 
-        else:
-            pass
-            #dump('Building SA Table From Model Properties')
-            # Fixme, code could go here to dynamically build
-            # an SQLAlchemy table here.
+            connection = uvicore.db.connection(cls.__connection__)
+            metadata = uvicore.db.metadata(cls.__connection__)
 
-            # An example of basic build, but fix to use __fields__
-            # and each fields .field_info instead, and convert each model
-            # property Field() into SA table stuff like columns and indexes...
-            # columns = [x for x in entity.__field_defaults__.values()]
-            # __class__.__table__ = sa.Table(
-            #     entity.__tablename__,
-            #     db.metadata.get(entity.__connection__),
-            #     *columns
-            # )
+            # Apply the connection's table prefix, exactly like the Table base class
+            prefix = connection.prefix
+            if prefix is not None:
+                cls.__tablename__ = str(prefix) + cls.__tablename__
+
+            # Only build an actual sa.Table for the sqlalchemy backend.  Optional
+            # __table_kwargs__ on the model maps to sa.Table()'s **kwargs (the inline
+            # equivalent of a Table class's schema_kwargs).
+            if connection.backend == 'sqlalchemy':
+                table_kwargs = getattr(cls, '__table_kwargs__', None) or {}
+                cls.__table__ = sa.Table(
+                    cls.__tablename__,
+                    metadata,
+                    *cls.__table__,
+                    **table_kwargs,
+                )
 
         # Pull out all callbacks from __modelfields__ and store in cls.__callbacks__ for future processing
         for (key, field) in cls.__modelfields__.items():

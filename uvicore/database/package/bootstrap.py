@@ -43,3 +43,16 @@ class Database(Handler):
         # Dynamically Import models, tables and seeders
         for model in models: load(model)
         for table in tables: load(table)
+
+        # Pydantic v2 builds a model's ENTIRE related-schema graph eagerly the moment
+        # the model is "rebuilt" (forward refs resolved).  ORM models reference their
+        # relations via forward references and import those related models at the BOTTOM
+        # of each module to break circular imports, so a per-module model_rebuild() can
+        # fire before the whole graph is importable.  Now that every model module above
+        # is fully imported, do a single authoritative rebuild pass: each model's forward
+        # refs (relations) now resolve against fully-populated module namespaces.
+        for name in uvicore.ioc.binding(type='model').keys():
+            entity = uvicore.ioc.make(name)
+            model_rebuild = getattr(entity, 'model_rebuild', None)
+            if model_rebuild:
+                model_rebuild(force=True)

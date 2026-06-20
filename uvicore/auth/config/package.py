@@ -1,6 +1,39 @@
 from uvicore.configuration import env
 from uvicore.typing import OrderedDict
 
+
+def _connection(prefix: str, default_db: str = ':memory:'):
+    """Build an env-driven connection, defaulting to in-memory SQLite.
+
+    Set <PREFIX>_DIALECT to a server dialect (postgresql, mysql, mariadb...) plus
+    the matching host/port/user/password env vars to run against a real database.
+    """
+    dialect = env(f'{prefix}_DIALECT', 'sqlite')
+    if dialect == 'sqlite':
+        return {
+            'backend': env(f'{prefix}_BACKEND', 'sqlalchemy'),
+            'dialect': 'sqlite',
+            'driver': env(f'{prefix}_DRIVER', 'aiosqlite'),
+            'database': env(f'{prefix}_DB', ':memory:'),
+            'prefix': env(f'{prefix}_PREFIX', None),
+        }
+    conn = {
+        'backend': env(f'{prefix}_BACKEND', 'sqlalchemy'),
+        'dialect': dialect,
+        'host': env(f'{prefix}_HOST', '127.0.0.1'),
+        'database': env(f'{prefix}_DB', default_db),
+        'username': env(f'{prefix}_USER', ''),
+        'password': env(f'{prefix}_PASSWORD', ''),
+        'prefix': env(f'{prefix}_PREFIX', None),
+    }
+    # Omit driver/port unless provided so the framework's per-dialect defaults apply
+    driver = env(f'{prefix}_DRIVER', None)
+    if driver: conn['driver'] = driver
+    port = env.int(f'{prefix}_PORT', None)
+    if port: conn['port'] = port
+    return conn
+
+
 # This is the main auth config.  All items here can be overridden
 # when used inside other applications.  Accessible at config('uvicore.auth')
 
@@ -44,19 +77,15 @@ config = {
 
     # --------------------------------------------------------------------------
     # Database Connections
+    #
+    # Defaults to in-memory SQLite.  Set DB_AUTH_DIALECT to a server dialect
+    # (postgresql, mysql, mariadb, mssql, oracle...) plus the matching
+    # host/port/user/password env vars to run auth against a real database.
     # --------------------------------------------------------------------------
     'database': {
         'default': 'auth',
         'connections': {
-
-            # SQLite Example
-            'auth': {
-                'backend': env('DB_AUTH_BACKEND', 'sqlalchemy'),
-                'dialect': env('DB_AUTH_DIALECT', 'sqlite'),
-                'driver': env('DB_AUTH_DRIVER', 'aiosqlite'),
-                'database': env('DB_AUTH_DB', ':memory:'),
-                'prefix': env('DB_AUTH_PREFIX', None),
-            },
+            'auth': _connection('DB_AUTH', default_db='auth'),
 
             # MySQL Example
             # 'auth': {

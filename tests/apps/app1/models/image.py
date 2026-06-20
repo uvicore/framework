@@ -72,7 +72,5 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
 # IoC Class Instance
 #Image: ImageModel = uvicore.ioc.make('app1.models.image.Image', ImageModel)
 
-# Update forwrad refs (a work around to circular dependencies)
 #from app1.models.post import Post  # isort:skip
 #from app1.models.user import User  # isort:skip
-#Image.update_forward_refs()

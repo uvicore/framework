@@ -23,14 +23,15 @@ class UserInfo(PydanticModel, UserInfoInterface):
     email: str
     first_name: str
     last_name: str
-    title: Optional[str]
-    avatar: Optional[str]
+    # Pydantic v2: Optional[x] requires an explicit default to remain optional.
+    title: Optional[str] = None
+    avatar: Optional[str] = None
     groups: List[str]
     roles: List[str]
     permissions: List[str]
     superadmin: bool
     authenticated: bool
-    extra: Optional[dict]
+    extra: Optional[dict] = None
 
     @property
     def name(self):

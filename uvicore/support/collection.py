@@ -38,9 +38,9 @@ def getitems(object: Any) -> List[Tuple]:
     else:
         # Class instance
         fields = []
-        if getattr(object, '__fields__'):
-            # Pydantic model
-            fields = object.__fields__
+        if getattr(object, 'model_fields', None):
+            # Pydantic model (v2: __fields__ -> model_fields)
+            fields = object.model_fields
         else:
             # Python class
             # vars(object) is the same as object.__dict__

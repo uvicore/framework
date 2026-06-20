@@ -118,16 +118,16 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic One-To-Many Attributes
-    attributes: Optional[List[Attribute]] = Field(None,
-    #attributes: Optional[Dict] = Field(None,
+    # Returns a Dict (not a List) because the relation uses dict_key/dict_value,
+    # which keys each attribute by its 'key' column with the 'value' column as the value.
+    attributes: Optional[Dict] = Field(None,
         description="Post Attributes",
-        # Must be a dict for unit tests
         relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable', dict_key='key', dict_value='value')
-        #relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable')
     )
 
     # Polymorphic Many-To-Many Hashtags
-    hashtags: Optional[List[str]] = Field(None,
+    # Returns a List of Hashtag models (no dict_key/list_value set on the relation).
+    hashtags: Optional[List[Hashtag]] = Field(None,
         description="Post Hashtags",
         # relation=MorphToMany(
         #     model='app1.models.hashtag.Hashtag',
@@ -191,7 +191,6 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
 # ): pass
 
 
-# Update forwrad refs (a work around to circular dependencies)
 # If the relation has an ID foreign key on this table, use ioc.make
 # If not (the reverse relation) use from xyz import abc
 
@@ -207,6 +206,3 @@ from app1.models.user import User  # isort:skip
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
 #Comment = uvicore.ioc.make('app1.models.comment.Comment')
 #Tag = uvicore.ioc.make('app1.models.tag.Tag')
-
-Post.update_forward_refs()
-#PostModel.update_forward_refs()

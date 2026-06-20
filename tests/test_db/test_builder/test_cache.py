@@ -5,7 +5,7 @@ from uvicore.support.dumper import dump
 
 # DB Builder
 
-# NOTE: default cache store in config/app.py should be redis
+# NOTE: default cache store in config/app.py is 'array'
 
 @pytest.mark.asyncio
 async def test_cache_default_store(app1):
@@ -15,13 +15,13 @@ async def test_cache_default_store(app1):
         .cache('test-hashtags-cache')
         .get()
     )
-    # Should be in default store
+    # Should be in default store (array)
     from_cache = await uvicore.cache.get(cache_key)
     assert [1, 2, 3, 4, 5] == [x.id for x in from_cache]
 
-    # Should NOT be in array store
+    # Should also be in array store since it's the default
     from_otherstore = await uvicore.cache.store('array').get(cache_key)
-    assert from_otherstore is None
+    assert [1, 2, 3, 4, 5] == [x.id for x in from_otherstore]
 
     # Remove from cache for next tests
     await uvicore.cache.forget(cache_key)

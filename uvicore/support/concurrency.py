@@ -12,7 +12,10 @@ except ImportError:  # pragma: no cover
 T = TypeVar("T")
 
 async def run_in_threadpool(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
-    loop = asyncio.get_event_loop()
+    # This is an `async def`, so a loop is always running here.  Use
+    # get_running_loop() rather than the deprecated get_event_loop(), which
+    # warns (and is slated to change) when called without a running loop.
+    loop = asyncio.get_running_loop()
     if contextvars is not None:  # pragma: no cover
         # Ensure we run in the same context
         child = functools.partial(func, *args, **kwargs)

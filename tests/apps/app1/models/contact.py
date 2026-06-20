@@ -72,35 +72,6 @@ class Contact(Model['Contact'], metaclass=ModelMetaclass):
     )
 
 
-# IoC Class Instance
-#Contact: ContactModel = uvicore.ioc.make('app1.models.contact.Contact', ContactModel)
-#class Contact(ContactIoc, Model[ContactModel], ContactInterface): pass
-
-# class Contact(
-#     _Contact,
-#     Model[_Contact],
-#     ContactInterface
-# ): pass
-
-
-# Update forwrad refs (a work around to circular dependencies)
-
 from app1.models.user import User  # isort:skip
 #from uvicore.auth.models.user import User
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
-
-Contact.update_forward_refs()
-#_Contact.update_forward_refs()
-
-
-
-#x = _Contact.find2(12)
-
-
-
-
-
-
-
-
-# y = _Contact()

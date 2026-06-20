@@ -1,9 +1,13 @@
 import inspect
-from typing import Any, Callable, List, Type, TypeVar, Union, get_type_hints
+from typing import Any, Callable, ClassVar, List, Type, TypeVar, Union, get_origin, get_type_hints
 
 from fastapi import APIRouter, Depends
-from pydantic.typing import is_classvar
 from starlette.routing import Route, WebSocketRoute
+
+
+def is_classvar(hint) -> bool:
+    """Stdlib replacement for the removed pydantic.typing.is_classvar (Pydantic v2)."""
+    return hint is ClassVar or get_origin(hint) is ClassVar
 
 """
 The MIT License (MIT)

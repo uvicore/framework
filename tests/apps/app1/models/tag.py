@@ -51,7 +51,6 @@ class Tag(Model['Tag'], metaclass=ModelMetaclass):
 
 from app1.models.user import User  # isort:skip
 from app1.models.post import Post
-Tag.update_forward_refs()
 
 # class Tag(
 #     uvicore.ioc.make('app1.models.tag.Tag'),

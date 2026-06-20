@@ -1,0 +1,69 @@
+# Integration test database matrix for the Uvicore database/ORM layers.
+#
+# Spins up real Postgres, MySQL and MariaDB servers so the full app1 schema,
+# seeders and ORM/query test suite can run end-to-end against each engine
+# (the default unit tests use in-memory SQLite).
+#
+# Usage:
+#   ./bin/test-db-integration.sh postgres     # one backend
+#   ./bin/test-db-integration.sh all          # every backend
+#
+# Ports are offset from the defaults to avoid clashing with any local servers.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: uvicore
+      POSTGRES_PASSWORD: techie
+      POSTGRES_DB: uvicore
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uvicore -d uvicore"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: techie
+      MYSQL_DATABASE: uvicore
+      MYSQL_USER: uvicore
+      MYSQL_PASSWORD: techie
+    ports:
+      - "53306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ptechie"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: techie
+      MARIADB_DATABASE: uvicore
+      MARIADB_USER: uvicore
+      MARIADB_PASSWORD: techie
+    ports:
+      - "53307:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+  # Real redis server for the cache backend integration suite
+  # (./bin/test-cache-integration.sh).  The default unit run uses the in-memory
+  # 'array' cache backend; this verifies the 'redis' backend end-to-end.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

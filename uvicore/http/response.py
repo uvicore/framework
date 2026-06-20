@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from uvicore.support.dumper import dump
 from uvicore.support.module import load
 from uvicore.http.request import Request
-from pydantic.generics import GenericModel
 from starlette.templating import _TemplateResponse
 from prettyprinter import pretty_call, register_pretty
 from starlette.background import BackgroundTask as _BackgroundTask
@@ -30,7 +29,8 @@ from starlette.responses import StreamingResponse, StreamingResponse as Stream
 
 
 # Entity Generic
-# Using Pydantic GenericModel for Generic OpenAPI schemas
+# Pydantic v2 BaseModel is natively generic for Generic OpenAPI schemas
+# (the v1 pydantic.generics.GenericModel was removed in v2).
 # See https://medium.com/@jkishan421/building-dynamic-api-responses-with-generics-in-fastapi-972fa1f52d54 for details
 E = TypeVar("E")
 
@@ -126,19 +126,22 @@ async def View(
 
 
 @uvicore.service()
-class APIResponse(GenericModel, Generic[E]):
+class APIResponse(BaseModel, Generic[E]):
     """Uvicore API Response"""
     # Careful, the text in """ above shows up in OpenAPI docs!
+    # Pydantic v2: BaseModel is natively generic (the v1 GenericModel was removed).
+    # Optional[x] no longer implies a default in v2, so every optional field needs
+    # an explicit = None (or other default) to stay optional.
     api_version: Optional[str] = "1"
     request_date: Optional[datetime] = Field(default_factory=utc_now)
-    response_date: Optional[datetime]
-    response_ms: Optional[int]
+    response_date: Optional[datetime] = None
+    response_ms: Optional[int] = None
     paged_response: bool = False
     result_count: Optional[int] = 0
     total_count: Optional[int] = 0
     page_num: Optional[int] = 0
     total_pages: Optional[int] = 0
-    data: Optional[E]
+    data: Optional[E] = None
 
     @staticmethod
     def begin() -> 'APIResponse':
@@ -186,11 +189,12 @@ class APIErrorResponse(BaseModel):
     """Uvicore API Error Response"""
     # Careful, the text in """ above shows up in OpenAPI docs!
     # Remember exception is REMOVED if not running in app.debug=True mode!
-    status_code: Optional[int]
-    message: Optional[str]
-    detail: Optional[str]
-    exception: Optional[str]
-    extra: Optional[Any]
+    # Pydantic v2: Optional[x] requires an explicit default to remain optional.
+    status_code: Optional[int] = None
+    message: Optional[str] = None
+    detail: Optional[str] = None
+    exception: Optional[str] = None
+    extra: Optional[Any] = None
 
 
 @register_pretty(APIResponse)

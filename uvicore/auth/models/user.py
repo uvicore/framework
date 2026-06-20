@@ -110,4 +110,3 @@ class User(Model['User'], metaclass=ModelMetaclass):
 
 
 # Required because I reference myself (creator_id)
-User.update_forward_refs()

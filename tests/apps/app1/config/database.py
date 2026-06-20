@@ -3,6 +3,44 @@ from uvicore.typing import OrderedDict
 
 
 # --------------------------------------------------------------------------
+# Env-driven connection builder
+#
+# Defaults to in-memory SQLite (the standard unit-test backend).  Set
+# DB_<NAME>_DIALECT to a server dialect (postgresql, mysql, mariadb...) plus
+# the matching host/port/user/password env vars to run the SAME schema and
+# tests against a real database.  See tests/integration/ for the docker matrix.
+# --------------------------------------------------------------------------
+def connection(prefix: str, default_db: str = ':memory:'):
+    dialect = env(f'{prefix}_DIALECT', 'sqlite')
+
+    if dialect == 'sqlite':
+        return {
+            'backend': env(f'{prefix}_BACKEND', 'sqlalchemy'),
+            'dialect': 'sqlite',
+            'driver': env(f'{prefix}_DRIVER', 'aiosqlite'),
+            'database': env(f'{prefix}_DB', ':memory:'),
+            'prefix': env(f'{prefix}_PREFIX', None),
+        }
+
+    # Standard server-based dialect.  driver/port are omitted unless explicitly
+    # provided so the framework's per-dialect defaults apply.
+    conn = {
+        'backend': env(f'{prefix}_BACKEND', 'sqlalchemy'),
+        'dialect': dialect,
+        'host': env(f'{prefix}_HOST', '127.0.0.1'),
+        'database': env(f'{prefix}_DB', default_db),
+        'username': env(f'{prefix}_USER', ''),
+        'password': env(f'{prefix}_PASSWORD', ''),
+        'prefix': env(f'{prefix}_PREFIX', None),
+    }
+    driver = env(f'{prefix}_DRIVER', None)
+    if driver: conn['driver'] = driver
+    port = env.int(f'{prefix}_PORT', None)
+    if port: conn['port'] = port
+    return conn
+
+
+# --------------------------------------------------------------------------
 # Database Connections
 #
 # Uvicore allows for multiple database connections (backends) each with
@@ -14,27 +52,7 @@ from uvicore.typing import OrderedDict
 database = {
     'default': env('DATABASE_DEFAULT', 'app1'),
     'connections': {
-        # SQLite Example
-        'app1': {
-            'backend': env('DB_APP1_BACKEND', 'sqlalchemy'),
-            'dialect': env('DB_APP1_DIALECT', 'sqlite'),
-            'driver': env('DB_APP1_DRIVER', 'aiosqlite'),
-            'database': env('DB_APP1_DB', ':memory:'),
-            'prefix': env('DB_APP1_PREFIX', None),
-        },
-
-        # MySQL Example
-        # 'app1': {
-        #     'backend': env('DB_APP1_BACKEND', 'sqlalchemy'),
-        #     'dialect': env('DB_APP1_DIALECT', 'mysql'),
-        #     'driver': env('DB_APP1_DRIVER', 'aiomysql'),
-        #     'host': env('DB_APP1_HOST', '127.0.0.1'),
-        #     'port': env.int('DB_APP1_PORT', 3306),
-        #     'database': env('DB_APP1_DB', 'app1'),
-        #     'username': env('DB_APP1_USER', 'root'),
-        #     'password': env('DB_APP1_PASSWORD', 'techie'),
-        #     'prefix': env('DB_APP1_PREFIX', None),
-        # },
+        'app1': connection('DB_APP1', default_db='app1'),
 
         # Example of ORM over Remote Uvicore API
         # NOT implemented yet

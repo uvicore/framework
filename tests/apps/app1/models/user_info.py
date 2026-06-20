@@ -54,4 +54,3 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
 #from uvicore.auth.models.user import User  # isort:skip
 from app1.models.user import User
 #User = uvicore.ioc.make('uvicore.auth.models.user.User')
-UserInfo.update_forward_refs()

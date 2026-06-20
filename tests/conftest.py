@@ -1,21 +1,19 @@
 import pytest
-import asyncio
 import uvicore
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from uvicore.typing import Generator
 from uvicore.support.dumper import dump, dd
 
 
-@pytest.fixture(scope='session')
-def event_loop(request):
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# NOTE: pytest-asyncio 1.x removed support for overriding the `event_loop`
+# fixture.  The single session-wide loop is now configured declaratively via
+# [tool.pytest.ini_options] asyncio_default_{fixture,test}_loop_scope = "session"
+# in pyproject.toml, so no custom event_loop fixture is needed (or allowed) here.
 
 
-@pytest_asyncio.fixture(scope="session")
-async def app1(event_loop):
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
+async def app1():
 
     #import sys
     #dd(sys.modules)
@@ -62,8 +60,7 @@ async def app1(event_loop):
 
 # Async TestClient based on encode/httpx
 # https://github.com/tiangolo/fastapi/issues/1273
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def client() -> Generator:
-    async with AsyncClient(app=uvicore.app.http, base_url="http://testserver") as client:
-    #async with AsyncClient(transport=uvicore.app.http, base_url="http://testserver") as client:
+    async with AsyncClient(transport=ASGITransport(app=uvicore.app.http), base_url="http://testserver") as client:
         yield client

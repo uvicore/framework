@@ -80,21 +80,5 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
         relation=BelongsTo('uvicore.auth.models.user.User'),
     )
 
-
-
-# IoC Class Instance
-#Comment: CommentModel = uvicore.ioc.make('app1.models.comment.Comment', CommentModel)
-
-# class Comment(
-#     _Comment,
-#     Model[_Comment],
-#     CommentInterface
-# ): pass
-
-# Update forwrad refs (a work around to circular dependencies)
-
 from app1.models.post import Post  # isort:skip
 from app1.models.user import User  # isort:skip
-#Post = uvicore.ioc.make('app1.models.post.Post')
-Comment.update_forward_refs()
-#_Comment.update_forward_refs()
