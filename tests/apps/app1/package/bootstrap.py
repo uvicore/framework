@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.configuration import Env
+from uvicore.configuration import env
 from uvicore.support import path
 from uvicore.support.dumper import dd, dump
 
@@ -17,10 +17,13 @@ class Application:
         # Base path
         base_path = path.find_base(__file__)
 
-        # Load .env from environs
-        Env().read_env(base_path + '/.env')
+        # Load .env into the shared global Env instance (the same one the
+        # config files read via uvicore.configuration.env). environs >= 11
+        # loads into the instance's private store, NOT os.environ, so we must
+        # read into THIS shared instance or the configs never see the values.
+        env.read_env(base_path + '/.env')
 
-        # Import this apps config (import must be after Env())
+        # Import this apps config (import must be after env.read_env())
         from ..config.app import config as app_config
 
         # Bootstrap the Uvicore Application (Either CLI or HTTP entry points based on is_console)
