@@ -1,6 +1,7 @@
 import uvicore
 import traceback
-from uvicore.typing import Any, Dict, Optional, List
+from typing import Any, List
+from uvicore.typing import Dict
 from starlette.exceptions import HTTPException as _HTTPException
 from uvicore.http import status
 from uvicore.support.dumper import dump
@@ -19,12 +20,12 @@ class HTTPException(_HTTPException):
     # Extra lets you pass in a dict of options or extra information that some handlers may want to use
     def __init__(self,
         status_code: int,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         *,
-        message: Optional[str] = None,
-        exception: Optional[str] = None,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        message: str | None = None,
+        exception: str | None = None,
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         # Detect if we were raised from another HTTPException with a status_code
         # If so, grab values from that first exception
@@ -57,11 +58,11 @@ class HTTPException(_HTTPException):
 class PermissionDenied(HTTPException):
     """Permission Denied Exception"""
     def __init__(self,
-        permissions: Optional[List] = None,
-        detail: Optional[str] = None,
+        permissions: List | None = None,
+        detail: str | None = None,
         *,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         detail = "Permission denied"
         if permissions:
@@ -79,10 +80,10 @@ class PermissionDenied(HTTPException):
 class NotAuthenticated(HTTPException):
     """Not Authenticated Exception"""
     def __init__(self,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         *,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -96,10 +97,10 @@ class NotAuthenticated(HTTPException):
 class InvalidCredentials(HTTPException):
     """Invalid Credentials Exception"""
     def __init__(self,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         *,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -113,10 +114,10 @@ class InvalidCredentials(HTTPException):
 class NotFound(HTTPException):
     """Not Found Exception"""
     def __init__(self,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         *,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -130,11 +131,11 @@ class NotFound(HTTPException):
 class BadParameter(HTTPException):
     """Bad Parameter"""
     def __init__(self,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         *,
-        exception: Optional[str] = None,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        exception: str | None = None,
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,

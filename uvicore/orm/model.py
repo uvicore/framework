@@ -8,7 +8,8 @@ from uvicore.orm.query import OrmQueryBuilder
 from uvicore.support.classes import hybridmethod
 from uvicore.contracts import Model as ModelInterface
 from uvicore.support.collection import getvalue, setvalue
-from uvicore.typing import Any, Dict, Generic, List, Tuple, TypeVar, Union
+from typing import Any, Generic, List, TypeVar
+from uvicore.typing import Dict
 from uvicore.orm.fields import BelongsTo, BelongsToMany, Field, HasMany, HasOne, MorphMany, MorphOne, MorphToMany
 
 E = TypeVar("E")
@@ -78,7 +79,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
     #     return OrmQueryBuilder(entity).include(*args)
 
     @classmethod
-    async def insert(entity, models: Union[E, Dict, List[E], List[Dict]]) -> Any:
+    async def insert(entity, models: E | Dict | List[E] | List[Dict]) -> Any:
         """Insert one or more entities as List of entities or List of Dictionaries
 
         This bulk insert does NOT allow inserting child relations at the
@@ -286,7 +287,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         """
         return Mapper(self_or_entity, *args)
 
-    async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def create(self, relation_name: str, models: Any | List[Any]) -> None:
         """Create related child records and link them to this parent (self) model"""
 
         # Ignore empty models (None or [])
@@ -344,11 +345,11 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
         else:
             raise Exception('Creating children does not work for this type of relation.')
 
-    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def add(self, relation_name: str, models: Any | List[Any]) -> None:
         """Alias to create"""
         await self.create(relation_name, models)
 
-    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def set(self, relation_name: str, models: Any | List[Any]) -> None:
         """Same as create(), except it deletes all first, so it sets the entire children"""
 
         # Get the entity of this model instance (which is the metaclass, aka self.__class__)
@@ -510,7 +511,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             await entity.execute(query)
             await self._after_delete()
 
-    async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def link(self, relation_name: str, models: Any | List[Any]) -> None:
         """Link records to relation using the Many-To-Many pivot table"""
 
         # NOTICE hooks:  We do NOT actually need to fire hooks on relation tables!
@@ -610,7 +611,7 @@ class Model(Generic[E], PydanticBaseModel, ModelInterface[E]):
             # Linking only works for Many-To-Many relations
             raise Exception('Linking is for Many-To-Many relations only.')
 
-    async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+    async def unlink(self, relation_name: str, models: Any | List[Any] = None) -> None:
         """Unlink records to relation using the Many-To-Many pivot table"""
 
         # NOTICE hooks:  We do NOT actuall need to fire hooks on relation tables!

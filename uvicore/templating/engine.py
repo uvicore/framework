@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Template as TemplateInterface
 
@@ -68,7 +68,7 @@ class Templates(TemplateInterface):
         # Only for starlette compatibility
         self.context_processors = {}
 
-    def render(self, template_name: str, data: Optional[Dict] = {}) -> str:
+    def render(self, template_name: str, data: Dict | None = {}) -> str:
         """Render a template as string (for CLI usage, not a Web response)"""
         template = self._env.get_template(template_name)
         return template.render(data)

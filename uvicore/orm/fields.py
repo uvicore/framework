@@ -6,7 +6,7 @@ from uvicore.support import module
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Field as FieldInterface
 from uvicore.contracts import Relation as RelationInterface
-from typing import Any, Callable, Dict, Optional, OrderedDict
+from typing import Any, Callable, Dict, OrderedDict
 
 # NOTE dataclass required on each on THAT HAS PROPERTIES event hough they all
 # impliment Relation.  If a class does not have property overrides, then do NOT add @dataclass
@@ -26,10 +26,10 @@ class Relation(RelationInterface):
     # By setting a default on these attributes of a dataclass
     # When printed, only the ones actually set will show up, which makes output much smaller
     model: str
-    foreign_key: Optional[str] = None
-    local_key: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
+    foreign_key: str | None = None
+    local_key: str | None = None
+    name: str | None = None
+    entity: Any | None = None
 
     def __init__(self,
         model: str,
@@ -165,9 +165,9 @@ class BelongsToMany(Relation):
     join_tablename: str = None
     left_key: str = None
     right_key: str = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
-    join_table: Optional[sa.Table] = None
+    name: str | None = None
+    entity: Any | None = None
+    join_table: sa.Table | None = None
 
     def __init__(self,
         model: str,
@@ -209,14 +209,14 @@ class BelongsToMany(Relation):
 class Morph(Relation):
     model: str
     polyfix: str = None
-    foreign_type: Optional[str] = None
-    foreign_key: Optional[str] = None
-    local_key: Optional[str] = None
-    dict_key: Optional[str] = None
-    dict_value: Optional[str] = None
-    list_value: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
+    foreign_type: str | None = None
+    foreign_key: str | None = None
+    local_key: str | None = None
+    dict_key: str | None = None
+    dict_value: str | None = None
+    list_value: str | None = None
+    name: str | None = None
+    entity: Any | None = None
 
     def __init__(self,
         model: str,
@@ -265,14 +265,14 @@ class MorphToMany(Morph):
     join_tablename: str = None
     polyfix: str = None
     right_key: str = None
-    left_type: Optional[str] = None
-    left_key: Optional[str] = None
-    dict_key: Optional[str] = None
-    dict_value: Optional[str] = None
-    list_value: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
-    join_table: Optional[sa.Table] = None
+    left_type: str | None = None
+    left_key: str | None = None
+    dict_key: str | None = None
+    dict_value: str | None = None
+    list_value: str | None = None
+    name: str | None = None
+    entity: Any | None = None
+    join_table: sa.Table | None = None
 
     def __init__(self,
         model: str,
@@ -339,24 +339,24 @@ class MorphToMany(Morph):
 @uvicore.service()
 class Field(FieldInterface):
     column: str
-    name: Optional[str] = None
-    primary: Optional[bool] = False
-    title: Optional[str] = None
-    description: Optional[str] = None
-    default: Optional[Any] = None
-    sortable: Optional[bool] = None
-    searchable: Optional[bool] = None
-    read_only: Optional[bool] = None
-    write_only: Optional[bool] = None
-    callback: Optional[Any] = None
-    evaluate: Optional[Callable] = None
-    relation: Optional[Relation] = None
-    json: Optional[bool] = False
-    properties: Optional[Dict] = None
+    name: str | None = None
+    primary: bool | None = False
+    title: str | None = None
+    description: str | None = None
+    default: Any | None = None
+    sortable: bool | None = None
+    searchable: bool | None = None
+    read_only: bool | None = None
+    write_only: bool | None = None
+    callback: Any | None = None
+    evaluate: Callable | None = None
+    relation: Relation | None = None
+    json: bool | None = False
+    properties: Dict | None = None
 
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    example: Optional[Any] = None
+    min_length: int | None = None
+    max_length: int | None = None
+    example: Any | None = None
 
 
     # Of all the uvicore Field() arguments, these are VALID OpenAPI fields and handled properly by Pydantic FieldInfo()
@@ -389,24 +389,24 @@ class Field(FieldInterface):
     ]
 
     def __init__(self, column: str = None, *,
-        name: Optional[str] = None,
-        primary: Optional[bool] = False,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        default: Optional[Any] = None,
+        name: str | None = None,
+        primary: bool | None = False,
+        title: str | None = None,
+        description: str | None = None,
+        default: Any | None = None,
         #required: Optional[bool] = False,
-        sortable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        searchable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        callback: Optional[Any] = None,
-        evaluate: Optional[Callable] = None,
-        relation: Optional[Relation] = None,
-        json: Optional[bool] = False,
-        properties: Optional[Dict] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        example: Optional[Any] = None,
+        sortable: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        searchable: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        read_only: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        write_only: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        callback: Any | None = None,
+        evaluate: Callable | None = None,
+        relation: Relation | None = None,
+        json: bool | None = False,
+        properties: Dict | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        example: Any | None = None,
     ):
         self.column = column
         self.name = name

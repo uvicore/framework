@@ -1,6 +1,7 @@
 import uvicore
 from contextlib import asynccontextmanager
-from uvicore.typing import Dict, List, OrderedDict, get_type_hints, Tuple
+from typing import List, Tuple
+from uvicore.typing import Dict
 from uvicore.events import Handler
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd

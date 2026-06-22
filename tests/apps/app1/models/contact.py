@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional, TypeVar
 
 import uvicore
 from app1.database.tables import contacts as table
@@ -36,7 +35,7 @@ class Contact(Model['Contact'], metaclass=ModelMetaclass):
     # Databas        u.contact.e table definition
     __tableclass__ = table.Contacts
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Contact ID',
         #read_only=True,
@@ -63,7 +62,7 @@ class Contact(Model['Contact'], metaclass=ModelMetaclass):
     )
 
     # One-To-One Inverse - Contact has ONE User
-    user: 'Optional[User]' = Field(None,
+    user: 'User | None' = Field(None,
         description="Contact User Model",
 
         #belongs_to=('uvicore.auth.models.user.User', 'id', 'user_id'),

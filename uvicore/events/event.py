@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.typing import Union, Callable
+from typing import Callable
 from uvicore.support.classes import classproperty
 
 
@@ -23,27 +23,27 @@ class Event():
         return cls.__doc__
 
     @classmethod
-    def listen(cls, handler: Union[str, Callable], *, priority: int = 50):
+    def listen(cls, handler: str | Callable, *, priority: int = 50):
         """Listen to to this event using this handler"""
         uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def listener(cls, handler: Union[str, Callable], *, priority: int = 50):
+    def listener(cls, handler: str | Callable, *, priority: int = 50):
         """Alias to Listen"""
         uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def handle(cls, handler: Union[str, Callable], *, priority: int = 50):
+    def handle(cls, handler: str | Callable, *, priority: int = 50):
         """Alias to Listen"""
         uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def handler(cls, handler: Union[str, Callable], *, priority: int = 50):
+    def handler(cls, handler: str | Callable, *, priority: int = 50):
         """Alias to Listen"""
         uvicore.events.listen(cls, handler, priority=priority)
 
     @classmethod
-    def call(cls, handler: Union[str, Callable], *, priority: int = 50):
+    def call(cls, handler: str | Callable, *, priority: int = 50):
         """Alias to Listen"""
         uvicore.events.listen(cls, handler, priority=priority)
 

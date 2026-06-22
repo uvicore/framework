@@ -1,7 +1,8 @@
 import uvicore
 import inspect
 import fnmatch
-from uvicore.typing import Optional, List, Tuple, Dict, Any, OrderedDict, Union
+from typing import List
+from uvicore.typing import Dict, OrderedDict
 from uvicore.http.routing.api_router import ApiRouter
 from uvicore.http.routing.router import Routes as Controller
 from uvicore.http.request import Request
@@ -43,7 +44,7 @@ class HTTPMessage(BaseModel):
 
 
 class DeleteQuery(PydanticModel):
-    where: Optional[dict[str, Union[str, List]]] = None
+    where: dict[str, str | List] | None = None
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -74,7 +75,7 @@ class ModelRoutes:
             inherits=AutoApi.getsig,
             # Use the builtin dict here (not uvicore.typing.Dict/SuperDict) — Pydantic v2
             # only accepts standard types as response/field types.
-            response_model=Union[List[Model], Model, dict],
+            response_model=List[Model] | Model | dict,
             tags=tags,
             scopes=scopes['read'],
             summary="List multiple {}".format(Model.tablename),
@@ -114,7 +115,7 @@ class ModelRoutes:
             summary="Get one {} by primary key".format(Model.tablename),
             description="Get a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
         )
-        async def find_one(id: Union[str,int], **kwargs):
+        async def find_one(id: str | int, **kwargs):
             api = AutoApi(Model, scopes, **kwargs).guard_relations()
             query = api.orm_query()
 
@@ -133,14 +134,14 @@ class ModelRoutes:
 
         @route.post(
             path='/' + path,
-            response_model=Union[Model, List[Model]],
+            response_model=Model | List[Model],
             tags=tags,
             scopes=scopes['create'],
             summary="Create new {}".format(Model.tablename),
             description="Create one or more {} ({}) without nested relations by POSTING a valid and complete Model.".format(Model.tablename, Model.modelfqn),
         )
         #async def post(request: Request, item: Model):
-        async def create(request: Request, items: Union[Model, List[Model]]):
+        async def create(request: Request, items: Model | List[Model]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -179,13 +180,13 @@ class ModelRoutes:
 
         @route.post(
             path='/' + path + '/with_relations',
-            response_model=Union[dict, List[dict]],
+            response_model=dict | List[dict],
             tags=tags,
             scopes=scopes['create'],
             summary="Create new {} with nested relations".format(Model.tablename),
             description="Create one or more {} ({}) with deeply nested relations by POSTING an object/array.  Uvicore must disable model validation when passing a complex nested relational object.  It is therefore up to you to ensure an accurate object is passed.".format(Model.tablename, Model.modelfqn),
         )
-        async def create_with_relations(request: Request, items: Union[dict, List[dict]]):
+        async def create_with_relations(request: Request, items: dict | List[dict]):
             # NOTES
             # How do I check each child relations permissions, there is no includes
             # Would have to flip each item key and check if its a relation?
@@ -228,7 +229,7 @@ class ModelRoutes:
             summary="Update one complete {} by primary key".format(Model.tablename),
             description="Update a single {} ({}) by primary key by PUTTING a valid and complete Model.".format(Model.tablename, Model.modelfqn),
         )
-        async def update_one(request: Request, id: Union[str,int], item: Model):
+        async def update_one(request: Request, id: str | int, item: Model):
             # PUT is used to UPDATE an EXISTNIG record.
             # The PUT object must be a complete object. This is why 'item' is a Model, not a Dict
             try:
@@ -257,7 +258,7 @@ class ModelRoutes:
             summary="Update one partial {} by primary key".format(Model.tablename),
             description="Update a single {} ({}) by primary key by PATCHING a partial object.  All fields in the object are optional.".format(Model.tablename, Model.modelfqn),
         )
-        async def update_one_partial(request: Request, id: Union[str,int], item: dict):
+        async def update_one_partial(request: Request, id: str | int, item: dict):
             # PATCH is used to UPDATE an EXISTNIG record.
             # The PATCH may be a partial object as it is merged with the existing object before being saved.
             # This is why 'item' must be a Dict, not a Model as pydantic would complain about missing fields.
@@ -304,7 +305,7 @@ class ModelRoutes:
             summary="Delete one {} by primary key".format(Model.tablename),
             description="Delete a single {} ({}) by primary key.".format(Model.tablename, Model.modelfqn),
         )
-        async def delete_one(request: Request, id: Union[str,int]):
+        async def delete_one(request: Request, id: str | int):
             # DELETE must act on a single resource ONLY /{id}.  It does NOT take a body/paylad at all.
             # If you want to BULK delete using a body/payload with a JSON query, use POST instead with
             # a new custom endpoint like POST /users/delete payload={"where": ...}

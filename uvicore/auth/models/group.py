@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Optional, List
+from typing import List
 from uvicore.auth.models.role import Role
 from uvicore.support.dumper import dd, dump
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsToMany
@@ -13,7 +13,7 @@ class Group(Model['Group'], metaclass=ModelMetaclass):
 
     __tableclass__ = table.Groups
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Group ID',
     )
@@ -28,7 +28,7 @@ class Group(Model['Group'], metaclass=ModelMetaclass):
     )
 
     # Many-To-Many via group_roles pivot table
-    roles: Optional[List[Role]] = Field(None,
+    roles: List[Role] | None = Field(None,
         description="Group Roles",
         relation=BelongsToMany('uvicore.auth.models.role.Role', join_tablename='group_roles', left_key='group_id', right_key='role_id'),
     )

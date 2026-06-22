@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
 import uvicore
 from app1.database.tables import users as table
@@ -87,18 +87,18 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
 
     # CUSTOM ###################################################################
 
-    app1_extra: Optional[str] = Field('app1_extra',
+    app1_extra: str | None = Field('app1_extra',
         description='Extra column on auth.users by app1',
     )
 
     # One-To-One - User has ONE Contact
-    info: Optional[UserInfo] = Field(None,
+    info: UserInfo | None = Field(None,
         description='User Info Model',
         relation=HasOne('app1.models.user_info.UserInfo', foreign_key='user_id'),
     )
 
     # One-To-One - User has ONE Contact
-    contact: Optional[Contact] = Field(None,
+    contact: Contact | None = Field(None,
         description='Users Contact Model',
 
         #has_one=('app1.models.contact.Contact', 'user_id', 'id'),
@@ -108,7 +108,7 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many (One User has Many Posts)
-    posts: Optional[List[Post]] = Field(None,
+    posts: List[Post] | None = Field(None,
         description="Users Posts Model",
 
         #has_many=('app1.models.post.Post', 'creator_id', 'id'),
@@ -118,7 +118,7 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
     )
 
     # Polymorphic One-To-One image
-    image: Optional[Image] = Field(None,
+    image: Image | None = Field(None,
         description="Post Image",
         relation=MorphOne('app1.models.image.Image', polyfix='imageable')
     )

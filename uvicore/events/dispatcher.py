@@ -7,7 +7,8 @@ from types import SimpleNamespace as obj
 from uvicore.support.dumper import dump, dd
 from uvicore.support.concurrency import run_in_threadpool
 from uvicore.contracts import Dispatcher as DispatcherInterface
-from uvicore.typing import Dict, List, Any, Union, Callable, Tuple
+from typing import List, Callable, Tuple
+from uvicore.typing import Dict
 
 #from uvicore.contracts import Event as EventInterface
 # from uvicore.support.printer import pretty_call, register_pretty
@@ -142,7 +143,7 @@ class Dispatcher(DispatcherInterface):
         # Return these event handlers
         return handlers
 
-    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def listen(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events."""
         def handle(events, listener):
             if type(events) != list: events = [events]
@@ -172,23 +173,23 @@ class Dispatcher(DispatcherInterface):
             return func
         return decorator
 
-    def listener(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def listener(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
 
-    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def handle(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
 
-    def handler(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def handler(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
 
-    def call(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def call(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         return self.listen(events, listener)
 
-    def subscribe(self, listener: Union[str, Callable]) -> None:
+    def subscribe(self, listener: str | Callable) -> None:
         """Add a subscription class which handles both registration and listener callbacks"""
         try:
             if type(listener) == str:
@@ -198,7 +199,7 @@ class Dispatcher(DispatcherInterface):
         except ModuleNotFoundError:
             pass
 
-    def dispatch(self, event: Union[str, Callable], payload: Dict = {}) -> None:
+    def dispatch(self, event: str | Callable, payload: Dict = {}) -> None:
         """Fire off an event and run all listener callbacks"""
 
         # Get dispatcher method for this event
@@ -207,7 +208,7 @@ class Dispatcher(DispatcherInterface):
         # Dispatch this event
         dispatch_method(*params)
 
-    async def dispatch_async(self, event: Union[str, Callable], payload: Dict = {}) -> None:
+    async def dispatch_async(self, event: str | Callable, payload: Dict = {}) -> None:
         """Async fire off an event and run all async listener callbacks"""
 
         # Get dispatcher method for this event
@@ -216,17 +217,17 @@ class Dispatcher(DispatcherInterface):
         # Dispatch this event
         await dispatch_method(*params)
 
-    async def codispatch(self, event: Union[str, Callable], payload: Dict = {}) -> None:
+    async def codispatch(self, event: str | Callable, payload: Dict = {}) -> None:
         """Alias for dispatch_async()."""
         return await self.dispatch_async(event, payload)
 
-    def _dispatch(self, event: Union[str, Callable], payload: Dict = {}) -> None:
+    def _dispatch(self, event: str | Callable, payload: Dict = {}) -> None:
         """Dispatch an event by fireing off all listeners/handlers"""
         (event, handlers) = self._get_handlers(event, payload)
         for handler in handlers:
             handler(event)
 
-    async def _dispatch_async(self, event: Union[str, Callable], payload: Dict = {}) -> None:
+    async def _dispatch_async(self, event: str | Callable, payload: Dict = {}) -> None:
         """Dispatch an event by fireing off all listeners/handlers"""
         (event, handlers) = self._get_handlers(event, payload)
         for handler in handlers:
@@ -236,7 +237,7 @@ class Dispatcher(DispatcherInterface):
                 # Listener/handler is NOT async but was called from await, lets throw in thread pool
                 await run_in_threadpool(handler, event)
 
-    def _get_dispatcher(self, event: Union[str, Callable], payload: Dict = {}, is_async: bool = False) -> Tuple:
+    def _get_dispatcher(self, event: str | Callable, payload: Dict = {}, is_async: bool = False) -> Tuple:
         """Get dispatcher method for this event"""
         # This function determines the proper dispatching method for this event.
         # If event is a string, we use self._dispatch
@@ -267,7 +268,7 @@ class Dispatcher(DispatcherInterface):
         # Return tuple of dispatcher method and params
         return (method, params)
 
-    def _get_handlers(self, event: Union[str, Callable], payload: Dict = {}) -> Tuple:
+    def _get_handlers(self, event: str | Callable, payload: Dict = {}) -> Tuple:
         """Get all listener/handlers and fix up payload"""
         # Get event by string name or class inspection
         #event_meta = self.event(event)

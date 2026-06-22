@@ -1,6 +1,5 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional, Any
 from app1.database.tables import images as table
 #from uvicore.orm.fields import Field
 #from uvicore.orm.model import Model, ModelMetaclass
@@ -16,7 +15,7 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
     # Database table definition
     __tableclass__ = table.Images
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Image ID',
         read_only=True,

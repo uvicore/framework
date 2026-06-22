@@ -1,6 +1,7 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator, get_type_hints, Union, Type
+from typing import Any, Callable, List, get_type_hints, Type
+from uvicore.typing import Dict, Decorator
 from uvicore.http.routing.router import Router
 from uvicore.contracts import ApiRoute as RouteInterface
 from uvicore.support.printer import pretty_call, register_pretty
@@ -29,22 +30,22 @@ class ApiRouter(Router['ApiRoute']):
     def get(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Add a new HTTP GET route to the ApiRouter
 
@@ -73,22 +74,22 @@ class ApiRouter(Router['ApiRoute']):
     def post(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ):
         """Add a new HTTP POST route to the ApiRouter
 
@@ -117,22 +118,22 @@ class ApiRouter(Router['ApiRoute']):
     def put(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ):
         """Add a new HTTP PUT route to the ApiRouter
 
@@ -161,22 +162,22 @@ class ApiRouter(Router['ApiRoute']):
     def patch(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ):
         """Add a new HTTP PATCH route to the ApiRouter
 
@@ -205,22 +206,22 @@ class ApiRouter(Router['ApiRoute']):
     def delete(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ):
         """Add a new HTTP DELETE route to the ApiRouter
 
@@ -249,23 +250,23 @@ class ApiRouter(Router['ApiRoute']):
     def add(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         methods: List[str] = ['GET'],
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
 
         # ApiRouter specific
-        responses: Optional[Dict] = None,
-        response_model: Optional[Any] = None,
-        response_class: Optional[Type[Response]] = None,
-        tags: Optional[List[str]] = None,
-        summary: Optional[str] = None,
-        description: Optional[str] = None,
+        responses: Dict | None = None,
+        response_model: Any | None = None,
+        response_class: Type[Response] | None = None,
+        tags: List[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
     ) -> Callable[[Decorator], Decorator]:
         """Add a new HTTP method route to the ApiRouter
 

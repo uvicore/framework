@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from uvicore.contracts.user_info import UserInfo
-from uvicore.typing import Optional, Tuple, Dict, Union
+from typing import Tuple
+from uvicore.typing import Dict
 
 try:
     from starlette.requests import HTTPConnection
@@ -11,11 +12,11 @@ except ImportError:
 class Authenticator(ABC):
 
     @abstractmethod
-    async def authenticate(self, conn: HTTPConnection) -> Union[UserInfo, bool]:
+    async def authenticate(self, conn: HTTPConnection) -> UserInfo | bool:
         pass
 
     @abstractmethod
-    async def retrieve_user(self, username: str, password: str, provider: Dict) -> Optional[UserInfo]:
+    async def retrieve_user(self, username: str, password: str, provider: Dict) -> UserInfo | None:
         """Retrieve user from User Provider backend"""
         pass
 

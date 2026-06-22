@@ -3,7 +3,6 @@ from base64 import b64decode
 from uvicore.contracts import UserInfo
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
-from uvicore.typing import Dict, Optional, Union
 from uvicore.auth.authenticators.base import Authenticator
 
 
@@ -22,7 +21,7 @@ class Basic(Authenticator):
     # Return of True means this authentication method was being attempted, but failed validation, skip next authenticator
     # Return of User object means a valid user was found, skip next authenticator
 
-    async def authenticate(self, request: HTTPConnection) -> Union[UserInfo, bool]:
+    async def authenticate(self, request: HTTPConnection) -> UserInfo | bool:
         self.log.debug('BASIC Authenticator')
 
         # Parse authorization header

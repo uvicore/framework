@@ -3,7 +3,7 @@ from importlib import import_module
 from importlib.util import find_spec
 from dataclasses import dataclass
 from uvicore.support.dumper import dump, dd
-from typing import Any, NamedTuple
+from typing import Any
 
 @dataclass
 class Module():

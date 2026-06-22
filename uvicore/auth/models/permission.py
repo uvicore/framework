@@ -1,6 +1,5 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Optional
 from uvicore.support.dumper import dd, dump
 from uvicore.orm import Model, ModelMetaclass, Field
 from uvicore.auth.database.tables import permissions as table
@@ -12,12 +11,12 @@ class Permission(Model['Permission'], metaclass=ModelMetaclass):
 
     __tableclass__ = table.Permissions
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Permission ID',
     )
 
-    entity: Optional[str] = Field('entity',
+    entity: str | None = Field('entity',
         description='Permission Entity',
     )
 

@@ -1,6 +1,7 @@
 import pytest
 import uvicore
-from uvicore.typing import Dict, OrderedDict, List
+from typing import List
+from uvicore.typing import Dict, OrderedDict
 from uvicore.support.dumper import dump
 
 

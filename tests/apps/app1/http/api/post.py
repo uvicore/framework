@@ -2,7 +2,7 @@ import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.http import Request, response
 from uvicore.http.routing import Controller, ApiRouter, AutoApi, Guard
-from uvicore.typing import Optional, List
+from typing import List
 
 from app1 import models
 from functools import partial
@@ -75,8 +75,8 @@ class Post(Controller):
 
         async def autoapi_list(
             request: Request,
-            include: Optional[List[str]] = params.Query([]),
-            where: Optional[str] = ''
+            include: List[str] | None = params.Query([]),
+            where: str | None = ''
         ):
             pass
 

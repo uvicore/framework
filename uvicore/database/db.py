@@ -6,7 +6,8 @@ from uvicore.contracts import Package as Package
 from uvicore.database.query import DbQueryBuilder
 from sqlalchemy.ext.asyncio import create_async_engine
 from uvicore.contracts import Database as DatabaseInterface
-from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
+from typing import Any, List, Sequence, Mapping
+from uvicore.typing import Dict
 
 
 @uvicore.service('uvicore.database.db.Db',
@@ -307,9 +308,9 @@ class Db(DatabaseInterface):
     async def execute(
         self,
         query: Any,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.CursorResult:
         """Execute a SQLAlchemy Core Query based on connection str or metakey"""
 
@@ -338,9 +339,9 @@ class Db(DatabaseInterface):
 
     async def all(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[sa.Row]:
         """Get many records from query. Returns empty List if no records found"""
         result = await self.execute(query, values, connection, metakey)
@@ -348,18 +349,18 @@ class Db(DatabaseInterface):
 
     async def fetchall(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[sa.Row]:
         """Alias to .all()"""
         return await self.all(query, values, connection, metakey)
 
     async def first(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Get one (first/top) record from query. Returns None if no records found"""
         result = await self.execute(query, values, connection, metakey)
@@ -367,9 +368,9 @@ class Db(DatabaseInterface):
 
     async def fetchone(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Alias to .first()"""
         result = await self.execute(query, values, connection, metakey)
@@ -377,9 +378,9 @@ class Db(DatabaseInterface):
 
     async def one(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row:
         """Get one record from query. Throws Exception if no data found or querying more than one record"""
         result = await self.execute(query, values, connection, metakey)
@@ -387,9 +388,9 @@ class Db(DatabaseInterface):
 
     async def one_or_none(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Get one record from query.  Returns None if no record found.  Throws Exception of querying more than one record"""
         result = await self.execute(query, values, connection, metakey)
@@ -397,9 +398,9 @@ class Db(DatabaseInterface):
 
     async def scalars(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[Any]:
         """Get many scalar values from query.  Returns empty List if no records found. If selecting multiple columns, returns List of FIRST column only."""
         result = await self.execute(query, values, connection, metakey)
@@ -407,9 +408,9 @@ class Db(DatabaseInterface):
 
     async def scalar(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any|None:
         """Get a single scalar value from query. Returns None if no record found.  Returns first (top) if more than one record found"""
         result = await self.execute(query, values, connection, metakey)
@@ -417,9 +418,9 @@ class Db(DatabaseInterface):
 
     async def scalar_one(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any:
         """Get a single scalar value from query.  Throws Exception if no data found or if querying more than one record"""
         result = await self.execute(query, values, connection, metakey)
@@ -427,9 +428,9 @@ class Db(DatabaseInterface):
 
     async def scalar_one_or_none(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any|None:
         """Get a single scalar value from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
         result = await self.execute(query, values, connection, metakey)
@@ -437,9 +438,9 @@ class Db(DatabaseInterface):
 
     async def insertmany(self,
         query: sa.Insert|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> List[sa.Row]:
         """Bulk insert many rows, returning bulk primary keys (for databases that support INSERT..RETURNING)"""
         # For bulk returns see https://docs.sqlalchemy.org/en/20/core/connections.html#engine-insertmanyvalues
@@ -448,9 +449,9 @@ class Db(DatabaseInterface):
 
     async def insertone(self,
         query: sa.Insert|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row:
         """Insert one row, returning the one rows PK (as a tuple in case of dual PKs)"""
         result = await self.execute(query, values, connection, metakey)

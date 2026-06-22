@@ -1,6 +1,7 @@
 import importlib
 import sys
-from uvicore.typing import Any, Dict, List, Union, Dict
+from typing import Any, List
+from uvicore.typing import Dict
 
 import uvicore
 #import typer_async as typer

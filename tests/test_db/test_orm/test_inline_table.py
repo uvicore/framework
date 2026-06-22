@@ -14,7 +14,6 @@ bootstrapped (the app1 fixture), not at module import / pytest collection time.
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.schema import CreateTable, DropTable
-from typing import Optional
 
 
 @pytest.mark.asyncio
@@ -32,7 +31,7 @@ async def test_inline_table_builds_real_sa_table(app1):
             sa.Column('size', sa.Integer),
         ]
         __table_kwargs__ = {'sqlite_autoincrement': True}
-        id: Optional[int] = Field('id', primary=True, read_only=True)
+        id: int | None = Field('id', primary=True, read_only=True)
         name: str = Field('name')
         size: int = Field('size')
 
@@ -62,7 +61,7 @@ async def test_inline_table_end_to_end_crud(app1):
             sa.Column('name', sa.String(length=50)),
             sa.Column('size', sa.Integer),
         ]
-        id: Optional[int] = Field('id', primary=True, read_only=True)
+        id: int | None = Field('id', primary=True, read_only=True)
         name: str = Field('name')
         size: int = Field('size')
 
@@ -96,4 +95,4 @@ async def test_inline_table_requires_connection_and_tablename(app1):
         @uvicore.model('tests.InlineWidgetBad')
         class Widget(Model['Widget'], metaclass=ModelMetaclass):
             __table__ = [sa.Column('id', sa.Integer, primary_key=True)]
-            id: Optional[int] = Field('id', primary=True, read_only=True)
+            id: int | None = Field('id', primary=True, read_only=True)

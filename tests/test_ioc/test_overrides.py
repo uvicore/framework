@@ -1,6 +1,5 @@
 import pytest
 import uvicore
-from typing import List
 from uvicore.support.dumper import dump
 
 

@@ -6,7 +6,6 @@ from .logger import logger
 from .overrides import overrides
 from .http import web, api, server
 from uvicore.configuration import env
-from uvicore.typing import OrderedDict
 
 
 # --------------------------------------------------------------------------

@@ -3,7 +3,8 @@ from uvicore.support import module
 from uvicore.container import Binding
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Ioc as IocInterface
-from uvicore.typing import Any, Callable, List, Optional, Type, TypeVar, Dict, Union
+from typing import Any, Callable, List, TypeVar
+from uvicore.typing import Dict
 
 T = TypeVar('T')
 
@@ -64,7 +65,7 @@ class Ioc(IocInterface):
     #def config(self, config: Dict) -> None:
     #    self._app_config = config
 
-    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Union[Binding, Dict]:
+    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Binding | Dict:
         if name:
             # Get one binding by name
             if name in self.bindings:

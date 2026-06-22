@@ -1,5 +1,4 @@
 import uvicore
-from uvicore.typing import Optional
 from uvicore.support.dumper import dd, dump
 from uvicore.http import Request, response
 from uvicore.http.routing import WebRouter, Controller
@@ -11,7 +10,7 @@ class Login(Controller):
     def register(self, route: WebRouter):
 
         @route.get('/login', name='login')
-        async def home(request: Request, referer: Optional[str] = None):
+        async def home(request: Request, referer: str | None = None):
             user = request.user
             if not user.authenticated:
                 from uvicore.http.exceptions import NotAuthenticated

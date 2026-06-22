@@ -1,6 +1,6 @@
 import uvicore
 from uvicore.http import Request
-from uvicore.typing import Sequence
+from typing import Sequence
 from fastapi.params import Security
 from fastapi.security import SecurityScopes
 from uvicore.support.dumper import dump, dd

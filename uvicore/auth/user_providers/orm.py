@@ -5,7 +5,7 @@ from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.auth.support import password as pwd
 from uvicore.http.request import HTTPConnection
-from uvicore.typing import List, Union, Any, Dict
+from typing import List, Any
 from uvicore.auth.models.user import User as UserModel
 from uvicore.auth.models.group import Group
 from datetime import datetime

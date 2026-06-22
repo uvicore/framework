@@ -4,7 +4,8 @@ from uvicore.package import Package
 from uvicore.console import command_is
 from uvicore.support.module import load, location
 from uvicore.foundation.events import app as events
-from uvicore.typing import List, Dict, OrderedDict, Union
+from typing import List
+from uvicore.typing import Dict, OrderedDict
 from uvicore.contracts import Package as PackageInterface
 from uvicore.contracts import Application as ApplicationInterface
 
@@ -40,7 +41,7 @@ class Application(ApplicationInterface):
         return self._perfs
 
     @property
-    def http(self) -> Union[Starlette, FastAPI]:
+    def http(self) -> Starlette | FastAPI:
         return self._http
 
     @property

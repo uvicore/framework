@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, ClassVar, List, Type, TypeVar, Union, get_origin, get_type_hints
+from typing import Any, Callable, ClassVar, List, Type, TypeVar, get_origin, get_type_hints
 
 from fastapi import APIRouter, Depends
 from starlette.routing import Route, WebSocketRoute
@@ -112,7 +112,7 @@ def _init_cbv(cls: Type[Any]) -> None:
     setattr(cls, CBV_CLASS_KEY, True)
 
 
-def _update_cbv_route_endpoint_signature(cls: Type[Any], route: Union[Route, WebSocketRoute]) -> None:
+def _update_cbv_route_endpoint_signature(cls: Type[Any], route: Route | WebSocketRoute) -> None:
     """
     Fixes the endpoint signature for a cbv route to ensure FastAPI performs dependency injection properly.
     """

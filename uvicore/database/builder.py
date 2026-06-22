@@ -11,7 +11,7 @@ from uvicore.support.dumper import dd, dump
 from collections import OrderedDict as ODict
 from sqlalchemy.sql.expression import BinaryExpression
 from uvicore.contracts import QueryBuilder as BuilderInterface
-from typing import Any, Dict, Generic, List, Tuple, TypeVar, Union, OrderedDict, Optional
+from typing import Any, Dict, Generic, List, Tuple, TypeVar, OrderedDict
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
 E = TypeVar("E")  # Entity Model
@@ -28,7 +28,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         self.query.distinct = True
         return self
 
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
+    def where(self, column: str | BinaryExpression | List[Tuple | BinaryExpression], operator: str = None, value: Any = '!None!') -> B[B, E]:
         """Add where statement to query"""
         if type(column) == str or type(column) == sa.Column:
             # A single where as a string or actual SQLAlchemy Column
@@ -69,7 +69,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
             self.query.wheres.append(column)
         return self
 
-    def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+    def or_where(self, wheres: List[Tuple | BinaryExpression]) -> B[B, E]:
         """Add or where statement to query"""
         # Or where must be a list of tuple or BinaryExpression as it requires at least 2 statements
         # .or_where([('column', 'value'), ('column', '=', 'value')])
@@ -87,7 +87,7 @@ class QueryBuilder(Generic[B, E], BuilderInterface[B, E]):
         self.query.or_wheres.extend(or_wheres)
         return self
 
-    def order_by(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def order_by(self, column: str | List[str] | List[Tuple] | Any, order: str = 'ASC') -> B[B, E]:
         """Order results by these columns ASC or DESC order"""
         if type(column) == str:
             # A single order_by as a string or actual SQLAlchemy Column
@@ -512,10 +512,10 @@ class Query:
     group_by: List
     order_by: List[Tuple]
     sort: List[Tuple]
-    limit: Optional[int]
-    offset: Optional[int]
-    keyed_by: Optional[str]
-    show_writeonly: Union[bool, List]
+    limit: int | None
+    offset: int | None
+    keyed_by: str | None
+    show_writeonly: bool | List
     cache: Dict
     relations: OrderedDict[str, Relation]
     joins: List[Join]
@@ -533,10 +533,10 @@ class Query:
         self.group_by: List = []
         self.order_by: List[Tuple] = []
         self.sort: List[Tuple] = []
-        self.limit: Optional[int] = None
-        self.offset: Optional[int] = None
-        self.keyed_by: Optional[str] = None
-        self.show_writeonly: Union[bool, List] = False
+        self.limit: int | None = None
+        self.offset: int | None = None
+        self.keyed_by: str | None = None
+        self.show_writeonly: bool | List = False
         self.cache: Dict = None
         self.relations: OrderedDict[str, Relation] = ODict()
         self.joins: List[Join] = []

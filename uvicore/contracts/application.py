@@ -1,6 +1,7 @@
 from .package import Package
 from abc import ABC, abstractmethod
-from uvicore.typing import Dict, List, OrderedDict, Union
+from typing import List
+from uvicore.typing import Dict, OrderedDict
 
 try:
     from fastapi import FastAPI
@@ -46,7 +47,7 @@ class Application(ABC):
 
     @property
     @abstractmethod
-    def http(self) -> Union[Starlette, FastAPI]:
+    def http(self) -> Starlette | FastAPI:
         """HTTP Server Instance"""
         pass
 

@@ -5,7 +5,7 @@ import os
 
 from collections import OrderedDict as ODict
 from copy import deepcopy
-from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Union, Callable
+from typing import Any, Dict, Generic, List, OrderedDict, Tuple, TypeVar, Callable
 from uvicore.support.hash import sha1
 
 import sqlalchemy as sa
@@ -74,7 +74,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             # Regular where, pass to parent (builder.py) where
             return parent_method(column, operator, value)
 
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = '!None!') -> B[B, E]:
+    def where(self, column: str | BinaryExpression | List[Tuple | BinaryExpression], operator: str = None, value: Any = '!None!') -> B[B, E]:
         # Custom where just for OrmQueryBuilder only to check for dict_key and dict_value type wheres
         # This is very limited and does not work with ORs or multiple ANDs.  Why not multiple ANDS?  Try querying posts join attributes and
         # where key=x and value=y and key=a and value=b and see what happens (you get nothing).  This is the nature of polymorphic one-to-many
@@ -104,7 +104,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             self.query.includes.append(include)
         return self
 
-    def filter(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def filter(self, column: str | BinaryExpression | List[Tuple | BinaryExpression], operator: str = None, value: Any = None) -> B[B, E]:
         """Filter child relationship by this AND clause"""
         # Filters are for Many relations only
         if type(column) == str or type(column) == sa.Column:
@@ -144,7 +144,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
             self.query.filters.append(column)
         return self
 
-    def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+    def or_filter(self, filters: List[Tuple | BinaryExpression]) -> B[B, E]:
         """Filter child relationship by this OR clause"""
         # Or filter must be a list of tuple or BinaryExpression as it requires at least 2 statements
         # .or_filter([('column', 'value'), ('column', '=', 'value')])
@@ -162,7 +162,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         self.query.or_filters.extend(or_filters)
         return self
 
-    def sort(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def sort(self, column: str | List[str] | List[Tuple] | Any, order: str = 'ASC') -> B[B, E]:
         """Sort Many relations only"""
         # This will not work as binary expression, becuase relation name is often
         # different than colums tablename
@@ -207,7 +207,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         """Get all queries involved in this ORM statement"""
         return self._build_orm_queries('select')
 
-    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> Union[E, None]:
+    async def find(self, pk_value: int | str = None, **kwargs) -> E | None:
         """Execute query by primary key or custom column and return first row found"""
         if pk_value:
             column = self._pk()
@@ -242,7 +242,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         if entities: return entities[0]
         return None
 
-    async def get(self) -> Union[List[E], Dict[str, E]]:
+    async def get(self) -> List[E] | Dict[str, E]:
         """Execute a select query and return all rows found"""
 
         # Get this models connection configuration
@@ -1109,7 +1109,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
         #         if join.alias == tablename:
         #             return join.table
 
-    def _get_tablename(self, table: Union[sa.Table, sa.sql.selectable.Alias]):
+    def _get_tablename(self, table: sa.Table | sa.sql.selectable.Alias):
         """Get the REAL tablename even if the table is an Alias"""
         if type(table) == sa.sql.selectable.Alias:
             return table.original.name

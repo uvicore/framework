@@ -1,5 +1,6 @@
 import uvicore
-from uvicore.typing import Callable, Decorator
+from typing import Callable
+from uvicore.typing import Decorator
 
 
 def model(name: str = None) -> Callable[[Decorator], Decorator]:

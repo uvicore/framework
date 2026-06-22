@@ -6,7 +6,8 @@ import json
 import uvicore
 from uvicore.http.request import Request
 from uvicore.http.params import Query
-from uvicore.typing import Optional, Union, List, Tuple, Generic, TypeVar, Dict
+from typing import List, Tuple, Generic, TypeVar
+from uvicore.typing import Dict
 from uvicore.orm.query import OrmQueryBuilder
 from uvicore.contracts import AutoApi as AutoApiInterface
 from uvicore.support.dumper import dump, dd
@@ -28,16 +29,16 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
         scopes: List = [],
         *,
         request: Request,
-        include: Optional[List[str]] = None,
-        find: Optional[str] = None,
-        where: Optional[str] = None,
-        or_where: Optional[str] = None,
-        filter: Optional[str] = None,
-        or_filter: Optional[str] = None,
-        order_by: Optional[str] = None,
-        sort: Optional[str] = None,
-        page: Optional[int] = 1,
-        page_size: Optional[int] = page_size_default,
+        include: List[str] | None = None,
+        find: str | None = None,
+        where: str | None = None,
+        or_where: str | None = None,
+        filter: str | None = None,
+        or_filter: str | None = None,
+        order_by: str | None = None,
+        sort: str | None = None,
+        page: int | None = 1,
+        page_size: int | None = page_size_default,
     ):
         self.Model = Model
         self.scopes = scopes
@@ -62,10 +63,10 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
     @classmethod
     def findsig(
         request: Request,
-        id: Union[str, int],
-        include: Optional[List[str]] = Query([]),
-        filter: Optional[str] = '',
-        or_filter: Optional[str] = '',
+        id: str | int,
+        include: List[str] | None = Query([]),
+        filter: str | None = '',
+        or_filter: str | None = '',
     ):
         """AutoApi Find Function Signature"""
         pass
@@ -73,16 +74,16 @@ class AutoApi(Generic[E], AutoApiInterface[E]):
     @classmethod
     def getsig(
         request: Request,
-        include: Optional[List[str]] = Query([]),
-        find: Optional[str] = '',
-        where: Optional[str] = '',
-        or_where: Optional[str] = '',
-        filter: Optional[str] = '',
-        or_filter: Optional[str] = '',
-        order_by: Optional[str] = '',
-        sort: Optional[str] = '',
-        page: Optional[int] = 1,
-        page_size: Optional[int] = page_size_default,
+        include: List[str] | None = Query([]),
+        find: str | None = '',
+        where: str | None = '',
+        or_where: str | None = '',
+        filter: str | None = '',
+        or_filter: str | None = '',
+        order_by: str | None = '',
+        sort: str | None = '',
+        page: int | None = 1,
+        page_size: int | None = page_size_default,
     ):
         """AutoApi Get Function Signature"""
         pass

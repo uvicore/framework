@@ -6,7 +6,6 @@ import uvicore
 import logging
 import logging.config
 from logging import Formatter
-from uvicore.typing import List
 from colored import attr, bg, fg
 from logging import Logger as PythonLogger
 from uvicore.support.dumper import dump, dd

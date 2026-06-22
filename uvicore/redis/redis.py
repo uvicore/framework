@@ -1,6 +1,6 @@
 import uvicore
 import redis.asyncio as redis
-from uvicore.typing import Dict, Any
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
 
 # Basically a uvicore quick connect and passthrough of aioredis

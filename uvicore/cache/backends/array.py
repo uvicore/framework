@@ -2,7 +2,8 @@ import pickle
 
 import uvicore
 from time import time
-from uvicore.typing import Dict, Any, Callable, Union, List, Tuple
+from typing import Any, Callable, List
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Cache as CacheInterface
 from uvicore.cache.manager import Manager
@@ -29,7 +30,7 @@ class Array(CacheInterface):
         key = self._prepair(key)
         return key in self.items.keys()
 
-    async def get(self, key: Union[str, List], *, default: Any = None) -> Any:
+    async def get(self, key: str | List, *, default: Any = None) -> Any:
         """Get one or more key values if exists else return default value"""
         keys = self._prepair(key)
         if type(keys) == list:
@@ -51,7 +52,7 @@ class Array(CacheInterface):
                 # Item does not exist, set default
                 return default
 
-    async def remember(self, key: Union[str, Dict], callback: Union[Callable, Any] = None, *, seconds: int = None) -> Any:
+    async def remember(self, key: str | Dict, callback: Callable | Any = None, *, seconds: int = None) -> Any:
         """Get a key if exists, if not SET the key to callback value"""
         keys = self._prepair(key)
         if type(key) != dict: keys = {keys:callback}
@@ -75,7 +76,7 @@ class Array(CacheInterface):
         # Dict key, dict return
         return value
 
-    async def put(self, key: Union[str, Dict], value: Any = None, *, seconds: int = None) -> None:
+    async def put(self, key: str | Dict, value: Any = None, *, seconds: int = None) -> None:
         """Put one or more key/values in cache with optional expire in seconds (0=never expire)"""
         keys = self._prepair(key)
         if seconds is None: seconds = self.seconds
@@ -87,7 +88,7 @@ class Array(CacheInterface):
             elif seconds > 0:
                 self.items_ttl[key] = self._now() + seconds
 
-    async def pull(self, key: Union[str, Dict]) -> Any:
+    async def pull(self, key: str | Dict) -> Any:
         """Get one or more key values from cache them remove them after"""
         keys = self._prepair(key)
         value = await self.get(key)
@@ -136,7 +137,7 @@ class Array(CacheInterface):
             await self.put(key, value, seconds=seconds)
         return value
 
-    async def forget(self, key: Union[str, List]) -> None:
+    async def forget(self, key: str | List) -> None:
         """Delete a key from cache"""
         keys = self._prepair(key)
         if type(keys) != list: keys = [keys]
@@ -173,7 +174,7 @@ class Array(CacheInterface):
         if len(key) > len(prefix) and key[0:len(prefix)] == prefix: prefix = ''
         return (prefix + key) in self.items.keys()
 
-    def _prepair(self, key: Union[str, List] = None) -> Union[str, List, Dict]:
+    def _prepair(self, key: str | List = None) -> str | List | Dict:
         if key:
             if type(key) == list:
                 # Check if prefix already added

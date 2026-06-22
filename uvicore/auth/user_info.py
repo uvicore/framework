@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.typing import List, Union, Optional
+from typing import List
 from pydantic import BaseModel as PydanticModel
 from uvicore.contracts import UserInfo as UserInfoInterface
 
@@ -24,14 +24,14 @@ class UserInfo(PydanticModel, UserInfoInterface):
     first_name: str
     last_name: str
     # Pydantic v2: Optional[x] requires an explicit default to remain optional.
-    title: Optional[str] = None
-    avatar: Optional[str] = None
+    title: str | None = None
+    avatar: str | None = None
     groups: List[str]
     roles: List[str]
     permissions: List[str]
     superadmin: bool
     authenticated: bool
-    extra: Optional[dict] = None
+    extra: dict | None = None
 
     @property
     def name(self):
@@ -93,7 +93,7 @@ class UserInfo(PydanticModel, UserInfoInterface):
         """Alias to authenticated"""
         return self.authenticated
 
-    def can(self, permissions: Union[str, List]) -> bool:
+    def can(self, permissions: str | List) -> bool:
         """Check if user has ALL of these permissions"""
         if self.superadmin: return True
 
@@ -104,7 +104,7 @@ class UserInfo(PydanticModel, UserInfoInterface):
                 return False
         return True
 
-    def can_any(self, permissions: Union[str, List]) -> bool:
+    def can_any(self, permissions: str | List) -> bool:
         """Check if user has any one of these permissions"""
         if self.superadmin: return True
 
@@ -115,10 +115,10 @@ class UserInfo(PydanticModel, UserInfoInterface):
                 return True
         return False
 
-    def cant(self, permissions: Union[str, List]) -> bool:
+    def cant(self, permissions: str | List) -> bool:
         """Check if user does not have one of these permissions"""
         return not self.can(permissions)
 
-    def cannot(self, permissions: Union[str, List]) -> bool:
+    def cannot(self, permissions: str | List) -> bool:
         """Alias to cant"""
         return self.cant(permissions)

@@ -1,5 +1,6 @@
 import json
-from uvicore.typing import Optional, Any, Dict
+from typing import Any
+from uvicore.typing import Dict
 from starlette.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_oauth2_redirect_html
 from fastapi.encoders import jsonable_encoder
@@ -13,8 +14,8 @@ def get_swagger_ui_html(
     swagger_js_url: str = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.7.2/swagger-ui-bundle.js",
     swagger_css_url: str = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.7.2/swagger-ui.min.css",
     swagger_favicon_url: str = "https://fastapi.tiangolo.com/img/favicon.png",
-    oauth2_redirect_url: Optional[str] = None,
-    init_oauth: Optional[Dict[str, Any]] = None,
+    oauth2_redirect_url: str | None = None,
+    init_oauth: Dict[str, Any] | None = None,
     doc_expansion: str = "list", # list none full
 ) -> HTMLResponse:
 

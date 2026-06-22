@@ -2,7 +2,7 @@ import pytest
 import uvicore
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from uvicore.typing import Generator
+from typing import Generator
 from uvicore.support.dumper import dump, dd
 
 

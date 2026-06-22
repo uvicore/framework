@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional, Any
+from typing import Any
 from app1.database.tables import attributes as table
 from uvicore.orm import Model, ModelMetaclass, Field
 
@@ -12,7 +12,7 @@ class Attribute(Model['Attribute'], metaclass=ModelMetaclass):
     # Database table definition
     __tableclass__ = table.Attributes
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Attribute ID',
         read_only=True,

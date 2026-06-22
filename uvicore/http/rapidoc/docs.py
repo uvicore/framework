@@ -1,5 +1,4 @@
 import json
-from uvicore.typing import Optional, Any, Dict
 from starlette.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_oauth2_redirect_html
 from fastapi.encoders import jsonable_encoder

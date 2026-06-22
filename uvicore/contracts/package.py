@@ -1,7 +1,8 @@
 from __future__ import annotations
 from abc import abstractmethod
 from .connection import Connection
-from uvicore.typing import Dict, List
+from typing import List
+from uvicore.typing import Dict
 from uvicore.support.printer import pretty_call, register_pretty
 
 

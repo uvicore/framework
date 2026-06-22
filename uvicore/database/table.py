@@ -1,7 +1,6 @@
 import uvicore
 import sqlalchemy as sa
 from abc import ABCMeta
-from typing import Dict, List
 from uvicore.support.dumper import dd, dump
 
 @uvicore.service()

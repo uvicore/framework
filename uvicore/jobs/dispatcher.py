@@ -1,5 +1,5 @@
 import uvicore
-from uvicore.typing import Any
+from typing import Any
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import JobDispatcher as JobDispatcherInterface
 

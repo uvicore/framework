@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Dict
+from typing import List, Dict
 
 import uvicore
 from app1.database.tables import posts as table
@@ -35,7 +35,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     __tableclass__ = table.Posts
 
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Post ID',
         sortable=False,
@@ -65,11 +65,11 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
         description='Post Body',
     )
 
-    other: Optional[str] = Field('other',
+    other: str | None = Field('other',
         description='Post Other',
     )
 
-    cb: Optional[str] = Field(None,
+    cb: str | None = Field(None,
         callback='cb_results'
     )
 
@@ -78,7 +78,7 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One Creator)
-    creator: Optional[User] = Field(None,
+    creator: User | None = Field(None,
         description="Post Creator User Model",
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
@@ -89,14 +89,14 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One Owner)
-    owner: Optional[User] = Field(None,
+    owner: User | None = Field(None,
         description="Post Owner User Model",
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'owner_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
     )
 
     # One-To-Many (One Post has Many Comments)
-    comments: Optional[List[Comment]] = Field(None,
+    comments: List[Comment] | None = Field(None,
         description="Post Comments Model",
 
         #has_many=('app1.models.comment.Comment', 'post_id', 'id'),
@@ -106,13 +106,13 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     )
 
     # Many-To-Many via post_tags pivot table
-    tags: Optional[List[Tag]] = Field(None,
+    tags: List[Tag] | None = Field(None,
         description="Post Tags",
         relation=BelongsToMany('app1.models.tag.Tag', join_tablename='post_tags', left_key='post_id', right_key='tag_id'),
     )
 
     # Polymorphic One-To-One image
-    image: Optional[Image] = Field(None,
+    image: Image | None = Field(None,
         description="Post Image",
         relation=MorphOne('app1.models.image.Image', polyfix='imageable')
     )
@@ -120,14 +120,14 @@ class Post(Model['Post'], metaclass=ModelMetaclass):
     # Polymorphic One-To-Many Attributes
     # Returns a Dict (not a List) because the relation uses dict_key/dict_value,
     # which keys each attribute by its 'key' column with the 'value' column as the value.
-    attributes: Optional[Dict] = Field(None,
+    attributes: Dict | None = Field(None,
         description="Post Attributes",
         relation=MorphMany('app1.models.attribute.Attribute', polyfix='attributable', dict_key='key', dict_value='value')
     )
 
     # Polymorphic Many-To-Many Hashtags
     # Returns a List of Hashtag models (no dict_key/list_value set on the relation).
-    hashtags: Optional[List[Hashtag]] = Field(None,
+    hashtags: List[Hashtag] | None = Field(None,
         description="Post Hashtags",
         # relation=MorphToMany(
         #     model='app1.models.hashtag.Hashtag',

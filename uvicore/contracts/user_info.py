@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from uvicore.typing import List, Union, Optional
+from typing import List
 
 # Why a dataclass instead of a SuperDict?
 # Because a dataclass FORCES you to instantiate with ALL these attributes
@@ -22,14 +22,14 @@ class UserInfo(ABC):
     email: str
     first_name: str
     last_name: str
-    title: Optional[str]
-    avatar: Optional[str]
+    title: str | None
+    avatar: str | None
     groups: List[str]
     roles: List[str]
     permissions: List[str]
     superadmin: bool
     authenticated: bool
-    extra: Optional[dict]
+    extra: dict | None
 
     @property
     @abstractmethod
@@ -92,17 +92,17 @@ class UserInfo(ABC):
         """Check if user is logged in"""
 
     @abstractmethod
-    def can(self, permissions: Union[str, List]) -> bool:
+    def can(self, permissions: str | List) -> bool:
         """Check if user has ALL of these permissions"""
 
     @abstractmethod
-    def can_any(self, permissions: Union[str, List]) -> bool:
+    def can_any(self, permissions: str | List) -> bool:
         """Check if user has any one of these permissions"""
 
     @abstractmethod
-    def cant(self, permissions: Union[str, List]) -> bool:
+    def cant(self, permissions: str | List) -> bool:
         """Check if user does not have one of these permissions"""
 
     @abstractmethod
-    def cannot(self, permissions: Union[str, List]) -> bool:
+    def cannot(self, permissions: str | List) -> bool:
         """Alias to cant"""

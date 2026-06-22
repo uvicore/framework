@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uvicore
-from typing import Dict, List, Optional
+from typing import Dict, List
 #from uvicore.auth.models.user import User
 from uvicore.support.dumper import dd, dump
 from uvicore.orm import Model, ModelMetaclass, Field
@@ -36,7 +36,7 @@ class xx_ModelName(Model['xx_ModelName'], metaclass=ModelMetaclass):
     # Optional as some models have no database table
     __tableclass__ = table.xx_TableName
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='xx_ModelName ID',
         #sortable=True,

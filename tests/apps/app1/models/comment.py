@@ -1,6 +1,5 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional
 from app1.database.tables import comments as table
 #from uvicore.orm.fields import Field, BelongsTo
 #from uvicore.orm.model import Model, ModelMetaclass
@@ -40,7 +39,7 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
     #     "unlink": ['tags', 'hashtags'],
     # }
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Comment ID',
         #sortable=True,
@@ -56,12 +55,12 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
         description='Comment Body',
     )
 
-    post_id: Optional[int] = Field('post_id',
+    post_id: int | None = Field('post_id',
         description="Comment PostID",
     )
 
     # One-To-Many Inverse (One Comment has One Post)
-    post: Optional[Post] = Field(None,
+    post: Post | None = Field(None,
         description="Comment Post Model",
 
         #belongs_to=('app1.models.post.Post', 'id', 'post_id'),
@@ -74,7 +73,7 @@ class Comment(Model['Comment'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One Creator)
-    creator: Optional[User] = Field(None,
+    creator: User | None = Field(None,
         description="Comment Creator User Model",
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
