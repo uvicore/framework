@@ -25,11 +25,11 @@ from uvicore.orm import Model, ModelMetaclass, Field, HasOne, HasMany, MorphOne
 #class UserModel(AuthOverride):
 
 # class UserInterface(ModelInterface):
-#     id: Optional[int]
+#     id: int | None
 #     email: str
-#     app1_extra: Optional[str]
-#     contact: 'Optional[ContactModel]'
-#     posts: 'Optional[List[Post]]'
+#     app1_extra: str | None
+#     contact: 'ContactModel | None'
+#     posts: 'List[Post] | None'
 
 
 
@@ -67,7 +67,7 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
     # Database connection and table information
     __tableclass__ = table.Users
 
-    # id: Optional[int] = Field('id',
+    # id: int | None = Field('id',
     #     primary=True,
     #     description='User Primary ID',
     #     sortable=True,
@@ -79,7 +79,7 @@ class User(AuthOverride, Model['User'], metaclass=ModelMetaclass):
     # )
 
     # # One-To-One - User has ONE Contact
-    # info: Optional[UserInfo] = Field(None,
+    # info: UserInfo | None = Field(None,
     #     description='User Info Model',
     #     relation=HasOne('uvicore.auth.models.user_info.UserInfo', foreign_key='user_id'),
     # )

@@ -41,14 +41,14 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
     # I never coded this inverse relation.  This would be more difficult as joins wouldn't work
     # I would have to query each distinct _type, then query each of those tables perhaps, unsure, but lots
     # of work.  The inverse isn't so important to me yet.
-    # imageable: Optional[Any] = Field(None,
+    # imageable: Any | None = Field(None,
     #     description="Polymorphic Imageable Model",
     #     relation=MorphTo()
     # )
 
 
     # # One-To-Many Inverse (One Comment has One Post)
-    # post: 'Optional[Post]' = Field(None,
+    # post: 'Post | None' = Field(None,
     #     description="Comment Post Model",
 
     #     #belongs_to=('app1.models.post.Post', 'id', 'post_id'),
@@ -61,7 +61,7 @@ class Image(Model['Image'], metaclass=ModelMetaclass):
     # )
 
     # # One-To-Many Inverse (One Post has One Creator)
-    # creator: Optional[User] = Field(None,
+    # creator: User | None = Field(None,
     #     description="Comment Creator User Model",
     #     #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
     #     relation=BelongsTo('uvicore.auth.models.user.User'),
