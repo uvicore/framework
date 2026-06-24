@@ -20,6 +20,20 @@ async def test_one_to_many(app1):
 
 
 @pytest.mark.asyncio
+async def test_one_to_many_with_limit(app1):
+    from app1.models.post import Post
+    from app1.models.comment import Comment  # for coverage
+
+    # LIMIT with an eager-loaded *Many must return N distinct PARENTS, each with
+    # its children fully attached (the *Many join must not multiply rows that
+    # LIMIT then truncates).
+    posts = await Post.query().include('comments').limit(1).get()
+    assert len(posts) == 1
+    assert posts[0].slug == 'test-post1'
+    assert ['Post1 Comment1', 'Post1 Comment2'] == [x.title for x in posts[0].comments]
+
+
+@pytest.mark.asyncio
 async def test_one_to_many_inverse(app1):
     from uvicore.auth.models.user import User
     from app1.models.post import Post

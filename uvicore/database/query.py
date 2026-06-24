@@ -48,7 +48,12 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         # Get left, right and onclause expressions
         left = None
         right = None
-        if type(left_where) == sa.BinaryExpression:
+        if right_where is None:
+            # left_where IS the complete ON clause expression.  This supports
+            # both a single binary expression (a == b) AND a COMPOSITE
+            # multi-column ON clause built with sa.and_(a == b, c == d, ...),
+            # which is required for sharded backends (Vitess/PlanetScale) that
+            # must join on the shard key in addition to the natural key.
             onclause = left_where
         else:
             left = self._column(left_where)

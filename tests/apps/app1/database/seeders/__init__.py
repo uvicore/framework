@@ -5,7 +5,7 @@ import uvicore
 async def seed():
     # Import seeders
     from . import (comments, contacts, groups, hashtags, images, posts, tags,
-                   user_info, users, roles)
+                   user_info, users, roles, warehouses, depots)
 
     # Order is critical for ForeignKey dependencies
     await roles.seed()
@@ -21,3 +21,9 @@ async def seed():
 
     # Poly
     await images.seed()
+
+    # Natural-key (non-pk local_key) relations
+    await warehouses.seed()
+
+    # Composite (multi-column) natural-key relations
+    await depots.seed()

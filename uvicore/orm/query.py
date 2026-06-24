@@ -383,6 +383,50 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                 for column in columns:
                     query.selects.append(column.label(quoted_name(relation.name + '__' + column.name, True)))
 
+        # Drop the physical JOIN for any *Many relation that is ONLY being
+        # eager-loaded (a pure .include()).  A *Many join multiplies parent rows
+        # (one row per child), so LIMIT/OFFSET would count child rows instead of
+        # parent rows -- e.g. .include('items').limit(2) returned the first
+        # parent's first 2 children, deduping to a SINGLE parent with no items.
+        # That *Many data is loaded via the separate secondary queries below.
+        # We must KEEP the join for any *Many that a .where()/.sort()/group_by
+        # references by column (e.g. .where('comments.title', ...)) because that
+        # filtering needs the join.  The relation stays in query.relations either
+        # way, so its secondary query is still generated.
+        referenced_cols = []
+        def _collect_cols(clauses):
+            for c in clauses:
+                if isinstance(c, str):
+                    referenced_cols.append(c)
+                elif isinstance(c, (list, tuple)) and len(c):
+                    if isinstance(c[0], (list, tuple)):
+                        _collect_cols(c)            # nested or-group
+                    elif isinstance(c[0], str):
+                        referenced_cols.append(c[0])  # (column, op, value)
+        _collect_cols(query.wheres)
+        _collect_cols(query.or_wheres)
+        _collect_cols(query.filters)
+        _collect_cols(query.or_filters)
+        _collect_cols(query.sort)
+        _collect_cols(query.order_by)
+        _collect_cols(query.group_by)
+
+        def _many_referenced(dot):
+            prefix = dot + '.'
+            return any(col == dot or col.startswith(prefix) for col in referenced_cols)
+
+        strip_aliases = [
+            r.name for r in query.relations.values()
+            if r.is_many() and not _many_referenced(r.name.replace('__', '.'))
+        ]
+        if strip_aliases:
+            def _belongs_to_many_join(alias):
+                for ma in strip_aliases:
+                    if alias == ma or alias == ma + '__pivot' or alias.startswith(ma + '__'):
+                        return True
+                return False
+            query.joins = [j for j in query.joins if not _belongs_to_many_join(j.alias)]
+
         # Build first query
         saquery = None
         if query.table is not None:
@@ -477,6 +521,13 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                     new_sorts.append(sort)
             query2.sort = new_sorts
             query2.order_by = query2.sort
+
+            # A *Many secondary query must NOT inherit the main query's
+            # limit/offset.  Those bound the number of PARENT rows; the children
+            # query must return all matching children (the merge then attaches
+            # only those children whose parent is in the limited primary set).
+            query2.limit = None
+            query2.offset = None
 
             # Build secondary relation query
             query2, saquery2 = self._build_query(method, query2)
@@ -622,18 +673,32 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
                         # Debug dump which tables are which
                         #dump('relation_name: ' + relation_name + ' - main table: ' + left_table.name + ' - join_table: ' + join_table.name + ' - alias: ' + alias)
 
-                        # Map relation.local_key and foreign_key Field names to column names
-                        #local_key = relation.entity.mapper(relation.local_key).column()
-                        #foreign_key = relation.entity.mapper(relation.foreign_key).column()
-                        local_key = relation.local_key
-                        foreign_key = relation.foreign_key
+                        # Build the JOIN ON clause from the relation's key pairs.
+                        # A relation may declare a SINGLE key
+                        # (foreign_key='ro_key', local_key='key') or a COMPOSITE
+                        # multi-column key by passing ordered lists
+                        # (foreign_key=['qgroup_id','client_id','ro_key'],
+                        #  local_key =['qgroup_id','client_id','key']).  Composite
+                        # keys are paired positionally and ANDed together IN THE
+                        # DECLARED ORDER -- required for sharded backends such as
+                        # Vitess/PlanetScale that must filter on the shard key.
+                        key_pairs = relation.key_pairs()
 
-                        # Join condition columns
-                        left = self._column(getattr(left_table.c, local_key))
-                        right = self._column(getattr(join_table.c, foreign_key))
+                        # left/right keep the FIRST (primary) pair only for the
+                        # Join() record + polymorphic table lookup; the SQL is
+                        # generated purely from `onclause` below.
+                        primary_local, primary_foreign = key_pairs[0]
+                        left = self._column(getattr(left_table.c, primary_local))
+                        right = self._column(getattr(join_table.c, primary_foreign))
+
+                        # local_key[i] == foreign_key[i] for every key pair
+                        conditions = [
+                            self._column(getattr(left_table.c, lk)).sacol == self._column(getattr(join_table.c, fk)).sacol
+                            for (lk, fk) in key_pairs
+                        ]
 
                         # Onclause, default for most relations
-                        onclause = left.sacol == right.sacol
+                        onclause = conditions[0] if len(conditions) == 1 else sa.and_(*conditions)
 
                         # Onclause override for Polymorphic relations
                         if type(relation) == MorphOne or type(relation) == MorphMany:
@@ -649,9 +714,7 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
                             # poly_type.sacol is 'attributable_type'
                             # self.get_tablename(left.table) is 'posts'
-                            # left.sacol is 'id'
-                            # right.sacol is 'attributable_id'
-                            onclause = sa.and_(poly_type.sacol == self._get_tablename(left.table), left.sacol == right.sacol)
+                            onclause = sa.and_(poly_type.sacol == self._get_tablename(left.table), *conditions)
 
                         # Append new Join
                         join = Join(
@@ -986,11 +1049,30 @@ class OrmQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E])
 
             else:
 
-                for child in children.values():
-                    parent_pk_value = getattr(child, relation.entity.mapper(relation.foreign_key).field())
-                    if parent_pk_value not in parents: continue;
+                # Index parents by this relation's local_key(s), NOT necessarily
+                # the primary key.  This lets HasMany relations that join on a
+                # natural key (e.g. ros.key = ro_items.ro_key) attach their
+                # children correctly.  Composite (multi-column) keys are matched
+                # as an ordered tuple so the parent/child link is the full
+                # ON clause, not just one column.  When local_key already IS the
+                # single primary key this is identical to the prior pk-based
+                # behavior (no regression).
+                if parents_name == 'primary':
+                    parent_entity = self.entity
+                else:
+                    parent_entity = query.relations.get(parents_name).entity
+                local_fields = [parent_entity.mapper(lk).field() for lk in relation.local_keys()]
+                foreign_fields = [relation.entity.mapper(fk).field() for fk in relation.foreign_keys()]
+                parents_by_local = {
+                    tuple(getattr(p, f) for f in local_fields): p
+                    for p in parents.values()
+                }
 
-                    parent = parents[parent_pk_value]
+                for child in children.values():
+                    parent_pk_value = tuple(getattr(child, f) for f in foreign_fields)
+                    if parent_pk_value not in parents_by_local: continue;
+
+                    parent = parents_by_local[parent_pk_value]
                     field = relation_parts[-1]
 
                     # # Set None field to empty list

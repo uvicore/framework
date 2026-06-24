@@ -17,6 +17,7 @@ def get_swagger_ui_html(
     oauth2_redirect_url: str | None = None,
     init_oauth: Dict[str, Any] | None = None,
     doc_expansion: str = "list", # list none full
+    models_expansion: int = -1, # -1 hides the Schemas section entirely, 0 collapses, 1+ expands
 ) -> HTMLResponse:
 
     html = f"""
@@ -50,7 +51,8 @@ def get_swagger_ui_html(
         deepLinking: true,
         showExtensions: true,
         showCommonExtensions: true,
-        docExpansion: '{doc_expansion}'
+        docExpansion: '{doc_expansion}',
+        defaultModelsExpandDepth: {models_expansion}
     }})"""
 
     if init_oauth:
