@@ -22,6 +22,32 @@ def test_swagger_ui_models_expansion_is_configurable():
     assert match.group(1) == '1'
 
 
+def test_swagger_ui_model_expansion_flows_through():
+    """model_expansion arg flows through to Swagger UI defaultModelExpandDepth (per-op model tree)"""
+    from uvicore.http.openapi.docs import get_swagger_ui_html
+    # default is 1
+    default_html = get_swagger_ui_html(openapi_url='/x', title='t').body.decode()
+    assert re.search(r'defaultModelExpandDepth:\s*1', default_html)
+    # configurable to 0 (collapse for fast first-expand)
+    html = get_swagger_ui_html(openapi_url='/x', title='t', model_expansion=0).body.decode()
+    assert re.search(r'defaultModelExpandDepth:\s*0', html)
+
+
+def test_swagger_ui_extra_parameters_merged_and_braces_balanced():
+    """Arbitrary parameters are merged into the SwaggerUIBundle config as valid JS"""
+    from uvicore.http.openapi.docs import get_swagger_ui_html
+    html = get_swagger_ui_html(
+        openapi_url='/x', title='t',
+        oauth2_redirect_url='/login',
+        init_oauth={'clientId': 'abc'},
+        parameters={'defaultModelRendering': 'model', 'tryItOutEnabled': True},
+    ).body.decode()
+    assert 'defaultModelRendering: "model"' in html
+    assert 'tryItOutEnabled: true' in html
+    # The injected config must not unbalance the braces of the rendered script
+    assert html.count('{') == html.count('}')
+
+
 @pytest.mark.asyncio
 async def test_api_server_built_with_separate_schemas_disabled(app1):
     """

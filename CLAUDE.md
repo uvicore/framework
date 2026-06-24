@@ -50,6 +50,8 @@ These repos are worked on by **dozens of team members across many machines**. So
 - **`adr/`** — Architecture Decision Records: one file per significant, hard-to-reverse decision
   (`adr/NNNN-title.md`, compact Nygard format). **Write one when you make an architectural call**;
   supersede rather than rewrite. See `adr/README.md`.
+- The **`journal-and-adr` skill** carries the full producing workflow + templates for both (and the
+  `uvicore-ship-framework-change` checklist already requires a journal entry + any ADR).
 
 **Recent history (the 0.4 cycle).** Much of 0.4 landed in a fast burst (2026-06-17 → present) and is
 captured in `journal/2026-06-*.md` + ADRs 0001–0006. The headline changes a contributor should know:

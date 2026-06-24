@@ -545,6 +545,15 @@ class Http(Handler):
                     # Schemas section at the bottom of the docs entirely, which
                     # keeps the UI responsive when the model graph is large.
                     models_expansion=openapi.docs.get('models_expansion', -1),
+
+                    # Swagger defaultModelExpandDepth.  Controls how deep each
+                    # operation's request/response model tree is rendered when
+                    # you expand it.  0 collapses it (much faster first-expand
+                    # on large/relational models); 1+ pre-expands.
+                    model_expansion=openapi.docs.get('model_expansion', 1),
+
+                    # Arbitrary extra SwaggerUIBundle parameters, merged last.
+                    parameters=openapi.docs.get('parameters', None),
                 )
 
             @api_server.get(openapi_redirect_url, include_in_schema=False)

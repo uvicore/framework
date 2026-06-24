@@ -17,7 +17,9 @@ def get_swagger_ui_html(
     oauth2_redirect_url: str | None = None,
     init_oauth: Dict[str, Any] | None = None,
     doc_expansion: str = "list", # list none full
-    models_expansion: int = -1, # -1 hides the Schemas section entirely, 0 collapses, 1+ expands
+    models_expansion: int = -1, # defaultModelsExpandDepth: the bottom "Schemas" section. -1 hides it entirely, 0 collapses, 1+ expands
+    model_expansion: int = 1, # defaultModelExpandDepth: the per-operation request/response model tree. 0 collapses (faster expand on large models), 1+ expands
+    parameters: Dict[str, Any] | None = None, # Arbitrary extra SwaggerUIBundle parameters, merged last (override the defaults above)
 ) -> HTMLResponse:
 
     html = f"""
@@ -52,8 +54,17 @@ def get_swagger_ui_html(
         showExtensions: true,
         showCommonExtensions: true,
         docExpansion: '{doc_expansion}',
-        defaultModelsExpandDepth: {models_expansion}
-    }})"""
+        defaultModelsExpandDepth: {models_expansion},
+        defaultModelExpandDepth: {model_expansion}"""
+
+    # Merge any additional raw SwaggerUIBundle parameters last so they can
+    # override the defaults above (e.g. defaultModelRendering, tryItOutEnabled).
+    if parameters:
+        for key, value in parameters.items():
+            html += f",\n        {key}: {json.dumps(jsonable_encoder(value))}"
+
+    html += """
+    })"""
 
     if init_oauth:
         html += f"""
