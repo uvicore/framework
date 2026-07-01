@@ -1,5 +1,6 @@
 import uvicore
-from uvicore.typing import Callable, Decorator, Any, Dict, List
+from typing import Callable, Any, List
+from uvicore.typing import Decorator, Dict
 from uvicore.support.dumper import dump, dd
 
 

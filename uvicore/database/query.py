@@ -5,7 +5,7 @@ from copy import copy
 import sqlalchemy as sa
 from uvicore.support.dumper import dd, dump
 from uvicore.database.builder import QueryBuilder, Join
-from typing import Generic, List, TypeVar, Union, Sequence, Any
+from typing import Generic, List, TypeVar, Sequence, Any
 from uvicore.contracts import DbQueryBuilder as BuilderInterface
 
 B = TypeVar("B")  # Builder Type (DbQueryBuilder or OrmQueryBuilder)
@@ -19,7 +19,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         self._conn = connection
         super().__init__()
 
-    def table(self, table: Union[str, sa.Table]) -> B[B, E]:
+    def table(self, table: str | sa.Table) -> B[B, E]:
         """Add table (select) statement to query"""
         if type(table) == str:
             self.query.table = uvicore.db.table(table, self._connection())
@@ -36,7 +36,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             self.query.selects.append(column)
         return self
 
-    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, sa.BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
+    def join(self, table: str | sa.Table, left_where: str | sa.Column | sa.BinaryExpression, right_where: str | sa.Column = None, alias: str = None, method: str = 'join') -> B[B, E]:
         """Add join (default to INNER) statement to query"""
         # Get table and tablename
         conn = self._connection()
@@ -48,7 +48,12 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         # Get left, right and onclause expressions
         left = None
         right = None
-        if type(left_where) == sa.BinaryExpression:
+        if right_where is None:
+            # left_where IS the complete ON clause expression.  This supports
+            # both a single binary expression (a == b) AND a COMPOSITE
+            # multi-column ON clause built with sa.and_(a == b, c == d, ...),
+            # which is required for sharded backends (Vitess/PlanetScale) that
+            # must join on the shard key in addition to the natural key.
             onclause = left_where
         else:
             left = self._column(left_where)
@@ -62,7 +67,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
         self.query.joins.append(Join(table, tablename, left, right, onclause, alias, method))
         return self
 
-    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, sa.BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
+    def outer_join(self, table: str | sa.Table, left_where: str | sa.Column | sa.BinaryExpression, right_where: str | sa.Column = None, alias: str = None) -> B[B, E]:
         """Add LEFT OUTER join statement to query"""
         self.join(table=table, left_where=left_where, right_where=right_where, method='outerjoin', alias=alias)
         return self
@@ -73,7 +78,7 @@ class DbQueryBuilder(Generic[B, E], QueryBuilder[B, E], BuilderInterface[B, E]):
             self.query.group_by.append(group_by)
         return self
 
-    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> sa.Row|None:
+    async def find(self, pk_value: int | str = None, **kwargs) -> sa.Row|None:
         """Execute query by primary key or custom column and return first row found"""
         if pk_value:
             # Assume column is PK .find(1234)

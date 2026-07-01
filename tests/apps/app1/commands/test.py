@@ -2,7 +2,6 @@ import uvicore
 from uvicore import log
 from uvicore.console import command
 from uvicore.support.dumper import dump, dd
-from uvicore.typing import Dict, List
 
 @command()
 async def cli():

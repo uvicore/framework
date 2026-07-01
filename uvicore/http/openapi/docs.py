@@ -1,5 +1,6 @@
 import json
-from uvicore.typing import Optional, Any, Dict
+from typing import Any
+from uvicore.typing import Dict
 from starlette.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_oauth2_redirect_html
 from fastapi.encoders import jsonable_encoder
@@ -13,9 +14,12 @@ def get_swagger_ui_html(
     swagger_js_url: str = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.7.2/swagger-ui-bundle.js",
     swagger_css_url: str = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.7.2/swagger-ui.min.css",
     swagger_favicon_url: str = "https://fastapi.tiangolo.com/img/favicon.png",
-    oauth2_redirect_url: Optional[str] = None,
-    init_oauth: Optional[Dict[str, Any]] = None,
+    oauth2_redirect_url: str | None = None,
+    init_oauth: Dict[str, Any] | None = None,
     doc_expansion: str = "list", # list none full
+    models_expansion: int = -1, # defaultModelsExpandDepth: the bottom "Schemas" section. -1 hides it entirely, 0 collapses, 1+ expands
+    model_expansion: int = 1, # defaultModelExpandDepth: the per-operation request/response model tree. 0 collapses (faster expand on large models), 1+ expands
+    parameters: Dict[str, Any] | None = None, # Arbitrary extra SwaggerUIBundle parameters, merged last (override the defaults above)
 ) -> HTMLResponse:
 
     html = f"""
@@ -49,8 +53,18 @@ def get_swagger_ui_html(
         deepLinking: true,
         showExtensions: true,
         showCommonExtensions: true,
-        docExpansion: '{doc_expansion}'
-    }})"""
+        docExpansion: '{doc_expansion}',
+        defaultModelsExpandDepth: {models_expansion},
+        defaultModelExpandDepth: {model_expansion}"""
+
+    # Merge any additional raw SwaggerUIBundle parameters last so they can
+    # override the defaults above (e.g. defaultModelRendering, tryItOutEnabled).
+    if parameters:
+        for key, value in parameters.items():
+            html += f",\n        {key}: {json.dumps(jsonable_encoder(value))}"
+
+    html += """
+    })"""
 
     if init_oauth:
         html += f"""

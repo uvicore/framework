@@ -1,7 +1,8 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import location, load
-from uvicore.typing import List, Dict, OrderedDict, Union
+from typing import List
+from uvicore.typing import Dict
 from uvicore.contracts import Provider
 from uvicore.support.collection import unique
 
@@ -62,7 +63,7 @@ class Http(Provider):
         if self.package.registers.views:
             self.package.web.context_processors = Dict(items)
 
-    def register_http_view_composers(self, module: Union[str, Dict], views: Union[str, List] = None, *, append: bool = False):
+    def register_http_view_composers(self, module: str | Dict, views: str | List = None, *, append: bool = False):
         # Default registration - we use same 'views' registration for composers as well
         self.package.registers.defaults({'views': True})
 

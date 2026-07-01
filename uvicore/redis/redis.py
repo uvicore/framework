@@ -1,6 +1,6 @@
 import uvicore
 import redis.asyncio as redis
-from uvicore.typing import Dict, Any
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
 
 # Basically a uvicore quick connect and passthrough of aioredis
@@ -62,9 +62,17 @@ class Redis:
             # 'port': 6379,
             # 'database': 2,
             # 'password': None,
-            # 'url': 'redis://127.0.0.1:6379/2'
+            # 'url': 'redis://127.0.0.1:6379/2',
+            # 'options': {'health_check_interval': 30}
             # })
-            self._engines[conn.url] = redis.from_url(conn.url)
+            #
+            # Any arbitrary client kwargs defined in the connection's optional
+            # 'options' dict (health_check_interval, socket_timeout,
+            # max_connections, decode_responses, ...) are passed straight through
+            # to the underlying redis.asyncio client - mirroring how the database
+            # connection 'options' dict becomes SQLAlchemy connect_args.
+            options = dict(conn.options) if conn.options else {}
+            self._engines[conn.url] = redis.from_url(conn.url, **options)
 
         # Return actual connection (engine)
         return self.engines[conn.url]

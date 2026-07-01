@@ -1,5 +1,6 @@
 import uvicore
-from uvicore.typing import Any, Dict, Optional
+from typing import Any
+from uvicore.typing import Dict
 
 # Smart exception should work regardless
 has_http = True
@@ -15,13 +16,13 @@ class SmartException(BaseException):
     # Notice detail and status_code are reversed from my uvicore.http.exceptions.HTTPException
     # This is intentional as SmartExceptions are used as a mix of CLI and HTTP
     def __init__(self,
-        detail: Optional[str],
+        detail: str | None,
         status_code: int = None,
         *,
-        message: Optional[str] = None,
-        exception: Optional[str] = None,
-        extra: Optional[Dict] = None,
-        headers: Optional[Dict[str, Any]] = None
+        message: str | None = None,
+        exception: str | None = None,
+        extra: Dict | None = None,
+        headers: Dict[str, Any] | None = None
     ) -> None:
         # Uvicore HTTP module is installed and we are running as HTTP
         if has_http and uvicore.app.is_http:

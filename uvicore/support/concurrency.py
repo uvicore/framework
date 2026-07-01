@@ -1,7 +1,7 @@
 import uvicore
 import asyncio
 import functools
-from uvicore.typing import Callable, TypeVar, Any
+from typing import Callable, TypeVar, Any
 from uvicore.support.dumper import dump, dd
 
 try:

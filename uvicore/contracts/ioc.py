@@ -1,18 +1,19 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from uvicore.typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, List, TypeVar
+from uvicore.typing import Dict
 
 T = TypeVar('T')
 
 
 @dataclass
 class Binding(ABC):
-    path: Optional[str]
-    object: Optional[Any]
-    instance: Optional[Any]
-    type: Optional[str]
-    factory: Optional[Any]
-    kwargs: Optional[Dict]
+    path: str | None
+    object: Any | None
+    instance: Any | None
+    type: str | None
+    factory: Any | None
+    kwargs: Dict | None
     singleton: bool
     aliases: List
 
@@ -34,7 +35,7 @@ class Ioc(ABC):
     #     pass
 
     @abstractmethod
-    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Union[Binding, Dict]:
+    def binding(self, name: str = None, *, type: str = None, include_overrides: bool = True) -> Binding | Dict:
         """Get an IoC binding object by name or alias"""
         pass
 

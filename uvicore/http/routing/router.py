@@ -11,7 +11,8 @@ from uvicore.support import str as string
 from uvicore.support.dumper import dump, dd
 from uvicore.http.routing.guard import Guard
 from uvicore.support.dictionary import deep_merge
-from uvicore.typing import Dict, Callable, List, TypeVar, Generic, Decorator, Optional, Union
+from typing import Callable, List, TypeVar, Generic
+from uvicore.typing import Dict, Decorator
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -51,11 +52,11 @@ class Router(Generic[R], RouterInterface[R]):
         self.name = name
 
     def controller(self,
-        module: Union[str, Callable],
+        module: str | Callable,
         *,
         prefix: str = '',
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         options: Dict = {}
     ) -> List:
         """Include a Route Controller"""
@@ -130,24 +131,24 @@ class Router(Generic[R], RouterInterface[R]):
         return routes
 
     def include(self,
-        module: Union[str, Callable],
+        module: str | Callable,
         *,
         prefix: str = '',
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         options: Dict = {}
     ) -> List:
         """Alias to controller"""
         self.controller(module=module, prefix=prefix, name=name, tags=tags, options=options)
 
     def group(self, prefix: str = '', *,
-        routes: Optional[List] = None,
+        routes: List | None = None,
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
     ) -> Callable[[Decorator], Decorator]:
         """Route groups method and decorator"""
 

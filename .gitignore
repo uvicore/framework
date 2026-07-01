@@ -1,4 +1,5 @@
 # mReschke Python .gitignore file standard
+# Latest Version https://gist.mreschke.net/mreschke/5b20c8b75bf5407785c8a35d7bdbe17a
 # mReschke 2020-11-17
 
 # NOTES:
@@ -42,6 +43,7 @@ pip-delete-this-directory.txt
 # Python Folders
 /instance/
 /venv/
+/.venv
 /env/
 /htmlcov/
 /html/

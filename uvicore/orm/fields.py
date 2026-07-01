@@ -6,7 +6,7 @@ from uvicore.support import module
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Field as FieldInterface
 from uvicore.contracts import Relation as RelationInterface
-from typing import Any, Callable, Dict, Optional, OrderedDict
+from typing import Any, Callable, Dict, List, OrderedDict
 
 # NOTE dataclass required on each on THAT HAS PROPERTIES event hough they all
 # impliment Relation.  If a class does not have property overrides, then do NOT add @dataclass
@@ -26,16 +26,16 @@ class Relation(RelationInterface):
     # By setting a default on these attributes of a dataclass
     # When printed, only the ones actually set will show up, which makes output much smaller
     model: str
-    foreign_key: Optional[str] = None
-    local_key: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
+    foreign_key: str | List[str] | None = None
+    local_key: str | List[str] | None = None
+    name: str | None = None
+    entity: Any | None = None
 
     def __init__(self,
         model: str,
         *,
-        foreign_key: str = None,
-        local_key: str = None,
+        foreign_key: str | List[str] = None,
+        local_key: str | List[str] = None,
     ) -> None:
         self.model = model
         self.foreign_key = foreign_key
@@ -74,6 +74,36 @@ class Relation(RelationInterface):
             if type(self) == arg:
                 return True
         return False
+
+    def local_keys(self) -> List[str]:
+        """Local (this-side) join column(s) as an ordered list.  Supports both a
+        single string key and a composite/multi-column list of keys."""
+        lk = self.local_key
+        return list(lk) if isinstance(lk, (list, tuple)) else [lk]
+
+    def foreign_keys(self) -> List[str]:
+        """Foreign (related-side) join column(s) as an ordered list."""
+        fk = self.foreign_key
+        return list(fk) if isinstance(fk, (list, tuple)) else [fk]
+
+    def key_pairs(self) -> List:
+        """Ordered list of (local_key, foreign_key) column pairs that make up the
+        JOIN ON clause.  A single-key relation yields one pair; a composite
+        (multi-column) relation yields one pair per column, in DECLARED ORDER.
+
+        Composite keys let a relation join on more than one column, e.g. for
+        sharded backends (Vitess/PlanetScale) that must include the shard key:
+            foreign_key=['qgroup_id', 'client_id', 'ro_key'],
+            local_key =['qgroup_id', 'client_id', 'key']
+        """
+        lks = self.local_keys()
+        fks = self.foreign_keys()
+        if len(lks) != len(fks):
+            raise Exception(
+                "Relation '{}' to '{}' has mismatched composite keys: "
+                "local_key={} foreign_key={} (must be the same length)".format(
+                    self.name, self.model, lks, fks))
+        return list(zip(lks, fks))
 
     def contains_many(self, relations: OrderedDict, skip: List = []) -> bool:
         """Walk down all sub_relations by __ name and check if any are *Many"""
@@ -118,8 +148,8 @@ class HasOne(Relation):
     def __init__(self,
         model: str,
         *,
-        foreign_key: str,
-        local_key: str = None,
+        foreign_key: str | List[str],
+        local_key: str | List[str] = None,
     ) -> None:
         super().__init__(model, foreign_key=foreign_key, local_key=local_key)
 
@@ -136,8 +166,8 @@ class HasMany(Relation):
     def __init__(self,
         model: str,
         *,
-        foreign_key: str,
-        local_key: str = None,
+        foreign_key: str | List[str],
+        local_key: str | List[str] = None,
     ) -> None:
         super().__init__(model, foreign_key=foreign_key, local_key=local_key)
 
@@ -165,9 +195,9 @@ class BelongsToMany(Relation):
     join_tablename: str = None
     left_key: str = None
     right_key: str = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
-    join_table: Optional[sa.Table] = None
+    name: str | None = None
+    entity: Any | None = None
+    join_table: sa.Table | None = None
 
     def __init__(self,
         model: str,
@@ -209,14 +239,14 @@ class BelongsToMany(Relation):
 class Morph(Relation):
     model: str
     polyfix: str = None
-    foreign_type: Optional[str] = None
-    foreign_key: Optional[str] = None
-    local_key: Optional[str] = None
-    dict_key: Optional[str] = None
-    dict_value: Optional[str] = None
-    list_value: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
+    foreign_type: str | None = None
+    foreign_key: str | None = None
+    local_key: str | None = None
+    dict_key: str | None = None
+    dict_value: str | None = None
+    list_value: str | None = None
+    name: str | None = None
+    entity: Any | None = None
 
     def __init__(self,
         model: str,
@@ -265,14 +295,14 @@ class MorphToMany(Morph):
     join_tablename: str = None
     polyfix: str = None
     right_key: str = None
-    left_type: Optional[str] = None
-    left_key: Optional[str] = None
-    dict_key: Optional[str] = None
-    dict_value: Optional[str] = None
-    list_value: Optional[str] = None
-    name: Optional[str] = None
-    entity: Optional[Any] = None
-    join_table: Optional[sa.Table] = None
+    left_type: str | None = None
+    left_key: str | None = None
+    dict_key: str | None = None
+    dict_value: str | None = None
+    list_value: str | None = None
+    name: str | None = None
+    entity: Any | None = None
+    join_table: sa.Table | None = None
 
     def __init__(self,
         model: str,
@@ -339,24 +369,24 @@ class MorphToMany(Morph):
 @uvicore.service()
 class Field(FieldInterface):
     column: str
-    name: Optional[str] = None
-    primary: Optional[bool] = False
-    title: Optional[str] = None
-    description: Optional[str] = None
-    default: Optional[Any] = None
-    sortable: Optional[bool] = None
-    searchable: Optional[bool] = None
-    read_only: Optional[bool] = None
-    write_only: Optional[bool] = None
-    callback: Optional[Any] = None
-    evaluate: Optional[Callable] = None
-    relation: Optional[Relation] = None
-    json: Optional[bool] = False
-    properties: Optional[Dict] = None
+    name: str | None = None
+    primary: bool | None = False
+    title: str | None = None
+    description: str | None = None
+    default: Any | None = None
+    sortable: bool | None = None
+    searchable: bool | None = None
+    read_only: bool | None = None
+    write_only: bool | None = None
+    callback: Any | None = None
+    evaluate: Callable | None = None
+    relation: Relation | None = None
+    json: bool | None = False
+    properties: Dict | None = None
 
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    example: Optional[Any] = None
+    min_length: int | None = None
+    max_length: int | None = None
+    example: Any | None = None
 
 
     # Of all the uvicore Field() arguments, these are VALID OpenAPI fields and handled properly by Pydantic FieldInfo()
@@ -389,24 +419,24 @@ class Field(FieldInterface):
     ]
 
     def __init__(self, column: str = None, *,
-        name: Optional[str] = None,
-        primary: Optional[bool] = False,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        default: Optional[Any] = None,
+        name: str | None = None,
+        primary: bool | None = False,
+        title: str | None = None,
+        description: str | None = None,
+        default: Any | None = None,
         #required: Optional[bool] = False,
-        sortable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        searchable: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        read_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        write_only: Optional[bool] = None,  # Must be none if not set to hide in OpenAPI
-        callback: Optional[Any] = None,
-        evaluate: Optional[Callable] = None,
-        relation: Optional[Relation] = None,
-        json: Optional[bool] = False,
-        properties: Optional[Dict] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        example: Optional[Any] = None,
+        sortable: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        searchable: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        read_only: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        write_only: bool | None = None,  # Must be none if not set to hide in OpenAPI
+        callback: Any | None = None,
+        evaluate: Callable | None = None,
+        relation: Relation | None = None,
+        json: bool | None = False,
+        properties: Dict | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        example: Any | None = None,
     ):
         self.column = column
         self.name = name

@@ -1,6 +1,5 @@
 import uvicore
 from argon2 import Type
-from uvicore.typing import Dict
 from argon2 import PasswordHasher
 from uvicore.support.dumper import dump, dd
 from argon2.exceptions import VerifyMismatchError

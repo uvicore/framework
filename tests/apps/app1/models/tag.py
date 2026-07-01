@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional, List
+from typing import List
 from app1.database.tables import tags as table
 #from uvicore.orm.fields import Field, BelongsToMany, BelongsTo
 #from uvicore.orm.model import Model, ModelMetaclass
@@ -14,7 +14,7 @@ class Tag(Model['Tag'], metaclass=ModelMetaclass):
     # Database table definition
     __tableclass__ = table.Tags
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Post ID',
         #sortable=False,
@@ -31,14 +31,14 @@ class Tag(Model['Tag'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One User)
-    creator: Optional[User] = Field(None,
+    creator: User | None = Field(None,
         description="Tag Creator User Model",
 
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
     )
 
-    posts: Optional[List[Post]] = Field(None,
+    posts: List[Post] | None = Field(None,
         description="Tag Posts Model",
         relation=BelongsToMany('app1.models.post.Post', join_tablename='post_tags', left_key='tag_id', right_key='post_id'),
     )

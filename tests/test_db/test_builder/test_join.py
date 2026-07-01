@@ -92,6 +92,37 @@ async def test_join(app1):
 
 
 @pytest.mark.asyncio
+async def test_join_composite_on(app1):
+    import sqlalchemy as sa
+    from app1.database.tables.depots import Depots
+    from app1.database.tables.slots import Slots
+
+    depots = Depots.table.c
+    slots = Slots.table.c
+
+    # Composite/multi-column JOIN ON via sa.and_().  depots/slots both reuse
+    # code 'D1' across the US and EU regions, so the join MUST include region.
+    query = (uvicore.db.query('app1')
+        .table('depots')
+        .join('slots', sa.and_(
+            depots.region == slots.region,
+            depots.code == slots.depot_code,
+        ), alias='slots')
+        .where('depots.region', 'US')
+        .order_by('slots.label', 'ASC')
+    )
+    results = await query.get()
+    print(query.sql())
+
+    # Only the US slots attach (EU-S1 must NOT cross-match despite code 'D1')
+    assert ['US-S1', 'US-S2'] == [x.slots__label for x in results]
+
+    # The generated SQL joins on BOTH columns
+    sql = query.sql()
+    assert ' AND ' in sql[sql.find(' ON '):]
+
+
+@pytest.mark.asyncio
 async def test_join_wheredot(app1):
     import sqlalchemy as sa
 

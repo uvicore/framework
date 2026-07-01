@@ -1,5 +1,8 @@
-# Importing all from typing is OK becuase its a single self contained module anyhow
-# So importing one thing, imports it all anyway.
+# Stdlib typing names should now be imported directly from `typing`.
+# This `from typing import *` remains only as a backwards-compatible re-export
+# shim so existing/external `from uvicore.typing import <stdlib name>` keeps
+# working (explicit imports bypass __all__).  uvicore.typing's own intentional
+# public surface is declared in __all__ below.
 from typing import *
 
 from .dictionary import Dict, OrderedDict
@@ -18,6 +21,19 @@ except:
 #         return func
 #     return decorator
 Decorator = TypeVar("Decorator", bound=Callable[..., Any])
+
+# uvicore.typing's intentional public surface: its custom types and re-exports.
+# (The `from typing import *` above is a back-compat shim, not part of this API.)
+__all__ = [
+    'Dict',
+    'OrderedDict',
+    'Decorator',
+    'Scope',
+    'Message',
+    'Receive',
+    'Send',
+    'ASGIApp',
+]
 
 # from __future__ import annotations
 # from typing import *

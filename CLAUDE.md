@@ -1,11 +1,11 @@
 # Uvicore Framework — Developer Guide (CLAUDE.md)
 
-This is the **Uvicore Framework** source repo (`uvicore` Python package, v0.4.1). Uvicore is
+This is the **Uvicore Framework** source repo (`uvicore` Python package, v0.4.4). Uvicore is
 a fullstack **async** Python framework for Web, API, and CLI apps — "the performance of
 FastAPI with the elegance of Laravel". This file is for developers **enhancing the framework
 itself**, not for building apps on top of it.
 
-> Sibling repos (symlinked one level up): `../docs` (MkDocs site, branch `0.3`) and
+> Sibling repos (symlinked one level up): `../docs` (MkDocs site, branch `0.4`) and
 > `../schematic` (the app scaffold/installer template, branch `0.4`). This repo is `0.4-develop`.
 > Docs may lag the 0.4 code.
 
@@ -25,10 +25,41 @@ keep changes from breaking the bootstrap/IoC contract.
 | `uvicore-services-reference` | leaf service subsystems — `uvicore/templating`, `mail`, `redis`, `cache`, `logging`, `auth` (UserInfo/authenticators/guards), `exceptions` (SmartException + HTTP exceptions/status). |
 | `uvicore-testing` | writing/running framework tests (`tests/`, `tests/apps/app1`, `bin/test*.sh`). |
 | `uvicore-add-subsystem` | adding a brand-new framework package/service (provider + mixin + IoC binding + config + tests). |
+| `uvicore-ship-framework-change` | **finishing ANY substantive framework change.** A change isn't done until its matching tests AND docs (feature page + the epologue release-notes/changelog/upgrade trio) are updated. Run its checklist every time. |
 
 There are also legacy GitHub Copilot instructions in `.github/` that are **app-author** oriented
 (how to build apps *on* Uvicore). They're useful background but the `.claude/` skills above are
 the framework-development source of truth.
+
+## Where knowledge lives (repo vs. machine-local)
+
+These repos are worked on by **dozens of team members across many machines**. So:
+- **All shared/durable knowledge goes in the repo** — `CLAUDE.md`, `.claude/skills/`,
+  `.claude/settings.json`. Any convention, architectural decision, gotcha, or repeatable workflow
+  that another person (or a future session on another laptop) should benefit from **must** be
+  written here, not kept anywhere machine-local.
+- Claude's `~/.claude/.../memory/` is **per-machine and per-user** (not committed, not synced) — fine
+  for Claude's own internal working notes, but it is **never** the home for anything a teammate or a
+  different machine would need. If something there turns out to be broadly useful, promote it into
+  the repo.
+
+### Journal & decision records
+- **`journal/`** — a dated, technical narrative of substantive work (`journal/YYYY-MM-DD.md`, entries
+  as H2). Lighter than the epologue changelog: it captures intent, *what changed and why*, files, and
+  related ADRs/tests. **Append an entry at the end of any substantive task.** See `journal/README.md`.
+- **`adr/`** — Architecture Decision Records: one file per significant, hard-to-reverse decision
+  (`adr/NNNN-title.md`, compact Nygard format). **Write one when you make an architectural call**;
+  supersede rather than rewrite. See `adr/README.md`.
+- The **`journal-and-adr` skill** carries the full producing workflow + templates for both (and the
+  `uvicore-ship-framework-change` checklist already requires a journal entry + any ADR).
+
+**Recent history (the 0.4 cycle).** Much of 0.4 landed in a fast burst (2026-06-17 → present) and is
+captured in `journal/2026-06-*.md` + ADRs 0001–0006. The headline changes a contributor should know:
+**Pydantic v1→v2** + FastAPI 0.137 / Starlette 1.3 (ADR 0002) with **central model rebuild** (ADR
+0003, no more per-model `update_forward_refs()`); **pipe-style typing** + **Python ≥3.12** (ADR 0005);
+**httpx replaced aiohttp** (ADR 0004); **expanded SQL dialects + WHERE operators** (ADR 0001); and
+**composite multi-column relation keys** for sharded backends (ADR 0006). Skim those before assuming
+older patterns still apply.
 
 ## The one mental model that explains everything
 
@@ -93,6 +124,8 @@ the key to the whole codebase.
   Prefer these over plain dicts to match the codebase.
 - **Async by default.** ORM, DB, mail, redis, event/job dispatch, CLI commands are async. Use
   `@pytest.mark.asyncio` in tests.
+- **Pipe-style typing.** Use `X | None` / `A | B`, never `Optional[...]` / `Union[...]`. Import
+  framework types (Dict/SuperDict, etc.) from `uvicore.typing`; language typing from stdlib. (ADR 0005)
 - **Provider mixins.** Providers compose feature mixins for their `register_*` helpers:
   `console.package.registers.Cli`, `http.package.registers.Http`, `database.package.registers.Db`,
   `redis.package.registers.Redis`, `templating.package.registers.Templating`. See
@@ -106,11 +139,12 @@ the key to the whole codebase.
   ignore them, don't extend them.
 
 ## Dev workflow
-- **Python ≥3.10**, Poetry, Pydantic **v1.10** (held back — do not use v2 idioms), SQLAlchemy 2.0,
+- **Python ≥3.12** (tested on 3.12/3.13/3.14), Poetry, Pydantic **v2** (`.model_dump()`,
+  `@field_validator`, lifespan events; see ADR 0002/0003), SQLAlchemy 2.0,
   FastAPI/Starlette for web, `encode/databases`-style async DB layer.
 - Extras gate optional deps: `poetry install --extras "database redis web"` (+ `--with test`).
 - **Run tests with Poetry, from `framework/`:** `poetry run ./bin/test.sh` (sets
-  `PYTHONPATH=./tests/apps`, runs pytest; ~361 tests in a few seconds). Coverage:
+  `PYTHONPATH=./tests/apps`, runs pytest; ~500 tests in a few seconds). Coverage:
   `poetry run ./bin/test-cov.sh` / `poetry run ./bin/test-cov-html.sh`. A single area:
   `poetry run ./bin/test.sh tests/test_db/test_orm`.
 - The test suite bootstraps the **`app1`** reference app (`tests/apps/app1/`) against an in-memory

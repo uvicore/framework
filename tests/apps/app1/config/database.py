@@ -1,5 +1,4 @@
 from uvicore.configuration import env
-from uvicore.typing import OrderedDict
 
 
 # --------------------------------------------------------------------------
@@ -80,6 +79,12 @@ redis = {
             'port': env.int('REDIS_APP1_PORT', 6379),
             'database': env.int('REDIS_APP1_DB', 0),
             'password': env('REDIS_APP1_PASSWORD', None),
+            # Optional arbitrary client kwargs passed straight through to the
+            # underlying redis.asyncio client (health_check_interval,
+            # socket_timeout, max_connections, decode_responses, ...).
+            'options': {
+                'health_check_interval': 30,
+            },
         },
         'cache': {
             'host': env('REDIS_CACHE_HOST', '127.0.0.1'),

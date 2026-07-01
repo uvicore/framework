@@ -11,7 +11,7 @@ class _ModelRoute:
     def routes(self, Model, route, path, tags):
 
         @route.get('/' + path, response_model=typing.List[Model], tags=tags)
-        async def list(include: typing.Optional[str] = ''):
+        async def list(include: str | None = ''):
             return await Model.query().include(*include.split(',')).get()
 
         # @route.get('/' + path + '/{id}', response_model=Model, tags=tags)

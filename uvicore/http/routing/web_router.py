@@ -1,6 +1,7 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Any, Callable, List, Dict, Optional, Decorator
+from typing import Callable, List
+from uvicore.typing import Decorator
 from uvicore.http.routing.router import Router
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import WebRoute as RouteInterface
@@ -15,14 +16,14 @@ class WebRouter(Router['WebRoute']):
     def get(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ):
         """Add a new HTTP GET route to the WebRouter
 
@@ -46,14 +47,14 @@ class WebRouter(Router['WebRoute']):
     def post(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ):
         """Add a new HTTP POST route to the WebRouter
 
@@ -76,14 +77,14 @@ class WebRouter(Router['WebRoute']):
     def put(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ):
         """Add a new HTTP PUT route to the WebRouter
 
@@ -106,14 +107,14 @@ class WebRouter(Router['WebRoute']):
     def patch(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ):
         """Add a new HTTP PATCH route to the WebRouter
 
@@ -136,14 +137,14 @@ class WebRouter(Router['WebRoute']):
     def delete(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ):
         """Add a new HTTP DELETE route to the WebRouter
 
@@ -166,15 +167,15 @@ class WebRouter(Router['WebRoute']):
     def add(self,
         # Common to both ApiRouter and WebRouter
         path: str,
-        endpoint: Optional[Callable] = None,
+        endpoint: Callable | None = None,
         methods: List[str] = ['GET'],
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Guard] = None,
-        scopes: Optional[List] = None,
-        inherits: Optional[Callable] = None,
+        middleware: List | None = None,
+        auth: Guard | None = None,
+        scopes: List | None = None,
+        inherits: Callable | None = None,
     ) -> Callable[[Decorator], Decorator]:
         """Add a new HTTP method route to the WebRouter
 

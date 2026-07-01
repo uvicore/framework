@@ -1,5 +1,4 @@
 import uvicore
-from typing import Dict
 from uvicore.package import Provider
 from uvicore.support.dumper import dump, dd
 from uvicore.console.package.registers import Cli

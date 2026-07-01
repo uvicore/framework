@@ -10,7 +10,8 @@ from uvicore.http.request import Request
 from starlette.templating import _TemplateResponse
 from prettyprinter import pretty_call, register_pretty
 from starlette.background import BackgroundTask as _BackgroundTask
-from uvicore.typing import Optional, Any, Dict, List, Generic, TypeVar
+from typing import Any, List, Generic, TypeVar
+from uvicore.typing import Dict
 
 # Proxy starlette and fastapi response APIs
 # Usage: from uvicore.http.response import FileResponse
@@ -132,16 +133,16 @@ class APIResponse(BaseModel, Generic[E]):
     # Pydantic v2: BaseModel is natively generic (the v1 GenericModel was removed).
     # Optional[x] no longer implies a default in v2, so every optional field needs
     # an explicit = None (or other default) to stay optional.
-    api_version: Optional[str] = "1"
-    request_date: Optional[datetime] = Field(default_factory=utc_now)
-    response_date: Optional[datetime] = None
-    response_ms: Optional[int] = None
+    api_version: str | None = "1"
+    request_date: datetime | None = Field(default_factory=utc_now)
+    response_date: datetime | None = None
+    response_ms: int | None = None
     paged_response: bool = False
-    result_count: Optional[int] = 0
-    total_count: Optional[int] = 0
-    page_num: Optional[int] = 0
-    total_pages: Optional[int] = 0
-    data: Optional[E] = None
+    result_count: int | None = 0
+    total_count: int | None = 0
+    page_num: int | None = 0
+    total_pages: int | None = 0
+    data: E | None = None
 
     @staticmethod
     def begin() -> 'APIResponse':
@@ -156,7 +157,7 @@ class APIResponse(BaseModel, Generic[E]):
         return APIResponse()
 
 
-    def render(self, data: E, *, total_count: Optional[int] = None, page: int = 0, page_size: int = 0):
+    def render(self, data: E, *, total_count: int | None = None, page: int = 0, page_size: int = 0):
         """Render the API Response"""
         self.api_version = uvicore.config('app.api.version') or "1.0"
         self.response_date = utc_now()
@@ -171,15 +172,15 @@ class APIResponse(BaseModel, Generic[E]):
         self.data = data
         return self
 
-    def build(self, data: E, *, total_count: Optional[int] = None, page: int = 0, page_size: int = 0):
+    def build(self, data: E, *, total_count: int | None = None, page: int = 0, page_size: int = 0):
         """Alias to render()"""
         return self.render(data=data, total_count=total_count, page=page, page_size=page_size)
 
-    def send(self, data: E, *, total_count: Optional[int] = None, page: int = 0, page_size: int = 0):
+    def send(self, data: E, *, total_count: int | None = None, page: int = 0, page_size: int = 0):
         """Alias to render()"""
         return self.render(data=data, total_count=total_count, page=page, page_size=page_size)
 
-    def __call__(self, data: E, *, total_count: Optional[int] = None, page: int = 0, page_size: int = 0):
+    def __call__(self, data: E, *, total_count: int | None = None, page: int = 0, page_size: int = 0):
         """Alias to render()"""
         return self.render(data=data, total_count=total_count, page=page, page_size=page_size)
 
@@ -190,11 +191,11 @@ class APIErrorResponse(BaseModel):
     # Careful, the text in """ above shows up in OpenAPI docs!
     # Remember exception is REMOVED if not running in app.debug=True mode!
     # Pydantic v2: Optional[x] requires an explicit default to remain optional.
-    status_code: Optional[int] = None
-    message: Optional[str] = None
-    detail: Optional[str] = None
-    exception: Optional[str] = None
-    extra: Optional[Any] = None
+    status_code: int | None = None
+    message: str | None = None
+    detail: str | None = None
+    exception: str | None = None
+    extra: Any | None = None
 
 
 @register_pretty(APIResponse)

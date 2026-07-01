@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Optional, Dict, Union, List
+from typing import List
 from uvicore.auth.support import password as pwd
 from uvicore.support.dumper import dd, dump
 from uvicore.auth.models import Group, Role
@@ -17,14 +17,14 @@ class User(Model['User'], metaclass=ModelMetaclass):
     # Database connection and table information
     __tableclass__ = table.Users
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='User Primary ID',
         #sortable=True,
         #searchable=True,
     )
 
-    uuid: Optional[str] = Field('uuid',
+    uuid: str | None = Field('uuid',
         description='Custom Alternate UUID',
     )
 
@@ -44,21 +44,21 @@ class User(Model['User'], metaclass=ModelMetaclass):
         description='User Last Name',
     )
 
-    title: Optional[str] = Field('title',
+    title: str | None = Field('title',
         description='User Title',
     )
 
-    avatar_url: Optional[str] = Field('avatar_url',
+    avatar_url: str | None = Field('avatar_url',
         description='User Avatar URL',
     )
 
-    password: Optional[str] = Field('password',
+    password: str | None = Field('password',
         description='User Last Name',
         read_only=False,
         write_only=True,
     )
 
-    disabled: Optional[bool] = Field('disabled',
+    disabled: bool | None = Field('disabled',
         description='User Disabled',
         default=False,
     )
@@ -68,34 +68,34 @@ class User(Model['User'], metaclass=ModelMetaclass):
     )
 
     # One-To-Many Inverse (One Post has One Creator)
-    creator: Optional[User] = Field(None,
+    creator: User | None = Field(None,
         description="Post Creator User Model",
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'creator_id'),
         relation=BelongsTo('uvicore.auth.models.user.User'),
     )
 
-    created_at: Optional[datetime] = Field('created_at',
+    created_at: datetime | None = Field('created_at',
         description='Created at Datetime',
         read_only=True,
     )
 
-    updated_at: Optional[datetime] = Field('updated_at',
+    updated_at: datetime | None = Field('updated_at',
         description='Updated at Datetime',
         read_only=True,
     )
 
-    login_at: Optional[datetime] = Field('login_at',
+    login_at: datetime | None = Field('login_at',
         description='Last Login Datetime',
     )
 
     # Many-To-Many via user_groups pivot table
-    groups: Optional[List[Group]] = Field(None,
+    groups: List[Group] | None = Field(None,
         description="User Groups",
         relation=BelongsToMany('uvicore.auth.models.group.Group', join_tablename='user_groups', left_key='user_id', right_key='group_id'),
     )
 
     # Many-To-Many via user_groups pivot table
-    roles: Optional[List[Role]] = Field(None,
+    roles: List[Role] | None = Field(None,
         description="User Roles",
         relation=BelongsToMany('uvicore.auth.models.role.Role', join_tablename='user_roles', left_key='user_id', right_key='role_id'),
     )

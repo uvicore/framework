@@ -1,7 +1,8 @@
 import uvicore
 from uvicore.support.dumper import dump, dd
 from uvicore.support.module import location, load
-from uvicore.typing import List, Dict, OrderedDict, Union
+from typing import List
+from uvicore.typing import Dict
 from uvicore.contracts import Provider
 from uvicore.support.collection import unique
 

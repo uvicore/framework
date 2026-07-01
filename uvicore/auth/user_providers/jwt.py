@@ -6,7 +6,8 @@ from uvicore.contracts import UserProvider
 from uvicore.support.dumper import dump, dd
 from uvicore.http.request import HTTPConnection
 from uvicore.auth.support import password as pwd
-from uvicore.typing import List, Union, Any, Dict, Optional, Callable
+from typing import Any
+from uvicore.typing import Dict
 from uvicore.support import module
 
 
@@ -30,7 +31,7 @@ class Jwt(UserProvider):
 
         # Parameters from authenticator method
         jwt: Dict = {},
-        role_permission_map: Optional[Dict] = None,
+        role_permission_map: Dict | None = None,
 
         # Must have kwargs for infinite allowed optional params, even if not used.
         **kwargs,

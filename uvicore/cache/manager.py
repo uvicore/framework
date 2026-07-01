@@ -1,6 +1,6 @@
 import uvicore
 from uvicore.support import module
-from uvicore.typing import Dict, Any
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Cache as CacheInterface
 

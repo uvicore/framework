@@ -1,6 +1,5 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional
 from uvicore.support.dumper import dd, dump
 from app1.database.tables import user_info as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo
@@ -16,7 +15,7 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
     # Database connection and table information
     __tableclass__ = table.UserInfo
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='User Primary ID',
         #sortable=True,
@@ -32,7 +31,7 @@ class UserInfo(Model['UserInfo'], metaclass=ModelMetaclass):
     )
 
     # One-To-One Inverse - Contact has ONE User
-    user: Optional[User] = Field(None,
+    user: User | None = Field(None,
         description="User Model",
         #belongs_to=('uvicore.auth.models.user.User', 'id', 'user_id'),
         #relation=BelongsTo('uvicore.auth.models.user.User', 'id', 'user_id')

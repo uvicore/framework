@@ -1,6 +1,5 @@
 from __future__ import annotations
 import uvicore
-from typing import Optional, List
 from app1.database.tables import hashtags as table
 from uvicore.orm import Model, ModelMetaclass, Field, BelongsTo, BelongsToMany
 
@@ -12,7 +11,7 @@ class Hashtag(Model['Hashtag'], metaclass=ModelMetaclass):
     # Database table definition
     __tableclass__ = table.Hashtags
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Hashtag ID',
         #sortable=False,

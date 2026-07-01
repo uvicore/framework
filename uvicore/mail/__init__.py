@@ -1,6 +1,7 @@
 import uvicore
 from uvicore.support import module
-from uvicore.typing import Dict, List
+from typing import List
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Email
 

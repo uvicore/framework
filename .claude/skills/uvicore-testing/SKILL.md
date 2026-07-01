@@ -15,12 +15,12 @@ and app — do not invent a new bootstrap flow.
 This repo uses **Poetry** — run everything through `poetry run`, from the `framework/` directory.
 
 - All tests: `poetry run ./bin/test.sh` — sets `PYTHONPATH=./tests/apps`, runs pytest with color,
-  ignores `tests/test_database`, passes extra args through. (~361 tests, a few seconds.)
+  ignores `tests/test_database`, passes extra args through. (~500 tests, a few seconds.)
 - A subset: `poetry run ./bin/test.sh tests/test_db/test_orm` or
   `poetry run ./bin/test.sh tests/test_db/test_orm/test_find.py`.
 - Coverage: `poetry run ./bin/test-cov.sh` (term-missing over `uvicore` + `tests/apps/app1`), HTML
   via `poetry run ./bin/test-cov-html.sh`.
-- Markers config: pytest-asyncio. Pydantic is v1.10; Python ≥3.10.
+- Markers config: pytest-asyncio. Pydantic v2; Python ≥3.12.
 - Format check: `poetry run ./bin/black-check.sh`.
 
 ## How the harness boots (`tests/conftest.py`)

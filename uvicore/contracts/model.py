@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from uvicore.contracts import Mapper
 from uvicore.contracts import OrmQueryBuilder
-from typing import Dict, Generic, TypeVar, Union, List, Any
+from typing import Dict, Generic, TypeVar, List, Any
 
 B = TypeVar("B")
 E = TypeVar("E")
@@ -27,7 +27,7 @@ class Model(Generic[E], ABC):
     #     pass
 
     @abstractmethod
-    async def insert(entity, models: Union[List[E], List[Dict]]) -> None:
+    async def insert(entity, models: List[E] | List[Dict]) -> None:
         """Insert one or more entities as List of entities or List of Dictionaries
 
         This bulk insert does NOT allow inserting child relations at the
@@ -55,15 +55,15 @@ class Model(Generic[E], ABC):
         """
 
     @abstractmethod
-    async def create(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def create(self, relation_name: str, models: Any | List[Any]) -> None:
         """Create related records and link them to this parent (self) model"""
 
     @abstractmethod
-    async def add(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def add(self, relation_name: str, models: Any | List[Any]) -> None:
         """Alias to create"""
 
     @abstractmethod
-    async def set(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def set(self, relation_name: str, models: Any | List[Any]) -> None:
         """Same as create(), except it deletes all first, so it sets the entire children"""
 
     @abstractmethod
@@ -75,11 +75,11 @@ class Model(Generic[E], ABC):
         """Delete this model from the database"""
 
     @abstractmethod
-    async def link(self, relation_name: str, models: Union[Any, List[Any]]) -> None:
+    async def link(self, relation_name: str, models: Any | List[Any]) -> None:
         """Link records to relation using the Many-To-Many pivot table"""
 
     @abstractmethod
-    async def unlink(self, relation_name: str, models: Union[Any, List[Any]] = None) -> None:
+    async def unlink(self, relation_name: str, models: Any | List[Any] = None) -> None:
         """Unlink records to relation using the Many-To-Many pivot table"""
 
     @abstractmethod

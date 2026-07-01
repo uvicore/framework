@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Union, Callable
+from typing import Dict, Any, List, Callable
 
 
 class Cache(ABC):
@@ -18,7 +18,7 @@ class Cache(ABC):
         """Check if key exists"""
 
     @abstractmethod
-    async def get(self, key: Union[str, List], *, default: Any = None) -> Any:
+    async def get(self, key: str | List, *, default: Any = None) -> Any:
         """Get one or more key values if exists else return default value"""
 
     @abstractmethod
@@ -26,7 +26,7 @@ class Cache(ABC):
         """Get a key if exists, if not SET the key to callback value"""
 
     @abstractmethod
-    async def put(self, key: Union[str, Dict], value: Any = None, *, seconds: int = 0) -> None:
+    async def put(self, key: str | Dict, value: Any = None, *, seconds: int = 0) -> None:
         """Put one or more key/values in cache with optional expire in seconds (0=never expire)"""
 
     @abstractmethod

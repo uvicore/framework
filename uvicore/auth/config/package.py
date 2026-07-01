@@ -1,5 +1,4 @@
 from uvicore.configuration import env
-from uvicore.typing import OrderedDict
 
 
 def _connection(prefix: str, default_db: str = ':memory:'):

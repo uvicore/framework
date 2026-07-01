@@ -1,4 +1,5 @@
-from uvicore.typing import Any, Dict, Tuple, List
+from typing import Any, Tuple, List
+from uvicore.typing import Dict
 from collections import OrderedDict
 from collections import OrderedDict
 from uvicore.support.dictionary import deep_merge

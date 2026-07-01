@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from uvicore.typing import List, Dict, Callable, TypeVar, Generic, Decorator, Optional, Any, Union
+from typing import List, Callable, TypeVar, Generic, Any
+from uvicore.typing import Dict, Decorator
 
 # Generic Route (Web or Api)
 R = TypeVar('R')
@@ -17,7 +18,7 @@ class WebRoute(Dict):
     name: str
     endpoint: Callable
     methods: List[str]
-    middleware: Optional[List]
+    middleware: List | None
     original_path: str
     original_name: str
 
@@ -33,12 +34,12 @@ class ApiRoute(Dict):
     prefix: bool
     endpoint: Callable
     methods: List[str]
-    response_model: Optional[Any]
-    response_class: Optional[Any]
-    tags: Optional[List]
-    middleware: Optional[List]
-    summary: Optional[str]
-    description: Optional[str]
+    response_model: Any | None
+    response_class: Any | None
+    tags: List | None
+    middleware: List | None
+    summary: str | None
+    description: str | None
     original_path: str
     original_name: str
 
@@ -68,35 +69,35 @@ class Router(Generic[R], ABC):
 
     @abstractmethod
     def controller(self,
-        module: Union[str, Callable],
+        module: str | Callable,
         *,
         prefix: str = '',
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         options: Dict = {}
     ) -> List:
         """Include a Route Controller"""
 
     @abstractmethod
     def include(self,
-        module: Union[str, Callable],
+        module: str | Callable,
         *,
         prefix: str = '',
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         options: Dict = {}
     ) -> List:
         """Alias to controller"""
 
     @abstractmethod
     def group(self, prefix: str = '', *,
-        routes: Optional[List] = None,
+        routes: List | None = None,
         name: str = '',
-        tags: Optional[List[str]] = None,
+        tags: List[str] | None = None,
         autoprefix: bool = True,
-        middleware: Optional[List] = None,
-        auth: Optional[Any] = None,
-        scopes: Optional[List] = None,
+        middleware: List | None = None,
+        auth: Any | None = None,
+        scopes: List | None = None,
     ) -> Callable[[Decorator], Decorator]:
         """Route groups method and decorator"""
 

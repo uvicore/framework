@@ -1,6 +1,7 @@
 import uvicore
 from contextlib import asynccontextmanager
-from uvicore.typing import Dict, List, OrderedDict, get_type_hints, Tuple
+from typing import List, Tuple
+from uvicore.typing import Dict
 from uvicore.events import Handler
 from uvicore.support import module
 from uvicore.support.dumper import dump, dd
@@ -302,6 +303,14 @@ class Http(Handler):
                 # Get version from main running apps package.version
                 version=uvicore.app.package(main=True).version,
 
+                # Collapse FastAPIs separate Input/Output schemas into a single
+                # schema per model.  FastAPI defaults this to True, which emits
+                # every model TWICE (Foo-Input + Foo-Output) even when the two
+                # are identical, doubling the OpenAPI schema count and bloating
+                # the docs.  Default to False (one schema per model); apps can
+                # re-enable via config app.api.openapi.separate_schemas=True.
+                separate_input_output_schemas=uvicore.config.app.api.openapi.get('separate_schemas', False),
+
                 # NOTE: Most other info is provided in my add_api_routes def openapi_docs() override
 
                 #openapi_url=uvicore.config('app.api.openapi.url'),
@@ -530,7 +539,21 @@ class Http(Handler):
                         #'additionalQueryStringParams': {'client_id': "7cc7d2a5-cc02-43ca-93bc-8476370ebf9d"},
                         #'usePkceWithAuthorizationCodeGrant': False
                     },
-                    doc_expansion=openapi.docs.expansion.lower() or 'list'
+                    doc_expansion=openapi.docs.expansion.lower() or 'list',
+
+                    # Swagger defaultModelsExpandDepth.  -1 hides the (often huge)
+                    # Schemas section at the bottom of the docs entirely, which
+                    # keeps the UI responsive when the model graph is large.
+                    models_expansion=openapi.docs.get('models_expansion', -1),
+
+                    # Swagger defaultModelExpandDepth.  Controls how deep each
+                    # operation's request/response model tree is rendered when
+                    # you expand it.  0 collapses it (much faster first-expand
+                    # on large/relational models); 1+ pre-expands.
+                    model_expansion=openapi.docs.get('model_expansion', 1),
+
+                    # Arbitrary extra SwaggerUIBundle parameters, merged last.
+                    parameters=openapi.docs.get('parameters', None),
                 )
 
             @api_server.get(openapi_redirect_url, include_in_schema=False)

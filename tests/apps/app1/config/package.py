@@ -1,6 +1,5 @@
 from uvicore.configuration import env
 from .database import database, redis
-from uvicore.typing import OrderedDict
 from .dependencies import dependencies
 
 

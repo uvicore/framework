@@ -1,6 +1,6 @@
 import os
 import uvicore
-from uvicore.typing import Dict, Any
+from uvicore.typing import Dict
 from uvicore.contracts import Connection
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Package as PackageInterface

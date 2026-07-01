@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Tuple, TypeVar, Union, Dict, Sequence
+from typing import Any, Generic, List, Tuple, TypeVar, Dict, Sequence
 
 try:
     import sqlalchemy as sa
@@ -26,15 +26,15 @@ class QueryBuilder(Generic[B, E], ABC):
         """Add distinct statement to query"""
 
     @abstractmethod
-    def where(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def where(self, column: str | BinaryExpression | List[Tuple | BinaryExpression], operator: str = None, value: Any = None) -> B[B, E]:
         """Add where statement to query"""
 
     @abstractmethod
-    def or_where(self, wheres: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+    def or_where(self, wheres: List[Tuple | BinaryExpression]) -> B[B, E]:
         """Add or where statement to query"""
 
     @abstractmethod
-    def order_by(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def order_by(self, column: str | List[str] | List[Tuple] | Any, order: str = 'ASC') -> B[B, E]:
         """Order results by these columns ASC or DESC order"""
 
     @abstractmethod
@@ -58,7 +58,7 @@ class QueryBuilder(Generic[B, E], ABC):
 class DbQueryBuilder(QueryBuilder[B, E], ABC):
 
     @abstractmethod
-    def table(self, table: Union[str, sa.Table]) -> B[B, E]:
+    def table(self, table: str | sa.Table) -> B[B, E]:
         """Add table (select) statement to query"""
 
     @abstractmethod
@@ -66,11 +66,11 @@ class DbQueryBuilder(QueryBuilder[B, E], ABC):
         """Add select (columns) statment to query"""
 
     @abstractmethod
-    def join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None, method: str = 'join') -> B[B, E]:
+    def join(self, table: str | sa.Table, left_where: str | sa.Column | BinaryExpression, right_where: str | sa.Column = None, alias: str = None, method: str = 'join') -> B[B, E]:
         """Add join (default to INNER) statement to query"""
 
     @abstractmethod
-    def outer_join(self, table: Union[str, sa.Table], left_where: Union[str, sa.Column, BinaryExpression], right_where: Union[str, sa.Column] = None, alias: str = None) -> B[B, E]:
+    def outer_join(self, table: str | sa.Table, left_where: str | sa.Column | BinaryExpression, right_where: str | sa.Column = None, alias: str = None) -> B[B, E]:
         """Add LEFT OUTER join statement to query"""
 
     @abstractmethod
@@ -148,17 +148,17 @@ class OrmQueryBuilder(QueryBuilder[B, E], ABC):
         pass
 
     @abstractmethod
-    def filter(self, column: Union[str, BinaryExpression, List[Union[Tuple, BinaryExpression]]], operator: str = None, value: Any = None) -> B[B, E]:
+    def filter(self, column: str | BinaryExpression | List[Tuple | BinaryExpression], operator: str = None, value: Any = None) -> B[B, E]:
         """Filter child relationship by this AND clause"""
         pass
 
     @abstractmethod
-    def or_filter(self, filters: List[Union[Tuple, BinaryExpression]]) -> B[B, E]:
+    def or_filter(self, filters: List[Tuple | BinaryExpression]) -> B[B, E]:
         """Filter child relationship by this OR clause"""
         pass
 
     @abstractmethod
-    def sort(self, column: Union[str, List[str], List[Tuple], Any], order: str = 'ASC') -> B[B, E]:
+    def sort(self, column: str | List[str] | List[Tuple] | Any, order: str = 'ASC') -> B[B, E]:
         """Sort Many relations only"""
         pass
 
@@ -180,12 +180,12 @@ class OrmQueryBuilder(QueryBuilder[B, E], ABC):
         """Get all queries involved in this ORM statement"""
 
     @abstractmethod
-    async def find(self, pk_value: Union[int, str] = None, **kwargs) -> Union[E, None]:
+    async def find(self, pk_value: int | str = None, **kwargs) -> E | None:
         """Execute query by primary key or custom column and return first row found"""
         pass
 
     @abstractmethod
-    async def get(self) -> Union[List[E], Dict[str, E]]:
+    async def get(self) -> List[E] | Dict[str, E]:
         """Execute a select query and return all rows found"""
         pass
 

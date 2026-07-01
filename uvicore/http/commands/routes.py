@@ -1,4 +1,3 @@
-from typing import Optional
 
 import uvicore
 from uvicore import app, log

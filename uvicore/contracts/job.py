@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from uvicore.typing import Dict, Any
+from typing import Any
+from uvicore.typing import Dict
 
 
 class Job(ABC, Dict):

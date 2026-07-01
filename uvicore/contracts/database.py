@@ -2,7 +2,8 @@ from .package import Package
 from .connection import Connection
 from abc import ABC, abstractmethod
 from uvicore.contracts import DbQueryBuilder
-from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
+from typing import Any, List, Sequence, Mapping
+from uvicore.typing import Dict
 
 # Optional imports based on installed modules
 try:
@@ -98,9 +99,9 @@ class Database(ABC):
     async def execute(
         self,
         query: Any,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.CursorResult:
         """Execute a SQLAlchemy Core Query based on connection str or metakey"""
         pass
@@ -109,9 +110,9 @@ class Database(ABC):
     @abstractmethod
     async def all(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[sa.Row]:
         """Get many records from query. Returns empty List if no records found"""
         pass
@@ -119,9 +120,9 @@ class Database(ABC):
     @abstractmethod
     async def fetchall(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[sa.Row]:
         """Alias to .all()"""
         pass
@@ -129,9 +130,9 @@ class Database(ABC):
     @abstractmethod
     async def first(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Get one (first/top) record from query. Returns None if no records found"""
         pass
@@ -139,9 +140,9 @@ class Database(ABC):
     @abstractmethod
     async def fetchone(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Alias to .first()"""
         pass
@@ -149,9 +150,9 @@ class Database(ABC):
     @abstractmethod
     async def one(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row:
         """Get one record from query. Throws Exception if no data found or querying more than one record"""
         pass
@@ -159,9 +160,9 @@ class Database(ABC):
     @abstractmethod
     async def one_or_none(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row|None:
         """Get one record from query.  Returns None if no record found.  Throws Exception of querying more than one record"""
         pass
@@ -169,9 +170,9 @@ class Database(ABC):
     @abstractmethod
     async def scalars(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Sequence[Any]:
         """Get many scalar values from query.  Returns empty List if no records found. If selecting multiple columns, returns List of FIRST column only."""
         pass
@@ -179,9 +180,9 @@ class Database(ABC):
     @abstractmethod
     async def scalar(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any|None:
         """Get a single scalar value from query. Returns None if no record found.  Returns first (top) if more than one record found"""
         pass
@@ -189,9 +190,9 @@ class Database(ABC):
     @abstractmethod
     async def scalar_one(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any:
         """Get a single scalar value from query.  Throws Exception if no data found or if querying more than one record"""
         pass
@@ -199,9 +200,9 @@ class Database(ABC):
     @abstractmethod
     async def scalar_one_or_none(self,
         query: sa.Select|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> Any|None:
         """Get a single scalar value from query.  Returns None if no record found.  Throws Exception if querying more than one record"""
         pass
@@ -209,9 +210,9 @@ class Database(ABC):
     @abstractmethod
     async def insertmany(self,
         query: sa.Insert|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> List[sa.Row]:
         """Bulk insert many rows, returning bulk primary keys (for databases that support INSERT..RETURNING)"""
         pass
@@ -219,9 +220,9 @@ class Database(ABC):
     @abstractmethod
     async def insertone(self,
         query: sa.Insert|str,
-        values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None,
-        connection: Optional[str] = None,
-        metakey: Optional[str] = None
+        values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None,
+        connection: str | None = None,
+        metakey: str | None = None
     ) -> sa.Row:
         """Insert one row, returning the one rows PK (as a tuple in case of dual PKs)"""
         pass

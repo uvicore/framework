@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from uvicore.typing import Union, List, Dict
 from uvicore.contracts.user_info import UserInfo
 try:
     from starlette.requests import HTTPConnection
@@ -17,7 +16,7 @@ class UserProvider(ABC):
             'username': 'username',
         }
 
-    async def retrieve_by_id(self, id: Union[str, int], request: HTTPConnection, **kwargs) -> UserInfo:
+    async def retrieve_by_id(self, id: str | int, request: HTTPConnection, **kwargs) -> UserInfo:
         """Retrieve user by primary key from the user provider backend.  No validation."""
         field = self.field_map['id']
         return await self._retrieve_user(field, id, request, **kwargs)

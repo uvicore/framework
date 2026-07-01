@@ -1,4 +1,4 @@
-from uvicore.typing import Any
+from typing import Any
 from abc import ABC, abstractmethod
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import uvicore
-from uvicore.typing import Optional, List
+from typing import List
 from uvicore.support.dumper import dd, dump
 from uvicore.auth.models.permission import Permission
 from uvicore.auth.database.tables import roles as table
@@ -13,7 +13,7 @@ class Role(Model['Role'], metaclass=ModelMetaclass):
 
     __tableclass__ = table.Roles
 
-    id: Optional[int] = Field('id',
+    id: int | None = Field('id',
         primary=True,
         description='Role ID',
     )
@@ -28,7 +28,7 @@ class Role(Model['Role'], metaclass=ModelMetaclass):
     # )
 
     # Many-To-Many via role_permissions pivot table
-    permissions: Optional[List[Permission]] = Field(None,
+    permissions: List[Permission] | None = Field(None,
         description="Role Permissions",
         relation=BelongsToMany('uvicore.auth.models.permission.Permission', join_tablename='role_permissions', left_key='role_id', right_key='permission_id'),
     )

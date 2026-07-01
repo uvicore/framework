@@ -5,7 +5,8 @@ from redis import Redis as RedisInterface
 from uvicore.redis import Redis as RedisDb
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Cache as CacheInterface
-from uvicore.typing import Dict, Any, Callable, Union, List, Tuple
+from typing import Any, Callable, List, Tuple
+from uvicore.typing import Dict
 
 
 @uvicore.service()
@@ -31,7 +32,7 @@ class Redis(CacheInterface):
         (redis, key) = await self._prepair(key)
         return bool(await redis.exists(key))
 
-    async def get(self, key: Union[str, List], *, default: Any = None) -> Any:
+    async def get(self, key: str | List, *, default: Any = None) -> Any:
         """Get one or more key values if exists else return default value"""
         (redis, keys) = await self._prepair(key)
         if type(keys) == list:
@@ -53,7 +54,7 @@ class Redis(CacheInterface):
                 # Item does not exist, set default
                 return default
 
-    async def remember(self, key: Union[str, Dict], callback: Union[Callable, Any] = None, *, seconds: int = None) -> Any:
+    async def remember(self, key: str | Dict, callback: Callable | Any = None, *, seconds: int = None) -> Any:
         """Get a key if exists, if not SET the key to callback value"""
         (redis, keys) = await self._prepair(key)
         if type(key) != dict: keys = {keys:callback}
@@ -78,7 +79,7 @@ class Redis(CacheInterface):
         # Dict key, dict return
         return value
 
-    async def put(self, key: Union[str, Dict], value: Any = None, *, seconds: int = None) -> None:
+    async def put(self, key: str | Dict, value: Any = None, *, seconds: int = None) -> None:
         """Put one or more key/values in cache with optional expire in seconds (0=never expire)"""
         (redis, keys) = await self._prepair(key)
         if seconds is None: seconds = self.seconds
@@ -86,7 +87,7 @@ class Redis(CacheInterface):
         for (key, value) in keys.items():
             await redis.set(key, self._serialize(value), ex=seconds)
 
-    async def pull(self, key: Union[str, Dict]) -> Any:
+    async def pull(self, key: str | Dict) -> Any:
         """Get one or more key values from cache them remove them after"""
         (redis, keys) = await self._prepair(key)
         value = await self.get(key)
@@ -138,7 +139,7 @@ class Redis(CacheInterface):
             await redis.expire(key, seconds)
         return int(await redis.get(key))
 
-    async def forget(self, key: Union[str, List]) -> None:
+    async def forget(self, key: str | List) -> None:
         """Delete a key from cache"""
         (redis, keys) = await self._prepair(key)
         if type(keys) != list: keys = [keys]
@@ -152,7 +153,7 @@ class Redis(CacheInterface):
         if keys:
             await redis.delete(*keys)
 
-    async def _prepair(self, key: Union[str, List] = None) -> Tuple[RedisInterface, Union[str, List, Dict]]:
+    async def _prepair(self, key: str | List = None) -> Tuple[RedisInterface, str | List | Dict]:
         # Connect to redis pool if not connected
         if not self._redis:
             # RedisDB is uvicore.redis.redis.py abstraction and .connect() there

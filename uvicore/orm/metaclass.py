@@ -5,7 +5,7 @@ from uvicore.support.dumper import dd, dump
 from uvicore.support.printer import pretty_call, register_pretty
 from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic._internal._model_construction import ModelMetaclass as PydanticMetaclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Sequence
+from typing import Any, Dict, List, Mapping, Tuple, Sequence
 
 import sqlalchemy as sa
 
@@ -123,15 +123,15 @@ class ModelMetaclass(PydanticMetaclass):
         if not field: raise Exception("Field {} not found in model {}".format(fieldname, entity.modelfqn))
         return field
 
-    async def execute(entity, query: Any, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> sa.CursorResult:
+    async def execute(entity, query: Any, values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None) -> sa.CursorResult:
         """Database execute in the context of this entities connection"""
         return await uvicore.db.execute(query=query, values=values, connection=entity.__connection__)
 
-    async def fetchall(entity, query: sa.Select|str, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> Sequence[sa.Row]:
+    async def fetchall(entity, query: sa.Select|str, values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None) -> Sequence[sa.Row]:
         """Database fetchall in the context of this entities connection"""
         return await uvicore.db.fetchall(query=query, connection=entity.__connection__)
 
-    async def fetchone(entity, query: sa.Select|str, values: Optional[Sequence[Mapping[str, Any]] | Mapping[str, Any]] = None) -> sa.Row|None:
+    async def fetchone(entity, query: sa.Select|str, values: Sequence[Mapping[str, Any]] | Mapping[str, Any] | None = None) -> sa.Row|None:
         """Database fetchone in the context of this entities connection"""
         return await uvicore.db.fetchone(query=query, connection=entity.__connection__)
 
@@ -152,7 +152,7 @@ class ModelMetaclass(PydanticMetaclass):
     #     if field: return field.column
     #     return fieldname
 
-    def selectable_columns(entity, table: sa.Table = None, *, show_writeonly: Union[bool, List] = False) -> List[sa.Column]:
+    def selectable_columns(entity, table: sa.Table = None, *, show_writeonly: bool | List = False) -> List[sa.Column]:
         """Get all SQLA columns that are selectable
 
         Why not just use the table to get all columns?  Because a table

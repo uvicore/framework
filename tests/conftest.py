@@ -1,8 +1,6 @@
 import pytest
 import uvicore
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-from uvicore.typing import Generator
 from uvicore.support.dumper import dump, dd
 
 
@@ -55,12 +53,3 @@ async def app1():
 
     # Register a PytestShutdown event (uvicore.console.events.command.PytestShutdown) to disconnect from all DBs
     await ConsoleEvents.PytestShutdown().codispatch()
-
-
-
-# Async TestClient based on encode/httpx
-# https://github.com/tiangolo/fastapi/issues/1273
-@pytest_asyncio.fixture(loop_scope="session", scope="session")
-async def client() -> Generator:
-    async with AsyncClient(transport=ASGITransport(app=uvicore.app.http), base_url="http://testserver") as client:
-        yield client

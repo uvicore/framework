@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from pydantic.fields import ModelField, FieldInfo
 from pydantic.main import ModelMetaclass
 import sqlalchemy as sa
-from typing import Optional, List, Dict, Mapping, TypeVar, Union, Generic, Any
+from typing import List, Dict, TypeVar, Any
 # from mreschke.wiki import db
 from uvicore.support.dumper import dump, dd
 from dataclasses import dataclass
@@ -311,7 +311,7 @@ class Entity(BaseModel, metaclass=EntityMetaclass):
 
 
     @classmethod
-    def find(entity, id: Union[int,str]):
+    def find(entity, id: int | str):
         table = entity.Db.table
         query = table.select().where(table.c.id == id)
         results = db.fetchone(entity, query)
@@ -406,16 +406,16 @@ class Field(FieldInfo):
     #     super().__init__(default, name=name, **kwargs)
 
     def __init__(self, name: str = None, *,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        default: Optional[Any] = None,
+        title: str | None = None,
+        description: str | None = None,
+        default: Any | None = None,
         required: bool = False,
         sortable: bool = False,
         searchable: bool = False,
-        read_only: Optional[bool] = None,
-        write_only: Optional[bool] = None,
-        callback: Optional[Any] = None,
-        properties: Optional[Dict] = None,
+        read_only: bool | None = None,
+        write_only: bool | None = None,
+        callback: Any | None = None,
+        properties: Dict | None = None,
     ):
         self.name: str = name
         self.title: str = title
@@ -424,10 +424,10 @@ class Field(FieldInfo):
         self.required: bool = required
         self.sortable: bool = sortable
         self.searchable: bool = searchable
-        self.read_only: Optional[bool] = read_only
-        self.write_only: Optional[bool] = write_only
+        self.read_only: bool | None = read_only
+        self.write_only: bool | None = write_only
         self.callback: Any = callback
-        self.properties: Optional[Dict] = properties
+        self.properties: Dict | None = properties
         super().__init__(
             default=default,
             column=name,
@@ -608,7 +608,7 @@ class User(Entity):
     #     },
     # }
 
-    id: Optional[int] = Field('user_id',
+    id: int | None = Field('user_id',
         #title='Some Title',
         #description='Some Desc',
         default=42,
@@ -627,7 +627,7 @@ class User(Entity):
         write_only=True,
     )
 
-    name2: Optional[str] = Field(None,
+    name2: str | None = Field(None,
         title='Some Title',
         description='Some Desc',
         callback='full_name',

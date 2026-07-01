@@ -1,4 +1,5 @@
-from uvicore.typing import Dict, List
+from typing import List
+from uvicore.typing import Dict
 
 class Email(Dict):
     """Email Message Definition"""

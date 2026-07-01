@@ -113,6 +113,22 @@ async def test_connection_without_name_returns_default(redis):
 
 
 @pytest.mark.asyncio
+async def test_connection_options_pass_through_to_client(redis):
+    """A connection's optional 'options' dict becomes real redis.asyncio client kwargs.
+
+    app1 config sets options={'health_check_interval': 30} on the 'app1'
+    connection; the underlying connection pool must reflect that value, while
+    the 'cache' connection (no options) keeps the client default of 0.
+    """
+    assert redis.connection('app1').options.health_check_interval == 30
+
+    app1 = await redis.connect('app1')
+    cache = await redis.connect('cache')
+    assert app1.connection_pool.connection_kwargs.get('health_check_interval') == 30
+    assert cache.connection_pool.connection_kwargs.get('health_check_interval', 0) == 0
+
+
+@pytest.mark.asyncio
 async def test_unknown_connection_raises(redis):
     with pytest.raises(Exception) as exc:
         redis.connection('does-not-exist')

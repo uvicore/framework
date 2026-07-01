@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 
 
 class Template(ABC):
@@ -29,7 +29,7 @@ class Template(ABC):
     def tests(self) -> Dict: pass
 
     @abstractmethod
-    def render(self, template_name: str, data: Optional[Dict] = {}) -> str:
+    def render(self, template_name: str, data: Dict | None = {}) -> str:
         """Render a template as string (for CLI usage, not a Web response)"""
         pass
 

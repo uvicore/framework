@@ -1,6 +1,5 @@
 import inspect
-from typing import ClassVar, get_origin
-from uvicore.typing import Any, Callable, List, Type, TypeVar, Union, get_type_hints
+from typing import ClassVar, get_origin, Any, Callable, List, Type, TypeVar, get_type_hints
 from fastapi import Depends
 from uvicore.http.routing.web_router import WebRouter
 from starlette.routing import Route, WebSocketRoute
@@ -150,7 +149,7 @@ def _init_cbv(cls: Type[Any]) -> None:
     setattr(cls, CBV_CLASS_KEY, True)
 
 
-def _update_cbv_route_endpoint_signature(cls: Type[Any], route: Union[Route, WebSocketRoute]) -> None:
+def _update_cbv_route_endpoint_signature(cls: Type[Any], route: Route | WebSocketRoute) -> None:
     """
     Fixes the endpoint signature for a cbv route to ensure FastAPI performs dependency injection properly.
     """

@@ -2,7 +2,7 @@ import uvicore
 from uvicore.typing import Dict
 from uvicore.http import Request
 from uvicore.http.response import APIResponse
-from uvicore.typing import Dict, List, Optional
+from typing import List
 from uvicore.http.exceptions import HTTPException
 from uvicore.http.routing import ApiRouter, Controller
 

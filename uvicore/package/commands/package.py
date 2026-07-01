@@ -1,6 +1,5 @@
 import uvicore
 import json as JSON
-from uvicore.typing import Dict
 from uvicore.console import command, argument, option
 from uvicore import app, log
 from uvicore.support.dumper import dd, dump

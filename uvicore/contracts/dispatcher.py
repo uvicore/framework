@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from uvicore.typing import Dict, List, Any, Union, Callable
+from typing import List, Any, Callable
+from uvicore.typing import Dict
 
 
 class Dispatcher(ABC):
@@ -50,32 +51,32 @@ class Dispatcher(ABC):
     #     pass
 
     @abstractmethod
-    def listen(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def listen(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events."""
         pass
 
     @abstractmethod
-    def listener(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def listener(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         pass
 
     @abstractmethod
-    def handle(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def handle(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         pass
 
     @abstractmethod
-    def handler(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def handler(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         pass
 
     @abstractmethod
-    def call(self, events: Union[str, List], listener: Union[str, Callable] = None, *, priority: int = 50) -> None:
+    def call(self, events: str | List, listener: str | Callable = None, *, priority: int = 50) -> None:
         """Decorator or method to append a listener (string or Callable) callback to one or more events.  Alias to listen()."""
         pass
 
     @abstractmethod
-    def subscribe(self, listener: Union[str, Callable]) -> None:
+    def subscribe(self, listener: str | Callable) -> None:
         """Add a subscription class which handles both registration and listener callbacks"""
         pass
 

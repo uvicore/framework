@@ -17,7 +17,7 @@ class Mail(Provider):
 
 
     def boot(self) -> None:
-       """Bootstrap package into the uvicore framework.
+        """Bootstrap package into the uvicore framework.
         Boot takes place after ALL packages are registered.  This means all package
         configs are deep merged to provide a complete and accurate view of all
         configuration. This is where you register, connections, models,
