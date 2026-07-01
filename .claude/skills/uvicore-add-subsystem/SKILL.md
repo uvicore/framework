@@ -41,8 +41,8 @@ legacy `.github` Copilot skills instead.
            self.registers(self.package.config.registers)
            # real init: read merged config, bind+init the service, register commands/routes/etc.
    ```
-   - `register()` = config + light binds ONLY. `boot()` = real work. `self.package` is None in
-     `register()`.
+   - `register()` = config + light binds only; `boot()` = real work — see `uvicore-architecture`
+     (and CLAUDE.md) for the cardinal rule and why. (`self.package` is None in `register()`.)
    - If the subsystem must see *all* packages (e.g. collect routes/connections), do that work in a
      handler listening to `foundation.events.app.Booted` (see `http/`, `database/`, `console/`
      `package/bootstrap.py`), not in `boot()` directly.

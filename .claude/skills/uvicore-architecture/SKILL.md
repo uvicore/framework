@@ -22,16 +22,16 @@ and the rest of the codebase is obvious. Touching `foundation/`, `container/`, `
 1. Sets `_path`, `_name`, `_main`, debug, and `is_console`/`is_http`/`is_pytest` flags. Special
    cases: `http serve` forces non-console; no `uvicore.http` package forces console;
    `PYTEST_CURRENT_TEST` env forces pytest mode.
-2. `_build_provider_graph(app_config)` (`application.py:210`) — recursive: for each package, load
+2. `_build_provider_graph(app_config)` (`application.py`) — recursive: for each package, load
    its `config/package.py`, read `dependencies`, recurse into those first, then record the package
    in `self._providers` (an `OrderedDict`). **Last write wins** but original declaration order is
    preserved → an app can override a framework package's provider by re-declaring it last. Then it
    applies `app_config.overrides.providers`.
-3. `_register_providers()` (`application.py:249`) — builds a `Package` object per provider, then
+3. `_register_providers()` (`application.py`) — builds a `Package` object per provider, then
    instantiates the provider via `load(service['provider']).object(...)` and calls `register()`.
    `package=None` is passed here (not available in register). Fires
    `foundation.events.app.Registered`.
-4. `_boot_providers()` (`application.py:291`) — re-instantiates each provider WITH its package and
+4. `_boot_providers()` (`application.py`) — re-instantiates each provider WITH its package and
    calls `boot()`. Fires `foundation.events.app.Booted`.
 5. Records each package's summary into `running_config`.
 
@@ -70,18 +70,18 @@ them: `class App1(Provider, Cli, Db, Redis, Http, Templating)` (see
 
 ## The IoC container (`uvicore/container/ioc.py`)
 
-- `make(name, default=None, **kwargs)` (`ioc.py:91`): resolve by name or alias; lazily
+- `make(name, default=None, **kwargs)` (`ioc.py`): resolve by name or alias; lazily
   `module.load()` if unbound; instantiate singletons once (cached on `binding.instance`),
   non-singletons per call (or return the class if no kwargs/factory).
 - `bind(name, object, *, object_type='service', override=True, factory, kwargs, singleton, aliases)`
-  (`ioc.py:218`): string `object` → stored as `path`, imported lazily; class `object` → path derived
+  (`ioc.py`): string `object` → stored as `path`, imported lazily; class `object` → path derived
   from `__module__.__name__`. Also usable as a decorator when `object is None`.
-- `bind_from_decorator(...)` (`ioc.py:169`): what every `@uvicore.*` decorator calls.
+- `bind_from_decorator(...)` (`ioc.py`): what every `@uvicore.*` decorator calls.
 - `bind_override(name, object)` / `overrides` property: merges `_overrides` with
   `app_config.overrides.ioc_bindings` (app config wins).
 
 ### Override + `_BASE` (do not break this)
-When a decorator binds a name that has an override (`ioc.py:174`):
+When a decorator binds a name that has an override (`ioc.py`):
 1. It binds `name` → the override object.
 2. It ALSO binds `name + '_BASE'` → the original `cls`, passing the class directly into the binding
    so `.make()` never has to re-import it (this is the circular-import escape hatch). Originals are

@@ -49,7 +49,7 @@ helpers: `header/header2/header3/header4`, `item/item2/item3/item4`, `line/nl/se
 prefix-based include/exclude. Config: `config.app.logger`.
 
 ## Auth — `uvicore/auth/`
-- **`UserInfo`** (`auth/user_info.py`, Pydantic v1 model, injected as `request.user`): fields
+- **`UserInfo`** (`auth/user_info.py`, Pydantic v2 model, injected as `request.user`): fields
   `id, uuid, username, email, first_name, last_name, title, avatar, groups, roles, permissions,
   superadmin, authenticated, extra`. Computed: `name`, `is_admin`/`admin`/`is_superadmin`,
   `is_authenticated`/`loggedin`/`check`, and the `is_not_*` negations. Methods:

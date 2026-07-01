@@ -6,8 +6,10 @@ user-invocable: true
 
 # Uvicore ORM Development
 
-The ORM is a Pydantic-v1-backed, async, relation-rich model layer that compiles to the low-level DB
-query builder (see `uvicore-database-dev`). Pydantic is **held at v1.10** — do not use v2 APIs.
+The ORM is a Pydantic-v2-backed, async, relation-rich model layer that compiles to the low-level DB
+query builder (see `uvicore-database-dev`). Use **v2 APIs** (`model_dump`, `field_validator`, etc.);
+see ADR 0002/0003 for the v1→v2 migration. Use **pipe-style typing** (`X | None`), never
+`Optional[...]` (ADR 0005).
 
 ## Anatomy of a model
 
@@ -15,10 +17,11 @@ query builder (see `uvicore-database-dev`). Pydantic is **held at v1.10** — do
 @uvicore.model()
 class Post(Model['Post'], metaclass=ModelMetaclass):
     __tableclass__ = table.Posts                       # links to the @uvicore.table() class
-    id: Optional[int] = Field('id', primary=True, read_only=True, ...)
-    slug: str        = Field('unique_slug', max_length=255)   # field name != column name OK
-    creator: Optional[User] = Field(None, relation=BelongsTo('uvicore.auth.models.user.User'))
-Post.update_forward_refs()                              # required when relations use forward refs
+    id: int | None  = Field('id', primary=True, read_only=True, ...)
+    slug: str       = Field('unique_slug', max_length=255)   # field name != column name OK
+    creator: User | None = Field(None, relation=BelongsTo('uvicore.auth.models.user.User'))
+# No per-model update_forward_refs()/model_rebuild() — Uvicore rebuilds every registered model
+# centrally at boot (ADR 0003).
 ```
 Real examples: `tests/apps/app1/models/post.py` (every relation type), `auth/models/user.py`.
 

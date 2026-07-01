@@ -1,6 +1,7 @@
 ---
 name: journal-and-adr
-description: Use at the END of any substantive task in this repo (new feature, behavior change, notable refactor, non-trivial fix, doc/skill change) to append a dated journal entry, and WHENEVER you make a significant, hard-to-reverse architectural decision to also write an ADR. Covers the journal/ and adr/ folder conventions, the entry templates, ADR numbering and the supersede rule, and the repo-vs-machine-local knowledge principle. Invoke before finishing work so durable reasoning lands in the repo, not just in chat.
+description: "Use at the END of any substantive task in this repo (new feature, behavior change, notable refactor, non-trivial fix, doc/skill change) to append a dated journal entry, and WHENEVER you make a significant, hard-to-reverse architectural decision to also write an ADR. Covers the journal/ and adr/ folder conventions, the entry templates, ADR numbering and the supersede rule, and the repo-vs-machine-local knowledge principle. Invoke before finishing work so durable reasoning lands in the repo, not just in chat."
+user-invocable: true
 ---
 
 # Journal & ADR — recording durable knowledge in this repo

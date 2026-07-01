@@ -1,6 +1,6 @@
 # Uvicore Framework — Developer Guide (CLAUDE.md)
 
-This is the **Uvicore Framework** source repo (`uvicore` Python package, v0.4.1). Uvicore is
+This is the **Uvicore Framework** source repo (`uvicore` Python package, v0.4.4). Uvicore is
 a fullstack **async** Python framework for Web, API, and CLI apps — "the performance of
 FastAPI with the elegance of Laravel". This file is for developers **enhancing the framework
 itself**, not for building apps on top of it.
@@ -144,7 +144,7 @@ the key to the whole codebase.
   FastAPI/Starlette for web, `encode/databases`-style async DB layer.
 - Extras gate optional deps: `poetry install --extras "database redis web"` (+ `--with test`).
 - **Run tests with Poetry, from `framework/`:** `poetry run ./bin/test.sh` (sets
-  `PYTHONPATH=./tests/apps`, runs pytest; ~361 tests in a few seconds). Coverage:
+  `PYTHONPATH=./tests/apps`, runs pytest; ~500 tests in a few seconds). Coverage:
   `poetry run ./bin/test-cov.sh` / `poetry run ./bin/test-cov-html.sh`. A single area:
   `poetry run ./bin/test.sh tests/test_db/test_orm`.
 - The test suite bootstraps the **`app1`** reference app (`tests/apps/app1/`) against an in-memory
