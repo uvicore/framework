@@ -4,7 +4,7 @@ from uvicore.contracts import Connection
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Package as Package
 from uvicore.database.query import DbQueryBuilder
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from uvicore.contracts import Database as DatabaseInterface
 from typing import Any, List, Sequence, Mapping
 from uvicore.typing import Dict
@@ -101,6 +101,7 @@ class Db(DatabaseInterface):
         self._default = None
         self._connections = Dict()
         self._engines = Dict()
+        self._engine_urls = Dict()
         self._metadatas = Dict()
 
     # Per-dialect (default driver, default port) for standard server-based dialects.
@@ -127,15 +128,40 @@ class Db(DatabaseInterface):
 
             # Create the actual SQLAlchemy [async or sync] engine
             if connection.backend == 'sqlalchemy':
+
+                # If init() is called again (re-init) and an engine for this metakey already
+                # exists with the SAME URL, reuse it.  Rebuilding an engine orphans its old
+                # connection pool which can never be disposed, leaking driver connections that
+                # finalize AFTER the event loop is closed (RuntimeError: Event loop is closed).
+                existing_engine = self._engines.get(connection.metakey)
+                if existing_engine is not None and self._engine_urls.get(connection.metakey) == connection.url:
+                    continue
+
+                # If the URL changed (ex: re-init with a new snowflake warehouse), dispose the
+                # old engine BEFORE replacing it so its pooled connections are properly closed.
+                if existing_engine is not None:
+                    if isinstance(existing_engine, AsyncEngine):
+                        # Cannot await in this sync method; schedule disposal on the running loop
+                        import asyncio
+                        try:
+                            asyncio.get_running_loop().create_task(existing_engine.dispose())
+                        except RuntimeError:
+                            pass
+                    else:
+                        existing_engine.dispose()
+
                 connect_args = dict(connection.options) if connection.options else {}
                 if connection.is_async:
                     engine = create_async_engine(connection.url, connect_args=connect_args)
                 else:
                     engine = sa.create_engine(connection.url, connect_args=connect_args, pool_pre_ping=True)
 
-                # Add this new [sync or async] engine + metadata keyed by metakey
+                # Add this new [sync or async] engine + metadata keyed by metakey (preserve
+                # existing metadata on re-init or ORM tables already registered would be lost)
                 self._engines[connection.metakey] = engine
-                self._metadatas[connection.metakey] = sa.MetaData()
+                self._engine_urls[connection.metakey] = connection.url
+                if connection.metakey not in self._metadatas:
+                    self._metadatas[connection.metakey] = sa.MetaData()
 
         # Set instance variables
         self._default = default
@@ -238,6 +264,22 @@ class Db(DatabaseInterface):
         connection.is_async = str(connection.driver) in self.SUPPORTED_ASYNC_DRIVERS
 
         return connection
+
+    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
+        """Dispose one engine (by connection str or metakey) or all engines (all_dbs=True).
+        Disposing an engine closes all pooled driver connections (aiomysql, asyncpg...).
+        Async engines MUST be disposed before the event loop closes or their __del__
+        finalizers fire on a dead loop (RuntimeError: Event loop is closed)."""
+        if all_dbs:
+            engines = list(self.engines.values())
+        else:
+            engine = self.engine(connection, metakey)
+            engines = [engine] if engine is not None else []
+        for engine in engines:
+            if isinstance(engine, AsyncEngine):
+                await engine.dispose()
+            else:
+                engine.dispose()
 
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
         """Get all packages with the metakey (direct or derived from connection str)."""
