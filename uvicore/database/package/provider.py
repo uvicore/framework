@@ -48,9 +48,9 @@ class Database(Provider, Cli):
         # Disconnect from all databases after the system has shutdown
         @uvicore.events.handle(['uvicore.console.events.command.Shutdown', 'uvicore.console.events.command.PytestShutdown', 'uvicore.http.events.server.Shutdown'])
         async def uvicore_shutdown(event):
-            # Disconnect from all connected databases
-            pass
-            #await uvicore.db.disconnect(all_dbs=True)
+            # Disconnect from all connected databases (disposes all SQLAlchemy engines,
+            # closing pooled async driver connections BEFORE the event loop closes)
+            await uvicore.db.disconnect(all_dbs=True)
 
     def boot(self) -> None:
         """Bootstrap package into the uvicore framework.

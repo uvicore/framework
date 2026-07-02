@@ -4,7 +4,7 @@ from uvicore.typing import Dict
 from uvicore.foundation.decorators import event, job, model, seeder, service, table, provider, routes, controller, composer
 
 # Uvicore version.  Also available in app.version
-__version__ = '0.3.17'
+__version__ = '0.3.18'
 
 # Types are only required during type checking
 if TYPE_CHECKING:

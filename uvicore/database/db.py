@@ -4,7 +4,7 @@ from uvicore.contracts import Connection
 from uvicore.support.dumper import dd, dump
 from uvicore.contracts import Package as Package
 from uvicore.database.query import DbQueryBuilder
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from uvicore.contracts import Database as DatabaseInterface
 from uvicore.typing import Any, Dict, List, Sequence, Mapping, Optional
 
@@ -89,6 +89,7 @@ class Db(DatabaseInterface):
         self._default = None
         self._connections = Dict()
         self._engines = Dict()
+        self._engine_urls = Dict()
         self._metadatas = Dict()
 
     def init(self, default: str, connections: Dict[str, Connection]) -> None:
@@ -224,8 +225,36 @@ class Db(DatabaseInterface):
                         '/' + connection.role
                     )
 
-                # Save conn_url as string
-                connection.url = str(conn_url)
+                # Store url as a string WITH the real password (str(URL) masks it as ***, which
+                # would make the stored url unusable for engine creation/reuse on re-init).  The
+                # password is already present in plaintext on connection.password, so this
+                # exposes nothing new.  (Backported from 0.4)
+                if hasattr(conn_url, 'render_as_string'):
+                    connection.url = conn_url.render_as_string(hide_password=False)
+                else:
+                    connection.url = str(conn_url)
+
+                # If init() is called again (re-init) and an engine for this metakey already
+                # exists with the SAME URL, reuse it.  Rebuilding an engine orphans its old
+                # connection pool which can never be disposed, leaking driver connections that
+                # finalize AFTER the event loop is closed (RuntimeError: Event loop is closed).
+                existing_engine = self._engines.get(connection.metakey)
+                if existing_engine is not None and self._engine_urls.get(connection.metakey) == connection.url:
+                    connection.is_async = isinstance(existing_engine, AsyncEngine)
+                    continue
+
+                # If the URL changed (ex: re-init with a new snowflake warehouse), dispose the
+                # old engine BEFORE replacing it so its pooled connections are properly closed.
+                if existing_engine is not None:
+                    if isinstance(existing_engine, AsyncEngine):
+                        # Cannot await in this sync method; schedule disposal on the running loop
+                        import asyncio
+                        try:
+                            asyncio.get_running_loop().create_task(existing_engine.dispose())
+                        except RuntimeError:
+                            pass
+                    else:
+                        existing_engine.dispose()
 
                 # Attempt an async connection, else a sync connection
                 # And automatically set an is_async attribute on our connection Dict
@@ -238,13 +267,32 @@ class Db(DatabaseInterface):
 
                 # Add this new [sync or async] engine to our Dict of engines
                 self._engines[connection.metakey] = engine
+                self._engine_urls[connection.metakey] = connection.url
 
-                # Add this new metadata to our Dict of metadatas
-                self._metadatas[connection.metakey] = sa.MetaData()
+                # Add this new metadata to our Dict of metadatas (preserve existing metadata
+                # on re-init or ORM tables already registered on it would be lost)
+                if connection.metakey not in self._metadatas:
+                    self._metadatas[connection.metakey] = sa.MetaData()
 
         # Set instance variables
         self._default = default
         self._connections = connections
+
+    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
+        """Dispose one engine (by connection str or metakey) or all engines (all_dbs=True).
+        Disposing an engine closes all pooled driver connections (aiomysql, asyncpg...).
+        Async engines MUST be disposed before the event loop closes or their __del__
+        finalizers fire on a dead loop (RuntimeError: Event loop is closed)."""
+        if all_dbs:
+            engines = list(self.engines.values())
+        else:
+            engine = self.engine(connection, metakey)
+            engines = [engine] if engine is not None else []
+        for engine in engines:
+            if isinstance(engine, AsyncEngine):
+                await engine.dispose()
+            else:
+                engine.dispose()
 
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
         """Get all packages with the metakey (direct or derived from connection str)."""
