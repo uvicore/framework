@@ -112,15 +112,16 @@ class App1(Provider, Cli, Db, Redis, Http, Templating):
         # Define view paths
         self.register_http_views(['app1.http.views'])
 
-        # Define view composers - multiple calls to self.composers() are appended
+        # Define view composers (pass append=True to add views to an existing composer)
         #self.register_http_view_composers('mreschke.wiki.http.composers.layout.Layout', 'wiki/*')
         #self.register_http_view_composers('mreschke.wiki.http.composers.layout.Layout', ['wiki/home', 'wiki/about'])
 
-        # You can also define view composers as a dict
-        # self.register_http_view_composers({
-        #     'mreschke.wiki.http.composers.layout.Layout': 'wiki/*',
-        #     'mreschke.wiki.http.composers.layout.Layout': ['wiki/home', 'wiki/about'],
-        # })
+        # You can also define multiple view composers as a dict.  Exercised by
+        # tests/test_http/test_view_composers.py (also guards the dict-form registration).
+        self.register_http_view_composers({
+            'app1.http.composers.layout.Layout': 'app1/*',
+            'app1.http.composers.sidebar.Sidebar': ['app1/home', 'app1/about'],
+        })
 
         # Define public paths
         self.register_http_public(['app1.http.publicc'])

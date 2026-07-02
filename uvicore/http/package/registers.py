@@ -71,12 +71,12 @@ class Http(Provider):
         if self.package.registers.views:
             if type(module) == dict:
                 # Dict based, example:
-                # self.composers({
+                # self.register_http_view_composers({
                 #     'mreschke.themes.http.composers.theme.Theme': 'themes/*',
                 #     'mreschke.themes.http.composers.theme.Theme2': ['themes/*', 'themes2/*'],
                 # })
                 for (mod, views) in module.items():
-                    self.composers(mod, views)
+                    self.register_http_view_composers(mod, views)
             else:
                 # Parameter based
                 if views is None:

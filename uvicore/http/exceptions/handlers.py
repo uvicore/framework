@@ -66,7 +66,7 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
 
 def expand_payload(e: HTTPException):
     """Get error payload depending on uvicore or stock HTTPException"""
-    # Defined in the running app config api.exceptions.main
+    # Defined in the running app config api.exception.handler
     headers = getattr(e, "headers", None)
 
     # Base only has status_code and detail

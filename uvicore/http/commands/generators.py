@@ -114,5 +114,5 @@ async def composer(name: str):
     package = uvicore.app.package(main=True)
 
     log.nl()
-    log.header('Add this to your Service Provider boot() or define_views()')
-    print("self.composers('{}/*', '{}.http.composers.{}.{}')".format(package.short_name, package.name, name, str.studly(name)))
+    log.header('Add this to your Package Provider register_views() or boot() method')
+    print("self.register_http_view_composers('{}.http.composers.{}.{}', '{}/*')".format(package.name, name, str.studly(name), package.short_name))
