@@ -38,7 +38,4 @@ dependencies = OrderedDict({
         'uvicore.templating': {
             'provider': 'uvicore.templating.package.provider.Templating',
         },
-        # 'mreschke.themes': {
-        #    'provider': 'mreschke.themes.package.provider.themes.Themes',
-        # },
 })

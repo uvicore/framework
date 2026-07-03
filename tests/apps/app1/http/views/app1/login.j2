@@ -1,8 +1,28 @@
-<h1>Login Page</h1>
+{% extends "layouts/app.j2" %}
+{% from "macros/ui.j2" import field, alert with context %}
 
-<a href="{{url('app1.home')}}">Home</a> |
-<a href="{{url('app1.about')}}">About</a> |
-<a href="{{url('app1.admin')}}">Admin</a> |
-<a href="{{url('app1.login')}}">Login</a> |
-<a href="{{url('app1.logout')}}">Logout</a>
+{% block title %}{{ site_name }} &middot; Login{% endblock %}
 
+{% block content %}
+<section class="page-head">
+  <h1>Login</h1>
+  <p class="lead">Illustrative form - shows the current request.user auth state.</p>
+</section>
+
+{% if attempted %}
+  {{ alert('Login attempt received for "' ~ attempted ~ '" (illustrative only - no auth backend).', 'success') }}
+{% elif user.authenticated %}
+  {{ alert('You are signed in as ' ~ user.name ~ '.', 'info') }}
+{% else %}
+  {{ alert('You are browsing anonymously.', 'info') }}
+{% endif %}
+
+<form class="form form-narrow" method="post" action="{{ url('app1.login') }}">
+  {{ field('username', 'Username', required=true, placeholder='username') }}
+  {{ field('password', 'Password', type='password', required=true) }}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Sign in</button>
+    <a class="btn" href="{{ url('app1.logout') }}">Log out</a>
+  </div>
+</form>
+{% endblock %}

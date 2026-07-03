@@ -1,11 +1,24 @@
-{% extends "themes/" + theme.name + "/layout.j2" %}
+{% extends "layouts/app.j2" %}
+
+{% block title %}{{ site_name }} &middot; About{% endblock %}
+
+{% block layout_class %}has-sidebar{% endblock %}
+
 {% block content %}
+<section class="page-head">
+  <h1>About</h1>
+  <p class="lead">This is the app1 reference web app used by the Uvicore test suite.</p>
+</section>
 
-    <!-- Jumbotron -->
-    <div class="p-5 text-center">
-        <h1 class="mb-3">About Page Here</h1>
-        <a class="btn btn-primary" href="{{ url('home') }}" role="button">Back Home</a>
-    </div>
-    <!-- Jumbotron -->
-
+<div class="prose">
+  <p>Uvicore is a fullstack async Python framework for Web, API and CLI apps. This
+     page exists to exercise the framework's server-rendered web stack end to end:
+     template inheritance, partials, view composers, named-route URLs and static
+     assets.</p>
+  <p>The sidebar on the right is rendered by the <code>Sidebar</code> view composer,
+     which is registered only for the home and about pages.</p>
+  <p><a class="btn" href="{{ url('home') }}">&larr; Back home</a></p>
+</div>
 {% endblock %}
+
+{% block sidebar %}{% include "partials/sidebar.j2" %}{% endblock %}

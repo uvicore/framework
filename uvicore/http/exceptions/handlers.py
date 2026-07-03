@@ -29,11 +29,13 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
     (status_code, detail, message, exception, extra, headers) = expand_payload(e)
 
     try:
-        # Try to respond with a errors template, if exists
+        # Try to respond with a errors template, if exists.  Pass the real
+        # status_code/headers through so the rendered error page returns the
+        # correct HTTP status (not a default 200).
         return await response.View('errors/' + str(status_code) + '.j2', {
             'request': request,
             **e.__dict__,
-        })
+        }, status_code=status_code, headers=headers)
     except:
 
         try:
@@ -41,7 +43,7 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
             return await response.View('errors/catch_all.j2', {
                 'request': request,
                 **e.__dict__,
-            })
+            }, status_code=status_code, headers=headers)
         except:
             # Errors status_code or catch_all template does not exist.
             # Response with generic HTML error

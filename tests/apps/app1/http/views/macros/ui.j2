@@ -1,0 +1,28 @@
+{#
+  Reusable UI macros.
+
+  Import them "with context" so the macros can call context-aware Jinja globals
+  (url, asset, nav_active) against the current request:
+
+      {% from "macros/ui.j2" import nav_link, field, alert with context %}
+#}
+
+{# A top-nav anchor that auto-highlights when it is the active route (nav_active
+   is a custom app1 context_function registered in the provider). #}
+{% macro nav_link(label, route) -%}
+<a href="{{ url(route) }}" class="nav-link {{ nav_active(route) }}">{{ label }}</a>
+{%- endmacro %}
+
+{# A labelled form field. #}
+{% macro field(name, label, type='text', value='', required=false, placeholder='') -%}
+<div class="field">
+  <label for="{{ name }}">{{ label }}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
+         placeholder="{{ placeholder }}"{% if required %} required{% endif %}>
+</div>
+{%- endmacro %}
+
+{# A coloured alert box. kind = success | info | error #}
+{% macro alert(message, kind='success') -%}
+<div class="alert alert-{{ kind }}" role="alert">{{ message }}</div>
+{%- endmacro %}

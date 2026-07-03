@@ -1,0 +1,25 @@
+{% extends "layouts/app.j2" %}
+{% from "macros/ui.j2" import field, alert with context %}
+
+{% block title %}{{ site_name }} &middot; Contact{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Contact</h1>
+  <p class="lead">Demonstrates HTML form + form-POST handling with Form(...) params.</p>
+</section>
+
+{% if submitted %}
+  {{ alert('Thanks ' ~ submitted.name ~ ', we received your message at ' ~ submitted.email ~ '.', 'success') }}
+{% endif %}
+
+<form class="form" method="post" action="{{ url('app1.contact') }}">
+  {{ field('name', 'Your name', required=true, placeholder='Ada Lovelace', value=(submitted.name if submitted else '')) }}
+  {{ field('email', 'Email', type='email', required=true, placeholder='ada@example.com', value=(submitted.email if submitted else '')) }}
+  <div class="field">
+    <label for="message">Message</label>
+    <textarea id="message" name="message" rows="4" placeholder="Say hello...">{{ submitted.message if submitted else '' }}</textarea>
+  </div>
+  <button class="btn btn-primary" type="submit">Send message</button>
+</form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "layouts/app.j2" %}
+
+{% block title %}{{ site_name }} &middot; Features{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Feature showcase</h1>
+  <p class="lead">Custom Jinja processors registered by the app provider.</p>
+</section>
+
+<div class="feature-grid">
+  <article class="card">
+    <h3>Plain filter</h3>
+    <p><code>{% raw %}{{ 'hello world' | shout }}{% endraw %}</code></p>
+    <p class="result">{{ 'hello world' | shout }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Context filter</h3>
+    <p><code>{% raw %}{{ price | money }}{% endraw %}</code></p>
+    <p class="result">{{ price | money }}</p>
+  </article>
+
+  <article class="card">
+    <h3>Context function</h3>
+    <p><code>{% raw %}{{ nav_active('app1.features') }}{% endraw %}</code> (empty unless active)</p>
+    <p class="result">"{{ nav_active('app1.features') }}"</p>
+  </article>
+</div>
+
+<section class="prose">
+  <h2>Jinja test: <code>is prime</code></h2>
+  <p>The numbers below are tagged using a custom <code>{% raw %}{% if n is prime %}{% endraw %}</code> test:</p>
+  <ul class="number-list">
+    {% for n in numbers %}
+    <li class="{{ 'is-prime' if n is prime else '' }}">
+      {{ n }}{% if n is prime %} <span class="badge">prime</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

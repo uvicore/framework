@@ -1,0 +1,15 @@
+{% from "macros/ui.j2" import nav_link with context %}
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{{ url('home') }}">
+      <img class="brand-logo" src="{{ asset('img/logo.svg') }}" alt="{{ site_name }} logo" width="28" height="28">
+      <span class="brand-name">{{ site_name }}</span>
+    </a>
+
+    <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+
+    <nav class="site-nav">
+      {% for item in nav %}{{ nav_link(item.label, item.route) }}{% endfor %}
+    </nav>
+  </div>
+</header>

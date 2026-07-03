@@ -1,0 +1,26 @@
+{#
+  404 page. Named errors/404.j2 so the web exception handler's
+  errors/<status_code>.j2 lookup resolves it directly.  Standalone (see
+  catch_all.j2 for why).
+#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 &middot; Page not found</title>
+  <link rel="icon" href="{{ public('favicon.ico') }}">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+</head>
+<body>
+  <main class="container error-page">
+    <p class="code">404</p>
+    <h1>{{ message or 'Page not found' }}</h1>
+    <p class="muted">{{ detail or "We couldn't find the page you were looking for." }}</p>
+    <p class="hero-actions" style="justify-content:center">
+      <a class="btn btn-primary" href="{{ url('home') }}">Back home</a>
+      <a class="btn" href="{{ url('app1.features') }}">Features</a>
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# serve-seed-sqlite - Run the app1 test web app against a *file-based* SQLite DB.
+#
+# The app1 (and auth) database defaults to in-memory SQLite (:memory:), which is
+# per-process: `./uvicore http serve` never creates/seeds it, so any page that
+# touches the DB fails with "no such table: users". This script points BOTH the
+# app1 and auth connections at a single SQLite *file* (so their cross-connection
+# foreign keys - e.g. comments.creator_id -> users - resolve into one schema and
+# the seeded data persists across processes), creates + seeds it, then starts the
+# dev server against it.
+#
+# Usage:
+#   ./serve-seed-sqlite                    # reseed, then serve on :5001
+#   SERVER_PORT=8080 ./serve-seed-sqlite   # override the port (or SERVER_HOST)
+#   DB_FILE=/tmp/mine.sqlite ./serve-seed-sqlite
+#   ./serve-seed-sqlite --no-seed          # skip reseed, serve the existing file
+#
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Single SQLite file shared by BOTH the app1 and auth connections.
+DB_FILE="${DB_FILE:-${TMPDIR:-/tmp}/app1.sqlite}"
+export DB_APP1_DB="$DB_FILE"
+export DB_AUTH_DB="$DB_FILE"
+
+# Dev server config (override any of these via env before running).
+export SERVER_PORT="${SERVER_PORT:-5001}"
+export SERVER_HOST="${SERVER_HOST:-127.0.0.1}"
+
+# Flags
+SEED=1
+for arg in "$@"; do
+    case "$arg" in
+        -n|--no-seed) SEED=0 ;;
+        -h|--help) awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "$0"; exit 0 ;;
+        *) echo "Unknown option: $arg (try --help)" >&2; exit 2 ;;
+    esac
+done
+
+# Invoke the app1 uvicore CLI. Prefer `poetry run` (so the framework's virtualenv
+# deps are on the path) when poetry is available; otherwise call the launcher
+# directly, exactly like `./uvicore http serve`.
+UVICORE="$SCRIPT_DIR/uvicore"
+if command -v poetry >/dev/null 2>&1 && [ -f "$FRAMEWORK_DIR/pyproject.toml" ]; then
+    RUN=(poetry run "$UVICORE")
+else
+    RUN=("$UVICORE")
+fi
+
+# poetry run resolves the venv relative to the project, so run from the framework root.
+cd "$FRAMEWORK_DIR"
+
+if [ "$SEED" -eq 1 ]; then
+    echo ":: Reseeding (drop/create/seed) SQLite file: $DB_FILE ::"
+    "${RUN[@]}" db reseed app1
+fi
+
+echo ":: Serving app1 on http://${SERVER_HOST}:${SERVER_PORT}  (DB: $DB_FILE) ::"
+exec "${RUN[@]}" http serve

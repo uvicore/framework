@@ -78,7 +78,10 @@ class Scopes:
         # Check for redirect override or additional exception headers
         if auth_config.unauthenticated_handler.redirect:
             location = auth_config.unauthenticated_handler.redirect
-            if '/' not in location and '.' in location: location = request.url_for(location)
+            # A redirect given as a route name (no '/', has a '.') is resolved to a
+            # URL.  request.url_for() returns a starlette URL object, so cast to str
+            # before the string operations below (and the header concat).
+            if '/' not in location and '.' in location: location = str(request.url_for(location))
             separator = '&' if '?' in location else '?'
             referer = separator + "referer=" + str(request.scope.get('path'))
             raise HTTPException(status_code=301, headers={

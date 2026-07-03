@@ -1,0 +1,28 @@
+{#
+  Generic web error page. The web exception handler
+  (uvicore.http.exceptions.handlers.web) renders errors/<status_code>.j2 first,
+  then falls back to this catch_all.  Context: request, status_code, message,
+  detail, exception, extra (from the exception's __dict__).
+
+  NOTE: error views are intentionally standalone (they don't extend
+  layouts/app.j2), because they render outside the app1/* view-composer scope and
+  so don't receive the layout's site/nav context.
+#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Error {{ status_code }}</title>
+  <link rel="icon" href="{{ public('favicon.ico') }}">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+</head>
+<body>
+  <main class="container error-page">
+    <p class="code">{{ status_code or 500 }}</p>
+    <h1>{{ message or 'Something went wrong' }}</h1>
+    {% if detail %}<p class="muted">{{ detail }}</p>{% endif %}
+    <p><a class="btn btn-primary" href="{{ url('home') }}">Back home</a></p>
+  </main>
+</body>
+</html>

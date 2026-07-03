@@ -113,57 +113,45 @@ class App1(Provider, Cli, Db, Redis, Http, Templating):
         self.register_http_views(['app1.http.views'])
 
         # Define view composers (pass append=True to add views to an existing composer)
-        #self.register_http_view_composers('mreschke.wiki.http.composers.layout.Layout', 'wiki/*')
-        #self.register_http_view_composers('mreschke.wiki.http.composers.layout.Layout', ['wiki/home', 'wiki/about'])
-
-        # You can also define multiple view composers as a dict.  Exercised by
-        # tests/test_http/test_view_composers.py (also guards the dict-form registration).
+        # A composer injects extra context into every view matching its wildcard.
+        # Layout feeds site-wide context (nav, site name, year) to every app1/* page;
+        # Sidebar adds sidebar links only to the home and about pages.
+        # Exercised/pinned by tests/test_http/test_view_composers.py.
         self.register_http_view_composers({
             'app1.http.composers.layout.Layout': 'app1/*',
             'app1.http.composers.sidebar.Sidebar': ['app1/home', 'app1/about'],
         })
 
-        # Define public paths
-        self.register_http_public(['app1.http.publicc'])
+        # Define public paths (served at /)
+        self.register_http_public(['app1.http.public'])
 
-        # Define asset paths
+        # Define asset paths (served at config.app.web.asset.path, default /assets)
         self.register_http_assets(['app1.http.public.assets'])
 
-        # Define custom template options
-        # def url_method(context: dict, name: str, **path_params: any) -> str:
-        #     request = context["request"]
-        #     return request.url_for(name, **path_params)
-
-        # def up_filter(input):
-        #     return input.upper()
-
-        # def up_filter2(context, input):
-        #     return input.upper()
-
-        # def is_prime(n):
-        #     import math
-        #     if n == 2:
-        #         return True
-        #     for i in range(2, int(math.ceil(math.sqrt(n))) + 1):
-        #         if n % i == 0:
-        #             return False
-        #     return True
-
-        # self.register_http_view_context_processors({
-        #     'context_functions': {
-        #         'url2': url_method,
-        #     },
-        #     'context_filters': {
-        #         'up': up_filter2,
-        #     },
-        #     'filters': {
-        #         'up': up_filter,
-        #     },
-        #     'tests': {
-        #         'prime': is_prime,
-        #     },
-        # })
-        # Optionally, hack jinja to add anything possible like so
+        # Define custom template options.  This demonstrates all four categories of
+        # app-level Jinja processors the templating engine supports.  The framework
+        # already provides url(), asset() and public() as context_functions; these
+        # are additional app extras defined in app1/http/context.py.
+        from app1.http import context
+        self.register_http_view_context_processors({
+            # Globals that receive the render context (used as functions in templates)
+            'context_functions': {
+                'nav_active': context.nav_active,
+            },
+            # Filters that receive the render context
+            'context_filters': {
+                'money': context.money,
+            },
+            # Plain filters
+            'filters': {
+                'shout': context.shout,
+            },
+            # Tests, usable as {% if n is prime %}
+            'tests': {
+                'prime': context.prime,
+            },
+        })
+        # You can also reach the raw jinja env for anything else, e.g.
         #app.jinja.env.globals['whatever'] = somefunc
 
     def register_routes(self) -> None:
