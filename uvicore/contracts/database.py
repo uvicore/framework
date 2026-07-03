@@ -51,6 +51,11 @@ class Database(ABC):
         pass
 
     @abstractmethod
+    async def disconnect(self, connection: str = None, metakey: str = None, all_dbs: bool = False) -> None:
+        """Dispose one engine (by connection str or metakey) or all engines (all_dbs=True), closing all pooled driver connections"""
+        pass
+
+    @abstractmethod
     def packages(self, connection: str = None, metakey: str = None) -> List[Package]:
         """Get all packages with the metakey (direct or derived from connection str)."""
         pass

@@ -1,23 +1,28 @@
 import uvicore
-from uvicore.support.dumper import dd, dump
 from uvicore.http import Request, response
 from uvicore.http.routing import WebRouter, Controller
-from fastapi import Depends
+
 
 @uvicore.controller()
 class About(Controller):
+    """About page.
+
+    Demonstrates: an autoprefixed named route ('app1.about'), a second plain-text
+    response on the same controller, and the Sidebar composer (registered for
+    app1/about).
+    """
 
     def register(self, route: WebRouter):
 
         @route.get('/about', name='about')
         async def about(request: Request):
             return await response.View('app1/about.j2', {
-                'request': request
+                'request': request,
             })
 
-        @route.get('/about2')
+        # A non-HTML response - handy for smoke tests and to show response.Text
+        @route.get('/about2', name='about2')
         async def about2():
-            return response.Text('About2 text here')
+            return response.Text('About2 plain text here')
 
-        # Return router
         return route

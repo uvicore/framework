@@ -1,14 +1,36 @@
-{% extends "themes/" + theme.name + "/layout.j2" %}
+{% extends "layouts/app.j2" %}
+
+{% block title %}{{ site_name }} &middot; Home{% endblock %}
+
+{% block layout_class %}has-sidebar{% endblock %}
+
 {% block content %}
+<section class="hero">
+  <h1>Welcome to {{ site_name }}</h1>
+  <p class="lead">{{ site_tagline }}</p>
+  <p class="hero-actions">
+    <a class="btn btn-primary" href="{{ url('app1.features') }}">Explore features</a>
+    <a class="btn" href="{{ url('app1.about') }}">Learn more</a>
+  </p>
+</section>
 
-    <!-- Jumbotron -->
-    <div class="p-5 text-center">
-        <h1 class="mb-3">Welcome to the Uvicore Test App1</h1>
-        {# <h4 class="mb-3">A prototype wiki written in the async python web framework Uvicore!</h4>
-        <a class="btn btn-primary" href="{{ url('wiki.search') }}" role="button">View all Posts</a> #}
-    </div>
-    <!-- Jumbotron -->
+<section class="cards">
+  <article class="card">
+    <h3>Layouts &amp; inheritance</h3>
+    <p>Every page extends <code>layouts/app.j2</code> and overrides blocks - header,
+       footer and this content area come from one shared template.</p>
+  </article>
+  <article class="card">
+    <h3>View composers</h3>
+    <p>The nav and this page's sidebar are injected by view composers, so no
+       controller has to pass them. Layout marker: <code>{{ composed_marker }}</code>.</p>
+  </article>
+  <article class="card">
+    <h3>Named routes</h3>
+    <p>Links use <code>url('name')</code> - e.g. this goes to
+       <a href="{{ url('app1.contact') }}">contact</a> by route name, not a hard path.</p>
+  </article>
+</section>
+{% endblock %}
 
-{% endblock content %}
-
-
+{% block sidebar %}{% include "partials/sidebar.j2" %}{% endblock %}

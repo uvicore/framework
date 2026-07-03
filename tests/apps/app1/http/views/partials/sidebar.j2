@@ -1,0 +1,20 @@
+{#
+  Sidebar - only rendered on pages that pull it in (home, about).  The
+  sidebar_links come from the Sidebar view composer, which is registered against
+  just those two views.
+#}
+<aside class="sidebar">
+  <h3 class="sidebar-title">Explore</h3>
+  <ul class="sidebar-links">
+    {% for link in sidebar_links %}
+    <li>
+      {% if link.route %}
+        <a href="{{ url(link.route) }}">{{ link.label }}</a>
+      {% else %}
+        <a href="{{ link.url }}" rel="noopener">{{ link.label }} &#8599;</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted sidebar-marker">composer: {{ sidebar_marker }}</p>
+</aside>

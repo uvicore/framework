@@ -1,38 +1,40 @@
 import uvicore
-from uvicore.support.dumper import dd, dump
 from uvicore.http import Request, response
+from uvicore.http.request import Form
 from uvicore.http.routing import WebRouter, Controller
 
 
 @uvicore.controller()
 class Login(Controller):
+    """Login / logout.
+
+    Illustrative only - it renders a login form, accepts a form POST, and shows
+    the current request.user auth state; it does not implement a real credential
+    backend.  Logout demonstrates a redirect response back to the home route.
+    """
 
     def register(self, route: WebRouter):
 
         @route.get('/login', name='login')
-        async def home(request: Request, referer: str | None = None):
-            user = request.user
-            if not user.authenticated:
-                from uvicore.http.exceptions import NotAuthenticated
-                raise NotAuthenticated(headers={'WWW-Authenticate': 'Basic realm="App1 Web Realm"'})
-
-            if referer:
-                return response.Redirect(referer)
+        async def login(request: Request):
             return await response.View('app1/login.j2', {
-                'request': request
+                'request': request,
+                'user': request.user,
+                'attempted': None,
+            })
+
+        @route.post('/login', name='login')
+        async def login_post(request: Request, username: str = Form(...), password: str = Form('')):
+            # Illustrative: no real credential check, just echo the attempt.
+            return await response.View('app1/login.j2', {
+                'request': request,
+                'user': request.user,
+                'attempted': username,
             })
 
         @route.get('/logout', name='logout')
-        async def home(request: Request):
-            # Fixme.  I have request.authenticator (basic, session...)
-            # and request.route_type (web or api)
-            # I should make an auth.logout() method that handles each authenticator logout
+        async def logout(request: Request):
+            # Redirect helper (Starlette RedirectResponse) back to the home route
+            return response.Redirect(str(request.url_for('home')))
 
-            user = request.user
-            if user.authenticated:
-                from uvicore.http.exceptions import NotAuthenticated
-                raise NotAuthenticated(headers={'WWW-Authenticate': 'Basic realm="App1 Web Realm"'})
-            return response.HTML('Logged Out')
-
-        # Return router
         return route

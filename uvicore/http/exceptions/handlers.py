@@ -29,11 +29,13 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
     (status_code, detail, message, exception, extra, headers) = expand_payload(e)
 
     try:
-        # Try to respond with a errors template, if exists
+        # Try to respond with a errors template, if exists.  Pass the real
+        # status_code/headers through so the rendered error page returns the
+        # correct HTTP status (not a default 200).
         return await response.View('errors/' + str(status_code) + '.j2', {
             'request': request,
             **e.__dict__,
-        })
+        }, status_code=status_code, headers=headers)
     except:
 
         try:
@@ -41,7 +43,7 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
             return await response.View('errors/catch_all.j2', {
                 'request': request,
                 **e.__dict__,
-            })
+            }, status_code=status_code, headers=headers)
         except:
             # Errors status_code or catch_all template does not exist.
             # Response with generic HTML error
@@ -66,7 +68,7 @@ async def web(request: Request, e: HTTPException) -> response.HTML:
 
 def expand_payload(e: HTTPException):
     """Get error payload depending on uvicore or stock HTTPException"""
-    # Defined in the running app config api.exceptions.main
+    # Defined in the running app config api.exception.handler
     headers = getattr(e, "headers", None)
 
     # Base only has status_code and detail
