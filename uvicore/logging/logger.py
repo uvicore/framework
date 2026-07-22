@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import re
 import sys
 import uvicore
 import logging
 import logging.config
-from logging import Formatter
-from colored import attr, bg, fg
 from logging import Logger as PythonLogger
+from rich.rule import Rule
+from rich.text import Text
+from rich.theme import Theme
+from rich.console import Console
 from uvicore.support.dumper import dump, dd
 from uvicore.contracts import Logger as LoggerInterface
 
@@ -55,119 +56,171 @@ class ExcludeFilter(logging.Filter):
         # logging filters are.  So you can filter on A.B and it will include
         # names of A.B.C and up.
         for exclude in self.excludes:
-            print(exclude)
             if record.name[0:len(exclude)] == exclude: return False
         return True
 
 
-class ColoredFormatter(Formatter):
+# Rich styles for the console (STDOUT/STDERR) output only.
+# This theme controls every color/decoration you see on the console.  It does
+# NOT affect the file handler (which stays plain %(asctime)s ... %(message)s so
+# logs remain greppable), nor prettyprinter dump()/dd() output.
+# Tweak these to re-skin the console.  See https://rich.readthedocs.io/en/stable/style.html
+UVICORE_LOG_THEME = Theme({
+    # Level styling (the whole line is styled for these levels)
+    'log.debug':        'grey42',
+    'log.debug.icon':   'grey42',
+    'log.info':         'default',
+    'log.notice':       'bold gold1',
+    'log.notice.label': 'bold black on gold1',
+    'log.warning':      'bold orange1',
+    'log.warning.icon': 'bold orange1',
+    'log.error':        'bold red1',
+    'log.error.icon':   'bold red1',
+    'log.critical':     'bold red1',
+    'log.critical.label': 'bold white on red3',
 
-    def __init__(self, patern):
-        Formatter.__init__(self, patern)
+    # Separator / line rules
+    'log.rule':         'dark_orange',
 
-    def format(self, record):
-        # Remember this is console output only, not file or other handlers
-        # See color chart https://pypi.org/project/colored/
-        level = record.levelname
-        message = logging.Formatter.format(self, record)
-        prefix = str(message.strip()[0:2]).strip()
+    # header()  ::  ->  full width rule with centered title
+    'header.rule':      'dark_orange',
+    'header.title':     'bold spring_green2',
 
-        # Format all INFO level messages
-        if level == 'INFO':
+    # header2()  ##  ->  full width rule with centered title
+    'header2.rule':     'grey42',
+    'header2.title':    'bold cyan',
 
-            # Format header
-            if prefix == '::':
-                message = re.sub("^:: ", "", message)
-                message = re.sub(" ::$", "", message)
-                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ':: ', attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ::', attr(0))
+    # header3()  ===  ->  inline styled text
+    'header3.mark':     'bold dark_orange',
+    'header3.title':    'bold spring_green2',
 
-            # Format header2
-            if prefix == '##':
-                message = re.sub("^## ", "", message)
-                message = re.sub(" ##$", "", message)
-                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '## ', attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('green'), attr('bold'), message, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ##', attr(0))
+    # header4()  ----  ->  inline styled text
+    'header4.mark':     'bold dark_orange',
+    'header4.title':    'green',
 
-            # Format header3
-            if prefix == '==':
-                message = re.sub("^=== ", "", message)
-                message = re.sub(" ===$", "", message)
-                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '=== ', attr(0)) \
-                    + ('{0}{1}{2}').format(fg('green'), message, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ===', attr(0))
+    # item()/item2()/item3()/item4()  ->  colored glyph + text
+    'item.mark':        'bold green',
+    'item2.mark':       'bold red',
+    'item3.mark':       'bold cyan',
+    'item4.mark':       'bold magenta',
+    'item.text':        'bold white',
+})
 
-            # Format header4
-            if prefix == '--':
-                message = re.sub("^---- ", "", message)
-                message = re.sub(" ----$", "", message)
-                message = ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), '---- ', attr(0)) \
-                    + ('{0}{1}{2}').format(fg('dark_green'), message, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('dark_orange'), attr('bold'), ' ----', attr(0))
+# NOTICE is a custom log level sitting between INFO (20) and WARNING (30).
+# Registering it with the stdlib means the file handler's %(levelname)s column
+# renders "NOTICE" (instead of "INFO") and level based filtering/config works.
+NOTICE = 25
+logging.addLevelName(NOTICE, 'NOTICE')
 
-            # Format item *
-            elif prefix == '*':
-                split = message.split('*')
-                pre = split[0] + '*'
-                post = '*'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('green'), pre, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
+# Glyphs used for item tiers and status prefixes on the console.  Purely
+# cosmetic (console only) - the file handler still logs the raw '* - + >'
+# prefixes so log files stay plain and greppable.
+ITEM_GLYPHS = {'* ': '●', '- ': '◆', '+ ': '✚', '> ': '▸'}
+NOTICE_GLYPH = 'ℹ'
+WARNING_GLYPH = '⚠'
+ERROR_GLYPH = '✖'
+DEBUG_GLYPH = '⚙'
 
-            # Format item2 -
-            elif prefix == '-':
-                split = message.split('-')
-                pre = split[0] + '-'
-                post = '-'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('red'), pre, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
 
-            # Format item3 +
-            elif prefix == '+':
-                split = message.split('+')
-                pre = split[0] + '+'
-                post = '+'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('cyan'), pre, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
+class RichConsoleHandler(logging.Handler):
+    """Rich powered console log handler.
 
-            # Format item4 >
-            elif prefix == '>':
-                split = message.split('>')
-                pre = split[0] + '>'
-                post = '>'.join(split[1:])
-                message = ('{0}{1}{2}').format(fg('magenta'), pre, attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), post, attr(0))
+    Replaces the old `colored` based ColoredFormatter for all STDOUT/STDERR
+    console output.  It keeps the exact same prefix-based semantics the Logger
+    methods emit (`:: header ::`, `## header2 ##`, `* item`, etc)
+    but renders them beautifully with rich.  DEBUG/INFO/NOTICE and all layout
+    helpers print to STDOUT, WARNING/ERROR/CRITICAL print to STDERR.  NOTICE is
+    a real custom log level (25) so the file handler's levelname column shows it.
 
-            # Format notice
-            elif (level == 'INFO' and re.match("^NOTICE: ", message)):
-                message = re.sub("^NOTICE: ", "", message)
-                message = ('{0}{1}{2}{3}').format(fg('yellow'), attr('bold'), 'NOTICE: ', attr(0)) \
-                    + ('{0}{1}{2}{3}').format(fg('white'), attr('bold'), message, attr(0))
+    This is a proper logging.Handler so log levels, filters and the file handler
+    all continue to behave exactly as before.
+    """
 
-            # Format separator
-            elif (level == 'INFO' and re.match("^====", message)):
-                message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
+    def __init__(self, level=logging.NOTSET, *, colors=True):
+        super().__init__(level=level)
+        # No explicit file= so each Console resolves sys.stdout/sys.stderr lazily
+        # at print time.  This keeps pytest's capture and any stream redirection
+        # working (rich would otherwise pin the stream at construction time).
+        self._stdout = Console(theme=UVICORE_LOG_THEME, stderr=False, no_color=not colors, markup=False, highlight=False, emoji=False)
+        self._stderr = Console(theme=UVICORE_LOG_THEME, stderr=True, no_color=not colors, markup=False, highlight=False, emoji=False)
 
-            # Format line
-            elif (level == 'INFO' and re.match("^----", message)):
-                message = ('{0}{1}{2}{3}').format(fg('orange_4a'), attr('bold'), message, attr(0))
-
-            # No special formatting, plain old .info()
+    def emit(self, record):
+        try:
+            console = self._stderr if record.levelno >= logging.WARNING else self._stdout
+            renderable = self._render(record)
+            # Rules must expand to the console width; everything else soft-wraps
+            # (no hard wrapping) so long lines like SQL stay intact and let the
+            # terminal wrap them, matching the old behavior.
+            if isinstance(renderable, Rule):
+                console.print(renderable)
             else:
-                message = message
+                console.print(renderable, soft_wrap=True)
+        except Exception:  # noqa: BLE001 - logging handlers must never raise
+            self.handleError(record)
 
-        elif (level == 'DEBUG'):
-            message = ('{0}{1}{2}').format(fg(241), message, attr(0))
+    def _render(self, record):
+        """Turn a log record into a rich renderable."""
+        message = self.format(record)
+        level = record.levelname
+        stripped = message.strip()
 
-        elif (level == 'WARNING'):
-            message = ('{0}{1}{2}').format(fg('orange_red_1'), message, attr(0))
-        elif (level == 'ERROR'):
-            message = ('{0}{1}{2}').format(fg('red'), message, attr(0))
-        elif (level == 'CRITICAL'):
-            message = ('{0}{1}{2}{3}').format(fg('black'), bg('red'), message, attr(0))
+        # Blank line
+        if stripped == '':
+            return Text('')
 
-        return message
+        # Level based styling (everything that is not a plain INFO message)
+        if level == 'DEBUG':
+            return Text.assemble((DEBUG_GLYPH + ' ', 'log.debug.icon'), (message, 'log.debug'))
+        if level == 'NOTICE':
+            return Text.assemble((f' {NOTICE_GLYPH} NOTICE ', 'log.notice.label'), ' ', (message, 'log.notice'))
+        if level == 'WARNING':
+            return Text.assemble((WARNING_GLYPH + '  ', 'log.warning.icon'), (message, 'log.warning'))
+        if level == 'ERROR':
+            return Text.assemble((ERROR_GLYPH + '  ', 'log.error.icon'), (message, 'log.error'))
+        if level == 'CRITICAL':
+            return Text.assemble((' CRITICAL ', 'log.critical.label'), ' ', (message, 'log.critical'))
+
+        # INFO level - parse the layout-helper prefixes
+        return self._render_info(message, stripped)
+
+    def _render_info(self, message, stripped):
+        # separator() -> a full line of '='
+        if len(stripped) >= 3 and set(stripped) == {'='}:
+            return Rule(style='log.rule', characters='═')
+
+        # line() -> a full line of '-'
+        if len(stripped) >= 3 and set(stripped) == {'-'}:
+            return Rule(style='log.rule', characters='─')
+
+        # header()  :: X ::  -> full width rule with centered title
+        if stripped.startswith(':: ') and stripped.endswith(' ::') and len(stripped) > 5:
+            title = stripped[3:-3]
+            return Rule(title=Text(f' {title} ', style='header.title'), characters='═', style='header.rule')
+
+        # header2()  ## X ##  -> full width rule with centered title
+        if stripped.startswith('## ') and stripped.endswith(' ##') and len(stripped) > 5:
+            title = stripped[3:-3]
+            return Rule(title=Text(f' {title} ', style='header2.title'), characters='─', style='header2.rule')
+
+        # header3()  === X ===  -> inline styled text
+        if stripped.startswith('=== ') and stripped.endswith(' ===') and len(stripped) > 7:
+            title = stripped[4:-4]
+            return Text.assemble(('=== ', 'header3.mark'), (title, 'header3.title'), (' ===', 'header3.mark'))
+
+        # header4()  ---- X ----  -> inline styled text
+        if stripped.startswith('---- ') and stripped.endswith(' ----') and len(stripped) > 9:
+            title = stripped[5:-5]
+            return Text.assemble(('---- ', 'header4.mark'), (title, 'header4.title'), (' ----', 'header4.mark'))
+
+        # item()/item2()/item3()/item4() -> colored glyph + text (indent preserved)
+        indent = message[:len(message) - len(message.lstrip())]
+        for prefix, style in (('* ', 'item.mark'), ('- ', 'item2.mark'), ('+ ', 'item3.mark'), ('> ', 'item4.mark')):
+            if stripped.startswith(prefix):
+                body = stripped[len(prefix):]
+                return Text.assemble(indent, (ITEM_GLYPHS[prefix] + ' ', style), (body, 'item.text'))
+
+        # Plain old .info()
+        return Text(message, style='log.info')
 
 
 @uvicore.service('uvicore.logging.logger.Logger',
@@ -219,19 +272,31 @@ class Logger(LoggerInterface):
         self._logger.setLevel(logging.DEBUG)
         self._name = None
 
+        # Explicit handler references (do not rely on handler list order)
+        self._console_handler = None
+        self._file_handler = None
+
         # New Console Handler
+        # colors=True renders beautifully with rich (STDOUT/STDERR split).
+        # colors=False falls back to a plain, ASCII, STDOUT-only StreamHandler
+        # (no rich, raw prefixes) for anyone who explicitly wants dumb output.
         if config['console']['enabled']:
-            handler = logging.StreamHandler(stream=sys.stdout)
-            handler.setLevel(config['console']['level'])
             if config['console']['colors']:
-                handler.setFormatter(ColoredFormatter(config['console']['format']))
+                handler = RichConsoleHandler(level=config['console']['level'], colors=True)
+                handler.setFormatter(logging.Formatter(
+                    fmt=config['console']['format'],
+                    datefmt='%Y-%m-%d %H:%M:%S'
+                ))
             else:
+                handler = logging.StreamHandler(stream=sys.stdout)
+                handler.setLevel(config['console']['level'])
                 handler.setFormatter(logging.Formatter(
                     fmt=config['console']['format'],
                     datefmt='%Y-%m-%d %H:%M:%S'
                 ))
             handler.addFilter(OutputFilter(config['console']['filters'], config['console']['exclude']))
             self._logger.addHandler(handler)
+            self._console_handler = handler
 
         # New File Handler
         if config['file']['enabled']:
@@ -246,6 +311,7 @@ class Logger(LoggerInterface):
             #if config['file'].get('filter'): handler.addFilter(logging.Filter(name=config['file']['filter']))
             handler.addFilter(OutputFilter(config['file']['filters'], config['file']['exclude']))
             self._logger.addHandler(handler)
+            self._file_handler = handler
 
         self.config = config
 
@@ -254,17 +320,11 @@ class Logger(LoggerInterface):
 
     @property
     def console_handler(self) -> PythonLogger:
-        try:
-            return self._logger.handlers[0]
-        except IndexError:
-            return None
+        return self._console_handler
 
     @property
     def file_handler(self) -> PythonLogger:
-        try:
-            return self._logger.handlers[1]
-        except IndexError:
-            return None
+        return self._file_handler
 
     @property
     def logger(self):
@@ -281,11 +341,11 @@ class Logger(LoggerInterface):
     def dump(self, *args):
         running_pytest = uvicore.app.is_pytest
         console_enabled = self.config['console']['enabled']
-        console_level = logging.getLevelName(uvicore.log.console_handler.level) if console_enabled else ''
+        console_level = logging.getLevelName(self.console_handler.level) if console_enabled else ''
         console_filters = self.config['console']['filters']
         console_excludes = self.config['console']['exclude']
         file_enabled = self.config['file']['enabled']
-        file_level = logging.getLevelName(uvicore.log.file_handler.level) if file_enabled else ''
+        file_level = logging.getLevelName(self.file_handler.level) if file_enabled else ''
 
 
         # Use dump() to prettyprint to console only if console is in DEBUG mode or we are running a pytest.
@@ -315,23 +375,21 @@ class Logger(LoggerInterface):
 
         # Dump to file
         if (file_enabled and file_level == 'DEBUG'):
-            # We must temporarily disable the console logger or this prints to the console as well
-            # Which means a double print because of the dump(*args) abvove
-            # Must get handlers from the root logger.  If we are using a custom logger name like 'my-section' then it has no handlers
-            # so self.logger.handlers does not work.  We want the 'root' logger handlers
-            root_handlers = logging.getLogger().handlers
-            for handler in root_handlers:
-                if 'logging.StreamHandler' in str(type(handler)):
-                    handler.setLevel('CRITICAL')
+            # We must temporarily disable the console handler or this prints to the console as well
+            # which means a double print because of the dump(*args) above.
+            console_handler = self.console_handler
+            saved_level = None
+            if console_handler is not None:
+                saved_level = console_handler.level
+                console_handler.setLevel(logging.CRITICAL)
 
-            # Log to file in in DEBUG mode
+            # Log to file in DEBUG mode
             for arg in args:
                 self.logger.debug(arg)
 
-            # Re-enable console logger by restoring the original level
-            for handler in root_handlers:
-                if 'logging.StreamHandler' in str(type(handler)):
-                    handler.setLevel(console_level)
+            # Re-enable the console handler by restoring its original level
+            if console_handler is not None:
+                console_handler.setLevel(saved_level)
 
         # Reset logger name
         self.reset()
@@ -341,7 +399,7 @@ class Logger(LoggerInterface):
         self.reset()
 
     def notice(self, message):
-        self.logger.info("NOTICE: " + str(message))
+        self.logger.log(NOTICE, str(message))
         self.reset()
 
     def warning(self, message):
@@ -424,4 +482,4 @@ class Logger(LoggerInterface):
 # Use the uvicore.log singleton global instead.
 
 # Public API for import * and doc gens
-#__all__ = ['_Logger', 'ColoredFormatter']
+#__all__ = ['_Logger', 'RichConsoleHandler']
