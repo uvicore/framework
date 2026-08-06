@@ -5,7 +5,7 @@ from .dispatcher import Dispatcher
 from .ioc import Binding, Ioc
 from .job_dispatcher import JobDispatcher
 from .job import Job
-from .logger import Logger
+from .logger import Logger, LogWriter, LogChannel
 from .package import Package
 from .provider import Provider
 from .template import Template

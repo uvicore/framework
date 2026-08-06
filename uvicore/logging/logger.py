@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import os
 import sys
 import uvicore
 import logging
 import logging.config
+import logging.handlers
+from contextvars import ContextVar
 from logging import Logger as PythonLogger
+from logging import Handler as PythonHandler
 from rich.rule import Rule
 from rich.text import Text
 from rich.theme import Theme
 from rich.console import Console
+from uvicore.typing import Dict
 from uvicore.support.dumper import dump, dd
+from uvicore.logging.handlers import DatedFileHandler, is_dated
 from uvicore.contracts import Logger as LoggerInterface
+from uvicore.contracts import LogWriter as LogWriterInterface
+from uvicore.contracts import LogChannel as LogChannelInterface
 
 
 class OutputFilter(logging.Filter):
@@ -42,22 +50,6 @@ class OutputFilter(logging.Filter):
 
         return show
 
-
-
-class ExcludeFilter(logging.Filter):
-    """Python logging custom exclude filter class"""
-
-    def __init__(self, excludes):
-        self.excludes = excludes
-        super().__init__(name='exclude')
-
-    def filter(self, record):
-        # Not an exact filter match but a contains match.  This matches how default python
-        # logging filters are.  So you can filter on A.B and it will include
-        # names of A.B.C and up.
-        for exclude in self.excludes:
-            if record.name[0:len(exclude)] == exclude: return False
-        return True
 
 
 # Rich styles for the console (STDOUT/STDERR) output only.
@@ -223,128 +215,144 @@ class RichConsoleHandler(logging.Handler):
         return Text(message, style='log.info')
 
 
-@uvicore.service('uvicore.logging.logger.Logger',
-    aliases=['Logger', 'logger', 'Log', 'log'],
-    singleton=True,
-    kwargs={'config': uvicore.config('app.logger')},
-)
-class Logger(LoggerInterface):
-    """Logger private class.
+# Default logger config.
+# Levels from logging._levelToName are
+# {50: 'CRITICAL', 40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG', 0: 'NOTSET'}
+# Levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+DEFAULT_CONFIG = {
+    'console': {
+        'enabled': True,
+        'level': 'DEBUG',
+        'colors': True,
+        'format': '%(message)s',
+        'filters': [],
+        'exclude': [],
+    },
+    'file': {
+        'enabled': False,
+        'level': 'DEBUG',
+        'file': '/tmp/example.log',
+        'retention': 0,
+        'when': 'midnight',
+        'interval': 1,
+        'backup_count': 7,
+        'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)-22s | %(message)s',
+        'filters': [],
+        'exclude': [],
+    },
+    'channels': {},
+}
 
-    Do not import from this location.
-    Use the uvicore.log singleton global instead."""
 
-    def __init__(self, config):
-        # Default Config
-        # Levels from logging._levelToName are
-        # {50: 'CRITICAL', 40: 'ERROR', 30: 'WARNING', 20: 'INFO', 10: 'DEBUG', 0: 'NOTSET'}
+# A channel inherits the default channels console/file config EXCEPT for these.
+# OutputFilter prefix matches on record.name, and a channels record name is the
+# channel itself - a completely different naming universe than 'uvicore.orm' or
+# 'asyncio'.  Inheriting an include style filters: ['acme'] would silently leave
+# every channel file empty, which is never what anybody wants.  A channel can
+# still define its own filters/exclude explicitly.
+CHANNEL_INHERIT_RESET = {'filters': [], 'exclude': []}
 
-        # Levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-        default = {
-            'console': {
-                'enabled': True,
-                'level': 'DEBUG',
-                'colors': True,
-                'format': '%(message)s',
-                'filters': [],
-                'exclude': [],
-            },
-            'file': {
-                'enabled': False,
-                'level': 'DEBUG',
-                'file': '/tmp/example.log',
-                'when': 'midnight',
-                'interval': 1,
-                'backup_count': 7,
-                'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)-22s | %(message)s',
-                'filters': [],
-                'exclude': [],
-            }
-        }
 
-        # Merge default and user defined config
-        config = {**default, **config}
-        if 'console' in config.keys(): config['console'] = {**default['console'], **config['console']}
-        if 'file' in config.keys(): config['file'] = {**default['file'], **config['file']}
+# The one-shot logger name set by uvicore.log.name('x') and cleared by reset().
+# A ContextVar, not an instance attribute, because uvicore.log is a singleton in
+# an async framework - a plain attribute lets two concurrent tasks (or two of
+# FastAPIs anyio worker threads running sync endpoints) clobber each others scope
+# between the name() call and the emit.
+_scope: ContextVar[str | None] = ContextVar('uvicore.log.scope', default=None)
 
-        # New Logger
-        self._logger = logging.getLogger()
-        self._logger.setLevel(logging.DEBUG)
-        self._name = None
 
-        # Explicit handler references (do not rely on handler list order)
-        self._console_handler = None
-        self._file_handler = None
+def build_console_handler(config: Dict) -> PythonHandler | None:
+    """Build the console log handler, or None if console logging is disabled
 
-        # New Console Handler
-        # colors=True renders beautifully with rich (STDOUT/STDERR split).
-        # colors=False falls back to a plain, ASCII, STDOUT-only StreamHandler
-        # (no rich, raw prefixes) for anyone who explicitly wants dumb output.
-        if config['console']['enabled']:
-            if config['console']['colors']:
-                handler = RichConsoleHandler(level=config['console']['level'], colors=True)
-                handler.setFormatter(logging.Formatter(
-                    fmt=config['console']['format'],
-                    datefmt='%Y-%m-%d %H:%M:%S'
-                ))
-            else:
-                handler = logging.StreamHandler(stream=sys.stdout)
-                handler.setLevel(config['console']['level'])
-                handler.setFormatter(logging.Formatter(
-                    fmt=config['console']['format'],
-                    datefmt='%Y-%m-%d %H:%M:%S'
-                ))
-            handler.addFilter(OutputFilter(config['console']['filters'], config['console']['exclude']))
-            self._logger.addHandler(handler)
-            self._console_handler = handler
+    colors=True renders beautifully with rich (STDOUT/STDERR split).
+    colors=False falls back to a plain, ASCII, STDOUT-only StreamHandler
+    (no rich, raw prefixes) for anyone who explicitly wants dumb output."""
+    if not config.enabled: return None
 
-        # New File Handler
-        if config['file']['enabled']:
-            #class logging.handlers.TimedRotatingFileHandler(filename, when='h', interval=1, backupCount=0, encoding=None, delay=False, utc=False, atTime=None, errors=None)
-            #handler = logging.FileHandler(filename=config['file']['file'], mode='a')
-            handler = logging.handlers.TimedRotatingFileHandler(filename=config['file']['file'], when=config['file']['when'], interval=config['file']['interval'], backupCount=config['file']['backup_count'])
-            handler.setLevel(config['file']['level'])
-            handler.setFormatter(logging.Formatter(
-                fmt=config['file']['format'],
-                datefmt='%Y-%m-%d %H:%M:%S'
-            ))
-            #if config['file'].get('filter'): handler.addFilter(logging.Filter(name=config['file']['filter']))
-            handler.addFilter(OutputFilter(config['file']['filters'], config['file']['exclude']))
-            self._logger.addHandler(handler)
-            self._file_handler = handler
+    if config.colors:
+        handler = RichConsoleHandler(level=config.level, colors=True)
+    else:
+        handler = logging.StreamHandler(stream=sys.stdout)
+        handler.setLevel(config.level)
+    handler.setFormatter(logging.Formatter(fmt=config.format, datefmt='%Y-%m-%d %H:%M:%S'))
+    handler.addFilter(OutputFilter(config.filters, config.exclude))
+    return handler
 
-        self.config = config
+
+def build_file_handler(config: Dict, channel: str = 'default') -> PythonHandler | None:
+    """Build the file log handler, or None if file logging is disabled
+
+    Which handler you get depends on the configured filename.  If it contains
+    strftime tokens the date IS the filename (DatedFileHandler) and nothing is
+    ever renamed - the safe choice for long running and multi process apps.  A
+    plain filename keeps the legacy rename based time rotation."""
+    if not config.enabled: return None
+
+    filename = str(config.file)
+    if '{channel}' in filename:
+        # .replace() not .format() - a real log path can contain other braces and
+        # .format() would blow up with a KeyError on them.
+        filename = filename.replace('{channel}', channel)
+    elif channel != 'default':
+        # No {channel} token, but this IS a named channel.  A channel exists to get
+        # its OWN file, so append the name rather than silently collapsing every
+        # channel (and the default log) into one shared file.
+        base, extension = os.path.splitext(filename)
+        filename = '{}_{}{}'.format(base, channel, extension)
+
+    if is_dated(filename):
+        handler = DatedFileHandler(filename, retention=config.retention or 0)
+    else:
+        #class logging.handlers.TimedRotatingFileHandler(filename, when='h', interval=1, backupCount=0, encoding=None, delay=False, utc=False, atTime=None, errors=None)
+        handler = logging.handlers.TimedRotatingFileHandler(
+            filename=filename,
+            when=config.when,
+            interval=config.interval,
+            backupCount=config.backup_count,
+        )
+    handler.setLevel(config.level)
+    handler.setFormatter(logging.Formatter(fmt=config.format, datefmt='%Y-%m-%d %H:%M:%S'))
+    handler.addFilter(OutputFilter(config.filters, config.exclude))
+    return handler
+
+
+class LogWriter(LogWriterInterface):
+    """All of the log emitting and layout methods.
+
+    Shared by the Logger singleton (the default channel) and by every named
+    Channel.  Subclasses supply config, logger, console_handler, file_handler
+    and reset()."""
+
+    config: Dict
 
     def __call__(self, message):
         self.info(message)
 
     @property
-    def console_handler(self) -> PythonLogger:
-        return self._console_handler
+    def logger(self) -> PythonLogger:
+        raise NotImplementedError()
 
     @property
-    def file_handler(self) -> PythonLogger:
-        return self._file_handler
+    def console_handler(self) -> PythonHandler | None:
+        raise NotImplementedError()
 
     @property
-    def logger(self):
-        if not self._name: return self._logger
-        return logging.getLogger(self._name)
-
-    def name(self, name: str) -> LoggerInterface:
-        self._name = name
-        return self
+    def file_handler(self) -> PythonHandler | None:
+        raise NotImplementedError()
 
     def reset(self):
-        self._name = None
+        pass
 
     def dump(self, *args):
         running_pytest = uvicore.app.is_pytest
-        console_enabled = self.config['console']['enabled']
+
+        # Derive from the actual handlers, not just the config 'enabled' flags, so a
+        # disabled or failed handler can never AttributeError on None.level here.
+        console_enabled = self.config['console']['enabled'] and self.console_handler is not None
         console_level = logging.getLevelName(self.console_handler.level) if console_enabled else ''
         console_filters = self.config['console']['filters']
         console_excludes = self.config['console']['exclude']
-        file_enabled = self.config['file']['enabled']
+        file_enabled = self.config['file']['enabled'] and self.file_handler is not None
         file_level = logging.getLevelName(self.file_handler.level) if file_enabled else ''
 
 
@@ -353,7 +361,11 @@ class Logger(LoggerInterface):
         # if we should dump() the content or not.
         if (console_enabled and console_level == 'DEBUG') or running_pytest:
             show = False
-            loggerName = self._name or 'root'
+
+            # logging.getLogger().name IS 'root', a name()d scope logger is that name
+            # and a channels logger is the channel - so this one expression covers
+            # the default channel, a scoped logger and every channel.
+            loggerName = self.logger.name
 
             # Check filters
             if not console_filters: show = True
@@ -426,7 +438,7 @@ class Logger(LoggerInterface):
         self.logger.info('')
         self.reset()
 
-    def nl(self) -> LoggerInterface:
+    def nl(self) -> LogWriterInterface:
         """nl() is a blank() that is chainable"""
         self.logger.info('')
         return self
@@ -475,6 +487,172 @@ class Logger(LoggerInterface):
         self.logger.info(spaces + "> " + str(message))
         self.reset()
 
+
+class Channel(LogWriter, LogChannelInterface):
+    """One named log channel with its own file and its own python logger.
+
+    Do not instantiate directly.  Use uvicore.log.channel('Processor') instead.
+
+    A Channel is immutable - it holds no one-shot scope state - so it is safe to
+    grab once and hold onto across awaits and across threads:
+
+        log = uvicore.log.channel('Importer')
+        await self.fetch_batch()
+        log.item('imported 500 rows')
+    """
+
+    def __init__(self, name: str, config: Dict) -> None:
+        # A dot would make this channel the PARENT of every dotted logger below
+        # it, silently vacuuming unrelated records into this channels file.  A
+        # channel named 'uvicore' would swallow everything from 'uvicore.orm'.
+        if '.' in name:
+            raise Exception("Log channel name '{}' cannot contain a dot".format(name))
+
+        self._channel = name
+        self.config = config
+
+        self._logger = logging.getLogger(name)
+        self._logger.setLevel(logging.DEBUG)
+
+        # This is the whole trick.  The default channels file handler lives on the
+        # ROOT logger, and python logging propagation fires EVERY ancestor handler
+        # with no way to address them individually - so propagate=True would write
+        # every channel line into the default log file as well.  With propagate
+        # False and the channel owning its own console+file pair, a record hits its
+        # own file once and the console once, and can never reach the root file
+        # handler.  Nothing to coordinate, no ordering hazard.
+        #
+        # The trade-off: channel records do NOT reach handlers attached to the root
+        # logger (pytest caplog, a Sentry handler, ...).  If you need that, add your
+        # handler to logging.getLogger('<channel>') directly.
+        self._logger.propagate = False
+
+        # Rebuild from scratch.  logging.getLogger() returns a process wide
+        # singleton that outlives us, so an existing handler list here means a
+        # previous Logger instance (or a previous test) already built this channel.
+        for handler in list(self._logger.handlers):
+            self._logger.removeHandler(handler)
+            try:
+                handler.close()
+            except Exception:
+                pass
+        self._logger.handlers = []
+
+        self._file_handler = build_file_handler(config.file, channel=name)
+        self._console_handler = build_console_handler(config.console)
+        for handler in (self._file_handler, self._console_handler):
+            if handler is not None: self._logger.addHandler(handler)
+
+    @property
+    def channel(self) -> str:
+        return self._channel
+
+    @property
+    def logger(self) -> PythonLogger:
+        return self._logger
+
+    @property
+    def console_handler(self) -> PythonHandler | None:
+        return self._console_handler
+
+    @property
+    def file_handler(self) -> PythonHandler | None:
+        return self._file_handler
+
+    def reset(self):
+        # Nothing to reset.  A channel has no one-shot scope state, which is
+        # exactly what makes it safe to hold across awaits.
+        pass
+
+
+@uvicore.service('uvicore.logging.logger.Logger',
+    aliases=['Logger', 'logger', 'Log', 'log'],
+    singleton=True,
+    kwargs={'config': uvicore.config('app.logger')},
+)
+class Logger(LogWriter, LoggerInterface):
+    """Logger private class.
+
+    Do not import from this location.
+    Use the uvicore.log singleton global instead."""
+
+    def __init__(self, config):
+        # Deep merge the user config over our defaults.
+        #
+        # .clone() is mandatory, not style.  Dict holds its nested SuperDicts by
+        # reference and defaults() -> merge() -> update() mutates in place, so
+        # without the clone this would rewrite the live uvicore.config.app.logger.
+        self.config = Dict(config).clone().defaults(DEFAULT_CONFIG)
+
+        # The default channel writes to the ROOT logger.  It stays on root on
+        # purpose: third party records that propagate up (sqlalchemy, databases,
+        # aiosqlite, asyncpg, asyncio, faker, httpx) land in the app's log file
+        # there, and the shipped exclude lists are what filter them.
+        self._logger = logging.getLogger()
+        self._logger.setLevel(logging.DEBUG)
+
+        # Lazily built, cached named channels
+        self._channels: Dict[str, Channel] = Dict()
+
+        # Explicit handler references (do not rely on handler list order)
+        self._console_handler = build_console_handler(self.config.console)
+        self._file_handler = build_file_handler(self.config.file, channel='default')
+        for handler in (self._console_handler, self._file_handler):
+            if handler is not None: self._logger.addHandler(handler)
+
+    @property
+    def console_handler(self) -> PythonHandler | None:
+        return self._console_handler
+
+    @property
+    def file_handler(self) -> PythonHandler | None:
+        return self._file_handler
+
+    @property
+    def logger(self) -> PythonLogger:
+        scope = _scope.get()
+        if not scope: return self._logger
+        return logging.getLogger(scope)
+
+    def name(self, name: str) -> LoggerInterface:
+        _scope.set(name)
+        return self
+
+    def reset(self):
+        _scope.set(None)
+
+    @property
+    def channels(self) -> Dict[str, LogChannelInterface]:
+        """All instantiated log channels"""
+        return self._channels
+
+    def channel(self, name: str) -> LogChannelInterface:
+        """Get a named log channel with its own log file, lazily created and cached
+
+            uvicore.log.channel('Processor').info('batch complete')
+        """
+        if name in self._channels: return self._channels[name]
+
+        # Read the channel definition LIVE rather than from the constructor
+        # snapshot.  Logging bootstraps before any package config is merged (see
+        # uvicore/logging/package/provider.py), so channels can only come from the
+        # running app config - but reading it here means a channel added later,
+        # say from a provider boot(), is still honored on first access.
+        #
+        # .get(name) and not a dotted dotget() so a channel name is never split.
+        defined = uvicore.config('app.logger.channels').get(name) or self.config.channels.get(name)
+
+        # Inherit the default channels console/file config, minus filters/exclude
+        config = Dict(defined or {}).clone().defaults({
+            'console': Dict(self.config.console).clone().merge(CHANNEL_INHERIT_RESET),
+            'file': Dict(self.config.file).clone().merge(CHANNEL_INHERIT_RESET),
+        })
+
+        # An unknown channel is created from the defaults rather than raising.
+        # Blowing up on a log call is worse than the typo it would catch, and a
+        # stray 2026-07-29_Procesor.log on disk is loud enough on its own.
+        self._channels[name] = Channel(name, config)
+        return self._channels[name]
 
 
 # IoC Class Instance

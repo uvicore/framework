@@ -41,12 +41,32 @@ Resolve via `uvicore.ioc.make('redis')`; then full aioredis async command surfac
 `has, get(key, default=), put(key, value, seconds=), add, pull, remember(key, callback, seconds=),
 touch, increment, decrement, forget, flush`. Config: `config.app.cache`.
 
-## Logging — `uvicore/logging/logger.py`
+## Logging — `uvicore/logging/logger.py` + `uvicore/logging/handlers.py`
 `Logger` service (`'uvicore.logging.logger.Logger'`, aliases `['Logger','logger','Log','log']`,
-singleton) → `uvicore.log`. Levels: `info/notice/warning/debug/error/critical/exception`. Layout
-helpers: `header/header2/header3/header4`, `item/item2/item3/item4`, `line/nl/separator/blank`,
-`name(str)` for a scoped sub-logger. `ColoredFormatter`, `OutputFilter`/`ExcludeFilter` do
-prefix-based include/exclude. Config: `config.app.logger`.
+singleton) → `uvicore.log`. Levels: `info/notice/warning/debug/error/critical/exception` (custom
+`NOTICE` = 25). Layout helpers: `header/header2/header3/header4`, `item/item2/item3/item4`,
+`line/nl/separator/blank`. Config: `config.app.logger` **only** — logging registers before any
+package config merges, so it cannot participate in the deep merge (see `logging/package/provider.py`).
+
+- **Contracts** (`contracts/logger.py`): `LogWriter` (all emit + layout methods, shared base),
+  `LogChannel` (adds `channel` property), `Logger` (adds `name()`, `channels`, `channel()`).
+  Implementation mirrors this: `LogWriter` → `Channel` + `Logger`.
+- **Console**: `RichConsoleHandler` + `UVICORE_LOG_THEME` (rich; ADR 0007). `colors: False` falls
+  back to a plain STDOUT-only `StreamHandler`. WARNING/ERROR/CRITICAL → STDERR.
+- **File**: `build_file_handler()` auto-selects by filename. strftime tokens (e.g.
+  `%Y-%m-%d_{channel}.log`) → `DatedFileHandler` (date IS the filename, reopens on date change,
+  never renames, `retention` in days); no tokens → legacy `TimedRotatingFileHandler`
+  (`when`/`interval`/`backup_count`). ADR 0008.
+- **Channels**: `uvicore.log.channel('Processor')` → cached immutable `Channel` with its own named
+  python logger, own console+file handlers, and **`propagate = False`** (so channel records never
+  double-write into the root/default log file). Inherits `console`/`file` config except
+  `filters`/`exclude`. Names cannot contain a dot.
+- **`name(str)`** is a one-shot *filter* scope (not a destination) stored in a **`ContextVar`**, so it
+  is task- and thread-local. `OutputFilter` does prefix-based (not exact) include/exclude on
+  `record.name`.
+- The default file handler stays on the **root** logger on purpose, so third-party records
+  (`sqlalchemy`, `aiosqlite`, `asyncpg`, `asyncio`, `httpx`) land in the app log where `exclude`
+  filters them.
 
 ## Auth — `uvicore/auth/`
 - **`UserInfo`** (`auth/user_info.py`, Pydantic v2 model, injected as `request.user`): fields

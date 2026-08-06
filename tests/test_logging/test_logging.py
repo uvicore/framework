@@ -1,8 +1,12 @@
 import io
+import time
+import asyncio
 import pytest
 import uvicore
 from uvicore.support.dumper import dump
 import logging
+import logging.handlers
+from contextlib import contextmanager
 
 from rich.rule import Rule
 from rich.text import Text
@@ -149,12 +153,151 @@ async def test_warning_error_critical_go_to_stderr(app1):
 async def test_colors_false_uses_plain_stream_handler(app1):
     """With colors disabled the handler falls back to a plain StreamHandler."""
     from uvicore.logging.logger import RichConsoleHandler
+    with isolated_logger({'console': {'enabled': True, 'colors': False}, 'file': {'enabled': False}}) as logger:
+        assert isinstance(logger.console_handler, logging.StreamHandler)
+        assert not isinstance(logger.console_handler, RichConsoleHandler)
+
+
+@contextmanager
+def isolated_logger(config):
+    """Build an ad-hoc Logger without leaking handlers onto the real root logger.
+
+    logging.getLogger() returns a process wide singleton, so a Logger built here
+    attaches its handlers to the SAME root logger every other test uses.  Restore
+    the handler list (and level) afterwards or the leak compounds across the suite.
+    """
     # The @uvicore.service decorator replaces the module-level Logger symbol, so
     # grab the real class off the live singleton instead of importing it.
     LoggerClass = type(uvicore.log)
-    logger = LoggerClass({'console': {'enabled': True, 'colors': False}, 'file': {'enabled': False}})
-    assert isinstance(logger.console_handler, logging.StreamHandler)
-    assert not isinstance(logger.console_handler, RichConsoleHandler)
-    # Clean up the root logger handlers this ad-hoc Logger added
     root = logging.getLogger()
-    root.handlers = [h for h in root.handlers if h is not logger.console_handler]
+    saved_handlers, saved_level = list(root.handlers), root.level
+    logger = LoggerClass(config)
+    try:
+        yield logger
+    finally:
+        for handler in list(root.handlers):
+            if handler not in saved_handlers:
+                root.removeHandler(handler)
+                try: handler.close()
+                except Exception: pass
+        root.handlers, root.level = saved_handlers, saved_level
+
+
+@pytest.mark.asyncio
+async def test_legacy_config_shape_still_works(app1):
+    """The two-key console/file config predates channels and must keep working
+    byte for byte - there is no migration."""
+    with isolated_logger({
+        'console': {'enabled': True, 'level': 'INFO', 'colors': True},
+        'file': {'enabled': False},
+    }) as logger:
+        # Missing keys were deep filled from DEFAULT_CONFIG
+        assert logger.config.console.format == '%(message)s'
+        assert logger.config.file.when == 'midnight'
+        assert logger.config.file.backup_count == 7
+        # channels is simply empty
+        assert logger.config.channels == {}
+        assert logger.channels == {}
+
+
+@pytest.mark.asyncio
+async def test_config_defaults_are_deep_merged(app1, tmp_path):
+    """A partial section still gets every default key, unlike the old shallow splat."""
+    with isolated_logger({
+        'console': {'enabled': False},
+        'file': {'enabled': True, 'file': str(tmp_path / 'partial.log')},
+    }) as logger:
+        assert logger.config.file.level == 'DEBUG'
+        assert logger.config.file.retention == 0
+        assert 'levelname' in logger.config.file.format
+        assert logger.config.file.filters == []
+
+
+@pytest.mark.asyncio
+async def test_defaults_merge_does_not_mutate_the_app_config(app1):
+    """Regression: Dict holds nested SuperDicts by reference and defaults() mutates
+    in place, so building a Logger without .clone() would rewrite the LIVE
+    uvicore.config.app.logger."""
+    before = uvicore.config('app.logger').clone()
+    with isolated_logger(uvicore.config('app.logger')):
+        pass
+    assert uvicore.config('app.logger') == before
+
+
+@pytest.mark.asyncio
+async def test_static_file_path_uses_timed_rotating_handler(app1, tmp_path):
+    """Backward compatibility: a plain filename keeps the legacy rotation handler."""
+    with isolated_logger({
+        'console': {'enabled': False},
+        'file': {'enabled': True, 'file': str(tmp_path / 'app1.log')},
+    }) as logger:
+        assert isinstance(logger.file_handler, logging.handlers.TimedRotatingFileHandler)
+
+
+@pytest.mark.asyncio
+async def test_strftime_file_path_uses_dated_handler(app1, tmp_path):
+    """A path with strftime tokens selects the dated handler instead."""
+    from uvicore.logging.handlers import DatedFileHandler
+    with isolated_logger({
+        'console': {'enabled': False},
+        'file': {'enabled': True, 'file': str(tmp_path / '%Y-%m-%d_app1.log'), 'retention': 14},
+    }) as logger:
+        assert isinstance(logger.file_handler, DatedFileHandler)
+        assert not isinstance(logger.file_handler, logging.handlers.TimedRotatingFileHandler)
+        assert logger.file_handler.retention == 14
+
+
+@pytest.mark.asyncio
+async def test_channel_token_resolves_to_default_for_the_main_log(app1, tmp_path):
+    """{channel} lets one configured path serve the default log and every channel."""
+    with isolated_logger({
+        'console': {'enabled': False},
+        'file': {'enabled': True, 'file': str(tmp_path / '%Y-%m-%d_{channel}.log')},
+    }) as logger:
+        logger.info('a default line')
+        expected = tmp_path / '{}_default.log'.format(time.strftime('%Y-%m-%d', time.localtime()))
+        assert expected.exists()
+        assert 'a default line' in expected.read_text()
+
+
+@pytest.mark.asyncio
+async def test_name_scope_is_task_local(app1):
+    """uvicore.log is a singleton in an async framework.  The one-shot name() scope
+    lives in a ContextVar so two concurrent tasks cannot clobber each other between
+    the name() call and the emit."""
+    seen = {}
+
+    async def scoped():
+        uvicore.log.name('uvicore.orm')
+        await asyncio.sleep(0)
+        seen['scoped'] = uvicore.log.logger.name
+        uvicore.log.reset()
+
+    async def unscoped():
+        await asyncio.sleep(0)
+        seen['unscoped'] = uvicore.log.logger.name
+
+    await asyncio.gather(scoped(), unscoped())
+
+    assert seen['scoped'] == 'uvicore.orm'
+    assert seen['unscoped'] == 'root', 'the other task leaked its logger scope'
+
+
+@pytest.mark.asyncio
+async def test_name_scope_is_cleared_after_one_emit(app1):
+    uvicore.log.name('uvicore.orm')
+    assert uvicore.log.logger.name == 'uvicore.orm'
+    uvicore.log.info('scoped message')
+    assert uvicore.log.logger.name == 'root'
+
+
+@pytest.mark.asyncio
+async def test_dump_uses_the_logger_name(app1, tmp_path):
+    """dump() reads self.logger.name, which covers root, a name()d scope and a
+    channel with one expression."""
+    with isolated_logger({
+        'console': {'enabled': False},
+        'file': {'enabled': True, 'level': 'DEBUG', 'file': str(tmp_path / 'dump.log')},
+    }) as logger:
+        logger.dump({'answer': 42})
+        assert 'answer' in (tmp_path / 'dump.log').read_text()
