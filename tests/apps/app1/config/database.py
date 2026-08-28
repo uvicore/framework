@@ -19,6 +19,14 @@ def connection(prefix: str, default_db: str = ':memory:'):
             'driver': env(f'{prefix}_DRIVER', 'aiosqlite'),
             'database': env(f'{prefix}_DB', ':memory:'),
             'prefix': env(f'{prefix}_PREFIX', None),
+
+            # Engine pool config ('options' is the DRIVER, 'pool' is the ENGINE's pool).
+            # pre_ping ONLY here: a ':memory:' sqlite url gets a StaticPool, which rejects
+            # size/max_overflow outright.  Exercising even one key means the whole unit
+            # suite boots a real app through the pool-config path.
+            'pool': {
+                'pre_ping': env.bool(f'{prefix}_POOL_PRE_PING', True),
+            },
         }
 
     # Standard server-based dialect.  driver/port are omitted unless explicitly
@@ -36,6 +44,16 @@ def connection(prefix: str, default_db: str = ':memory:'):
     if driver: conn['driver'] = driver
     port = env.int(f'{prefix}_PORT', None)
     if port: conn['port'] = port
+
+    # The full engine pool block, on the branch where pooling actually matters - so the
+    # cross-dialect integration matrix (real Postgres/MySQL/MariaDB) runs the entire suite
+    # with an app-configured pool rather than framework defaults.
+    conn['pool'] = {
+        'pre_ping': env.bool(f'{prefix}_POOL_PRE_PING', True),
+        'recycle': env.int(f'{prefix}_POOL_RECYCLE', 3600),
+        'size': env.int(f'{prefix}_POOL_SIZE', 5),
+        'max_overflow': env.int(f'{prefix}_POOL_MAX_OVERFLOW', 10),
+    }
     return conn
 
 

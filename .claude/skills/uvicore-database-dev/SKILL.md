@@ -93,6 +93,23 @@ Supported (case- + whitespace-insensitive): `= == != <> > < >= <=`, `in`, `!in`/
 `not between`, `is`/`is null`, `is not`/`is not null`. Unknown operator or column → clear
 raised error (not a silent wrong result). Add new operators here, not in callers.
 
+## Engine pooling + dialect resilience (`db.py` `engine_pool_kwargs`, `database/snowflake.py`)
+- A connection's optional **`pool`** block maps unprefixed keys (`pre_ping`, `recycle`, `size`,
+  `max_overflow`, `timeout`, `use_lifo`, `reset_on_return`) onto `create_engine()`'s `pool_*`
+  kwargs via `Db.POOL_OPTIONS`. `engine_pool_kwargs()` is **pure** → unit-testable per dialect
+  (`tests/test_db/test_pooling.py`). Unknown keys **raise** (a silently-ignored `pool_recycle`
+  would look configured and do nothing). Only `pre_ping` is defaulted (`POOL_DEFAULTS`) —
+  `size`/`max_overflow` are rejected by StaticPool/NullPool, which is what sqlite `:memory:` gets.
+- Applied identically to the sync AND async branch. It used to be a hardcoded `pool_pre_ping=True`
+  on the sync branch only, so async engines had no stale-connection protection at all.
+- **`database/snowflake.py`** — Snowflake's master token expires (~4h) and the connector never
+  renews it, and `snowflake-sqlalchemy` declares no `is_disconnect()`, so SQLAlchemy returned the
+  dead connection to the pool forever. `register_dead_session_recovery(engine)` attaches a
+  `handle_error` listener (per ENGINE, not to the `Engine` class) that flips `ctx.is_disconnect`
+  for the terminal token codes. `Db.init()` arms it on every snowflake engine it builds, so a
+  re-init (warehouse switch) re-arms. `configure_connection()` also defaults the snowflake connect
+  options to `client_session_keep_alive`. See `adr/0009-*`.
+
 ## Dialect / connection layer (`db.py` `configure_connection`)
 - `configure_connection()` is pure (no engine creation) → unit-testable per dialect
   (`tests/test_db/test_dialects.py`). `init()` calls it then creates the engine.
