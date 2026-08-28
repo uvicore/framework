@@ -97,6 +97,43 @@ class Db(DatabaseInterface):
         """All SQLAlchemy Metadata for all unique (by metakey) connections, keyed by metakey"""
         return self._metadatas
 
+    # A connection's optional 'pool' config block -> SQLAlchemy create_engine kwargs.
+    #
+    # WHY THIS IS CONFIG AND NOT HARDCODED.  Engine pooling is the one part of the database
+    # layer whose right answer is entirely deployment-shaped: a days-long consumer wants
+    # pre-ping and connection recycling, a request/response API wants a pool sized to its
+    # worker count, and a warehouse with a per-warehouse concurrency ceiling wants that
+    # ceiling respected.  The framework cannot guess any of it, so it must be settable.
+    #
+    # NAMES ARE DELIBERATELY UNPREFIXED here ('recycle', not 'pool_recycle'): the block is
+    # already called 'pool', so repeating it would read as pool.pool_recycle.  SQLAlchemy's
+    # own kwargs are inconsistent about the prefix ('pool_size' but 'max_overflow'), which
+    # is exactly the kind of trivia a config file should not make anyone remember.
+    POOL_OPTIONS = {
+        'pre_ping':        'pool_pre_ping',
+        'recycle':         'pool_recycle',
+        'size':            'pool_size',
+        'max_overflow':    'max_overflow',
+        'timeout':         'pool_timeout',
+        'use_lifo':        'pool_use_lifo',
+        'reset_on_return': 'pool_reset_on_return',
+    }
+
+    # Applied when the connection sets no 'pool' block of its own.
+    #
+    # pre_ping defaults ON because the alternative is the worst failure mode a pool has: a
+    # connection the server closed while it sat idle is handed to application code, which
+    # then fails on a query it had no way to anticipate.  One cheap round-trip per checkout
+    # buys that away.  Set 'pool': {'pre_ping': False} to opt out on a hot path.
+    #
+    # NOTHING ELSE IS DEFAULTED, on purpose.  pool_size/max_overflow are rejected outright
+    # by SQLAlchemy's StaticPool and NullPool (which is what a sqlite ':memory:' url gets),
+    # so a framework-level default would break the simplest connection there is.  Only keys
+    # the app actually sets are ever passed through.
+    POOL_DEFAULTS = {
+        'pre_ping': True,
+    }
+
     def __init__(self) -> None:
         self._default = None
         self._connections = Dict()
@@ -151,10 +188,25 @@ class Db(DatabaseInterface):
                         existing_engine.dispose()
 
                 connect_args = dict(connection.options) if connection.options else {}
+
+                # Pool kwargs come from the connection's 'pool' block (see POOL_OPTIONS).
+                # Identical for sync and async engines - pre-ping used to be hardcoded true
+                # on the sync branch and absent from the async one, which meant an async
+                # app silently had no stale-connection protection at all.
+                pool_kwargs = self.engine_pool_kwargs(connection)
+
                 if connection.is_async:
-                    engine = create_async_engine(connection.url, connect_args=connect_args)
+                    engine = create_async_engine(connection.url, connect_args=connect_args, **pool_kwargs)
                 else:
-                    engine = sa.create_engine(connection.url, connect_args=connect_args, pool_pre_ping=True)
+                    engine = sa.create_engine(connection.url, connect_args=connect_args, **pool_kwargs)
+
+                # Dialect-specific resilience.  Snowflake needs SQLAlchemy taught that an
+                # expired auth token is a DISCONNECT, or the dead connection is returned to
+                # the pool and handed back out forever (see database/snowflake.py).  Armed
+                # here, on engine creation, so an engine rebuilt by a re-init is re-armed.
+                if connection.dialect == 'snowflake':
+                    from uvicore.database.snowflake import register_dead_session_recovery
+                    register_dead_session_recovery(engine)
 
                 # Add this new [sync or async] engine + metadata keyed by metakey (preserve
                 # existing metadata on re-init or ORM tables already registered would be lost)
@@ -166,6 +218,36 @@ class Db(DatabaseInterface):
         # Set instance variables
         self._default = default
         self._connections = connections
+
+    def engine_pool_kwargs(self, connection: Connection) -> Dict:
+        """Translate a connection's 'pool' config block into create_engine kwargs.
+
+        Pure (no engine creation, no live database) so every dialect's pooling can be
+        unit-tested.  Unknown keys RAISE rather than being ignored: a silently-dropped
+        'pool_recycle' (the prefixed spelling) would look configured and do nothing, and
+        the whole point of the block is the failures it prevents."""
+
+        pool = Dict(connection.pool) if connection.get('pool') else Dict()
+
+        unknown = [key for key in pool.keys() if key not in self.POOL_OPTIONS]
+        if unknown:
+            raise Exception(
+                "A packages config/database.py connection '{}' has unknown pool option(s) "
+                '[{}].  Must be one of [{}].  Note these are UNPREFIXED (use \'recycle\', '
+                "not \'pool_recycle\').".format(
+                    connection.get('name'), ','.join(sorted(unknown)), ','.join(self.POOL_OPTIONS)
+                )
+            )
+
+        pool.defaults(self.POOL_DEFAULTS)
+
+        # None means "not set" so a config file can spell out every key it cares about and
+        # leave the rest explicitly blank without accidentally passing None to SQLAlchemy.
+        return Dict({
+            self.POOL_OPTIONS[key]: value
+            for key, value in pool.items()
+            if value is not None
+        })
 
     def configure_connection(self, connection_name: str, connection: Connection) -> Connection:
         """Normalize, validate and derive url/metakey/is_async for one connection.
@@ -218,7 +300,36 @@ class Db(DatabaseInterface):
             connection.defaults({
                 'account': '', 'database': '', 'schema': '', 'warehouse': '',
                 'username': '', 'role': '', 'password': '', 'private_key': '', 'prefix': None,
+                'options': {},
             })
+
+            # KEEP THE SNOWFLAKE SESSION ALIVE BY DEFAULT.
+            #
+            # A Snowflake session holds a session token (~1h, which the connector renews)
+            # and a MASTER token (~4h, which it does NOT - on 390114 it merely sets an
+            # `expired` flag that nothing ever reads, and key-pair auth has no re-auth
+            # path).  So without a heartbeat, EVERY process that outlives the master token
+            # starts failing every query with '390114: Authentication token has expired',
+            # permanently, until it is restarted.  A framework whose database connection
+            # expires after four hours is not a working database connection, so this is a
+            # default rather than something each app has to discover the hard way.
+            #
+            # `client_session_keep_alive` starts a per-connection heartbeat thread that
+            # POSTs /session/heartbeat, refreshing the master token before it can expire.
+            #
+            # 900s, not the connector's 3600s default: the connector clamps the value to
+            # [master_validity/16, master_validity/4] = [900, 3600] for the usual 4h
+            # validity, and a heartbeat is a token-only REST call - it runs no query and
+            # consumes NO warehouse credits - so the cheap end costs nothing and gives four
+            # renewal chances per master-token window instead of one.
+            #
+            # .defaults() only fills what is MISSING, so an app that sets either key (or
+            # sets keep-alive False for a short-lived CLI) always wins.
+            connection.options.defaults({
+                'client_session_keep_alive': True,
+                'client_session_keep_alive_heartbeat_frequency': 900,
+            })
+
             conn_url = connection.url or (
                 f"{connection.dialect}://{connection.username}:{connection.password}"
                 f"@{connection.account}/{connection.database}/{connection.schema}"

@@ -37,3 +37,4 @@ Trade-offs, what becomes easier/harder, migration impact, what to watch.
 - [0006 — Composite (multi-column) relation keys](0006-composite-multi-column-relation-keys.md)
 - [0007 — Render console logging with rich (base dependency)](0007-rich-console-logging.md)
 - [0008 — Date-stamped log filenames and named log channels](0008-dated-log-files-and-log-channels.md)
+- [0009 — Configurable engine pooling & Snowflake session resilience](0009-configurable-engine-pooling-and-snowflake-session-resilience.md)
