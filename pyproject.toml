@@ -43,7 +43,7 @@ dependencies = [
     "rich==14.2.0",
     "environs==15.0.1",
     "argon2-cffi==25.1.0",
-    "cryptography==49.0.0",
+    "cryptography==50.0.0",
     "merge-args==0.1.5",
 
     # Templating is part of core, not just web, so include it in base
