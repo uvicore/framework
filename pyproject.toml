@@ -131,7 +131,7 @@ web = [
     "uvloop==0.22.1",       # picked up automatically by uvicorn for performance
     "httptools==0.8.0",     # picked up automatically by uvicorn for HTTP parsing
     "python-multipart==0.0.32",  # required by starlette/fastapi for Form/File parsing
-    "pyjwt==2.13.0"
+    "pyjwt==2.15.0"
 ]
 
 [project.urls]
