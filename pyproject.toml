@@ -33,7 +33,7 @@ classifiers = [
 # Required base dependencies
 # Hard-pinned to exact latest versions on 2026-06-19
 dependencies = [
-    "anyio==4.14.0",
+    "anyio==4.14.2",
     "prettyprinter==0.18.0",
 
     # Rich powers all pretty STDOUT/STDERR console logging (uvicore.log).
