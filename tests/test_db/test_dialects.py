@@ -9,6 +9,7 @@ Covers the cross-dialect contract the framework must get right so users aren't l
 to the few databases the author happened to test (SQLite, MySQL, Snowflake).
 """
 import pytest
+import sqlalchemy as sa
 
 
 def configure(cfg):
@@ -51,7 +52,11 @@ async def test_mysql_async_and_sync_drivers(app1):
 @pytest.mark.asyncio
 async def test_sqlite(app1):
     conn = configure({'dialect': 'sqlite', 'database': ':memory:'})
-    assert conn.url == 'sqlite+aiosqlite:///:memory:'
+    # SQLAlchemy 2.1+ percent-encodes the ':' chars (sqlite+aiosqlite:///%3Amemory%3A),
+    # 2.0 did not.  Both parse back to the same URL, so compare the parsed parts.
+    url = sa.engine.make_url(conn.url)
+    assert url.drivername == 'sqlite+aiosqlite'
+    assert url.database == ':memory:'
     assert conn.metakey == 'sqlite://:memory:'
     assert conn.is_async is True
 
