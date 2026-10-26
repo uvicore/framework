@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import socket
 import uvicore
 import logging
 import logging.config
@@ -289,6 +290,14 @@ def build_file_handler(config: Dict, channel: str = 'default') -> PythonHandler 
     if not config.enabled: return None
 
     filename = str(config.file)
+
+    # {hostname} gives every machine its own file.  Needed when several hosts log to one
+    # shared NFS/EFS folder: NFS has no atomic append across clients, so two machines
+    # appending to the SAME file overwrite each other's bytes (torn, merged and lost lines).
+    # Processes on ONE machine appending to one file are fine, the kernel serializes them.
+    if '{hostname}' in filename:
+        filename = filename.replace('{hostname}', socket.gethostname())
+
     if '{channel}' in filename:
         # .replace() not .format() - a real log path can contain other braces and
         # .format() would blow up with a KeyError on them.
