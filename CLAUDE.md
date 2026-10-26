@@ -140,7 +140,7 @@ the key to the whole codebase.
 
 ## Dev workflow
 - **Python ≥3.12** (tested on 3.12/3.13/3.14), Poetry, Pydantic **v2** (`.model_dump()`,
-  `@field_validator`, lifespan events; see ADR 0002/0003), SQLAlchemy 2.0,
+  `@field_validator`, lifespan events; see ADR 0002/0003), SQLAlchemy 2.1,
   FastAPI/Starlette for web, `encode/databases`-style async DB layer.
 - Extras gate optional deps: `poetry install --extras "database redis web"` (+ `--with test`).
 - **Run tests with Poetry, from `framework/`:** `poetry run ./bin/test.sh` (sets
