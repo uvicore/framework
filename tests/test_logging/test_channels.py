@@ -357,3 +357,39 @@ async def test_app1_configured_channels_work_end_to_end(app1):
 
     # Cached on the real singleton
     assert uvicore.log.channel('Processor') is channel
+
+
+@pytest.mark.asyncio
+async def test_hostname_token_gives_each_machine_its_own_file(app1, tmp_path, monkeypatch):
+    """{hostname} keeps hosts sharing one NFS/EFS log folder out of each other's
+    files.  NFS has no atomic append across machines, so two hosts appending to the
+    SAME file tear and lose lines.  Works for the default log and every channel."""
+    import socket
+    monkeypatch.setattr(socket, 'gethostname', lambda: 'pr-app1')
+    config = _config(tmp_path, {'Batch': {}})
+    config['file']['file'] = str(tmp_path / '%Y-%m-%d_{channel}_{hostname}.log')
+
+    with isolated_logger(config) as log:
+        log.info('default line')
+        log.channel('Batch').info('batch line')
+
+        day = time.strftime('%Y-%m-%d', time.localtime())
+        assert 'default line' in (tmp_path / '{}_default_pr-app1.log'.format(day)).read_text()
+        assert 'batch line' in (tmp_path / '{}_Batch_pr-app1.log'.format(day)).read_text()
+        assert not list(tmp_path.glob('*{hostname}*')), 'token must never reach the filesystem'
+
+
+@pytest.mark.asyncio
+async def test_hostname_token_works_without_a_channel_token(app1, tmp_path, monkeypatch):
+    import socket
+    monkeypatch.setattr(socket, 'gethostname', lambda: 'pr-app2')
+    config = _config(tmp_path, {'Batch': {}})
+    config['file']['file'] = str(tmp_path / 'app_{hostname}.log')
+
+    with isolated_logger(config) as log:
+        log.info('default line')
+        log.channel('Batch').info('batch line')
+
+        assert 'default line' in (tmp_path / 'app_pr-app2.log').read_text()
+        # No {channel} token: the channel name is still appended before the extension
+        assert 'batch line' in (tmp_path / 'app_pr-app2_Batch.log').read_text()
